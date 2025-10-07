@@ -31,6 +31,7 @@ const productFormSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
   category: z.string().optional(),
   stockStatus: z.enum(['in-stock', 'low-stock', 'out-of-stock']).default('in-stock'),
+  metadata: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -45,6 +46,7 @@ interface Product {
   category?: string | null;
   stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock';
   imageUrl?: string | null;
+  metadata?: string | null;
 }
 
 export default function AdminPage() {
@@ -75,6 +77,7 @@ export default function AdminPage() {
       sku: '',
       category: '',
       stockStatus: 'in-stock',
+      metadata: '',
     },
   });
 
@@ -88,6 +91,7 @@ export default function AdminPage() {
       sku: '',
       category: '',
       stockStatus: 'in-stock',
+      metadata: '',
     },
   });
 
@@ -247,6 +251,7 @@ export default function AdminPage() {
       sku: product.sku,
       category: product.category || '',
       stockStatus: product.stockStatus,
+      metadata: product.metadata || '',
     });
     // Set preview to existing image if available
     setImagePreview(product.imageUrl || null);
@@ -634,6 +639,28 @@ export default function AdminPage() {
                 />
               </div>
 
+              <FormField
+                control={createForm.control}
+                name="metadata"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'حقول مخصصة (JSON)' : 'Custom Fields (JSON)'}</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        value={field.value || ''}
+                        placeholder={language === 'ar' ? '{"اللون": "أزرق", "الوزن": "5 كغ"}' : '{"color": "blue", "weight": "5kg"}'}
+                        data-testid="input-product-metadata"
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'حقول مخصصة اختيارية بتنسيق JSON' : 'Optional custom fields in JSON format'}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="space-y-2">
                 <FormLabel>{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
                 {imagePreview && (
@@ -797,6 +824,28 @@ export default function AdminPage() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={editForm.control}
+                name="metadata"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'حقول مخصصة (JSON)' : 'Custom Fields (JSON)'}</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        value={field.value || ''}
+                        placeholder={language === 'ar' ? '{"اللون": "أزرق", "الوزن": "5 كغ"}' : '{"color": "blue", "weight": "5kg"}'}
+                        data-testid="input-edit-product-metadata"
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'حقول مخصصة اختيارية بتنسيق JSON' : 'Optional custom fields in JSON format'}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="space-y-2">
                 <FormLabel>{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>

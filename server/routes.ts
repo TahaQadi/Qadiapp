@@ -20,6 +20,7 @@ import {
   insertLtaSchema,
   insertLtaProductSchema,
   insertLtaClientSchema,
+  bulkAssignProductsSchema,
   type CartItem,
 } from "@shared/schema";
 import { z } from "zod";
@@ -572,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createOrderSchema.parse(req.body);
       
       // Step 1: Extract and validate ltaId from items
-      const ltaIds = [...new Set(validatedData.items.map(item => item.ltaId))];
+      const ltaIds = Array.from(new Set(validatedData.items.map(item => item.ltaId)));
       if (ltaIds.length === 0) {
         return res.status(400).json({
           message: 'Order must include LTA information',
@@ -946,6 +947,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء تحديث السعر"
+      });
+    }
+  });
+
+  // Bulk assign products to LTA
+  app.post('/api/admin/ltas/:ltaId/products/bulk', requireAdmin, async (req, res) => {
+    try {
+      const { ltaId } = req.params;
+      const result = bulkAssignProductsSchema.safeParse({ ltaId, ...req.body });
+
+      if (!result.success) {
+        return res.status(400).json({
+          message: 'Invalid data',
+          messageAr: 'بيانات غير صالحة',
+          errors: result.error.errors,
+        });
+      }
+
+      const assignmentResult = await storage.bulkAssignProductsToLta(ltaId, result.data.products);
+
+      return res.status(200).json({
+        message: `Successfully assigned ${assignmentResult.success} products`,
+        messageAr: `تم تعيين ${assignmentResult.success} منتجات بنجاح`,
+        ...assignmentResult,
+      });
+    } catch (error: any) {
+      console.error('Bulk assign products error:', error);
+      return res.status(500).json({
+        message: 'Failed to assign products',
+        messageAr: 'فشل تعيين المنتجات',
       });
     }
   });

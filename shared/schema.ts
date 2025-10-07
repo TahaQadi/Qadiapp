@@ -48,6 +48,7 @@ export const products = pgTable("products", {
   stockStatus: text("stock_status").notNull().default("in-stock"),
   quantity: integer("quantity").default(0).notNull(),
   lowStockThreshold: integer("low_stock_threshold").default(10).notNull(),
+  metadata: text("metadata"),
 });
 
 export const ltas = pgTable("ltas", {
@@ -187,8 +188,11 @@ export const createProductSchema = insertProductSchema.extend({
   stockStatus: stockStatusEnum.optional().default("in-stock"),
   quantity: z.number().int().min(0).optional().default(0),
   lowStockThreshold: z.number().int().min(0).optional().default(10),
+  metadata: z.string().optional().nullable(),
 });
-export const updateProductSchema = createProductSchema.partial();
+export const updateProductSchema = createProductSchema.partial().extend({
+  metadata: z.string().optional().nullable(),
+});
 
 // Inventory adjustment schema
 export const inventoryAdjustmentSchema = z.object({
@@ -215,6 +219,18 @@ export const updateClientSchema = insertClientSchema.pick({
   email: true,
   phone: true,
 });
+
+// Schema for bulk product assignment to LTA
+export const bulkAssignProductsSchema = z.object({
+  ltaId: z.string().uuid(),
+  products: z.array(z.object({
+    sku: z.string().min(1, 'SKU is required'),
+    contractPrice: z.string().min(1, 'Contract price is required'),
+    currency: z.string().default('USD'),
+  })),
+});
+
+export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 
 // Types
 export type Client = typeof clients.$inferSelect;

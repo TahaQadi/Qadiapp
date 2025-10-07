@@ -107,6 +107,9 @@ export interface IStorage {
   // Product queries for LTA context
   getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>>;
   getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>>;
+
+  // Bulk operations
+  bulkAssignProductsToLta(ltaId: string, products: Array<{ sku: string; contractPrice: string; currency: string }>): Promise<{ success: number; failed: Array<{ sku: string; error: string }> }>;
 }
 
 export class MemStorage implements IStorage {
@@ -297,6 +300,7 @@ export class MemStorage implements IStorage {
       stockStatus,
       quantity,
       lowStockThreshold,
+      metadata: insertProduct.metadata ?? null,
     };
     this.products.set(id, product);
     return product;
@@ -647,6 +651,49 @@ export class MemStorage implements IStorage {
     }
     
     return productsWithPricing;
+  }
+
+  async bulkAssignProductsToLta(
+    ltaId: string,
+    products: Array<{ sku: string; contractPrice: string; currency: string }>
+  ) {
+    const results = {
+      success: 0,
+      failed: [] as Array<{ sku: string; error: string }>,
+    };
+
+    for (const item of products) {
+      try {
+        const product = Array.from(this.products.values()).find(p => p.sku === item.sku);
+        
+        if (!product) {
+          results.failed.push({ sku: item.sku, error: 'Product not found' });
+          continue;
+        }
+
+        const existingAssignment = Array.from(this.ltaProducts.values()).find(
+          lp => lp.ltaId === ltaId && lp.productId === product.id
+        );
+
+        if (existingAssignment) {
+          results.failed.push({ sku: item.sku, error: 'Already assigned to this LTA' });
+          continue;
+        }
+
+        await this.assignProductToLta({
+          ltaId,
+          productId: product.id,
+          contractPrice: item.contractPrice,
+          currency: item.currency,
+        });
+
+        results.success++;
+      } catch (error) {
+        results.failed.push({ sku: item.sku, error: 'Assignment failed' });
+      }
+    }
+
+    return results;
   }
 }
 

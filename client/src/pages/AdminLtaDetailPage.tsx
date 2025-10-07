@@ -21,7 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ArrowLeft, Pencil, Plus, Trash2, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Trash2, CalendarIcon, Upload, Download } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 const ltaFormSchema = z.object({
@@ -104,6 +106,12 @@ export default function AdminLtaDetailPage() {
   const [removeClientDialogOpen, setRemoveClientDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<LtaProduct | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResults, setImportResults] = useState<{
+    success: number;
+    failed: Array<{ sku: string; error: string }>;
+  } | null>(null);
 
   const { data: lta, isLoading: ltaLoading } = useQuery<Lta>({
     queryKey: ['/api/admin/ltas', ltaId],
@@ -310,6 +318,41 @@ export default function AdminLtaDetailPage() {
     },
   });
 
+  const bulkImportMutation = useMutation({
+    mutationFn: async (data: { products: Array<{ sku: string; contractPrice: string; currency: string }> }) => {
+      const response = await fetch(`/api/admin/ltas/${ltaId}/products/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Bulk import failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/ltas', ltaId, 'products'] });
+      setImportResults(data);
+      setImportFile(null);
+      
+      toast({
+        description: language === 'ar'
+          ? `تم استيراد ${data.success} منتج بنجاح`
+          : `Successfully imported ${data.success} products`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        description: error.message,
+      });
+    },
+  });
+
   const handleEditLta = () => {
     if (lta) {
       editLtaForm.reset({
@@ -354,6 +397,91 @@ export default function AdminLtaDetailPage() {
       return <Badge data-testid="badge-status-active">{language === 'ar' ? 'نشط' : 'Active'}</Badge>;
     }
     return <Badge variant="secondary" data-testid="badge-status-inactive">{language === 'ar' ? 'غير نشط' : 'Inactive'}</Badge>;
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {
+      toast({
+        variant: 'destructive',
+        description: language === 'ar' 
+          ? 'يرجى تحميل ملف CSV'
+          : 'Please upload a CSV file',
+      });
+      return;
+    }
+
+    setImportFile(file);
+    setImportResults(null);
+  };
+
+  const parseCSV = async (): Promise<Array<{ sku: string; contractPrice: string; currency: string }>> => {
+    if (!importFile) return [];
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        const dataLines = lines.slice(1);
+        
+        const products = dataLines.map(line => {
+          const [sku, contractPrice, currency] = line.split(',').map(s => s.trim());
+          return {
+            sku,
+            contractPrice,
+            currency: currency || 'USD',
+          };
+        }).filter(p => p.sku && p.contractPrice);
+
+        resolve(products);
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(importFile);
+    });
+  };
+
+  const handleBulkImport = async () => {
+    try {
+      const products = await parseCSV();
+      
+      if (products.length === 0) {
+        toast({
+          variant: 'destructive',
+          description: language === 'ar'
+            ? 'لا توجد منتجات صالحة في الملف'
+            : 'No valid products found in file',
+        });
+        return;
+      }
+
+      bulkImportMutation.mutate({ products });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        description: error.message,
+      });
+    }
+  };
+
+  const downloadCSVTemplate = () => {
+    const csvContent = `SKU,Contract Price,Currency
+CHAIR-001,299.99,USD
+DESK-001,549.99,EUR
+KB-001,89.99,SAR`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'bulk_import_template.csv';
+    link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   if (ltaLoading) {
@@ -457,13 +585,23 @@ export default function AdminLtaDetailPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <CardTitle>{language === 'ar' ? 'المنتجات في هذه الاتفاقية' : 'Products in this LTA'}</CardTitle>
-            <Button 
-              onClick={() => setAddProductDialogOpen(true)}
-              data-testid="button-add-product"
-            >
-              <Plus className="h-4 w-4 me-2" />
-              {language === 'ar' ? 'إضافة منتج' : 'Add Product'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => setBulkImportDialogOpen(true)}
+                data-testid="button-bulk-import"
+              >
+                <Upload className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'استيراد جماعي' : 'Bulk Import'}
+              </Button>
+              <Button 
+                onClick={() => setAddProductDialogOpen(true)}
+                data-testid="button-add-product"
+              >
+                <Plus className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'إضافة منتج' : 'Add Product'}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {productsLoading ? (
@@ -1035,6 +1173,109 @@ export default function AdminLtaDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Import Dialog */}
+      <Dialog open={bulkImportDialogOpen} onOpenChange={setBulkImportDialogOpen}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-bulk-import">
+          <DialogHeader>
+            <DialogTitle>{language === 'ar' ? 'استيراد منتجات جماعي' : 'Bulk Import Products'}</DialogTitle>
+            <DialogDescription>
+              {language === 'ar'
+                ? 'قم بتحميل ملف CSV يحتوي على رمز المنتج وسعر العقد والعملة'
+                : 'Upload a CSV file containing SKU, Contract Price, and Currency'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
+              <div>
+                <p className="font-medium">{language === 'ar' ? 'قالب CSV' : 'CSV Template'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? 'قم بتنزيل قالب CSV لمعرفة التنسيق الصحيح'
+                    : 'Download CSV template to see the correct format'}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={downloadCSVTemplate}
+                data-testid="button-download-template"
+              >
+                <Download className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'تنزيل القالب' : 'Download Template'}
+              </Button>
+            </div>
+
+            <div>
+              <Label>{language === 'ar' ? 'تحميل ملف CSV' : 'Upload CSV File'}</Label>
+              <Input
+                type="file"
+                accept=".csv,.txt"
+                onChange={handleFileUpload}
+                className="mt-2"
+                data-testid="input-bulk-import-file"
+              />
+              {importFile && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {language === 'ar' ? 'الملف المحدد:' : 'Selected file:'} {importFile.name}
+                </p>
+              )}
+            </div>
+
+            {importResults && (
+              <div className="space-y-2">
+                <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                    {language === 'ar'
+                      ? `تم استيراد ${importResults.success} منتج بنجاح`
+                      : `Successfully imported ${importResults.success} products`}
+                  </p>
+                </div>
+
+                {importResults.failed.length > 0 && (
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p className="text-sm font-medium text-destructive mb-2">
+                      {language === 'ar'
+                        ? `فشل ${importResults.failed.length} منتج:`
+                        : `${importResults.failed.length} products failed:`}
+                    </p>
+                    <ul className="text-sm space-y-1">
+                      {importResults.failed.map((item, i) => (
+                        <li key={i} className="text-destructive">
+                          {item.sku}: {item.error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setBulkImportDialogOpen(false);
+                setImportFile(null);
+                setImportResults(null);
+              }}
+              data-testid="button-cancel-bulk-import"
+            >
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button
+              onClick={handleBulkImport}
+              disabled={!importFile || bulkImportMutation.isPending}
+              data-testid="button-submit-bulk-import"
+            >
+              {bulkImportMutation.isPending
+                ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...')
+                : (language === 'ar' ? 'استيراد' : 'Import')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
