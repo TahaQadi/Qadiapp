@@ -15,7 +15,7 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
-export function registerRoutes(app: Express): Server {
+export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Client Profile Routes
