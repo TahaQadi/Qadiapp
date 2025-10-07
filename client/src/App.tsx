@@ -14,6 +14,8 @@ import ClientProfilePage from "@/pages/ClientProfilePage";
 import AdminPage from "@/pages/AdminPage";
 import AdminClientsPage from "@/pages/AdminClientsPage";
 import AdminInventoryPage from "@/pages/AdminInventoryPage";
+import AdminLtaListPage from "@/pages/AdminLtaListPage";
+import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import "./lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -77,6 +79,8 @@ function Router() {
       <AdminRoute path="/admin" component={AdminPage} />
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
       <AdminRoute path="/admin/inventory" component={AdminInventoryPage} />
+      <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
+      <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <Route component={NotFound} />
     </Switch>
   );

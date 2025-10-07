@@ -84,97 +84,187 @@ export async function seedData() {
   });
 
   // Create products
-  const products = [
-    {
-      sku: 'CHAIR-001',
-      nameEn: 'Office Chair',
-      nameAr: 'كرسي مكتب',
-      descriptionEn: 'Ergonomic design with lumbar support',
-      descriptionAr: 'تصميم مريح مع دعم قطني',
-      category: 'Furniture',
-      stockStatus: 'in-stock',
-      quantity: 150,
-      lowStockThreshold: 20,
-    },
-    {
-      sku: 'DESK-001',
-      nameEn: 'Standing Desk',
-      nameAr: 'مكتب واقف',
-      descriptionEn: 'Adjustable height electric desk',
-      descriptionAr: 'مكتب كهربائي بارتفاع قابل للتعديل',
-      category: 'Furniture',
-      stockStatus: 'in-stock',
-      quantity: 150,
-      lowStockThreshold: 20,
-    },
-    {
-      sku: 'ARM-001',
-      nameEn: 'Monitor Arm',
-      nameAr: 'ذراع شاشة',
-      descriptionEn: 'Dual monitor support, gas spring',
-      descriptionAr: 'دعم شاشتين، نابض غازي',
-      category: 'Accessories',
-      stockStatus: 'low-stock',
-      quantity: 150,
-      lowStockThreshold: 20,
-    },
-    {
-      sku: 'KB-001',
-      nameEn: 'Keyboard',
-      nameAr: 'لوحة مفاتيح',
-      descriptionEn: 'Mechanical switches, RGB backlight',
-      descriptionAr: 'مفاتيح ميكانيكية، إضاءة خلفية RGB',
-      category: 'Accessories',
-      stockStatus: 'in-stock',
-      quantity: 150,
-      lowStockThreshold: 20,
-    },
-    {
-      sku: 'MOUSE-001',
-      nameEn: 'Mouse',
-      nameAr: 'فأرة',
-      descriptionEn: 'Wireless ergonomic mouse',
-      descriptionAr: 'فأرة لاسلكية مريحة',
-      category: 'Accessories',
-      stockStatus: 'out-of-stock',
-      quantity: 150,
-      lowStockThreshold: 20,
-    },
-    {
-      sku: 'STAND-001',
-      nameEn: 'Laptop Stand',
-      nameAr: 'حامل لابتوب',
-      descriptionEn: 'Adjustable aluminum laptop stand',
-      descriptionAr: 'حامل لابتوب ألمنيوم قابل للتعديل',
-      category: 'Accessories',
-      stockStatus: 'in-stock',
-      quantity: 150,
-      lowStockThreshold: 20,
-    },
-  ];
+  const product1 = await storage.createProduct({
+    sku: 'CHAIR-001',
+    nameEn: 'Office Chair',
+    nameAr: 'كرسي مكتب',
+    descriptionEn: 'Ergonomic design with lumbar support',
+    descriptionAr: 'تصميم مريح مع دعم قطني',
+    category: 'Furniture',
+    stockStatus: 'in-stock',
+    quantity: 150,
+    lowStockThreshold: 20,
+  });
 
-  for (const product of products) {
-    await storage.createProduct(product);
-  }
+  const product2 = await storage.createProduct({
+    sku: 'DESK-001',
+    nameEn: 'Standing Desk',
+    nameAr: 'مكتب واقف',
+    descriptionEn: 'Adjustable height electric desk',
+    descriptionAr: 'مكتب كهربائي بارتفاع قابل للتعديل',
+    category: 'Furniture',
+    stockStatus: 'in-stock',
+    quantity: 150,
+    lowStockThreshold: 20,
+  });
 
-  // Create pricing for test client
-  const allProducts = await storage.getProducts();
-  const pricingData = [
-    { sku: 'CHAIR-001', price: '299.99', currency: 'USD' },
-    { sku: 'DESK-001', price: '599.99', currency: 'USD' },
-    { sku: 'ARM-001', price: '149.99', currency: 'USD' },
-    { sku: 'KB-001', price: '179.99', currency: 'USD' },
-    { sku: 'MOUSE-001', price: '89.99', currency: 'USD' },
-    { sku: 'STAND-001', price: '79.99', currency: 'USD' },
-  ];
+  const product3 = await storage.createProduct({
+    sku: 'ARM-001',
+    nameEn: 'Monitor Arm',
+    nameAr: 'ذراع شاشة',
+    descriptionEn: 'Dual monitor support, gas spring',
+    descriptionAr: 'دعم شاشتين، نابض غازي',
+    category: 'Accessories',
+    stockStatus: 'in-stock',
+    quantity: 150,
+    lowStockThreshold: 20,
+  });
 
-  await storage.bulkImportPricing(testClient.id, pricingData);
+  const product4 = await storage.createProduct({
+    sku: 'LAMP-001',
+    nameEn: 'Desk Lamp',
+    nameAr: 'مصباح مكتب',
+    descriptionEn: 'LED desk lamp with adjustable brightness',
+    descriptionAr: 'مصباح مكتب LED بإضاءة قابلة للتعديل',
+    category: 'Accessories',
+    stockStatus: 'in-stock',
+    quantity: 150,
+    lowStockThreshold: 20,
+  });
 
-  console.log('Seeding completed successfully!');
-  console.log('Admin credentials:');
+  const product5 = await storage.createProduct({
+    sku: 'KB-001',
+    nameEn: 'Wireless Keyboard',
+    nameAr: 'لوحة مفاتيح لاسلكية',
+    descriptionEn: 'Mechanical switches, RGB backlight',
+    descriptionAr: 'مفاتيح ميكانيكية، إضاءة خلفية RGB',
+    category: 'Technology',
+    stockStatus: 'in-stock',
+    quantity: 150,
+    lowStockThreshold: 20,
+  });
+
+  const product6 = await storage.createProduct({
+    sku: 'PAD-001',
+    nameEn: 'Mouse Pad',
+    nameAr: 'حشية الفأرة',
+    descriptionEn: 'Extended gaming mouse pad',
+    descriptionAr: 'حشية فأرة للألعاب ممتدة',
+    category: 'Technology',
+    stockStatus: 'in-stock',
+    quantity: 150,
+    lowStockThreshold: 20,
+  });
+
+  // Create LTAs
+  // LTA 1: General Office Supplies Contract (Active)
+  const lta1 = await storage.createLta({
+    nameEn: 'Office Supplies Contract 2024',
+    nameAr: 'عقد اللوازم المكتبية 2024',
+    descriptionEn: 'Annual contract for office furniture and supplies',
+    descriptionAr: 'عقد سنوي للأثاث واللوازم المكتبية',
+    startDate: new Date('2024-01-01'),
+    endDate: new Date('2024-12-31'),
+    status: 'active',
+  });
+
+  // LTA 2: Technology Equipment Contract (Active)
+  const lta2 = await storage.createLta({
+    nameEn: 'Technology Equipment Contract 2024',
+    nameAr: 'عقد المعدات التقنية 2024',
+    descriptionEn: 'Contract for computers and tech accessories',
+    descriptionAr: 'عقد لأجهزة الكمبيوتر والملحقات التقنية',
+    startDate: new Date('2024-01-01'),
+    endDate: new Date('2024-12-31'),
+    status: 'active',
+  });
+
+  // LTA 3: Expired/Inactive Contract (for testing)
+  const lta3 = await storage.createLta({
+    nameEn: 'Archived Supplies Contract 2023',
+    nameAr: 'عقد اللوازم المؤرشف 2023',
+    descriptionEn: 'Previous year contract (expired)',
+    descriptionAr: 'عقد السنة السابقة (منتهي)',
+    startDate: new Date('2023-01-01'),
+    endDate: new Date('2023-12-31'),
+    status: 'inactive',
+  });
+
+  // Assign products to LTA 1 (Office Supplies) - 4 products
+  await storage.assignProductToLta({
+    ltaId: lta1.id,
+    productId: product1.id,
+    contractPrice: '299.99',
+    currency: 'USD',
+  });
+
+  await storage.assignProductToLta({
+    ltaId: lta1.id,
+    productId: product2.id,
+    contractPrice: '549.99',
+    currency: 'USD',
+  });
+
+  await storage.assignProductToLta({
+    ltaId: lta1.id,
+    productId: product3.id,
+    contractPrice: '79.99',
+    currency: 'USD',
+  });
+
+  await storage.assignProductToLta({
+    ltaId: lta1.id,
+    productId: product4.id,
+    contractPrice: '45.00',
+    currency: 'USD',
+  });
+
+  // Assign products to LTA 2 (Technology) - 3 products
+  await storage.assignProductToLta({
+    ltaId: lta2.id,
+    productId: product5.id,
+    contractPrice: '89.99',
+    currency: 'USD',
+  });
+
+  await storage.assignProductToLta({
+    ltaId: lta2.id,
+    productId: product6.id,
+    contractPrice: '15.99',
+    currency: 'USD',
+  });
+
+  // Standing Desk in both LTAs with different prices
+  await storage.assignProductToLta({
+    ltaId: lta2.id,
+    productId: product2.id,
+    contractPrice: '599.99',
+    currency: 'USD',
+  });
+
+  // Assign test client to both active LTAs
+  await storage.assignClientToLta({
+    ltaId: lta1.id,
+    clientId: testClient.id,
+  });
+
+  await storage.assignClientToLta({
+    ltaId: lta2.id,
+    clientId: testClient.id,
+  });
+
+  console.log('\nSeeding completed successfully!');
+  console.log('\nLTAs created:');
+  console.log(`  - ${lta1.nameEn} (${lta1.status})`);
+  console.log(`  - ${lta2.nameEn} (${lta2.status})`);
+  console.log(`  - ${lta3.nameEn} (${lta3.status})`);
+  console.log('\nTest client has access to:');
+  console.log(`  - ${lta1.nameEn} (4 products)`);
+  console.log(`  - ${lta2.nameEn} (3 products)`);
+  console.log('\nAdmin credentials:');
   console.log('  Username: admin');
   console.log('  Password: admin123');
-  console.log('Test client credentials:');
+  console.log('\nTest client credentials:');
   console.log('  Username: test');
   console.log('  Password: test123');
 }

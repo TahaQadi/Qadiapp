@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, timestamp, boolean, uuid, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -50,6 +50,38 @@ export const products = pgTable("products", {
   lowStockThreshold: integer("low_stock_threshold").default(10).notNull(),
 });
 
+export const ltas = pgTable("ltas", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nameEn: text("name_en").notNull(),
+  nameAr: text("name_ar").notNull(),
+  descriptionEn: text("description_en"),
+  descriptionAr: text("description_ar"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const ltaProducts = pgTable("lta_products", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  contractPrice: decimal("contract_price", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueLtaProduct: unique().on(table.ltaId, table.productId),
+}));
+
+export const ltaClients = pgTable("lta_clients", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueLtaClient: unique().on(table.ltaId, table.clientId),
+}));
+
 export const clientPricing = pgTable("client_pricing", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
@@ -71,6 +103,7 @@ export const orderTemplates = pgTable("order_templates", {
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
+  ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "restrict" }),
   items: text("items").notNull(), // JSON string
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
@@ -95,6 +128,9 @@ export const insertClientSchema = createInsertSchema(clients).omit({ id: true })
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
+export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, createdAt: true });
+export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id: true, createdAt: true });
+export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: true, createdAt: true });
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
@@ -137,6 +173,8 @@ export const createOrderSchema = z.object({
     productId: z.string(),
     quantity: z.number().int().positive(),
     price: z.string(),
+    ltaId: z.string(),
+    sku: z.string(),
   })),
   totalAmount: z.string().optional(),
   status: z.string().optional(),
@@ -183,6 +221,9 @@ export type Client = typeof clients.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;
 export type ClientLocation = typeof clientLocations.$inferSelect;
 export type Product = typeof products.$inferSelect;
+export type Lta = typeof ltas.$inferSelect;
+export type LtaProduct = typeof ltaProducts.$inferSelect;
+export type LtaClient = typeof ltaClients.$inferSelect;
 export type ClientPricing = typeof clientPricing.$inferSelect;
 export type OrderTemplate = typeof orderTemplates.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -192,6 +233,9 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertClientDepartment = z.infer<typeof insertClientDepartmentSchema>;
 export type InsertClientLocation = z.infer<typeof insertClientLocationSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertLta = z.infer<typeof insertLtaSchema>;
+export type InsertLtaProduct = z.infer<typeof insertLtaProductSchema>;
+export type InsertLtaClient = z.infer<typeof insertLtaClientSchema>;
 export type InsertClientPricing = z.infer<typeof insertClientPricingSchema>;
 export type InsertOrderTemplate = z.infer<typeof insertOrderTemplateSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
@@ -209,6 +253,8 @@ export interface CartItem {
   price: string;
   quantity: number;
   sku: string;
+  ltaId: string;
+  currency: string;
 }
 
 export interface AuthUser {

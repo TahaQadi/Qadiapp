@@ -7,6 +7,9 @@ import {
   type OrderTemplate, 
   type Order,
   type InventoryTransaction,
+  type Lta,
+  type LtaProduct,
+  type LtaClient,
   type InsertClient,
   type InsertClientDepartment,
   type InsertClientLocation,
@@ -15,6 +18,9 @@ import {
   type InsertOrderTemplate,
   type InsertOrder,
   type InsertInventoryTransaction,
+  type InsertLta,
+  type InsertLtaProduct,
+  type InsertLtaClient,
   type AuthUser,
   type StockStatus,
 } from "@shared/schema";
@@ -78,6 +84,29 @@ export interface IStorage {
   adjustInventory(productId: string, quantityChange: number, reason: string, notes: string | undefined, userId: string): Promise<InventoryTransaction>;
   getInventoryTransactions(productId?: string): Promise<InventoryTransaction[]>;
   updateProductQuantity(productId: string, newQuantity: number): Promise<Product | null>;
+  
+  // LTA Management
+  createLta(lta: InsertLta): Promise<Lta>;
+  getLta(id: string): Promise<Lta | null>;
+  getAllLtas(): Promise<Lta[]>;
+  updateLta(id: string, updates: Partial<InsertLta>): Promise<Lta | null>;
+  deleteLta(id: string): Promise<boolean>;
+  
+  // LTA Products (assignment with pricing)
+  assignProductToLta(ltaProduct: InsertLtaProduct): Promise<LtaProduct>;
+  removeProductFromLta(ltaId: string, productId: string): Promise<boolean>;
+  getLtaProducts(ltaId: string): Promise<LtaProduct[]>;
+  updateLtaProductPrice(id: string, contractPrice: string, currency?: string): Promise<LtaProduct | null>;
+  
+  // LTA Clients (assignment)
+  assignClientToLta(ltaClient: InsertLtaClient): Promise<LtaClient>;
+  removeClientFromLta(ltaId: string, clientId: string): Promise<boolean>;
+  getLtaClients(ltaId: string): Promise<LtaClient[]>;
+  getClientLtas(clientId: string): Promise<Lta[]>;
+  
+  // Product queries for LTA context
+  getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>>;
+  getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>>;
 }
 
 export class MemStorage implements IStorage {
@@ -91,6 +120,10 @@ export class MemStorage implements IStorage {
   private orders: Map<string, Order>;
   private inventoryTransactions: Map<string, InventoryTransaction>;
 
+  private ltas: Map<string, Lta> = new Map();
+  private ltaProducts: Map<string, LtaProduct> = new Map();
+  private ltaClients: Map<string, LtaClient> = new Map();
+
   constructor() {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
@@ -103,6 +136,9 @@ export class MemStorage implements IStorage {
     this.orderTemplates = new Map();
     this.orders = new Map();
     this.inventoryTransactions = new Map();
+    this.ltas = new Map();
+    this.ltaProducts = new Map();
+    this.ltaClients = new Map();
   }
 
   // Client Authentication
@@ -378,6 +414,7 @@ export class MemStorage implements IStorage {
       id,
       status: insertOrder.status ?? 'pending',
       pipefyCardId: insertOrder.pipefyCardId ?? null,
+      ltaId: insertOrder.ltaId ?? null,
       createdAt: new Date()
     };
     this.orders.set(id, order);
@@ -451,6 +488,165 @@ export class MemStorage implements IStorage {
     this.products.set(productId, updatedProduct);
 
     return updatedProduct;
+  }
+
+  // LTA Management
+  async createLta(insertLta: InsertLta): Promise<Lta> {
+    const id = randomUUID();
+    const lta: Lta = {
+      ...insertLta,
+      id,
+      descriptionEn: insertLta.descriptionEn ?? null,
+      descriptionAr: insertLta.descriptionAr ?? null,
+      status: insertLta.status ?? 'active',
+      createdAt: new Date(),
+    };
+    this.ltas.set(id, lta);
+    return lta;
+  }
+
+  async getLta(id: string): Promise<Lta | null> {
+    return this.ltas.get(id) || null;
+  }
+
+  async getAllLtas(): Promise<Lta[]> {
+    return Array.from(this.ltas.values());
+  }
+
+  async updateLta(id: string, updates: Partial<InsertLta>): Promise<Lta | null> {
+    const lta = this.ltas.get(id);
+    if (!lta) return null;
+    
+    const updated = { ...lta, ...updates };
+    this.ltas.set(id, updated);
+    return updated;
+  }
+
+  async deleteLta(id: string): Promise<boolean> {
+    return this.ltas.delete(id);
+  }
+
+  // LTA Products
+  async assignProductToLta(insertLtaProduct: InsertLtaProduct): Promise<LtaProduct> {
+    const id = randomUUID();
+    const ltaProduct: LtaProduct = {
+      ...insertLtaProduct,
+      id,
+      currency: insertLtaProduct.currency ?? 'USD',
+      createdAt: new Date(),
+    };
+    this.ltaProducts.set(id, ltaProduct);
+    return ltaProduct;
+  }
+
+  async removeProductFromLta(ltaId: string, productId: string): Promise<boolean> {
+    const ltaProduct = Array.from(this.ltaProducts.values()).find(
+      (lp) => lp.ltaId === ltaId && lp.productId === productId
+    );
+    if (!ltaProduct) return false;
+    return this.ltaProducts.delete(ltaProduct.id);
+  }
+
+  async getLtaProducts(ltaId: string): Promise<LtaProduct[]> {
+    return Array.from(this.ltaProducts.values()).filter(
+      (lp) => lp.ltaId === ltaId
+    );
+  }
+
+  async updateLtaProductPrice(id: string, contractPrice: string, currency?: string): Promise<LtaProduct | null> {
+    const ltaProduct = this.ltaProducts.get(id);
+    if (!ltaProduct) return null;
+    
+    const updated = {
+      ...ltaProduct,
+      contractPrice,
+      currency: currency ?? ltaProduct.currency,
+    };
+    this.ltaProducts.set(id, updated);
+    return updated;
+  }
+
+  // LTA Clients
+  async assignClientToLta(insertLtaClient: InsertLtaClient): Promise<LtaClient> {
+    const id = randomUUID();
+    const ltaClient: LtaClient = {
+      ...insertLtaClient,
+      id,
+      createdAt: new Date(),
+    };
+    this.ltaClients.set(id, ltaClient);
+    return ltaClient;
+  }
+
+  async removeClientFromLta(ltaId: string, clientId: string): Promise<boolean> {
+    const ltaClient = Array.from(this.ltaClients.values()).find(
+      (lc) => lc.ltaId === ltaId && lc.clientId === clientId
+    );
+    if (!ltaClient) return false;
+    return this.ltaClients.delete(ltaClient.id);
+  }
+
+  async getLtaClients(ltaId: string): Promise<LtaClient[]> {
+    return Array.from(this.ltaClients.values()).filter(
+      (lc) => lc.ltaId === ltaId
+    );
+  }
+
+  async getClientLtas(clientId: string): Promise<Lta[]> {
+    const clientLtaAssignments = Array.from(this.ltaClients.values()).filter(
+      (lc) => lc.clientId === clientId
+    );
+    
+    const ltas: Lta[] = [];
+    for (const assignment of clientLtaAssignments) {
+      const lta = this.ltas.get(assignment.ltaId);
+      if (lta) {
+        ltas.push(lta);
+      }
+    }
+    return ltas;
+  }
+
+  // Product queries for LTA context
+  async getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>> {
+    const ltaProducts = await this.getLtaProducts(ltaId);
+    const productsWithPricing: Array<Product & { contractPrice: string; currency: string }> = [];
+    
+    for (const ltaProduct of ltaProducts) {
+      const product = this.products.get(ltaProduct.productId);
+      if (product) {
+        productsWithPricing.push({
+          ...product,
+          contractPrice: ltaProduct.contractPrice,
+          currency: ltaProduct.currency,
+        });
+      }
+    }
+    
+    return productsWithPricing;
+  }
+
+  async getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>> {
+    const clientLtas = await this.getClientLtas(clientId);
+    const productsWithPricing: Array<Product & { contractPrice: string; currency: string; ltaId: string }> = [];
+    
+    for (const lta of clientLtas) {
+      const ltaProducts = await this.getLtaProducts(lta.id);
+      
+      for (const ltaProduct of ltaProducts) {
+        const product = this.products.get(ltaProduct.productId);
+        if (product) {
+          productsWithPricing.push({
+            ...product,
+            contractPrice: ltaProduct.contractPrice,
+            currency: ltaProduct.currency,
+            ltaId: lta.id,
+          });
+        }
+      }
+    }
+    
+    return productsWithPricing;
   }
 }
 

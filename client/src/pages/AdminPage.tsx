@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LogOut, User, Plus, Pencil, Trash2, Package, Users, Boxes } from 'lucide-react';
+import { LogOut, User, Plus, Pencil, Trash2, Package, Users, Boxes, FileText, X, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -44,6 +44,7 @@ interface Product {
   sku: string;
   category?: string | null;
   stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock';
+  imageUrl?: string | null;
 }
 
 export default function AdminPage() {
@@ -57,6 +58,8 @@ export default function AdminPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -156,8 +159,82 @@ export default function AdminPage() {
     },
   });
 
-  const handleCreateProduct = (data: ProductFormValues) => {
-    createProductMutation.mutate(data);
+  const uploadImageMutation = useMutation({
+    mutationFn: async ({ productId, file }: { productId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch(`/api/admin/products/${productId}/image`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        description: language === 'ar' ? 'تم رفع صورة المنتج بنجاح' : 'Product image uploaded successfully',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        description: error.message,
+      });
+    },
+  });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ 
+        variant: 'destructive',
+        description: language === 'ar' ? 'يجب أن يكون حجم الصورة أقل من 5 ميجابايت' : 'Image must be less than 5MB',
+      });
+      return;
+    }
+    
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCreateProduct = async (data: ProductFormValues) => {
+    try {
+      const product = await createProductMutation.mutateAsync(data);
+      
+      // Upload image if file selected
+      if (imageFile && product.id) {
+        await uploadImageMutation.mutateAsync({
+          productId: product.id,
+          file: imageFile,
+        });
+      }
+      
+      // Close dialog and reset
+      setCreateDialogOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
+      createForm.reset();
+    } catch (error) {
+      // Error already handled by mutation
+    }
   };
 
   const handleEditProduct = (product: Product) => {
@@ -171,12 +248,33 @@ export default function AdminPage() {
       category: product.category || '',
       stockStatus: product.stockStatus,
     });
+    // Set preview to existing image if available
+    setImagePreview(product.imageUrl || null);
+    setImageFile(null);
     setEditDialogOpen(true);
   };
 
-  const handleUpdateProduct = (data: ProductFormValues) => {
-    if (selectedProduct) {
-      updateProductMutation.mutate({ id: selectedProduct.id, data });
+  const handleUpdateProduct = async (data: ProductFormValues) => {
+    if (!selectedProduct) return;
+    
+    try {
+      await updateProductMutation.mutateAsync({ id: selectedProduct.id, data });
+      
+      // Upload image if file selected
+      if (imageFile) {
+        await uploadImageMutation.mutateAsync({
+          productId: selectedProduct.id,
+          file: imageFile,
+        });
+      }
+      
+      // Close dialog and reset
+      setEditDialogOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
+      setSelectedProduct(null);
+    } catch (error) {
+      // Error already handled by mutation
     }
   };
 
@@ -258,20 +356,20 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <Card 
             className="hover-elevate cursor-pointer" 
-            onClick={() => setLocation('/admin/clients')}
-            data-testid="card-manage-clients"
+            onClick={() => setLocation('/admin/ltas')}
+            data-testid="card-manage-ltas"
           >
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-md bg-primary/10">
-                  <Users className="h-6 w-6 text-primary" />
+                  <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-lg">
-                    {language === 'ar' ? 'إدارة العملاء' : 'Manage Clients'}
+                    {language === 'ar' ? 'إدارة الاتفاقيات' : 'LTA Management'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'ar' ? 'عرض وتعديل معلومات العملاء' : 'View and edit client information'}
+                    {language === 'ar' ? 'إدارة العقود والمنتجات والعملاء' : 'Manage contracts, products, and clients'}
                   </p>
                 </div>
               </div>
@@ -344,6 +442,7 @@ export default function AdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>{language === 'ar' ? 'الصورة' : 'Image'}</TableHead>
                       <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
                       <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                       <TableHead>{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
@@ -355,13 +454,27 @@ export default function AdminPage() {
                   <TableBody>
                     {products.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           {language === 'ar' ? 'لا توجد منتجات' : 'No products'}
                         </TableCell>
                       </TableRow>
                     ) : (
                       products.map((product) => (
                         <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
+                          <TableCell>
+                            {product.imageUrl ? (
+                              <img 
+                                src={product.imageUrl} 
+                                alt={language === 'ar' ? product.nameAr : product.nameEn}
+                                className="w-12 h-12 object-cover rounded"
+                                data-testid={`img-product-${product.id}`}
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-muted rounded flex items-center justify-center" data-testid={`placeholder-product-${product.id}`}>
+                                <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                           <TableCell className="font-medium">
                             {language === 'ar' ? product.nameAr : product.nameEn}
@@ -521,6 +634,31 @@ export default function AdminPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <FormLabel>{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
+                {imagePreview && (
+                  <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                    <img src={imagePreview} alt="Product" className="w-full h-full object-cover" data-testid="preview-product-image" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={() => {setImagePreview(null); setImageFile(null);}}
+                      data-testid="button-remove-image"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  data-testid="input-product-image"
+                />
+              </div>
+
               <DialogFooter>
                 <Button 
                   type="button" 
@@ -657,6 +795,31 @@ export default function AdminPage() {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <FormLabel>{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
+                {imagePreview && (
+                  <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                    <img src={imagePreview} alt="Product" className="w-full h-full object-cover" data-testid="preview-edit-product-image" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={() => {setImagePreview(selectedProduct?.imageUrl || null); setImageFile(null);}}
+                      data-testid="button-remove-edit-image"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  data-testid="input-edit-product-image"
                 />
               </div>
 

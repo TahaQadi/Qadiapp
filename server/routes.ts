@@ -17,11 +17,47 @@ import {
   updateProductSchema,
   updateClientSchema,
   inventoryAdjustmentSchema,
+  insertLtaSchema,
+  insertLtaProductSchema,
+  insertLtaClientSchema,
   type CartItem,
 } from "@shared/schema";
 import { z } from "zod";
+import path from "path";
+import crypto from "crypto";
+import fs from "fs";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const uploadMemory = multer({ storage: multer.memoryStorage() });
+
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'attached_assets/products/';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + crypto.randomUUID();
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadImage = multer({
+  storage: uploadStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
@@ -179,19 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products Routes
   app.get("/api/products", requireAuth, async (req, res) => {
     try {
-      const products = await storage.getProducts();
-      const pricing = await storage.getClientPricing(req.user!.id);
-
-      const productsWithPricing = products.map(product => {
-        const price = pricing.find(p => p.productId === product.id);
-        return {
-          ...product,
-          price: price?.price || null,
-          currency: price?.currency || 'USD',
-        };
-      });
-
-      res.json(productsWithPricing);
+      const products = await storage.getProductsForClient(req.user!.id);
+      res.json(products);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -415,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Price Import Route
-  app.post("/api/client/import-prices", requireAuth, upload.single('file'), async (req, res) => {
+  app.post("/api/client/import-prices", requireAuth, uploadMemory.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ 
@@ -546,47 +571,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate request body with schema
       const validatedData = createOrderSchema.parse(req.body);
       
-      // Fetch products and pricing from storage
-      const products = await storage.getProducts();
-      const clientPricing = await storage.getClientPricing(req.user!.id);
-      
-      // Validate each item has pricing and calculate total
+      // Step 1: Extract and validate ltaId from items
+      const ltaIds = [...new Set(validatedData.items.map(item => item.ltaId))];
+      if (ltaIds.length === 0) {
+        return res.status(400).json({
+          message: 'Order must include LTA information',
+          messageAr: 'يجب أن يتضمن الطلب معلومات الاتفاقية',
+        });
+      }
+      if (ltaIds.length > 1) {
+        return res.status(400).json({
+          message: 'All items must be from the same LTA',
+          messageAr: 'يجب أن تكون جميع العناصر من نفس الاتفاقية',
+        });
+      }
+      const ltaId = ltaIds[0];
+
+      // Step 2: Validate client is assigned to this LTA
+      const clientLtas = await storage.getClientLtas(req.user!.id);
+      const isClientInLta = clientLtas.some(lta => lta.id === ltaId);
+
+      if (!isClientInLta) {
+        return res.status(403).json({
+          message: 'You are not authorized to order from this LTA',
+          messageAr: 'أنت غير مخول بالطلب من هذه الاتفاقية',
+        });
+      }
+
+      // Step 3: Get LTA products with pricing and validate
+      const ltaProducts = await storage.getProductsForLta(ltaId);
+      const ltaProductMap = new Map(
+        ltaProducts.map(p => [p.id, { price: p.contractPrice, currency: p.currency, nameEn: p.nameEn, nameAr: p.nameAr }])
+      );
+
+      // Validate each item against LTA products and pricing
       let totalAmount = 0;
       const validatedItems: CartItem[] = [];
 
       for (const item of validatedData.items) {
-        // Find the product details
-        const product = products.find(p => p.id === item.productId);
-        if (!product) {
-          return res.status(400).json({ 
-            message: `Product not found`,
-            messageAr: `المنتج غير موجود`,
+        // Check product exists in LTA
+        if (!ltaProductMap.has(item.productId)) {
+          return res.status(400).json({
+            message: `Product ${item.sku} is not available in this LTA`,
+            messageAr: `المنتج ${item.sku} غير متاح في هذه الاتفاقية`,
           });
         }
-
-        // Find the actual price from storage
-        const pricing = clientPricing.find(p => p.productId === item.productId);
         
-        if (!pricing) {
-          return res.status(400).json({ 
-            message: `Product ${product.sku} does not have pricing configured`,
-            messageAr: `المنتج ${product.sku} ليس لديه سعر محدد`,
+        // Validate price matches LTA contract price
+        const ltaProductInfo = ltaProductMap.get(item.productId)!;
+        if (item.price !== ltaProductInfo.price) {
+          return res.status(400).json({
+            message: `Invalid price for product ${item.sku}`,
+            messageAr: `سعر غير صحيح للمنتج ${item.sku}`,
           });
         }
 
-        // Use the actual price from storage, not the client-provided price
-        const actualPrice = parseFloat(pricing.price);
+        // Calculate total using LTA price
+        const actualPrice = parseFloat(ltaProductInfo.price);
         const itemTotal = actualPrice * item.quantity;
         totalAmount += itemTotal;
 
         // Create validated item with complete data
         validatedItems.push({
           productId: item.productId,
-          nameEn: product.nameEn,
-          nameAr: product.nameAr,
-          sku: product.sku,
+          nameEn: ltaProductInfo.nameEn,
+          nameAr: ltaProductInfo.nameAr,
+          sku: item.sku,
           quantity: item.quantity,
-          price: pricing.price,
+          price: ltaProductInfo.price,
+          ltaId: item.ltaId,
+          currency: ltaProductInfo.currency,
         });
       }
 
@@ -595,8 +649,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const product = await storage.getProduct(item.productId);
         if (!product) {
           return res.status(400).json({
-            message: `Product not found: ${item.productId}`,
-            messageAr: `المنتج غير موجود: ${item.productId}`
+            message: `Product not found: ${item.sku}`,
+            messageAr: `المنتج غير موجود: ${item.sku}`
           });
         }
         if (product.quantity < item.quantity) {
@@ -614,13 +668,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create order with calculated total
+      // Step 4: Create order with ltaId
       const order = await storage.createOrder({
         clientId: req.user!.id,
         items: JSON.stringify(validatedItems),
         totalAmount: totalAmount.toFixed(2),
         status: validatedData.status || 'pending',
         pipefyCardId: validatedData.pipefyCardId,
+        ltaId, // Include ltaId in order
       });
 
       // Decrement inventory for each item
@@ -648,6 +703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               client_name_ar: client?.nameAr,
               items: validatedItems,
               total_amount: order.totalAmount,
+              lta_id: order.ltaId,
               created_at: order.createdAt,
             }),
           });
@@ -680,6 +736,343 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: error.message,
         messageAr: "حدث خطأ أثناء إنشاء الطلب",
+      });
+    }
+  });
+
+  // LTA Management Endpoints (Admin)
+  app.post('/api/admin/ltas', requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertLtaSchema.parse(req.body);
+      const lta = await storage.createLta(validatedData);
+      res.status(201).json({
+        ...lta,
+        message: "LTA created successfully",
+        messageAr: "تم إنشاء الاتفاقية طويلة الأجل بنجاح"
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق"
+        });
+      }
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء إنشاء الاتفاقية"
+      });
+    }
+  });
+
+  app.get('/api/admin/ltas', requireAdmin, async (req, res) => {
+    try {
+      const ltas = await storage.getAllLtas();
+      res.json(ltas);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب الاتفاقيات"
+      });
+    }
+  });
+
+  app.get('/api/admin/ltas/:id', requireAdmin, async (req, res) => {
+    try {
+      const lta = await storage.getLta(req.params.id);
+      if (!lta) {
+        return res.status(404).json({
+          message: "LTA not found",
+          messageAr: "الاتفاقية غير موجودة"
+        });
+      }
+      res.json(lta);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب الاتفاقية"
+      });
+    }
+  });
+
+  app.patch('/api/admin/ltas/:id', requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertLtaSchema.partial().parse(req.body);
+      const lta = await storage.updateLta(req.params.id, validatedData);
+      if (!lta) {
+        return res.status(404).json({
+          message: "LTA not found",
+          messageAr: "الاتفاقية غير موجودة"
+        });
+      }
+      res.json({
+        ...lta,
+        message: "LTA updated successfully",
+        messageAr: "تم تحديث الاتفاقية بنجاح"
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق"
+        });
+      }
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تحديث الاتفاقية"
+      });
+    }
+  });
+
+  app.delete('/api/admin/ltas/:id', requireAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getOrders(req.params.id);
+      const ltaOrders = orders.filter(order => order.ltaId === req.params.id);
+      
+      if (ltaOrders.length > 0) {
+        return res.status(400).json({
+          message: "Cannot delete LTA with existing orders",
+          messageAr: "لا يمكن حذف الاتفاقية التي تحتوي على طلبات موجودة"
+        });
+      }
+
+      const deleted = await storage.deleteLta(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({
+          message: "LTA not found",
+          messageAr: "الاتفاقية غير موجودة"
+        });
+      }
+
+      res.json({
+        message: "LTA deleted successfully",
+        messageAr: "تم حذف الاتفاقية بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء حذف الاتفاقية"
+      });
+    }
+  });
+
+  // LTA Products Endpoints (Admin)
+  app.post('/api/admin/ltas/:ltaId/products', requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertLtaProductSchema.parse({
+        ltaId: req.params.ltaId,
+        ...req.body
+      });
+      const ltaProduct = await storage.assignProductToLta(validatedData);
+      res.status(201).json({
+        ...ltaProduct,
+        message: "Product assigned to LTA successfully",
+        messageAr: "تم تعيين المنتج للاتفاقية بنجاح"
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق"
+        });
+      }
+      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        return res.status(409).json({
+          message: "Product already assigned to this LTA",
+          messageAr: "المنتج مُعيّن بالفعل لهذه الاتفاقية"
+        });
+      }
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تعيين المنتج"
+      });
+    }
+  });
+
+  app.delete('/api/admin/ltas/:ltaId/products/:productId', requireAdmin, async (req, res) => {
+    try {
+      const removed = await storage.removeProductFromLta(req.params.ltaId, req.params.productId);
+      if (!removed) {
+        return res.status(404).json({
+          message: "Product assignment not found",
+          messageAr: "تعيين المنتج غير موجود"
+        });
+      }
+      res.json({
+        message: "Product removed from LTA successfully",
+        messageAr: "تم إزالة المنتج من الاتفاقية بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء إزالة المنتج"
+      });
+    }
+  });
+
+  app.get('/api/admin/ltas/:ltaId/products', requireAdmin, async (req, res) => {
+    try {
+      const products = await storage.getProductsForLta(req.params.ltaId);
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب منتجات الاتفاقية"
+      });
+    }
+  });
+
+  app.patch('/api/admin/lta-products/:id', requireAdmin, async (req, res) => {
+    try {
+      const { contractPrice, currency } = req.body;
+      if (!contractPrice) {
+        return res.status(400).json({
+          message: "Contract price is required",
+          messageAr: "سعر العقد مطلوب"
+        });
+      }
+      const ltaProduct = await storage.updateLtaProductPrice(req.params.id, contractPrice, currency);
+      if (!ltaProduct) {
+        return res.status(404).json({
+          message: "LTA product not found",
+          messageAr: "منتج الاتفاقية غير موجود"
+        });
+      }
+      res.json({
+        ...ltaProduct,
+        message: "Product pricing updated successfully",
+        messageAr: "تم تحديث سعر المنتج بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تحديث السعر"
+      });
+    }
+  });
+
+  // LTA Clients Endpoints (Admin)
+  app.post('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertLtaClientSchema.parse({
+        ltaId: req.params.ltaId,
+        ...req.body
+      });
+      const ltaClient = await storage.assignClientToLta(validatedData);
+      res.status(201).json({
+        ...ltaClient,
+        message: "Client assigned to LTA successfully",
+        messageAr: "تم تعيين العميل للاتفاقية بنجاح"
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق"
+        });
+      }
+      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        return res.status(409).json({
+          message: "Client already assigned to this LTA",
+          messageAr: "العميل مُعيّن بالفعل لهذه الاتفاقية"
+        });
+      }
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تعيين العميل"
+      });
+    }
+  });
+
+  app.delete('/api/admin/ltas/:ltaId/clients/:clientId', requireAdmin, async (req, res) => {
+    try {
+      const removed = await storage.removeClientFromLta(req.params.ltaId, req.params.clientId);
+      if (!removed) {
+        return res.status(404).json({
+          message: "Client assignment not found",
+          messageAr: "تعيين العميل غير موجود"
+        });
+      }
+      res.json({
+        message: "Client removed from LTA successfully",
+        messageAr: "تم إزالة العميل من الاتفاقية بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء إزالة العميل"
+      });
+    }
+  });
+
+  app.get('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req, res) => {
+    try {
+      const ltaClients = await storage.getLtaClients(req.params.ltaId);
+      const clients = [];
+      
+      for (const ltaClient of ltaClients) {
+        const client = await storage.getClient(ltaClient.clientId);
+        if (client) {
+          clients.push({
+            id: client.id,
+            nameEn: client.nameEn,
+            nameAr: client.nameAr,
+            email: client.email,
+            phone: client.phone,
+          });
+        }
+      }
+      
+      res.json(clients);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب عملاء الاتفاقية"
+      });
+    }
+  });
+
+  // Client LTA Endpoints
+  app.get('/api/client/ltas', requireAuth, async (req, res) => {
+    try {
+      const ltas = await storage.getClientLtas(req.user!.id);
+      res.json(ltas);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب الاتفاقيات"
+      });
+    }
+  });
+
+  // Image Upload Endpoint
+  app.post('/api/admin/products/:id/image', requireAdmin, uploadImage.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No image file uploaded",
+          messageAr: "لم يتم تحميل ملف الصورة"
+        });
+      }
+
+      const imageUrl = `/attached_assets/products/${req.file.filename}`;
+      const product = await storage.updateProduct(req.params.id, { imageUrl });
+      
+      if (!product) {
+        return res.status(404).json({
+          message: "Product not found",
+          messageAr: "المنتج غير موجود"
+        });
+      }
+
+      res.json({
+        ...product,
+        message: "Product image uploaded successfully",
+        messageAr: "تم تحميل صورة المنتج بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تحميل الصورة"
       });
     }
   });

@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/components/LanguageProvider';
-import { ShoppingCart, CartItem } from '@/components/ShoppingCart';
+import { ShoppingCart as ShoppingCartComponent } from '@/components/ShoppingCart';
 import { SaveTemplateDialog } from '@/components/SaveTemplateDialog';
 import { OrderTemplateCard } from '@/components/OrderTemplateCard';
 import { OrderHistoryTable } from '@/components/OrderHistoryTable';
@@ -11,23 +11,32 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart as CartIcon, LogOut, User, Search, Plus, Package, FileText, History, Settings } from 'lucide-react';
+import { ShoppingCart as CartIcon, LogOut, User, Search, Package, FileText, History, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
+import type { Product, Lta } from '@shared/schema';
+import { cn } from '@/lib/utils';
 
-interface ProductWithPrice {
-  id: string;
-  sku: string;
-  nameEn: string;
-  nameAr: string;
-  descriptionEn?: string | null;
-  descriptionAr?: string | null;
-  price: string | null;
+interface ProductWithLtaPrice extends Product {
+  contractPrice: string;
   currency: string;
+  ltaId: string;
+}
+
+interface CartItem {
+  productId: string;
+  productSku: string;
+  productNameEn: string;
+  productNameAr: string;
+  quantity: number;
+  price: string;
+  currency: string;
+  ltaId: string;
 }
 
 interface Template {
@@ -53,12 +62,17 @@ export default function OrderingPage() {
   const { toast } = useToast();
   
   const [cartOpen, setCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
+  const [activeLtaId, setActiveLtaId] = useState<string | null>(null);
 
-  const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithPrice[]>({
+  const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products'],
+  });
+
+  const { data: clientLtas = [] } = useQuery<Lta[]>({
+    queryKey: ['/api/client/ltas'],
   });
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery<Template[]>({
@@ -78,7 +92,8 @@ export default function OrderingPage() {
       toast({
         title: t('orderSubmitted'),
       });
-      setCartItems([]);
+      setCart([]);
+      setActiveLtaId(null);
       setCartOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/client/orders'] });
     },
@@ -116,58 +131,101 @@ export default function OrderingPage() {
            product.sku.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const handleAddToCart = (product: ProductWithPrice) => {
-    if (!product.price) {
+  const handleAddToCart = (product: ProductWithLtaPrice) => {
+    // Check if cart is empty or product is from same LTA
+    if (activeLtaId && activeLtaId !== product.ltaId) {
+      // Show warning dialog asking user to clear cart or cancel
       toast({
-        title: language === 'ar' ? 'السعر غير متوفر' : 'Price not available',
         variant: 'destructive',
+        title: language === 'en' ? 'Different Contract' : 'عقد مختلف',
+        description: language === 'en' 
+          ? 'This product is from a different LTA contract. Please complete or clear your current order first.'
+          : 'هذا المنتج من عقد اتفاقية مختلف. يرجى إكمال أو مسح طلبك الحالي أولاً.',
       });
       return;
     }
-
-    const existingItem = cartItems.find(item => item.productId === product.id);
+    
+    const existingItem = cart.find(item => item.productId === product.id);
+    
     if (existingItem) {
-      setCartItems(cartItems.map(item =>
-        item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      setCart(cart.map(item =>
+        item.productId === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
       ));
     } else {
-      setCartItems([...cartItems, {
+      setCart([...cart, {
         productId: product.id,
-        nameEn: product.nameEn,
-        nameAr: product.nameAr,
-        price: product.price,
+        productSku: product.sku,
+        productNameEn: product.nameEn,
+        productNameAr: product.nameAr,
         quantity: 1,
-        sku: product.sku,
+        price: product.contractPrice,
+        currency: product.currency,
+        ltaId: product.ltaId,
       }]);
+      
+      // Set active LTA if cart was empty
+      if (!activeLtaId) {
+        setActiveLtaId(product.ltaId);
+      }
     }
     
     toast({
-      title: t('itemAdded'),
-      description: language === 'ar' ? product.nameAr : product.nameEn,
+      description: language === 'ar' 
+        ? `تمت إضافة ${product.nameAr} إلى السلة`
+        : `${product.nameEn} added to cart`
     });
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      setCartItems(cartItems.filter(item => item.productId !== productId));
+      setCart(cart.filter(item => item.productId !== productId));
     } else {
-      setCartItems(cartItems.map(item =>
+      setCart(cart.map(item =>
         item.productId === productId ? { ...item, quantity } : item
       ));
     }
   };
 
   const handleRemoveItem = (productId: string) => {
-    setCartItems(cartItems.filter(item => item.productId !== productId));
+    const newCart = cart.filter(item => item.productId !== productId);
+    setCart(newCart);
+    
+    // If cart is empty, reset active LTA
+    if (newCart.length === 0) {
+      setActiveLtaId(null);
+    }
+    
+    toast({
+      description: language === 'ar' ? 'تمت إزالة العنصر من السلة' : 'Item removed from cart'
+    });
   };
 
   const handleClearCart = () => {
-    setCartItems([]);
+    setCart([]);
+    setActiveLtaId(null);
+    toast({
+      description: language === 'ar' ? 'تم مسح السلة' : 'Cart cleared'
+    });
   };
 
   const handleSubmitOrder = () => {
-    const total = cartItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
-    const items = cartItems.map(item => ({
+    // Validate all items from same LTA
+    const ltaIds = Array.from(new Set(cart.map(item => item.ltaId)));
+    if (ltaIds.length > 1) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Order Error' : 'خطأ في الطلب',
+        description: language === 'en'
+          ? 'All items must be from the same LTA contract'
+          : 'يجب أن تكون جميع العناصر من نفس عقد الاتفاقية',
+      });
+      return;
+    }
+
+    const total = cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+    const items = cart.map(item => ({
       productId: item.productId,
       quantity: item.quantity,
       price: item.price,
@@ -176,12 +234,12 @@ export default function OrderingPage() {
     submitOrderMutation.mutate({
       items,
       totalAmount: total.toFixed(2),
-      currency: 'USD',
+      currency: cart[0]?.currency || 'USD',
     });
   };
 
   const handleSaveTemplate = (nameEn: string, nameAr: string) => {
-    const items = cartItems.map(item => ({
+    const items = cart.map(item => ({
       productId: item.productId,
       quantity: item.quantity,
     }));
@@ -201,19 +259,21 @@ export default function OrderingPage() {
 
       for (const item of templateItems) {
         const product = products.find(p => p.id === item.productId);
-        if (product && product.price) {
+        if (product) {
           newCartItems.push({
             productId: product.id,
-            nameEn: product.nameEn,
-            nameAr: product.nameAr,
-            price: product.price,
+            productNameEn: product.nameEn,
+            productNameAr: product.nameAr,
+            price: product.contractPrice,
             quantity: item.quantity,
-            sku: product.sku,
+            productSku: product.sku,
+            currency: product.currency,
+            ltaId: product.ltaId,
           });
         }
       }
 
-      setCartItems(newCartItems);
+      setCart(newCartItems);
       toast({
         title: t('templateLoaded'),
         description: language === 'ar' ? templateData.nameAr : templateData.nameEn,
@@ -240,19 +300,21 @@ export default function OrderingPage() {
 
       for (const item of orderItems) {
         const product = products.find(p => p.id === item.productId);
-        if (product && product.price) {
+        if (product) {
           newCartItems.push({
             productId: product.id,
-            nameEn: product.nameEn,
-            nameAr: product.nameAr,
-            price: product.price,
+            productNameEn: product.nameEn,
+            productNameAr: product.nameAr,
+            price: product.contractPrice,
             quantity: item.quantity,
-            sku: product.sku,
+            productSku: product.sku,
+            currency: product.currency,
+            ltaId: product.ltaId,
           });
         }
       }
 
-      setCartItems(newCartItems);
+      setCart(newCartItems);
       toast({
         title: language === 'ar' ? 'تم تحميل الطلب إلى السلة' : 'Order loaded to cart',
       });
@@ -271,7 +333,7 @@ export default function OrderingPage() {
     });
   };
 
-  const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const formattedOrders = orders.map(order => {
     const orderItems = JSON.parse(order.items);
@@ -297,18 +359,137 @@ export default function OrderingPage() {
     };
   });
 
+  // Convert cart items to match ShoppingCart component interface
+  const shoppingCartItems = cart.map(item => ({
+    productId: item.productId,
+    nameEn: item.productNameEn,
+    nameAr: item.productNameAr,
+    price: item.price,
+    quantity: item.quantity,
+    sku: item.productSku,
+  }));
+
+  function ProductCard({ product }: { product: ProductWithLtaPrice }) {
+    const name = language === 'ar' ? product.nameAr : product.nameEn;
+    const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
+    const cartItem = cart.find(item => item.productId === product.id);
+    const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
+    
+    return (
+      <Card 
+        className={cn(
+          "flex flex-col overflow-hidden hover-elevate",
+          isDifferentLta && "opacity-50"
+        )}
+        data-testid={`card-product-${product.id}`}
+      >
+        {/* Product Image */}
+        <div className="relative w-full aspect-square bg-muted">
+          {product.imageUrl ? (
+            <img 
+              src={product.imageUrl} 
+              alt={name}
+              className="w-full h-full object-cover"
+              data-testid={`img-product-${product.id}`}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Package className="w-16 h-16 text-muted-foreground" />
+            </div>
+          )}
+          
+          {/* Stock Status Badge */}
+          <Badge 
+            variant={product.stockStatus === 'in-stock' ? 'default' : 
+                    product.stockStatus === 'low-stock' ? 'secondary' : 'destructive'}
+            className="absolute top-2 end-2"
+            data-testid={`badge-stock-${product.id}`}
+          >
+            {product.stockStatus === 'in-stock' ? (language === 'ar' ? 'متوفر' : 'In Stock') :
+             product.stockStatus === 'low-stock' ? (language === 'ar' ? 'مخزون منخفض' : 'Low Stock') :
+             (language === 'ar' ? 'غير متوفر' : 'Out of Stock')}
+          </Badge>
+        </div>
+        
+        {/* Product Info */}
+        <CardContent className="flex-1 p-4 space-y-2">
+          <div>
+            <h3 className="font-semibold text-base line-clamp-1" data-testid={`text-product-name-${product.id}`}>
+              {name}
+            </h3>
+            <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+          </div>
+          
+          {description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {description}
+            </p>
+          )}
+          
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <div>
+              <p className="text-lg font-bold font-mono" data-testid={`text-price-${product.id}`}>
+                {product.contractPrice} {product.currency}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
+              </p>
+            </div>
+            
+            {/* Quantity in cart indicator */}
+            {cartItem && (
+              <Badge variant="outline" data-testid={`badge-in-cart-${product.id}`}>
+                {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+        
+        {/* Add to Cart */}
+        <CardFooter className="p-4 pt-0">
+          <Button
+            onClick={() => handleAddToCart(product)}
+            disabled={
+              product.stockStatus === 'out-of-stock' || 
+              isDifferentLta
+            }
+            className="w-full"
+            data-testid={`button-add-to-cart-${product.id}`}
+          >
+            <CartIcon className="w-4 h-4 me-2" />
+            {isDifferentLta
+              ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+              : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
+            }
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-semibold">
               {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
             </h1>
             <Badge variant="secondary" className="hidden md:flex">
               {language === 'ar' ? user?.nameAr : user?.nameEn}
             </Badge>
+            {activeLtaId && clientLtas.length > 0 && (
+              <Badge variant="outline" className="gap-2" data-testid="badge-active-lta">
+                <FileText className="w-3 h-3" />
+                {(() => {
+                  const activeLta = clientLtas.find(lta => lta.id === activeLtaId);
+                  return activeLta 
+                    ? (language === 'ar' ? activeLta.nameAr : activeLta.nameEn)
+                    : (language === 'ar' ? 'العقد النشط' : 'Active Contract');
+                })()}
+              </Badge>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -401,49 +582,36 @@ export default function OrderingPage() {
             </div>
 
             {productsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {[...Array(8)].map((_, i) => (
-                  <Card key={i} className="p-4 animate-pulse">
-                    <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Card key={i} className="flex flex-col">
+                    <Skeleton className="w-full aspect-square" />
+                    <CardContent className="p-4 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-6 w-1/3 mt-2" />
+                    </CardContent>
                   </Card>
+                ))}
+              </div>
+            ) : filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <Card key={product.id} className="p-4 hover-elevate">
-                    <div className="mb-3">
-                      <h3 className="font-semibold mb-1">
-                        {language === 'ar' ? product.nameAr : product.nameEn}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'ar' ? product.descriptionAr : product.descriptionEn}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">SKU: {product.sku}</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold">
-                        {product.price ? `${product.price} ${product.currency}` : (language === 'ar' ? 'لا يوجد سعر' : 'No price')}
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToCart(product)}
-                        disabled={!product.price}
-                        data-testid={`button-add-${product.sku}`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {filteredProducts.length === 0 && !productsLoading && (
-              <div className="text-center py-12 text-muted-foreground">
-                {language === 'ar' ? 'لم يتم العثور على منتجات' : 'No products found'}
-              </div>
+              <Card className="p-8 text-center">
+                <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {language === 'ar' ? 'لا توجد منتجات متاحة' : 'No Products Available'}
+                </h3>
+                <p className="text-muted-foreground">
+                  {language === 'ar' 
+                    ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية الخاص بك بعد.'
+                    : 'No products are assigned to your LTA contract yet.'}
+                </p>
+              </Card>
             )}
           </TabsContent>
 
@@ -502,8 +670,8 @@ export default function OrderingPage() {
       </main>
 
       {/* Shopping Cart */}
-      <ShoppingCart
-        items={cartItems}
+      <ShoppingCartComponent
+        items={shoppingCartItems}
         open={cartOpen}
         onOpenChange={setCartOpen}
         onUpdateQuantity={handleUpdateQuantity}
@@ -511,7 +679,7 @@ export default function OrderingPage() {
         onClearCart={handleClearCart}
         onSubmitOrder={handleSubmitOrder}
         onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-        currency="USD"
+        currency={cart[0]?.currency || 'USD'}
       />
 
       {/* Save Template Dialog */}
