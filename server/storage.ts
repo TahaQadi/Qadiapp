@@ -6,7 +6,6 @@ import {
   type ClientPricing, 
   type OrderTemplate, 
   type Order,
-  type InventoryTransaction,
   type Lta,
   type LtaProduct,
   type LtaClient,
@@ -17,12 +16,10 @@ import {
   type InsertClientPricing,
   type InsertOrderTemplate,
   type InsertOrder,
-  type InsertInventoryTransaction,
   type InsertLta,
   type InsertLtaProduct,
   type InsertLtaClient,
   type AuthUser,
-  type StockStatus,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -80,11 +77,6 @@ export interface IStorage {
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<void>;
   
-  // Inventory methods
-  adjustInventory(productId: string, quantityChange: number, reason: string, notes: string | undefined, userId: string): Promise<InventoryTransaction>;
-  getInventoryTransactions(productId?: string): Promise<InventoryTransaction[]>;
-  updateProductQuantity(productId: string, newQuantity: number): Promise<Product | null>;
-  
   // LTA Management
   createLta(lta: InsertLta): Promise<Lta>;
   getLta(id: string): Promise<Lta | null>;
@@ -121,7 +113,6 @@ export class MemStorage implements IStorage {
   private clientPricing: Map<string, ClientPricing>;
   private orderTemplates: Map<string, OrderTemplate>;
   private orders: Map<string, Order>;
-  private inventoryTransactions: Map<string, InventoryTransaction>;
 
   private ltas: Map<string, Lta> = new Map();
   private ltaProducts: Map<string, LtaProduct> = new Map();
@@ -138,7 +129,6 @@ export class MemStorage implements IStorage {
     this.clientPricing = new Map();
     this.orderTemplates = new Map();
     this.orders = new Map();
-    this.inventoryTransactions = new Map();
     this.ltas = new Map();
     this.ltaProducts = new Map();
     this.ltaClients = new Map();
@@ -286,9 +276,6 @@ export class MemStorage implements IStorage {
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = randomUUID();
-    const quantity = (insertProduct as any).quantity ?? 0;
-    const lowStockThreshold = (insertProduct as any).lowStockThreshold ?? 10;
-    const stockStatus = this.calculateStockStatus(quantity, lowStockThreshold);
     
     const product: Product = { 
       ...insertProduct, 
@@ -297,19 +284,10 @@ export class MemStorage implements IStorage {
       descriptionAr: insertProduct.descriptionAr ?? null,
       imageUrl: insertProduct.imageUrl ?? null,
       category: insertProduct.category ?? null,
-      stockStatus,
-      quantity,
-      lowStockThreshold,
       metadata: insertProduct.metadata ?? null,
     };
     this.products.set(id, product);
     return product;
-  }
-  
-  private calculateStockStatus(quantity: number, threshold: number): StockStatus {
-    if (quantity === 0) return 'out-of-stock';
-    if (quantity <= threshold) return 'low-stock';
-    return 'in-stock';
   }
 
   async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
@@ -423,75 +401,6 @@ export class MemStorage implements IStorage {
     };
     this.orders.set(id, order);
     return order;
-  }
-
-  // Inventory methods
-  async adjustInventory(
-    productId: string, 
-    quantityChange: number, 
-    reason: string, 
-    notes: string | undefined, 
-    userId: string
-  ): Promise<InventoryTransaction> {
-    const product = this.products.get(productId);
-    if (!product) {
-      throw new Error('Product not found');
-    }
-
-    // Create transaction record
-    const id = randomUUID();
-    const transaction: InventoryTransaction = {
-      id,
-      productId,
-      type: 'adjustment',
-      quantityChange,
-      reason: reason ?? null,
-      notes: notes ?? null,
-      userId: userId ?? null,
-      createdAt: new Date(),
-    };
-    this.inventoryTransactions.set(id, transaction);
-
-    // Update product quantity
-    const newQuantity = product.quantity + quantityChange;
-    const newStockStatus = this.calculateStockStatus(newQuantity, product.lowStockThreshold);
-    
-    const updatedProduct = {
-      ...product,
-      quantity: newQuantity,
-      stockStatus: newStockStatus,
-    };
-    this.products.set(productId, updatedProduct);
-
-    return transaction;
-  }
-
-  async getInventoryTransactions(productId?: string): Promise<InventoryTransaction[]> {
-    const allTransactions = Array.from(this.inventoryTransactions.values());
-    
-    if (productId) {
-      return allTransactions.filter(t => t.productId === productId);
-    }
-    
-    return allTransactions;
-  }
-
-  async updateProductQuantity(productId: string, newQuantity: number): Promise<Product | null> {
-    const product = this.products.get(productId);
-    if (!product) {
-      return null;
-    }
-
-    const newStockStatus = this.calculateStockStatus(newQuantity, product.lowStockThreshold);
-    
-    const updatedProduct = {
-      ...product,
-      quantity: newQuantity,
-      stockStatus: newStockStatus,
-    };
-    this.products.set(productId, updatedProduct);
-
-    return updatedProduct;
   }
 
   // LTA Management
