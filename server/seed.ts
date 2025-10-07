@@ -91,9 +91,6 @@ export async function seedData() {
     descriptionEn: 'Ergonomic design with lumbar support',
     descriptionAr: 'تصميم مريح مع دعم قطني',
     category: 'Furniture',
-    stockStatus: 'in-stock',
-    quantity: 150,
-    lowStockThreshold: 20,
   });
 
   const product2 = await storage.createProduct({
@@ -103,9 +100,6 @@ export async function seedData() {
     descriptionEn: 'Adjustable height electric desk',
     descriptionAr: 'مكتب كهربائي بارتفاع قابل للتعديل',
     category: 'Furniture',
-    stockStatus: 'in-stock',
-    quantity: 150,
-    lowStockThreshold: 20,
   });
 
   const product3 = await storage.createProduct({
@@ -115,9 +109,6 @@ export async function seedData() {
     descriptionEn: 'Dual monitor support, gas spring',
     descriptionAr: 'دعم شاشتين، نابض غازي',
     category: 'Accessories',
-    stockStatus: 'in-stock',
-    quantity: 150,
-    lowStockThreshold: 20,
   });
 
   const product4 = await storage.createProduct({
@@ -127,9 +118,6 @@ export async function seedData() {
     descriptionEn: 'LED desk lamp with adjustable brightness',
     descriptionAr: 'مصباح مكتب LED بإضاءة قابلة للتعديل',
     category: 'Accessories',
-    stockStatus: 'in-stock',
-    quantity: 150,
-    lowStockThreshold: 20,
   });
 
   const product5 = await storage.createProduct({
@@ -139,9 +127,6 @@ export async function seedData() {
     descriptionEn: 'Mechanical switches, RGB backlight',
     descriptionAr: 'مفاتيح ميكانيكية، إضاءة خلفية RGB',
     category: 'Technology',
-    stockStatus: 'in-stock',
-    quantity: 150,
-    lowStockThreshold: 20,
   });
 
   const product6 = await storage.createProduct({
@@ -151,9 +136,6 @@ export async function seedData() {
     descriptionEn: 'Extended gaming mouse pad',
     descriptionAr: 'حشية فأرة للألعاب ممتدة',
     category: 'Technology',
-    stockStatus: 'in-stock',
-    quantity: 150,
-    lowStockThreshold: 20,
   });
 
   // Create LTAs
