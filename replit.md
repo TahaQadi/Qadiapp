@@ -1,6 +1,6 @@
 # Overview
 
-This is a bilingual (Arabic/English) **LTA (Long-Term Agreement) contract fulfillment application** that enables businesses to manage contract-based product ordering. The system is LTA-centric, where each LTA represents a contract that can include multiple clients and specifies which products from a master catalog are supplied. Features include client authentication with role-based access (admin vs regular clients), product image management, responsive product grid display, order templates, and comprehensive inventory management with Pipefy webhook integration.
+This is a bilingual (Arabic/English) **LTA (Long-Term Agreement) contract fulfillment application** that enables businesses to manage contract-based product ordering. The system is LTA-centric, where each LTA represents a contract that can include multiple clients and specifies which products from a master catalog are supplied. Features include client authentication with role-based access (admin vs regular clients), product image management with custom metadata support, bulk product import via CSV, responsive product grid display, order templates, and Pipefy webhook integration for order processing.
 
 # User Preferences
 
@@ -92,39 +92,30 @@ Preferred communication style: Simple, everyday language.
 4. **Products** - Master product catalog
    - SKU-based identification
    - Bilingual names and descriptions
-   - Stock status (in-stock, low-stock, out-of-stock)
-   - Inventory tracking (quantity, lowStockThreshold)
    - Image URL support (nullable)
    - Category metadata
    - Custom metadata field (nullable JSON text) for flexible product attributes
 
-5. **Inventory Transactions** - Audit trail for stock changes
-   - Transaction types: adjustment, sale, return, initial
-   - Quantity change tracking (positive/negative)
-   - Reason and notes fields
-   - User tracking (who made the change)
-   - Timestamp
-
-6. **Clients** - User accounts with bilingual names and admin flag
+5. **Clients** - User accounts with bilingual names and admin flag
    - Authentication credentials (username/password)
    - Contact information (email, phone)
    - Admin privilege flag for system management
 
-7. **Client Departments** - Organizational units
+6. **Client Departments** - Organizational units
    - Department types: finance, purchase, warehouse
    - Department-specific contact information
 
-8. **Client Locations** - Physical addresses and delivery points
+7. **Client Locations** - Physical addresses and delivery points
    - Bilingual location names and addresses
    - Headquarters designation flag
    - City/country metadata
 
-9. **Order Templates** - Reusable order configurations
+8. **Order Templates** - Reusable order configurations
    - Bilingual template names
    - JSON-serialized cart items
    - Timestamp tracking
 
-10. **Orders** - Transaction records
+9. **Orders** - Transaction records
     - JSON-serialized order items
     - Order status workflow (pending → confirmed → shipped → delivered)
     - Total amount and currency tracking
@@ -136,7 +127,6 @@ Preferred communication style: Simple, everyday language.
 - One-to-many: Client → Departments, Locations, Orders, Templates
 - Many-to-many: LTAs ↔ Products (through LtaProducts with pricing)
 - Many-to-many: LTAs ↔ Clients (through LtaClients)
-- One-to-many: Products → InventoryTransactions
 - UUID primary keys generated via PostgreSQL `gen_random_uuid()`
 
 **Deprecated Tables:**
@@ -150,19 +140,11 @@ Preferred communication style: Simple, everyday language.
 3. Admin assigns clients to LTA (clients can be in multiple LTAs)
 4. Clients see only products from their assigned LTA(s)
 5. Cart enforces single-LTA context (cannot mix LTAs in one order)
-6. Orders validate: client authorization, product availability, contract pricing
-7. Inventory automatically decrements on successful order
-8. Pipefy webhook sends order data (if configured)
-
-**Inventory Management:**
-- Real-time stock tracking with quantity and thresholds
-- Auto-calculation of stock status (in-stock/low-stock/out-of-stock)
-- Transaction history for complete audit trail
-- Manual adjustments by admin with reason tracking
-- Automatic decrement on order placement
+6. Orders validate: client authorization and contract pricing
+7. Pipefy webhook sends order data (if configured)
 
 **Security & Validation:**
-- Admin-only access for LTA management, inventory, and product management
+- Admin-only access for LTA management and product management
 - Server-side price validation using LTA contract prices
 - Client authorization check for LTA access
 - Single-LTA order enforcement (frontend and backend)
@@ -214,12 +196,11 @@ Preferred communication style: Simple, everyday language.
 - Bulk Product Import: CSV upload for assigning multiple products to LTA at once
 - Client Assignment: Assign clients to LTAs (multi-LTA support)
 - Product Management: CRUD operations with image upload and custom metadata fields
-- Inventory Management: Stock adjustments, transaction history
 - Client Management: View/edit client information, departments, locations
 
 **Client Features:**
 - View products from assigned LTA(s) in responsive grid (1-5 columns)
-- Product display: images, stock status, contract pricing
+- Product display: images, names, descriptions, contract pricing
 - Single-LTA cart enforcement with visual indicators
 - Active contract badge showing current LTA
 - Order templates: save/load cart configurations
@@ -230,9 +211,7 @@ Preferred communication style: Simple, everyday language.
 - Bilingual throughout (English/Arabic)
 - Responsive design with mobile-first approach
 - Dark/light theme support
-- Real-time inventory tracking
 - Pipefy webhook integration for order processing
-- Complete audit trail via transaction history
 
 ## Recent Changes (October 2025)
 
@@ -244,7 +223,6 @@ Preferred communication style: Simple, everyday language.
 - Added product image management with upload
 - Created admin LTA management pages
 - Updated client ordering page with responsive grid layout
-- Enhanced inventory management with transaction history
 
 **Product Enhancements (October 7, 2025):**
 - Added custom metadata field to products for flexible JSON-formatted attributes
@@ -253,6 +231,15 @@ Preferred communication style: Simple, everyday language.
 - Bulk import features: SKU-based lookup, duplicate detection, detailed error reporting
 - Success/failure tracking with bilingual UI feedback
 - Updated product forms to support custom metadata editing
+
+**Inventory Management Removal (October 7, 2025):**
+- Removed all inventory tracking features from the application
+- Deleted inventory transactions table and related schemas
+- Removed quantity, stock status, and stock threshold fields from products
+- Removed inventory management admin page and navigation
+- Removed stock status badges from product displays
+- Simplified product management to focus on core catalog features
+- Orders no longer validate or track stock availability
 
 **Test Credentials:**
 - Admin: username `admin` / password `admin123`
