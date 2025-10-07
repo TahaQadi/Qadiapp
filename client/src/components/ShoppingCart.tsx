@@ -1,0 +1,185 @@
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Minus, Plus, ShoppingCart as CartIcon, Trash2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from './LanguageProvider';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+
+export interface CartItem {
+  productId: string;
+  nameEn: string;
+  nameAr: string;
+  price: string;
+  quantity: number;
+  sku: string;
+}
+
+interface ShoppingCartProps {
+  items: CartItem[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemoveItem: (productId: string) => void;
+  onClearCart: () => void;
+  onSubmitOrder: () => void;
+  onSaveTemplate: () => void;
+  currency: string;
+}
+
+export function ShoppingCart({
+  items,
+  open,
+  onOpenChange,
+  onUpdateQuantity,
+  onRemoveItem,
+  onClearCart,
+  onSubmitOrder,
+  onSaveTemplate,
+  currency,
+}: ShoppingCartProps) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+
+  const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+  const tax = subtotal * 0.15; // 15% tax
+  const total = subtotal + tax;
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
+        <SheetHeader className="p-6 pb-4">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2">
+              <CartIcon className="h-5 w-5" />
+              {t('yourCart')}
+            </SheetTitle>
+            {items.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearCart}
+                data-testid="button-clear-cart"
+              >
+                {t('clearCart')}
+              </Button>
+            )}
+          </div>
+        </SheetHeader>
+
+        {items.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6">
+            <CartIcon className="h-12 w-12 text-muted-foreground" />
+            <div className="text-center">
+              <p className="font-medium">{t('emptyCart')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('startShopping')}</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <ScrollArea className="flex-1 px-6">
+              <div className="space-y-4 pb-4">
+                {items.map((item) => (
+                  <div
+                    key={item.productId}
+                    className="flex gap-3"
+                    data-testid={`cart-item-${item.sku}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {language === 'ar' ? item.nameAr : item.nameEn}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('sku')}: {item.sku}
+                      </p>
+                      <p className="font-mono text-sm mt-1">
+                        {currency} {item.price}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        data-testid={`button-decrease-${item.sku}`}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <div className="w-10 text-center font-medium" data-testid={`text-quantity-${item.sku}`}>
+                        {item.quantity}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+                        data-testid={`button-increase-${item.sku}`}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => onRemoveItem(item.productId)}
+                      data-testid={`button-remove-${item.sku}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <div className="p-6 pt-4 border-t space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('subtotal')}</span>
+                  <span className="font-mono" data-testid="text-subtotal">
+                    {currency} {subtotal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('tax')}</span>
+                  <span className="font-mono" data-testid="text-tax">
+                    {currency} {tax.toFixed(2)}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-medium">
+                  <span>{t('total')}</span>
+                  <span className="font-mono text-lg" data-testid="text-total">
+                    {currency} {total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Button
+                  className="w-full"
+                  onClick={onSubmitOrder}
+                  data-testid="button-submit-order"
+                >
+                  {t('submitOrder')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={onSaveTemplate}
+                  data-testid="button-save-template"
+                >
+                  {t('saveAsTemplate')}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
