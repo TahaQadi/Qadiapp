@@ -38,6 +38,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Validate SESSION_SECRET exists before starting the server
+  if (!process.env.SESSION_SECRET) {
+    throw new Error(
+      "SESSION_SECRET environment variable is required for session management. " +
+      "Please set SESSION_SECRET in your environment variables."
+    );
+  }
+
   // Seed data on startup
   await seedData();
 

@@ -75,6 +75,7 @@ export const orders = pgTable("orders", {
 });
 
 // Insert schemas
+// Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
@@ -94,6 +95,36 @@ export const priceImportRowSchema = z.object({
   sku: z.string(),
   price: z.string(),
   currency: z.string().optional().default("USD"),
+});
+
+// Cart item schema for order validation
+export const cartItemSchema = z.object({
+  productId: z.string(),
+  nameEn: z.string(),
+  nameAr: z.string(),
+  price: z.string(),
+  quantity: z.number().int().positive(),
+  sku: z.string(),
+});
+
+// Department validation schemas
+export const createDepartmentSchema = insertClientDepartmentSchema.omit({ clientId: true });
+export const updateDepartmentSchema = createDepartmentSchema.partial();
+
+// Location validation schemas
+export const createLocationSchema = insertClientLocationSchema.omit({ clientId: true });
+export const updateLocationSchema = createLocationSchema.partial();
+
+// Order creation schema
+export const createOrderSchema = z.object({
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive(),
+    price: z.string(),
+  })),
+  totalAmount: z.string().optional(),
+  status: z.string().optional(),
+  pipefyCardId: z.string().optional(),
 });
 
 // Types
