@@ -15,7 +15,6 @@ export default function ProductCardExample() {
           price="299.99"
           currency="USD"
           sku="CHAIR-001"
-          stockStatus="in-stock"
           onAddToCart={() => console.log('Added to cart')}
         />
       </div>

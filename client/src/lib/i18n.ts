@@ -14,9 +14,6 @@ const resources = {
       
       // Product
       "addToCart": "Add to Cart",
-      "outOfStock": "Out of Stock",
-      "inStock": "In Stock",
-      "lowStock": "Low Stock",
       "sku": "SKU",
       
       // Cart
@@ -85,9 +82,6 @@ const resources = {
       
       // Product
       "addToCart": "أضف للسلة",
-      "outOfStock": "غير متوفر",
-      "inStock": "متوفر",
-      "lowStock": "مخزون منخفض",
       "sku": "رمز المنتج",
       
       // Cart

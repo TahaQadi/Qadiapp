@@ -398,17 +398,6 @@ export default function OrderingPage() {
             </div>
           )}
           
-          {/* Stock Status Badge */}
-          <Badge 
-            variant={product.stockStatus === 'in-stock' ? 'default' : 
-                    product.stockStatus === 'low-stock' ? 'secondary' : 'destructive'}
-            className="absolute top-2 end-2"
-            data-testid={`badge-stock-${product.id}`}
-          >
-            {product.stockStatus === 'in-stock' ? (language === 'ar' ? 'متوفر' : 'In Stock') :
-             product.stockStatus === 'low-stock' ? (language === 'ar' ? 'مخزون منخفض' : 'Low Stock') :
-             (language === 'ar' ? 'غير متوفر' : 'Out of Stock')}
-          </Badge>
         </div>
         
         {/* Product Info */}
@@ -449,10 +438,7 @@ export default function OrderingPage() {
         <CardFooter className="p-4 pt-0">
           <Button
             onClick={() => handleAddToCart(product)}
-            disabled={
-              product.stockStatus === 'out-of-stock' || 
-              isDifferentLta
-            }
+            disabled={isDifferentLta}
             className="w-full"
             data-testid={`button-add-to-cart-${product.id}`}
           >

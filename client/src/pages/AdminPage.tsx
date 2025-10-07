@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LogOut, User, Plus, Pencil, Trash2, Package, Users, Boxes, FileText, X, ImageIcon } from 'lucide-react';
+import { LogOut, User, Plus, Pencil, Trash2, Package, FileText, X, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -30,7 +30,6 @@ const productFormSchema = z.object({
   descriptionAr: z.string().optional(),
   sku: z.string().min(1, 'SKU is required'),
   category: z.string().optional(),
-  stockStatus: z.enum(['in-stock', 'low-stock', 'out-of-stock']).default('in-stock'),
   metadata: z.string().optional(),
 });
 
@@ -44,7 +43,6 @@ interface Product {
   descriptionAr?: string | null;
   sku: string;
   category?: string | null;
-  stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock';
   imageUrl?: string | null;
   metadata?: string | null;
 }
@@ -76,7 +74,6 @@ export default function AdminPage() {
       descriptionAr: '',
       sku: '',
       category: '',
-      stockStatus: 'in-stock',
       metadata: '',
     },
   });
@@ -90,7 +87,6 @@ export default function AdminPage() {
       descriptionAr: '',
       sku: '',
       category: '',
-      stockStatus: 'in-stock',
       metadata: '',
     },
   });
@@ -250,7 +246,6 @@ export default function AdminPage() {
       descriptionAr: product.descriptionAr || '',
       sku: product.sku,
       category: product.category || '',
-      stockStatus: product.stockStatus,
       metadata: product.metadata || '',
     });
     // Set preview to existing image if available
@@ -291,19 +286,6 @@ export default function AdminPage() {
   const confirmDelete = () => {
     if (selectedProduct) {
       deleteProductMutation.mutate(selectedProduct.id);
-    }
-  };
-
-  const getStockStatusBadge = (status: string) => {
-    switch (status) {
-      case 'in-stock':
-        return <Badge variant="default" data-testid={`badge-stock-${status}`}>{language === 'ar' ? 'متوفر' : 'In Stock'}</Badge>;
-      case 'low-stock':
-        return <Badge variant="secondary" data-testid={`badge-stock-${status}`}>{language === 'ar' ? 'مخزون منخفض' : 'Low Stock'}</Badge>;
-      case 'out-of-stock':
-        return <Badge variant="destructive" data-testid={`badge-stock-${status}`}>{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</Badge>;
-      default:
-        return null;
     }
   };
 
@@ -398,28 +380,6 @@ export default function AdminPage() {
               </div>
             </CardHeader>
           </Card>
-
-          <Card 
-            className="hover-elevate cursor-pointer" 
-            onClick={() => setLocation('/admin/inventory')}
-            data-testid="card-manage-inventory"
-          >
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-primary/10">
-                  <Boxes className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">
-                    {language === 'ar' ? 'إدارة المخزون' : 'Manage Inventory'}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'ar' ? 'تتبع وتعديل مخزون المنتجات' : 'Track and adjust product stock'}
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
         </div>
 
         <Card>
@@ -452,14 +412,13 @@ export default function AdminPage() {
                       <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
                       <TableHead>{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
                       <TableHead>{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
                       <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {products.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           {language === 'ar' ? 'لا توجد منتجات' : 'No products'}
                         </TableCell>
                       </TableRow>
@@ -488,7 +447,6 @@ export default function AdminPage() {
                             {language === 'ar' ? product.descriptionAr : product.descriptionEn}
                           </TableCell>
                           <TableCell className="text-sm">{product.category || '-'}</TableCell>
-                          <TableCell>{getStockStatusBadge(product.stockStatus)}</TableCell>
                           <TableCell className="text-end">
                             <div className="flex justify-end gap-1">
                               <Button
@@ -588,7 +546,7 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={createForm.control}
                   name="sku"
@@ -611,28 +569,6 @@ export default function AdminPage() {
                       <FormControl>
                         <Input {...field} data-testid="input-category" />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="stockStatus"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'حالة المخزون' : 'Stock Status'}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-stock-status">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="in-stock">{language === 'ar' ? 'متوفر' : 'In Stock'}</SelectItem>
-                          <SelectItem value="low-stock">{language === 'ar' ? 'مخزون منخفض' : 'Low Stock'}</SelectItem>
-                          <SelectItem value="out-of-stock">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -774,7 +710,7 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={editForm.control}
                   name="sku"
@@ -797,28 +733,6 @@ export default function AdminPage() {
                       <FormControl>
                         <Input {...field} data-testid="input-edit-category" />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="stockStatus"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'حالة المخزون' : 'Stock Status'}</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-edit-stock-status">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="in-stock">{language === 'ar' ? 'متوفر' : 'In Stock'}</SelectItem>
-                          <SelectItem value="low-stock">{language === 'ar' ? 'مخزون منخفض' : 'Low Stock'}</SelectItem>
-                          <SelectItem value="out-of-stock">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
