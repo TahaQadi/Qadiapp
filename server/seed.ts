@@ -93,6 +93,8 @@ export async function seedData() {
       descriptionAr: 'تصميم مريح مع دعم قطني',
       category: 'Furniture',
       stockStatus: 'in-stock',
+      quantity: 150,
+      lowStockThreshold: 20,
     },
     {
       sku: 'DESK-001',
@@ -102,6 +104,8 @@ export async function seedData() {
       descriptionAr: 'مكتب كهربائي بارتفاع قابل للتعديل',
       category: 'Furniture',
       stockStatus: 'in-stock',
+      quantity: 150,
+      lowStockThreshold: 20,
     },
     {
       sku: 'ARM-001',
@@ -111,6 +115,8 @@ export async function seedData() {
       descriptionAr: 'دعم شاشتين، نابض غازي',
       category: 'Accessories',
       stockStatus: 'low-stock',
+      quantity: 150,
+      lowStockThreshold: 20,
     },
     {
       sku: 'KB-001',
@@ -120,6 +126,8 @@ export async function seedData() {
       descriptionAr: 'مفاتيح ميكانيكية، إضاءة خلفية RGB',
       category: 'Accessories',
       stockStatus: 'in-stock',
+      quantity: 150,
+      lowStockThreshold: 20,
     },
     {
       sku: 'MOUSE-001',
@@ -129,6 +137,8 @@ export async function seedData() {
       descriptionAr: 'فأرة لاسلكية مريحة',
       category: 'Accessories',
       stockStatus: 'out-of-stock',
+      quantity: 150,
+      lowStockThreshold: 20,
     },
     {
       sku: 'STAND-001',
@@ -138,6 +148,8 @@ export async function seedData() {
       descriptionAr: 'حامل لابتوب ألمنيوم قابل للتعديل',
       category: 'Accessories',
       stockStatus: 'in-stock',
+      quantity: 150,
+      lowStockThreshold: 20,
     },
   ];
 

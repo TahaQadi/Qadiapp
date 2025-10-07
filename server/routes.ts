@@ -16,6 +16,7 @@ import {
   createProductSchema,
   updateProductSchema,
   updateClientSchema,
+  inventoryAdjustmentSchema,
   type CartItem,
 } from "@shared/schema";
 import { z } from "zod";
@@ -351,6 +352,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Inventory Management Routes
+  app.post("/api/admin/inventory/adjust", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = inventoryAdjustmentSchema.parse(req.body);
+      
+      // Adjust inventory
+      const transaction = await storage.adjustInventory(
+        validatedData.productId,
+        validatedData.quantityChange,
+        validatedData.reason,
+        validatedData.notes,
+        req.user!.id
+      );
+      
+      // Get updated product
+      const product = await storage.getProduct(validatedData.productId);
+      
+      res.json({
+        transaction,
+        product,
+        message: "Inventory adjusted successfully",
+        messageAr: "تم تعديل المخزون بنجاح",
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تعديل المخزون",
+      });
+    }
+  });
+
+  app.get("/api/admin/inventory/transactions", requireAdmin, async (req, res) => {
+    try {
+      const productId = req.query.productId as string | undefined;
+      const transactions = await storage.getInventoryTransactions(productId);
+      res.json(transactions);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب سجلات المخزون",
+      });
+    }
+  });
+
+  app.get("/api/admin/inventory/transactions/:productId", requireAdmin, async (req, res) => {
+    try {
+      const transactions = await storage.getInventoryTransactions(req.params.productId);
+      res.json(transactions);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب سجلات المخزون",
+      });
+    }
+  });
+
   // Price Import Route
   app.post("/api/client/import-prices", requireAuth, upload.single('file'), async (req, res) => {
     try {
@@ -527,6 +590,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Validate stock availability before creating order
+      for (const item of validatedData.items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({
+            message: `Product not found: ${item.productId}`,
+            messageAr: `المنتج غير موجود: ${item.productId}`
+          });
+        }
+        if (product.quantity < item.quantity) {
+          return res.status(400).json({
+            message: `Insufficient stock for ${product.nameEn}`,
+            messageAr: `مخزون غير كافٍ لـ ${product.nameAr}`,
+            product: { 
+              id: product.id, 
+              nameEn: product.nameEn, 
+              nameAr: product.nameAr, 
+              available: product.quantity, 
+              requested: item.quantity 
+            }
+          });
+        }
+      }
+
       // Create order with calculated total
       const order = await storage.createOrder({
         clientId: req.user!.id,
@@ -535,6 +622,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: validatedData.status || 'pending',
         pipefyCardId: validatedData.pipefyCardId,
       });
+
+      // Decrement inventory for each item
+      for (const item of validatedData.items) {
+        await storage.adjustInventory(
+          item.productId,
+          -item.quantity,
+          `Order #${order.id}`,
+          `Order placed by client`,
+          req.user!.id
+        );
+      }
 
       // Send to Pipefy webhook if configured
       if (process.env.PIPEFY_WEBHOOK_URL) {

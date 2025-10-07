@@ -13,6 +13,7 @@ import OrderingPage from "@/pages/OrderingPage";
 import ClientProfilePage from "@/pages/ClientProfilePage";
 import AdminPage from "@/pages/AdminPage";
 import AdminClientsPage from "@/pages/AdminClientsPage";
+import AdminInventoryPage from "@/pages/AdminInventoryPage";
 import "./lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -75,6 +76,7 @@ function Router() {
       <ProtectedRoute path="/profile" component={ClientProfilePage} />
       <AdminRoute path="/admin" component={AdminPage} />
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
+      <AdminRoute path="/admin/inventory" component={AdminInventoryPage} />
       <Route component={NotFound} />
     </Switch>
   );
