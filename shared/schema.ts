@@ -45,9 +45,6 @@ export const products = pgTable("products", {
   sku: text("sku").notNull().unique(),
   imageUrl: text("image_url"),
   category: text("category"),
-  stockStatus: text("stock_status").notNull().default("in-stock"),
-  quantity: integer("quantity").default(0).notNull(),
-  lowStockThreshold: integer("low_stock_threshold").default(10).notNull(),
   metadata: text("metadata"),
 });
 
@@ -112,16 +109,6 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const inventoryTransactions = pgTable("inventory_transactions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull(),
-  type: text("type").notNull(), // 'adjustment', 'sale', 'return', 'initial'
-  quantityChange: integer("quantity_change").notNull(), // positive or negative
-  reason: text("reason"),
-  notes: text("notes"),
-  userId: varchar("user_id"), // who made the change
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
 // Insert schemas
 // Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
@@ -135,7 +122,6 @@ export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: t
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
-export const insertInventoryTransactionSchema = createInsertSchema(inventoryTransactions).omit({ id: true, createdAt: true });
 
 // Login schema
 export const loginSchema = z.object({
@@ -183,24 +169,13 @@ export const createOrderSchema = z.object({
 });
 
 // Product management schemas
-export const stockStatusEnum = z.enum(["in-stock", "low-stock", "out-of-stock"]);
 export const createProductSchema = insertProductSchema.extend({
-  stockStatus: stockStatusEnum.optional().default("in-stock"),
-  quantity: z.number().int().min(0).optional().default(0),
-  lowStockThreshold: z.number().int().min(0).optional().default(10),
   metadata: z.string().optional().nullable(),
 });
 export const updateProductSchema = createProductSchema.partial().extend({
   metadata: z.string().optional().nullable(),
 });
 
-// Inventory adjustment schema
-export const inventoryAdjustmentSchema = z.object({
-  productId: z.string().uuid(),
-  quantityChange: z.number().int(),
-  reason: z.string().min(1, 'Reason is required'),
-  notes: z.string().optional(),
-});
 
 // Template save schema
 export const saveTemplateSchema = z.object({
@@ -243,7 +218,6 @@ export type LtaClient = typeof ltaClients.$inferSelect;
 export type ClientPricing = typeof clientPricing.$inferSelect;
 export type OrderTemplate = typeof orderTemplates.$inferSelect;
 export type Order = typeof orders.$inferSelect;
-export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertClientDepartment = z.infer<typeof insertClientDepartmentSchema>;
@@ -255,12 +229,9 @@ export type InsertLtaClient = z.infer<typeof insertLtaClientSchema>;
 export type InsertClientPricing = z.infer<typeof insertClientPricingSchema>;
 export type InsertOrderTemplate = z.infer<typeof insertOrderTemplateSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
-export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransactionSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;
-export type InventoryAdjustment = z.infer<typeof inventoryAdjustmentSchema>;
-export type StockStatus = z.infer<typeof stockStatusEnum>;
 
 export interface CartItem {
   productId: string;
