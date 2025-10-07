@@ -11,6 +11,17 @@ export async function seedData() {
 
   console.log('Seeding database...');
 
+  // Create admin user
+  const adminUser = await storage.createClient({
+    username: 'admin',
+    password: await hashPassword('admin123'),
+    nameEn: 'Administrator',
+    nameAr: 'المسؤول',
+    email: 'admin@system.com',
+    phone: '+1111111111',
+    isAdmin: true,
+  });
+
   // Create test client
   const testClient = await storage.createClient({
     username: 'test',
@@ -19,6 +30,7 @@ export async function seedData() {
     nameAr: 'شركة أكمي',
     email: 'info@acme.com',
     phone: '+1234567890',
+    isAdmin: false,
   });
 
   // Create departments
@@ -80,6 +92,7 @@ export async function seedData() {
       descriptionEn: 'Ergonomic design with lumbar support',
       descriptionAr: 'تصميم مريح مع دعم قطني',
       category: 'Furniture',
+      stockStatus: 'in-stock',
     },
     {
       sku: 'DESK-001',
@@ -88,6 +101,7 @@ export async function seedData() {
       descriptionEn: 'Adjustable height electric desk',
       descriptionAr: 'مكتب كهربائي بارتفاع قابل للتعديل',
       category: 'Furniture',
+      stockStatus: 'in-stock',
     },
     {
       sku: 'ARM-001',
@@ -96,6 +110,7 @@ export async function seedData() {
       descriptionEn: 'Dual monitor support, gas spring',
       descriptionAr: 'دعم شاشتين، نابض غازي',
       category: 'Accessories',
+      stockStatus: 'low-stock',
     },
     {
       sku: 'KB-001',
@@ -104,6 +119,7 @@ export async function seedData() {
       descriptionEn: 'Mechanical switches, RGB backlight',
       descriptionAr: 'مفاتيح ميكانيكية، إضاءة خلفية RGB',
       category: 'Accessories',
+      stockStatus: 'in-stock',
     },
     {
       sku: 'MOUSE-001',
@@ -112,6 +128,7 @@ export async function seedData() {
       descriptionEn: 'Wireless ergonomic mouse',
       descriptionAr: 'فأرة لاسلكية مريحة',
       category: 'Accessories',
+      stockStatus: 'out-of-stock',
     },
     {
       sku: 'STAND-001',
@@ -120,6 +137,7 @@ export async function seedData() {
       descriptionEn: 'Adjustable aluminum laptop stand',
       descriptionAr: 'حامل لابتوب ألمنيوم قابل للتعديل',
       category: 'Accessories',
+      stockStatus: 'in-stock',
     },
   ];
 
@@ -141,6 +159,9 @@ export async function seedData() {
   await storage.bulkImportPricing(testClient.id, pricingData);
 
   console.log('Seeding completed successfully!');
+  console.log('Admin credentials:');
+  console.log('  Username: admin');
+  console.log('  Password: admin123');
   console.log('Test client credentials:');
   console.log('  Username: test');
   console.log('  Password: test123');

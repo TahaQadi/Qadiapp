@@ -57,6 +57,7 @@ export function setupAuth(app: Express) {
           nameAr: client.nameAr,
           email: client.email ?? undefined,
           phone: client.phone ?? undefined,
+          isAdmin: client.isAdmin,
         };
         return done(null, authUser);
       }
@@ -77,6 +78,7 @@ export function setupAuth(app: Express) {
       nameAr: client.nameAr,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
+      isAdmin: client.isAdmin,
     };
     done(null, authUser);
   });

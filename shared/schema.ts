@@ -11,6 +11,7 @@ export const clients = pgTable("clients", {
   password: text("password").notNull(),
   email: text("email"),
   phone: text("phone"),
+  isAdmin: boolean("is_admin").notNull().default(false),
 });
 
 export const clientDepartments = pgTable("client_departments", {
@@ -44,6 +45,7 @@ export const products = pgTable("products", {
   sku: text("sku").notNull().unique(),
   imageUrl: text("image_url"),
   category: text("category"),
+  stockStatus: text("stock_status").notNull().default("in-stock"),
 });
 
 export const clientPricing = pgTable("client_pricing", {
@@ -127,6 +129,23 @@ export const createOrderSchema = z.object({
   pipefyCardId: z.string().optional(),
 });
 
+// Product management schemas
+export const stockStatusEnum = z.enum(["in-stock", "low-stock", "out-of-stock"]);
+export const createProductSchema = insertProductSchema.extend({
+  stockStatus: stockStatusEnum.optional().default("in-stock"),
+});
+export const updateProductSchema = createProductSchema.partial();
+
+// Template save schema
+export const saveTemplateSchema = z.object({
+  nameEn: z.string().min(1),
+  nameAr: z.string().min(1),
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive(),
+  })),
+});
+
 // Types
 export type Client = typeof clients.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;
@@ -163,4 +182,5 @@ export interface AuthUser {
   nameAr: string;
   email?: string;
   phone?: string;
+  isAdmin: boolean;
 }

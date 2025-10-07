@@ -58,12 +58,17 @@ export interface IStorage {
   
   // Order Templates
   getOrderTemplates(clientId: string): Promise<OrderTemplate[]>;
+  getOrderTemplate(id: string): Promise<OrderTemplate | undefined>;
   createOrderTemplate(template: InsertOrderTemplate): Promise<OrderTemplate>;
   deleteOrderTemplate(id: string): Promise<void>;
   
   // Orders
   getOrders(clientId: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
+  
+  // Product Management
+  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -108,6 +113,7 @@ export class MemStorage implements IStorage {
       nameAr: client.nameAr,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
+      isAdmin: client.isAdmin,
     };
   }
 
@@ -121,7 +127,13 @@ export class MemStorage implements IStorage {
 
   async createClient(insertClient: InsertClient): Promise<Client> {
     const id = randomUUID();
-    const client: Client = { ...insertClient, id, email: insertClient.email ?? null, phone: insertClient.phone ?? null };
+    const client: Client = { 
+      ...insertClient, 
+      id, 
+      email: insertClient.email ?? null, 
+      phone: insertClient.phone ?? null,
+      isAdmin: insertClient.isAdmin ?? false
+    };
     this.clients.set(id, client);
     return client;
   }
@@ -215,9 +227,22 @@ export class MemStorage implements IStorage {
       descriptionAr: insertProduct.descriptionAr ?? null,
       imageUrl: insertProduct.imageUrl ?? null,
       category: insertProduct.category ?? null,
+      stockStatus: (insertProduct as any).stockStatus ?? "in-stock",
     };
     this.products.set(id, product);
     return product;
+  }
+
+  async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
+    const product = this.products.get(id);
+    if (!product) return undefined;
+    const updated = { ...product, ...updates };
+    this.products.set(id, updated);
+    return updated;
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    this.products.delete(id);
   }
 
   // Client Pricing
@@ -279,6 +304,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.orderTemplates.values()).filter(
       (template) => template.clientId === clientId
     );
+  }
+
+  async getOrderTemplate(id: string): Promise<OrderTemplate | undefined> {
+    return this.orderTemplates.get(id);
   }
 
   async createOrderTemplate(insertTemplate: InsertOrderTemplate): Promise<OrderTemplate> {

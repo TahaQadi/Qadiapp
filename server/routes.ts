@@ -12,6 +12,9 @@ import {
   updateLocationSchema,
   createOrderSchema,
   cartItemSchema,
+  saveTemplateSchema,
+  createProductSchema,
+  updateProductSchema,
   type CartItem,
 } from "@shared/schema";
 import { z } from "zod";
@@ -21,6 +24,19 @@ const upload = multer({ storage: multer.memoryStorage() });
 function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+}
+
+function requireAdmin(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ 
+      message: "Unauthorized - Admin access required",
+      messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
+    });
   }
   next();
 }
@@ -179,6 +195,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Product Management Routes
+  app.get("/api/products/all", requireAdmin, async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/products", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = createProductSchema.parse(req.body);
+      const product = await storage.createProduct(validatedData);
+      res.status(201).json(product);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: error.message,
+        messageAr: "حدث خطأ أثناء إنشاء المنتج",
+      });
+    }
+  });
+
+  app.put("/api/products/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = updateProductSchema.parse(req.body);
+      const product = await storage.updateProduct(req.params.id, validatedData);
+      if (!product) {
+        return res.status(404).json({ 
+          message: "Product not found",
+          messageAr: "المنتج غير موجود",
+        });
+      }
+      res.json(product);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تحديث المنتج",
+      });
+    }
+  });
+
+  app.delete("/api/products/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteProduct(req.params.id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: error.message,
+        messageAr: "حدث خطأ أثناء حذف المنتج",
+      });
+    }
+  });
+
   // Price Import Route
   app.post("/api/client/import-prices", requireAuth, upload.single('file'), async (req, res) => {
     try {
@@ -251,14 +333,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/client/templates/:id", requireAuth, async (req, res) => {
+    try {
+      const template = await storage.getOrderTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ 
+          message: "Template not found",
+          messageAr: "القالب غير موجود",
+        });
+      }
+      res.json(template);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/client/templates", requireAuth, async (req, res) => {
     try {
+      const validatedData = saveTemplateSchema.parse(req.body);
       const template = await storage.createOrderTemplate({
         clientId: req.user!.id,
-        ...req.body,
+        nameEn: validatedData.nameEn,
+        nameAr: validatedData.nameAr,
+        items: JSON.stringify(validatedData.items),
       });
       res.status(201).json(template);
     } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
       res.status(500).json({ message: error.message });
     }
   });
@@ -340,18 +446,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pipefyCardId: validatedData.pipefyCardId,
       });
 
-      // TODO: Send to Pipefy webhook
-      // const pipefyResponse = await fetch(process.env.PIPEFY_WEBHOOK_URL!, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     order_id: order.id,
-      //     client_id: order.clientId,
-      //     items: order.items,
-      //     total_amount: order.totalAmount,
-      //     created_at: order.createdAt,
-      //   })
-      // });
+      // Send to Pipefy webhook if configured
+      if (process.env.PIPEFY_WEBHOOK_URL) {
+        try {
+          const client = await storage.getClient(req.user!.id);
+          const pipefyResponse = await fetch(process.env.PIPEFY_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: order.id,
+              client_id: order.clientId,
+              client_name_en: client?.nameEn,
+              client_name_ar: client?.nameAr,
+              items: validatedItems,
+              total_amount: order.totalAmount,
+              created_at: order.createdAt,
+            }),
+          });
+
+          if (pipefyResponse.ok) {
+            const pipefyData = await pipefyResponse.json();
+            if (pipefyData.card_id) {
+              // Update order with Pipefy card ID
+              const updatedOrder = await storage.createOrder({
+                ...order,
+                pipefyCardId: pipefyData.card_id,
+              });
+              return res.status(201).json(updatedOrder);
+            }
+          }
+        } catch (pipefyError: any) {
+          console.error('Pipefy webhook error:', pipefyError);
+          // Continue even if Pipefy fails - order is already created
+        }
+      }
 
       res.status(201).json(order);
     } catch (error: any) {
