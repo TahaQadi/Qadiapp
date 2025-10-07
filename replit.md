@@ -96,6 +96,7 @@ Preferred communication style: Simple, everyday language.
    - Inventory tracking (quantity, lowStockThreshold)
    - Image URL support (nullable)
    - Category metadata
+   - Custom metadata field (nullable JSON text) for flexible product attributes
 
 5. **Inventory Transactions** - Audit trail for stock changes
    - Transaction types: adjustment, sale, return, initial
@@ -209,9 +210,10 @@ Preferred communication style: Simple, everyday language.
 
 **Admin Features:**
 - LTA Management: Create/edit/delete contracts, set dates and status
-- Product Assignment: Assign products to LTAs with contract pricing
+- Product Assignment: Assign products to LTAs with contract pricing (individual or bulk CSV import)
+- Bulk Product Import: CSV upload for assigning multiple products to LTA at once
 - Client Assignment: Assign clients to LTAs (multi-LTA support)
-- Product Management: CRUD operations with image upload
+- Product Management: CRUD operations with image upload and custom metadata fields
 - Inventory Management: Stock adjustments, transaction history
 - Client Management: View/edit client information, departments, locations
 
@@ -243,6 +245,14 @@ Preferred communication style: Simple, everyday language.
 - Created admin LTA management pages
 - Updated client ordering page with responsive grid layout
 - Enhanced inventory management with transaction history
+
+**Product Enhancements (October 7, 2025):**
+- Added custom metadata field to products for flexible JSON-formatted attributes
+- Implemented bulk product import for LTAs via CSV upload
+- CSV format: SKU, Contract Price, Currency (with template download)
+- Bulk import features: SKU-based lookup, duplicate detection, detailed error reporting
+- Success/failure tracking with bilingual UI feedback
+- Updated product forms to support custom metadata editing
 
 **Test Credentials:**
 - Admin: username `admin` / password `admin123`
