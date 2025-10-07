@@ -32,6 +32,7 @@ export interface IStorage {
   // Clients
   getClients(): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
+  updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined>;
   
   // Client Departments
   getClientDepartments(clientId: string): Promise<ClientDepartment[]>;
@@ -136,6 +137,22 @@ export class MemStorage implements IStorage {
     };
     this.clients.set(id, client);
     return client;
+  }
+
+  async updateClient(id: string, data: Partial<InsertClient>): Promise<Client | undefined> {
+    const { nameEn, nameAr, email, phone } = data;
+    const client = this.clients.get(id);
+    if (!client) return undefined;
+    
+    const updated = {
+      ...client,
+      nameEn: nameEn ?? client.nameEn,
+      nameAr: nameAr ?? client.nameAr,
+      email: email ?? client.email,
+      phone: phone ?? client.phone,
+    };
+    this.clients.set(id, updated);
+    return updated;
   }
 
   // Client Departments

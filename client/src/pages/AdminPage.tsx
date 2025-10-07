@@ -15,10 +15,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LogOut, User, Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { LogOut, User, Plus, Pencil, Trash2, Package, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -51,6 +51,7 @@ export default function AdminPage() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -254,6 +255,48 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Card 
+            className="hover-elevate cursor-pointer" 
+            onClick={() => setLocation('/admin/clients')}
+            data-testid="card-manage-clients"
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-primary/10">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">
+                    {language === 'ar' ? 'إدارة العملاء' : 'Manage Clients'}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {language === 'ar' ? 'عرض وتعديل معلومات العملاء' : 'View and edit client information'}
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card className="hover-elevate cursor-pointer">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-primary/10">
+                  <Package className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">
+                    {language === 'ar' ? 'إدارة المنتجات' : 'Manage Products'}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {language === 'ar' ? 'إدارة كتالوج المنتجات' : 'Manage product catalog'}
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <CardTitle>

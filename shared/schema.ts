@@ -146,6 +146,14 @@ export const saveTemplateSchema = z.object({
   })),
 });
 
+// Client update schema
+export const updateClientSchema = insertClientSchema.pick({
+  nameEn: true,
+  nameAr: true,
+  email: true,
+  phone: true,
+});
+
 // Types
 export type Client = typeof clients.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;

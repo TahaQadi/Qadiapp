@@ -15,6 +15,7 @@ import {
   saveTemplateSchema,
   createProductSchema,
   updateProductSchema,
+  updateClientSchema,
   type CartItem,
 } from "@shared/schema";
 import { z } from "zod";
@@ -192,6 +193,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(productsWithPricing);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin Client Management Routes
+  app.get("/api/admin/clients", requireAdmin, async (req, res) => {
+    try {
+      const clients = await storage.getClients();
+      const clientsBasicInfo = clients.map(client => ({
+        id: client.id,
+        username: client.username,
+        nameEn: client.nameEn,
+        nameAr: client.nameAr,
+        email: client.email,
+        phone: client.phone,
+        isAdmin: client.isAdmin,
+      }));
+      res.json(clientsBasicInfo);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error fetching clients",
+        messageAr: "خطأ في جلب العملاء"
+      });
+    }
+  });
+
+  app.get("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+    try {
+      const client = await storage.getClient(req.params.id);
+      if (!client) {
+        return res.status(404).json({ 
+          message: "Client not found",
+          messageAr: "العميل غير موجود",
+        });
+      }
+
+      const departments = await storage.getClientDepartments(client.id);
+      const locations = await storage.getClientLocations(client.id);
+
+      res.json({
+        client: {
+          id: client.id,
+          username: client.username,
+          nameEn: client.nameEn,
+          nameAr: client.nameAr,
+          email: client.email,
+          phone: client.phone,
+          isAdmin: client.isAdmin,
+        },
+        departments,
+        locations,
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error fetching client details",
+        messageAr: "خطأ في جلب تفاصيل العميل"
+      });
+    }
+  });
+
+  app.put("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = updateClientSchema.parse(req.body);
+      const client = await storage.updateClient(req.params.id, validatedData);
+      if (!client) {
+        return res.status(404).json({ 
+          message: "Client not found",
+          messageAr: "العميل غير موجود",
+        });
+      }
+      res.json({
+        id: client.id,
+        username: client.username,
+        nameEn: client.nameEn,
+        nameAr: client.nameAr,
+        email: client.email,
+        phone: client.phone,
+        isAdmin: client.isAdmin,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error updating client",
+        messageAr: "خطأ في تحديث العميل"
+      });
     }
   });
 
