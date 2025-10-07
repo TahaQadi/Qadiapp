@@ -1,6 +1,6 @@
 # Overview
 
-This is a bilingual (Arabic/English) B2B client ordering application that enables businesses to browse products, manage orders, and maintain order templates. The system supports client-specific pricing, multi-department organization, and RTL/LTR language switching. It's designed as a productivity-first tool following Material Design 3 principles with enterprise adaptations for efficient order management.
+This is a bilingual (Arabic/English) **LTA (Long-Term Agreement) contract fulfillment application** that enables businesses to manage contract-based product ordering. The system is LTA-centric, where each LTA represents a contract that can include multiple clients and specifies which products from a master catalog are supplied. Features include client authentication with role-based access (admin vs regular clients), product image management, responsive product grid display, order templates, and comprehensive inventory management with Pipefy webhook integration.
 
 # User Preferences
 
@@ -29,12 +29,14 @@ Preferred communication style: Simple, everyday language.
 - Typography: Inter (English), Noto Sans Arabic (Arabic), JetBrains Mono (prices/code)
 - RTL/LTR layout switching based on language selection
 - 4px base spacing system for consistent layout
+- Responsive grid layouts (1 col mobile → 5 cols 2xl)
 
 **State Management:**
 - Authentication state managed through React Context (AuthProvider)
 - Theme preferences (light/dark) stored in localStorage with Context API
 - Language preferences (en/ar) stored in localStorage with Context API
 - Server state cached via React Query with infinite stale time by default
+- Active LTA context tracking in cart (single-LTA enforcement)
 
 ## Backend Architecture
 
@@ -43,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - TypeScript with ESNext module system
 - Passport.js with Local Strategy for session-based authentication
 - Express-session with configurable session store (currently memory-based, designed to support PostgreSQL)
+- Multer for file uploads (product images)
 
 **Authentication Flow:**
 - Password hashing using Node.js crypto (scrypt with salt)
@@ -55,7 +58,8 @@ Preferred communication style: Simple, everyday language.
 - Middleware for request/response logging with duration tracking
 - Zod schema validation for request payloads
 - Consistent error handling with appropriate HTTP status codes
-- File upload support via Multer (for price import functionality)
+- Image upload validation (jpeg/jpg/png/webp, 5MB max)
+- Bilingual error messages (English/Arabic)
 
 **Data Layer:**
 - Storage abstraction interface (`IStorage`) for database operations
@@ -65,47 +69,103 @@ Preferred communication style: Simple, everyday language.
 
 ## Database Schema
 
-**Core Entities:**
+**LTA-Centric Model:**
 
-1. **Clients** - User accounts with bilingual names and admin flag
+1. **LTAs (Long-Term Agreements)** - Contract master table
+   - UUID primary key
+   - Bilingual names and descriptions
+   - Contract dates (startDate, endDate)
+   - Status (active/inactive)
+   - Created timestamp
+
+2. **LTA Products** - Junction table with contract pricing
+   - Links LTAs to products with contract-specific pricing
+   - Unique constraint on (ltaId, productId)
+   - Decimal contract price and currency
+   - Allows same product in multiple LTAs with different prices
+
+3. **LTA Clients** - Junction table for client assignments
+   - Links LTAs to clients (many-to-many)
+   - Unique constraint on (ltaId, clientId)
+   - Allows clients to belong to multiple LTAs
+
+4. **Products** - Master product catalog
+   - SKU-based identification
+   - Bilingual names and descriptions
+   - Stock status (in-stock, low-stock, out-of-stock)
+   - Inventory tracking (quantity, lowStockThreshold)
+   - Image URL support (nullable)
+   - Category metadata
+
+5. **Inventory Transactions** - Audit trail for stock changes
+   - Transaction types: adjustment, sale, return, initial
+   - Quantity change tracking (positive/negative)
+   - Reason and notes fields
+   - User tracking (who made the change)
+   - Timestamp
+
+6. **Clients** - User accounts with bilingual names and admin flag
    - Authentication credentials (username/password)
    - Contact information (email, phone)
    - Admin privilege flag for system management
 
-2. **Client Departments** - Organizational units within client companies
+7. **Client Departments** - Organizational units
    - Department types: finance, purchase, warehouse
    - Department-specific contact information
 
-3. **Client Locations** - Physical addresses and delivery points
+8. **Client Locations** - Physical addresses and delivery points
    - Bilingual location names and addresses
    - Headquarters designation flag
    - City/country metadata
 
-4. **Products** - Catalog items with bilingual content
-   - SKU-based identification
-   - Stock status tracking (in-stock, low-stock, out-of-stock)
-   - Optional image URLs and categorization
-
-5. **Client Pricing** - Client-specific product pricing
-   - Foreign key relationships to clients and products
-   - Currency support for international clients
-   - Allows different prices per client
-
-6. **Order Templates** - Reusable order configurations
+9. **Order Templates** - Reusable order configurations
    - Bilingual template names
    - JSON-serialized cart items
-   - Timestamp tracking for template usage
+   - Timestamp tracking
 
-7. **Orders** - Transaction records
-   - JSON-serialized order items
-   - Order status workflow (pending → confirmed → shipped → delivered)
-   - Total amount and currency tracking
-   - Foreign key to client locations for delivery
+10. **Orders** - Transaction records
+    - JSON-serialized order items
+    - Order status workflow (pending → confirmed → shipped → delivered)
+    - Total amount and currency tracking
+    - LTA reference (ltaId)
+    - Client location for delivery
+    - Pipefy card ID tracking
 
 **Data Relationships:**
 - One-to-many: Client → Departments, Locations, Orders, Templates
-- Many-to-many: Clients ↔ Products (through ClientPricing)
+- Many-to-many: LTAs ↔ Products (through LtaProducts with pricing)
+- Many-to-many: LTAs ↔ Clients (through LtaClients)
+- One-to-many: Products → InventoryTransactions
 - UUID primary keys generated via PostgreSQL `gen_random_uuid()`
+
+**Deprecated Tables:**
+- ClientPricing - Replaced by LTA-based pricing model
+
+## Business Logic
+
+**LTA Contract Fulfillment Flow:**
+1. Admin creates LTA contracts with dates and status
+2. Admin assigns products to LTA with contract-specific pricing
+3. Admin assigns clients to LTA (clients can be in multiple LTAs)
+4. Clients see only products from their assigned LTA(s)
+5. Cart enforces single-LTA context (cannot mix LTAs in one order)
+6. Orders validate: client authorization, product availability, contract pricing
+7. Inventory automatically decrements on successful order
+8. Pipefy webhook sends order data (if configured)
+
+**Inventory Management:**
+- Real-time stock tracking with quantity and thresholds
+- Auto-calculation of stock status (in-stock/low-stock/out-of-stock)
+- Transaction history for complete audit trail
+- Manual adjustments by admin with reason tracking
+- Automatic decrement on order placement
+
+**Security & Validation:**
+- Admin-only access for LTA management, inventory, and product management
+- Server-side price validation using LTA contract prices
+- Client authorization check for LTA access
+- Single-LTA order enforcement (frontend and backend)
+- No price manipulation possible (server validates against LTA pricing)
 
 ## External Dependencies
 
@@ -120,8 +180,9 @@ Preferred communication style: Simple, everyday language.
 - Environment variable: `SESSION_SECRET` (required for production)
 
 **File Processing:**
-- Multer for multipart/form-data handling (price import CSV/Excel)
-- Client-side file upload for price list imports
+- Multer for multipart/form-data handling
+- Product image upload (jpeg/jpg/png/webp, 5MB max)
+- Images stored in `attached_assets/products/`
 
 **Fonts (Google Fonts CDN):**
 - Inter: English UI text (variable weights 300-900)
@@ -143,3 +204,48 @@ Preferred communication style: Simple, everyday language.
 - Drizzle Kit for schema migrations and database management
 - tsx for TypeScript execution in development
 - PostCSS with Tailwind and Autoprefixer
+
+## Key Features
+
+**Admin Features:**
+- LTA Management: Create/edit/delete contracts, set dates and status
+- Product Assignment: Assign products to LTAs with contract pricing
+- Client Assignment: Assign clients to LTAs (multi-LTA support)
+- Product Management: CRUD operations with image upload
+- Inventory Management: Stock adjustments, transaction history
+- Client Management: View/edit client information, departments, locations
+
+**Client Features:**
+- View products from assigned LTA(s) in responsive grid (1-5 columns)
+- Product display: images, stock status, contract pricing
+- Single-LTA cart enforcement with visual indicators
+- Active contract badge showing current LTA
+- Order templates: save/load cart configurations
+- Order history with reorder functionality
+- Multi-language support (English/Arabic) with RTL
+
+**System Features:**
+- Bilingual throughout (English/Arabic)
+- Responsive design with mobile-first approach
+- Dark/light theme support
+- Real-time inventory tracking
+- Pipefy webhook integration for order processing
+- Complete audit trail via transaction history
+
+## Recent Changes (October 2025)
+
+**Major Restructuring: LTA-Centric Model**
+- Migrated from client-specific pricing to LTA-based contract pricing
+- Added LTA tables: ltas, ltaProducts, ltaClients
+- Updated order flow to track and validate LTA context
+- Implemented single-LTA cart enforcement (UX fix)
+- Added product image management with upload
+- Created admin LTA management pages
+- Updated client ordering page with responsive grid layout
+- Enhanced inventory management with transaction history
+
+**Test Credentials:**
+- Admin: username `admin` / password `admin123`
+- Test Client: username `test` / password `test123`
+  - Assigned to: Office Supplies Contract 2024 (4 products)
+  - Assigned to: Technology Equipment Contract 2024 (3 products)
