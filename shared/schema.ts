@@ -187,12 +187,23 @@ export const saveTemplateSchema = z.object({
   })),
 });
 
-// Client update schema
+// Client update schema (admin)
 export const updateClientSchema = insertClientSchema.pick({
   nameEn: true,
   nameAr: true,
   email: true,
   phone: true,
+});
+
+// Client creation schema (admin with password)
+export const createClientSchema = insertClientSchema.omit({ isAdmin: true });
+
+// Client self-update schema (clients can update own info)
+export const updateOwnProfileSchema = z.object({
+  nameEn: z.string().min(1, 'English name is required'),
+  nameAr: z.string().min(1, 'Arabic name is required'),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional(),
 });
 
 // Schema for bulk product assignment to LTA

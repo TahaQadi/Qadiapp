@@ -15,7 +15,9 @@ import {
   saveTemplateSchema,
   createProductSchema,
   updateProductSchema,
+  createClientSchema,
   updateClientSchema,
+  updateOwnProfileSchema,
   insertLtaSchema,
   insertLtaProductSchema,
   insertLtaClientSchema,
@@ -274,6 +276,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Error fetching client details",
         messageAr: "خطأ في جلب تفاصيل العميل"
+      });
+    }
+  });
+
+  app.post("/api/admin/clients", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = createClientSchema.parse(req.body);
+      const client = await storage.createClient(validatedData);
+      res.status(201).json({
+        id: client.id,
+        username: client.username,
+        nameEn: client.nameEn,
+        nameAr: client.nameAr,
+        email: client.email,
+        phone: client.phone,
+        isAdmin: client.isAdmin,
+        message: "Client created successfully",
+        messageAr: "تم إنشاء العميل بنجاح"
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        return res.status(409).json({
+          message: "Username already exists",
+          messageAr: "اسم المستخدم موجود بالفعل"
+        });
+      }
+      res.status(500).json({ 
+        message: "Error creating client",
+        messageAr: "خطأ في إنشاء العميل"
       });
     }
   });
