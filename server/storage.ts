@@ -23,13 +23,14 @@ import {
   type User,
   type UpsertUser,
   Notification,
+  notifications,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { eq, desc, and } from "drizzle-orm";
-import { notifications } from "./db"; // Import notifications table
-import crypto from "crypto"; // Import crypto module
+import crypto from "crypto";
+import { db } from "./db";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -133,6 +134,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   public sessionStore: session.Store;
+  private db = db;
   private users: Map<string, User>;
   private clients: Map<string, Client>;
   private clientDepartments: Map<string, ClientDepartment>;
@@ -674,34 +676,17 @@ export class MemStorage implements IStorage {
     messageAr: string;
     metadata?: string;
   }): Promise<Notification> {
-    const id = crypto.randomUUID();
-    const createdAt = new Date().toISOString();
-
-    await this.db.insert(notifications).values({
-      id,
+    const result = await this.db.insert(notifications).values({
       clientId: data.clientId,
       type: data.type,
       titleEn: data.titleEn,
       titleAr: data.titleAr,
       messageEn: data.messageEn,
       messageAr: data.messageAr,
-      isRead: false,
       metadata: data.metadata || null,
-      createdAt,
-    }).execute();
+    }).returning();
 
-    return {
-      id,
-      clientId: data.clientId,
-      type: data.type,
-      titleEn: data.titleEn,
-      titleAr: data.titleAr,
-      messageEn: data.messageEn,
-      messageAr: data.messageAr,
-      isRead: false,
-      metadata: data.metadata || null,
-      createdAt,
-    };
+    return result[0];
   }
 
   async getClientNotifications(clientId: string): Promise<Notification[]> {
