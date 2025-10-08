@@ -150,25 +150,7 @@ export default function OrderingPage() {
     );
   }
 
-  if (!ltasLoading && clientLtas.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4 max-w-md p-8">
-          <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Package className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-semibold">
-            {language === 'ar' ? 'لا توجد اتفاقيات متاحة' : 'No Contracts Available'}
-          </h2>
-          <p className="text-muted-foreground">
-            {language === 'ar'
-              ? 'لم يتم تعيينك لأي اتفاقية طويلة الأجل بعد. يرجى الاتصال بالمسؤول للحصول على إمكانية الوصول.'
-              : 'You have not been assigned to any Long-Term Agreements yet. Please contact your administrator for access.'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  
 
 
   const filteredProducts = selectedLtaFilter !== 'all'
