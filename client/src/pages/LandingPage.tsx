@@ -59,7 +59,7 @@ export default function LandingPage() {
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent" 
               dir={isArabic ? 'rtl' : 'ltr'}
             >
-              {isArabic ? 'نظام إدارة اتفاقيات الإمداد' : 'LTA Contract Fulfillment'}
+              {isArabic ? 'زي ما اتفقنا' : 'LTA Contract Fulfillment'}
             </h1>
             
             <p 
