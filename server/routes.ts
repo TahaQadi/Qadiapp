@@ -1080,9 +1080,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const row = dataRows[i];
         if (!row.trim()) continue;
 
+        let values: string[] = [];
         try {
           // Parse CSV row with quote handling
-          const values: string[] = [];
           let currentValue = '';
           let inQuotes = false;
           

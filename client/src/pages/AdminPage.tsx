@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LogOut, User, Plus, Pencil, Trash2, Package, FileText, X, ImageIcon } from 'lucide-react';
+import { LogOut, User, Plus, Pencil, Trash2, Package, FileText, X, ImageIcon, Download, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -57,9 +57,12 @@ export default function AdminPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResults, setImportResults] = useState<any>(null);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -192,6 +195,73 @@ export default function AdminPage() {
     },
   });
 
+  const exportProductsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/admin/products/export', {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onSuccess: () => {
+      toast({
+        description: language === 'ar' ? 'تم تصدير المنتجات بنجاح' : 'Products exported successfully',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        description: error.message,
+      });
+    },
+  });
+
+  const importProductsMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/admin/products/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Import failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setImportResults(data);
+      toast({
+        description: language === 'ar' ? data.messageAr : data.message,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        description: error.message,
+      });
+    },
+  });
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -213,6 +283,41 @@ export default function AdminPage() {
       setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast({
+        variant: 'destructive',
+        description: language === 'ar' ? 'الرجاء اختيار ملف CSV' : 'Please select a CSV file',
+      });
+      return;
+    }
+    
+    await importProductsMutation.mutateAsync(importFile);
+  };
+
+  const downloadTemplate = () => {
+    const csvHeader = 'SKU,Name (EN),Name (AR),Description (EN),Description (AR),Category,Image URL,Custom Metadata\n';
+    const csvExample = '"SAMPLE-001","Sample Product","منتج عينة","Sample description","وصف عينة","Electronics","",""';
+    const csv = csvHeader + csvExample;
+    
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv; charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'products_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
 
   const handleCreateProduct = async (data: ProductFormValues) => {
@@ -383,17 +488,38 @@ export default function AdminPage() {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
             <CardTitle>
               {language === 'ar' ? 'إدارة المنتجات' : 'Product Management'}
             </CardTitle>
-            <Button 
-              onClick={() => setCreateDialogOpen(true)}
-              data-testid="button-create-product"
-            >
-              <Plus className="h-4 w-4 me-2" />
-              {language === 'ar' ? 'منتج جديد' : 'New Product'}
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => exportProductsMutation.mutate()}
+                disabled={exportProductsMutation.isPending}
+                data-testid="button-export-products"
+              >
+                <Download className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'تصدير' : 'Export'}
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+                data-testid="button-import-products"
+              >
+                <Upload className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'استيراد' : 'Import'}
+              </Button>
+              <Button 
+                onClick={() => setCreateDialogOpen(true)}
+                data-testid="button-create-product"
+              >
+                <Plus className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'منتج جديد' : 'New Product'}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {productsLoading ? (
@@ -834,6 +960,135 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Products Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={(open) => {
+        setImportDialogOpen(open);
+        if (!open) {
+          setImportFile(null);
+          setImportResults(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-import-products">
+          <DialogHeader>
+            <DialogTitle>{language === 'ar' ? 'استيراد المنتجات' : 'Import Products'}</DialogTitle>
+            <DialogDescription>
+              {language === 'ar' 
+                ? 'رفع ملف CSV لإنشاء أو تحديث المنتجات. سيتم تحديث المنتجات الموجودة بناءً على رمز المنتج (SKU).'
+                : 'Upload a CSV file to create or update products. Existing products will be updated based on SKU.'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <label className="text-sm font-medium">
+                  {language === 'ar' ? 'ملف CSV' : 'CSV File'}
+                </label>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={downloadTemplate}
+                  className="h-auto p-0"
+                  data-testid="button-download-template"
+                >
+                  {language === 'ar' ? 'تحميل النموذج' : 'Download Template'}
+                </Button>
+              </div>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleImportFileChange}
+                data-testid="input-import-file"
+              />
+              {importFile && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {language === 'ar' ? 'الملف المحدد:' : 'Selected file:'} {importFile.name}
+                </p>
+              )}
+            </div>
+
+            {importResults && (
+              <div className="space-y-2">
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm font-medium mb-2">
+                    {language === 'ar' ? 'نتائج الاستيراد' : 'Import Results'}
+                  </p>
+                  <p className="text-sm">
+                    {language === 'ar' 
+                      ? `نجح: ${importResults.success.length} | فشل: ${importResults.errors.length}`
+                      : `Success: ${importResults.success.length} | Failed: ${importResults.errors.length}`
+                    }
+                  </p>
+                </div>
+
+                {importResults.errors.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    <p className="text-sm font-medium text-destructive">
+                      {language === 'ar' ? 'الأخطاء:' : 'Errors:'}
+                    </p>
+                    {importResults.errors.map((error: any, idx: number) => (
+                      <div key={idx} className="text-xs p-2 bg-destructive/10 rounded">
+                        {language === 'ar' 
+                          ? `الصف ${error.row}: ${error.messageAr || error.message}`
+                          : `Row ${error.row}: ${error.message}`
+                        }
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {importResults.success.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                      {language === 'ar' ? 'نجح:' : 'Success:'}
+                    </p>
+                    {importResults.success.slice(0, 10).map((item: any, idx: number) => (
+                      <div key={idx} className="text-xs p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                        {language === 'ar' 
+                          ? `الصف ${item.row}: ${item.sku} - ${item.actionAr}`
+                          : `Row ${item.row}: ${item.sku} - ${item.action}`
+                        }
+                      </div>
+                    ))}
+                    {importResults.success.length > 10 && (
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ar' 
+                          ? `و ${importResults.success.length - 10} أخرى...`
+                          : `and ${importResults.success.length - 10} more...`
+                        }
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setImportDialogOpen(false)}
+              data-testid="button-cancel-import"
+            >
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!importFile || importProductsMutation.isPending}
+              data-testid="button-submit-import"
+            >
+              {importProductsMutation.isPending 
+                ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...') 
+                : (language === 'ar' ? 'استيراد' : 'Import')
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
