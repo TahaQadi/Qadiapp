@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Package, ArrowLeft } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { LogOut, User, Package, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -25,7 +26,17 @@ const clientFormSchema = z.object({
   phone: z.string().optional(),
 });
 
+const createClientSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  nameEn: z.string().min(1, 'English name is required'),
+  nameAr: z.string().min(1, 'Arabic name is required'),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional(),
+});
+
 type ClientFormValues = z.infer<typeof clientFormSchema>;
+type CreateClientFormValues = z.infer<typeof createClientSchema>;
 
 interface ClientBasic {
   id: string;
@@ -68,6 +79,7 @@ export default function AdminClientsPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery<ClientBasic[]>({
     queryKey: ['/api/admin/clients'],
@@ -88,6 +100,40 @@ export default function AdminClientsPage() {
     },
   });
 
+  const createForm = useForm<CreateClientFormValues>({
+    resolver: zodResolver(createClientSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+      nameEn: '',
+      nameAr: '',
+      email: '',
+      phone: '',
+    },
+  });
+
+  const createClientMutation = useMutation({
+    mutationFn: async (data: CreateClientFormValues) => {
+      const res = await apiRequest('POST', '/api/admin/clients', data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+      setCreateDialogOpen(false);
+      createForm.reset();
+      toast({
+        title: language === 'ar' ? 'تم إنشاء العميل بنجاح' : 'Client created successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في إنشاء العميل' : 'Error creating client',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const updateClientMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ClientFormValues }) => {
       const res = await apiRequest('PUT', `/api/admin/clients/${id}`, data);
@@ -105,6 +151,26 @@ export default function AdminClientsPage() {
     onError: (error: any) => {
       toast({
         title: language === 'ar' ? 'خطأ في تحديث العميل' : 'Error updating client',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest('DELETE', `/api/admin/clients/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+      setSelectedClientId(null);
+      toast({
+        title: language === 'ar' ? 'تم حذف العميل بنجاح' : 'Client deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في حذف العميل' : 'Error deleting client',
         description: error.message,
         variant: 'destructive',
       });
@@ -203,10 +269,124 @@ export default function AdminClientsPage() {
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="md:col-span-1">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>
                 {language === 'ar' ? 'قائمة العملاء' : 'Client List'}
               </CardTitle>
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="outline" data-testid="button-create-client">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {language === 'ar' ? 'إنشاء عميل جديد' : 'Create New Client'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {language === 'ar' 
+                        ? 'أدخل معلومات العميل الجديد' 
+                        : 'Enter the new client information'}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...createForm}>
+                    <form onSubmit={createForm.handleSubmit((data) => createClientMutation.mutate(data))} className="space-y-4">
+                      <FormField
+                        control={createForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{language === 'ar' ? 'اسم المستخدم' : 'Username'}</FormLabel>
+                            <FormControl>
+                              <Input {...field} data-testid="input-create-username" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={createForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{language === 'ar' ? 'كلمة المرور' : 'Password'}</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="password" data-testid="input-create-password" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="nameEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} data-testid="input-create-name-en" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="nameAr"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} data-testid="input-create-name-ar" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <FormField
+                        control={createForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" data-testid="input-create-email" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={createForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
+                            <FormControl>
+                              <Input {...field} data-testid="input-create-phone" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DialogFooter>
+                        <Button
+                          type="submit"
+                          disabled={createClientMutation.isPending}
+                          data-testid="button-submit-create-client"
+                        >
+                          {createClientMutation.isPending
+                            ? (language === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
+                            : (language === 'ar' ? 'إنشاء عميل' : 'Create Client')}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               {clientsLoading ? (
@@ -251,10 +431,25 @@ export default function AdminClientsPage() {
           </Card>
 
           <Card className="md:col-span-2">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>
                 {language === 'ar' ? 'تفاصيل العميل' : 'Client Details'}
               </CardTitle>
+              {selectedClientId && clientDetails?.client && !clientDetails.client.isAdmin && (
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => {
+                    if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا العميل؟' : 'Are you sure you want to delete this client?')) {
+                      deleteClientMutation.mutate(selectedClientId);
+                    }
+                  }}
+                  disabled={deleteClientMutation.isPending}
+                  data-testid="button-delete-client"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {!selectedClientId ? (
