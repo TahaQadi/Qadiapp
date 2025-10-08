@@ -133,6 +133,20 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull(),
+  type: text("type").notNull(), // e.g., 'order_created', 'order_status_changed', 'system'
+  titleEn: text("title_en").notNull(),
+  titleAr: text("title_ar").notNull(),
+  messageEn: text("message_en").notNull(),
+  messageAr: text("message_ar").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 
 // Insert schemas
 // Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
@@ -146,6 +160,8 @@ export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: t
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, isRead: true });
+
 
 // Login schema
 export const loginSchema = z.object({
@@ -253,6 +269,7 @@ export type LtaClient = typeof ltaClients.$inferSelect;
 export type ClientPricing = typeof clientPricing.$inferSelect;
 export type OrderTemplate = typeof orderTemplates.$inferSelect;
 export type Order = typeof orders.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertClientDepartment = z.infer<typeof insertClientDepartmentSchema>;
@@ -264,6 +281,7 @@ export type InsertLtaClient = z.infer<typeof insertLtaClientSchema>;
 export type InsertClientPricing = z.infer<typeof insertClientPricingSchema>;
 export type InsertOrderTemplate = z.infer<typeof insertOrderTemplateSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;

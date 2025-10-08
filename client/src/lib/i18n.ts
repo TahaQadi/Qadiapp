@@ -11,11 +11,11 @@ const resources = {
       "templates": "Templates",
       "history": "History",
       "language": "Language",
-      
+
       // Product
       "addToCart": "Add to Cart",
       "sku": "SKU",
-      
+
       // Cart
       "yourCart": "Your Cart",
       "emptyCart": "Your cart is empty",
@@ -27,7 +27,7 @@ const resources = {
       "saveAsTemplate": "Save as Template",
       "remove": "Remove",
       "clearCart": "Clear Cart",
-      
+
       // Templates
       "orderTemplates": "Order Templates",
       "noTemplates": "No templates saved",
@@ -39,7 +39,7 @@ const resources = {
       "deleteTemplate": "Delete",
       "saveTemplate": "Save Template",
       "cancel": "Cancel",
-      
+
       // Order History
       "orderHistory": "Order History",
       "noOrders": "No orders yet",
@@ -50,13 +50,20 @@ const resources = {
       "itemsSummary": "Items",
       "amount": "Amount",
       "actions": "Actions",
-      "viewDetails": "View",
+      "viewDetails": "View Details",
       "reorder": "Reorder",
       "pending": "Pending",
       "confirmed": "Confirmed",
       "shipped": "Shipped",
       "delivered": "Delivered",
-      
+
+      // Notifications
+      "notifications": "Notifications",
+      "noNotifications": "No notifications",
+      "markAllAsRead": "Mark all as read",
+      "markAsRead": "Mark as read",
+      "deleteNotification": "Delete",
+
       // Messages
       "orderSubmitted": "Order submitted successfully",
       "templateSaved": "Template saved successfully",
@@ -64,7 +71,7 @@ const resources = {
       "templateDeleted": "Template deleted",
       "itemAdded": "Item added to cart",
       "itemRemoved": "Item removed from cart",
-      
+
       // Theme
       "darkMode": "Dark Mode",
       "lightMode": "Light Mode",
@@ -79,11 +86,11 @@ const resources = {
       "templates": "القوالب",
       "history": "السجل",
       "language": "اللغة",
-      
+
       // Product
       "addToCart": "أضف للسلة",
       "sku": "رمز المنتج",
-      
+
       // Cart
       "yourCart": "سلة المشتريات",
       "emptyCart": "السلة فارغة",
@@ -95,7 +102,7 @@ const resources = {
       "saveAsTemplate": "حفظ كقالب",
       "remove": "إزالة",
       "clearCart": "إفراغ السلة",
-      
+
       // Templates
       "orderTemplates": "قوالب الطلبات",
       "noTemplates": "لا توجد قوالب محفوظة",
@@ -107,7 +114,7 @@ const resources = {
       "deleteTemplate": "حذف",
       "saveTemplate": "حفظ القالب",
       "cancel": "إلغاء",
-      
+
       // Order History
       "orderHistory": "سجل الطلبات",
       "noOrders": "لا توجد طلبات",
@@ -118,13 +125,20 @@ const resources = {
       "itemsSummary": "العناصر",
       "amount": "المبلغ",
       "actions": "الإجراءات",
-      "viewDetails": "عرض",
+      "viewDetails": "عرض التفاصيل",
       "reorder": "إعادة الطلب",
       "pending": "قيد الانتظار",
       "confirmed": "مؤكد",
       "shipped": "تم الشحن",
       "delivered": "تم التسليم",
-      
+
+      // Notifications
+      "notifications": "الإشعارات",
+      "noNotifications": "لا توجد إشعارات",
+      "markAllAsRead": "وضع علامة مقروء على الكل",
+      "markAsRead": "وضع علامة مقروء",
+      "deleteNotification": "حذف",
+
       // Messages
       "orderSubmitted": "تم تقديم الطلب بنجاح",
       "templateSaved": "تم حفظ القالب بنجاح",
@@ -132,7 +146,7 @@ const resources = {
       "templateDeleted": "تم حذف القالب",
       "itemAdded": "تمت إضافة العنصر إلى السلة",
       "itemRemoved": "تمت إزالة العنصر من السلة",
-      
+
       // Theme
       "darkMode": "الوضع الداكن",
       "lightMode": "الوضع الفاتح",

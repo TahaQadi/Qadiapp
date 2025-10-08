@@ -1,10 +1,10 @@
-import { 
-  type Client, 
+import {
+  type Client,
   type ClientDepartment,
   type ClientLocation,
-  type Product, 
-  type ClientPricing, 
-  type OrderTemplate, 
+  type Product,
+  type ClientPricing,
+  type OrderTemplate,
   type Order,
   type Lta,
   type LtaProduct,
@@ -22,93 +22,113 @@ import {
   type AuthUser,
   type User,
   type UpsertUser,
+  Notification,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { eq, desc, and } from "drizzle-orm";
+import { notifications } from "./db"; // Import notifications table
+import crypto from "crypto"; // Import crypto module
 
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   sessionStore: session.Store;
-  
+
   // Replit Auth User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Client Authentication
   getClientByUsername(username: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   validateClientCredentials(username: string, password: string): Promise<AuthUser | null>;
-  
+
   // Clients
   getClients(): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined>;
   deleteClient(id: string): Promise<void>;
-  
+
   // Client Departments
   getClientDepartments(clientId: string): Promise<ClientDepartment[]>;
   createClientDepartment(department: InsertClientDepartment): Promise<ClientDepartment>;
   updateClientDepartment(id: string, department: Partial<InsertClientDepartment>): Promise<ClientDepartment | undefined>;
   deleteClientDepartment(id: string): Promise<void>;
-  
+
   // Client Locations
   getClientLocations(clientId: string): Promise<ClientLocation[]>;
   createClientLocation(location: InsertClientLocation): Promise<ClientLocation>;
   updateClientLocation(id: string, location: Partial<InsertClientLocation>): Promise<ClientLocation | undefined>;
   deleteClientLocation(id: string): Promise<void>;
-  
+
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   getProductBySku(sku: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
-  
+
   // Client Pricing
   getClientPricing(clientId: string): Promise<ClientPricing[]>;
   createClientPricing(pricing: InsertClientPricing): Promise<ClientPricing>;
   bulkImportPricing(clientId: string, pricingData: Array<{ sku: string; price: string; currency?: string }>): Promise<number>;
-  
+
   // Order Templates
   getOrderTemplates(clientId: string): Promise<OrderTemplate[]>;
   getOrderTemplate(id: string): Promise<OrderTemplate | undefined>;
   createOrderTemplate(template: InsertOrderTemplate): Promise<OrderTemplate>;
   deleteOrderTemplate(id: string): Promise<void>;
-  
+
   // Orders
   getOrders(clientId: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
-  
+
   // Product Management
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<void>;
-  
+
   // LTA Management
   createLta(lta: InsertLta): Promise<Lta>;
   getLta(id: string): Promise<Lta | null>;
   getAllLtas(): Promise<Lta[]>;
   updateLta(id: string, updates: Partial<InsertLta>): Promise<Lta | null>;
   deleteLta(id: string): Promise<boolean>;
-  
+
   // LTA Products (assignment with pricing)
   assignProductToLta(ltaProduct: InsertLtaProduct): Promise<LtaProduct>;
   removeProductFromLta(ltaId: string, productId: string): Promise<boolean>;
   getLtaProducts(ltaId: string): Promise<LtaProduct[]>;
   updateLtaProductPrice(id: string, contractPrice: string, currency?: string): Promise<LtaProduct | null>;
-  
+
   // LTA Clients (assignment)
   assignClientToLta(ltaClient: InsertLtaClient): Promise<LtaClient>;
   removeClientFromLta(ltaId: string, clientId: string): Promise<boolean>;
   getLtaClients(ltaId: string): Promise<LtaClient[]>;
   getClientLtas(clientId: string): Promise<Lta[]>;
-  
+
   // Product queries for LTA context
   getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>>;
   getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>>;
 
   // Bulk operations
   bulkAssignProductsToLta(ltaId: string, products: Array<{ sku: string; contractPrice: string; currency: string }>): Promise<{ success: number; failed: Array<{ sku: string; error: string }> }>;
+
+  // Notifications
+  createNotification(data: {
+    clientId: string;
+    type: 'order_created' | 'order_status_changed' | 'system';
+    titleEn: string;
+    titleAr: string;
+    messageEn: string;
+    messageAr: string;
+    metadata?: string;
+  }): Promise<Notification>;
+  getClientNotifications(clientId: string): Promise<Notification[]>;
+  markNotificationAsRead(id: string): Promise<Notification | null>;
+  markAllNotificationsAsRead(clientId: string): Promise<void>;
+  deleteNotification(id: string): Promise<void>;
+  getUnreadNotificationCount(clientId: string): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -196,11 +216,11 @@ export class MemStorage implements IStorage {
 
   async createClient(insertClient: InsertClient): Promise<Client> {
     const id = randomUUID();
-    const client: Client = { 
-      ...insertClient, 
-      id, 
+    const client: Client = {
+      ...insertClient,
+      id,
       userId: insertClient.userId ?? null,
-      email: insertClient.email ?? null, 
+      email: insertClient.email ?? null,
       phone: insertClient.phone ?? null,
       isAdmin: insertClient.isAdmin ?? false
     };
@@ -212,7 +232,7 @@ export class MemStorage implements IStorage {
     const { nameEn, nameAr, email, phone } = data;
     const client = this.clients.get(id);
     if (!client) return undefined;
-    
+
     const updated = {
       ...client,
       nameEn: nameEn ?? client.nameEn,
@@ -315,9 +335,9 @@ export class MemStorage implements IStorage {
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = randomUUID();
-    
-    const product: Product = { 
-      ...insertProduct, 
+
+    const product: Product = {
+      ...insertProduct,
       id,
       descriptionEn: insertProduct.descriptionEn ?? null,
       descriptionAr: insertProduct.descriptionAr ?? null,
@@ -350,8 +370,8 @@ export class MemStorage implements IStorage {
 
   async createClientPricing(insertPricing: InsertClientPricing): Promise<ClientPricing> {
     const id = randomUUID();
-    const pricing: ClientPricing = { 
-      ...insertPricing, 
+    const pricing: ClientPricing = {
+      ...insertPricing,
       id,
       currency: insertPricing.currency ?? 'USD',
       importedAt: new Date(),
@@ -361,11 +381,11 @@ export class MemStorage implements IStorage {
   }
 
   async bulkImportPricing(
-    clientId: string, 
+    clientId: string,
     pricingData: Array<{ sku: string; price: string; currency?: string }>
   ): Promise<number> {
     let importedCount = 0;
-    
+
     for (const row of pricingData) {
       const product = await this.getProductBySku(row.sku);
       if (product) {
@@ -373,7 +393,7 @@ export class MemStorage implements IStorage {
         const existingPricing = Array.from(this.clientPricing.values()).find(
           (p) => p.clientId === clientId && p.productId === product.id
         );
-        
+
         if (existingPricing) {
           // Update existing pricing
           existingPricing.price = row.price;
@@ -391,7 +411,7 @@ export class MemStorage implements IStorage {
         importedCount++;
       }
     }
-    
+
     return importedCount;
   }
 
@@ -408,8 +428,8 @@ export class MemStorage implements IStorage {
 
   async createOrderTemplate(insertTemplate: InsertOrderTemplate): Promise<OrderTemplate> {
     const id = randomUUID();
-    const template: OrderTemplate = { 
-      ...insertTemplate, 
+    const template: OrderTemplate = {
+      ...insertTemplate,
       id,
       createdAt: new Date()
     };
@@ -430,8 +450,8 @@ export class MemStorage implements IStorage {
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
-    const order: Order = { 
-      ...insertOrder, 
+    const order: Order = {
+      ...insertOrder,
       id,
       status: insertOrder.status ?? 'pending',
       pipefyCardId: insertOrder.pipefyCardId ?? null,
@@ -468,7 +488,7 @@ export class MemStorage implements IStorage {
   async updateLta(id: string, updates: Partial<InsertLta>): Promise<Lta | null> {
     const lta = this.ltas.get(id);
     if (!lta) return null;
-    
+
     const updated = { ...lta, ...updates };
     this.ltas.set(id, updated);
     return updated;
@@ -508,7 +528,7 @@ export class MemStorage implements IStorage {
   async updateLtaProductPrice(id: string, contractPrice: string, currency?: string): Promise<LtaProduct | null> {
     const ltaProduct = this.ltaProducts.get(id);
     if (!ltaProduct) return null;
-    
+
     const updated = {
       ...ltaProduct,
       contractPrice,
@@ -548,7 +568,7 @@ export class MemStorage implements IStorage {
     const clientLtaAssignments = Array.from(this.ltaClients.values()).filter(
       (lc) => lc.clientId === clientId
     );
-    
+
     const ltas: Lta[] = [];
     for (const assignment of clientLtaAssignments) {
       const lta = this.ltas.get(assignment.ltaId);
@@ -563,7 +583,7 @@ export class MemStorage implements IStorage {
   async getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>> {
     const ltaProducts = await this.getLtaProducts(ltaId);
     const productsWithPricing: Array<Product & { contractPrice: string; currency: string }> = [];
-    
+
     for (const ltaProduct of ltaProducts) {
       const product = this.products.get(ltaProduct.productId);
       if (product) {
@@ -574,17 +594,17 @@ export class MemStorage implements IStorage {
         });
       }
     }
-    
+
     return productsWithPricing;
   }
 
   async getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>> {
     const clientLtas = await this.getClientLtas(clientId);
     const productsWithPricing: Array<Product & { contractPrice: string; currency: string; ltaId: string }> = [];
-    
+
     for (const lta of clientLtas) {
       const ltaProducts = await this.getLtaProducts(lta.id);
-      
+
       for (const ltaProduct of ltaProducts) {
         const product = this.products.get(ltaProduct.productId);
         if (product) {
@@ -597,7 +617,7 @@ export class MemStorage implements IStorage {
         }
       }
     }
-    
+
     return productsWithPricing;
   }
 
@@ -613,7 +633,7 @@ export class MemStorage implements IStorage {
     for (const item of products) {
       try {
         const product = Array.from(this.products.values()).find(p => p.sku === item.sku);
-        
+
         if (!product) {
           results.failed.push({ sku: item.sku, error: 'Product not found' });
           continue;
@@ -642,6 +662,98 @@ export class MemStorage implements IStorage {
     }
 
     return results;
+  }
+
+  // Notifications
+  async createNotification(data: {
+    clientId: string;
+    type: 'order_created' | 'order_status_changed' | 'system';
+    titleEn: string;
+    titleAr: string;
+    messageEn: string;
+    messageAr: string;
+    metadata?: string;
+  }): Promise<Notification> {
+    const id = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+
+    await this.db.insert(notifications).values({
+      id,
+      clientId: data.clientId,
+      type: data.type,
+      titleEn: data.titleEn,
+      titleAr: data.titleAr,
+      messageEn: data.messageEn,
+      messageAr: data.messageAr,
+      isRead: false,
+      metadata: data.metadata || null,
+      createdAt,
+    }).execute();
+
+    return {
+      id,
+      clientId: data.clientId,
+      type: data.type,
+      titleEn: data.titleEn,
+      titleAr: data.titleAr,
+      messageEn: data.messageEn,
+      messageAr: data.messageAr,
+      isRead: false,
+      metadata: data.metadata || null,
+      createdAt,
+    };
+  }
+
+  async getClientNotifications(clientId: string): Promise<Notification[]> {
+    const result = await this.db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.clientId, clientId))
+      .orderBy(desc(notifications.createdAt))
+      .execute();
+
+    return result;
+  }
+
+  async markNotificationAsRead(id: string): Promise<Notification | null> {
+    await this.db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id))
+      .execute();
+
+    const result = await this.db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id))
+      .execute();
+
+    return result[0] || null;
+  }
+
+  async markAllNotificationsAsRead(clientId: string): Promise<void> {
+    await this.db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.clientId, clientId))
+      .execute();
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    await this.db.delete(notifications).where(eq(notifications.id, id)).execute();
+  }
+
+  async getUnreadNotificationCount(clientId: string): Promise<number> {
+    const result = await this.db
+      .select()
+      .from(notifications)
+      .where(and(
+        eq(notifications.clientId, clientId),
+        eq(notifications.isRead, false)
+      ))
+      .execute();
+
+    return result.length;
   }
 }
 

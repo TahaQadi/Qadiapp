@@ -10,6 +10,7 @@ import { OrderHistoryTable } from '@/components/OrderHistoryTable';
 import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -506,6 +507,7 @@ export default function OrderingPage() {
                 </Link>
               </Button>
             )}
+            <NotificationCenter />
             <LanguageToggle />
             <ThemeToggle />
             <Button

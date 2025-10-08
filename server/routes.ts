@@ -28,6 +28,7 @@ import { z } from "zod";
 import path from "path";
 import crypto from "crypto";
 import fs from "fs";
+import { emailService } from "./email";
 
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 
@@ -878,10 +879,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ltaId, // Include ltaId in order
       });
 
+      const client = await storage.getClient(req.client.id);
+
       // Send to Pipefy webhook if configured
+      let finalOrder = order;
       if (process.env.PIPEFY_WEBHOOK_URL) {
         try {
-          const client = await storage.getClient(req.client.id);
           const pipefyResponse = await fetch(process.env.PIPEFY_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -901,11 +904,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const pipefyData = await pipefyResponse.json();
             if (pipefyData.card_id) {
               // Update order with Pipefy card ID
-              const updatedOrder = await storage.createOrder({
+              finalOrder = await storage.createOrder({
                 ...order,
                 pipefyCardId: pipefyData.card_id,
               });
-              return res.status(201).json(updatedOrder);
             }
           }
         } catch (pipefyError: any) {
@@ -914,7 +916,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.status(201).json(order);
+      // Send order confirmation email
+      if (client) {
+        try {
+          const language = req.headers['accept-language']?.includes('ar') ? 'ar' : 'en';
+          await emailService.sendOrderConfirmation({
+            order: finalOrder,
+            client,
+            items: validatedItems,
+          }, language as 'en' | 'ar');
+        } catch (emailError: any) {
+          console.error('Error sending order confirmation email:', emailError);
+          // Continue even if email fails - order is already created
+        }
+      }
+
+      // Create in-app notification
+      try {
+        await storage.createNotification({
+          clientId: req.client.id,
+          type: 'order_created',
+          titleEn: 'Order Placed Successfully',
+          titleAr: 'تم تقديم الطلب بنجاح',
+          messageEn: `Your order #${finalOrder.id.substring(0, 8)} has been placed successfully. Total: ${finalOrder.totalAmount} ${validatedItems[0]?.currency || 'USD'}`,
+          messageAr: `تم تقديم طلبك #${finalOrder.id.substring(0, 8)} بنجاح. المجموع: ${finalOrder.totalAmount} ${validatedItems[0]?.currency || 'USD'}`,
+          metadata: JSON.stringify({ orderId: finalOrder.id }),
+        });
+      } catch (notifError: any) {
+        console.error('Error creating notification:', notifError);
+      }
+
+      res.status(201).json(finalOrder);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -926,6 +958,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error.message,
         messageAr: "حدث خطأ أثناء إنشاء الطلب",
       });
+    }
+  });
+
+  // Notifications Routes
+  app.get("/api/client/notifications", requireAuth, async (req: any, res) => {
+    try {
+      const notifications = await storage.getClientNotifications(req.client.id);
+      res.json(notifications);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/client/notifications/unread-count", requireAuth, async (req: any, res) => {
+    try {
+      const count = await storage.getUnreadNotificationCount(req.client.id);
+      res.json({ count });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/client/notifications/:id/read", requireAuth, async (req: any, res) => {
+    try {
+      const notification = await storage.markNotificationAsRead(req.params.id);
+      if (!notification) {
+        return res.status(404).json({ 
+          message: "Notification not found",
+          messageAr: "الإشعار غير موجود",
+        });
+      }
+      res.json(notification);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/client/notifications/mark-all-read", requireAuth, async (req: any, res) => {
+    try {
+      await storage.markAllNotificationsAsRead(req.client.id);
+      res.json({ 
+        message: "All notifications marked as read",
+        messageAr: "تم وضع علامة مقروء على جميع الإشعارات",
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/client/notifications/:id", requireAuth, async (req: any, res) => {
+    try {
+      await storage.deleteNotification(req.params.id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 
