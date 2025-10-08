@@ -988,7 +988,7 @@ export default function AdminPage() {
                 </label>
                 <Button
                   type="button"
-                  variant="link"
+                  variant="ghost"
                   size="sm"
                   onClick={downloadTemplate}
                   className="h-auto p-0"
