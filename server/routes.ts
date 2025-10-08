@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import multer from "multer";
 import { 
   loginSchema, 
@@ -61,33 +61,117 @@ const uploadImage = multer({
   }
 });
 
-function requireAuth(req: any, res: any, next: any) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
+// Middleware to get client data from Replit Auth user
+async function getClientFromAuth(req: any, res: any, next: any) {
+  try {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Find client linked to this Replit Auth user
+    const clients = await storage.getClients();
+    let client = clients.find(c => c.userId === userId);
+    
+    // If no client exists, this is first login - create a client record
+    if (!client) {
+      const replitUser = await storage.getUser(userId);
+      if (!replitUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      // Create a client record linked to this Replit Auth user
+      client = await storage.createClient({
+        userId: userId,
+        nameEn: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'User',
+        nameAr: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'مستخدم',
+        username: replitUser.email || `user_${userId.substring(0, 8)}`,
+        password: '', // Not used with Replit Auth
+        email: replitUser.email || null,
+        phone: null,
+        isAdmin: false,
+      });
+    }
+
+    // Attach client to request
+    (req as any).client = client;
+    next();
+  } catch (error: any) {
+    console.error("Error in getClientFromAuth:", error);
+    res.status(500).json({ message: error.message });
   }
-  next();
 }
 
-function requireAdmin(req: any, res: any, next: any) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  if (!req.user?.isAdmin) {
-    return res.status(403).json({ 
-      message: "Unauthorized - Admin access required",
-      messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
-    });
-  }
-  next();
+// Require auth middleware (uses Replit Auth + loads client)
+async function requireAuth(req: any, res: any, next: any) {
+  await isAuthenticated(req, res, async () => {
+    await getClientFromAuth(req, res, next);
+  });
+}
+
+// Require admin middleware
+async function requireAdmin(req: any, res: any, next: any) {
+  await requireAuth(req, res, () => {
+    if (!(req as any).client?.isAdmin) {
+      return res.status(403).json({ 
+        message: "Unauthorized - Admin access required",
+        messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
+      });
+    }
+    next();
+  });
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  setupAuth(app);
+  await setupAuth(app);
+
+  // Auth endpoint - returns user with client data
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const replitUser = await storage.getUser(userId);
+      
+      // Find or create client linked to this user
+      const clients = await storage.getClients();
+      let client = clients.find(c => c.userId === userId);
+      
+      if (!client && replitUser) {
+        client = await storage.createClient({
+          userId: userId,
+          nameEn: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'User',
+          nameAr: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'مستخدم',
+          username: replitUser.email || `user_${userId.substring(0, 8)}`,
+          password: '', // Not used with Replit Auth
+          email: replitUser.email || null,
+          phone: null,
+          isAdmin: false,
+        });
+      }
+      
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      res.json({
+        id: client.id,
+        username: client.username,
+        nameEn: client.nameEn,
+        nameAr: client.nameAr,
+        email: client.email,
+        phone: client.phone,
+        isAdmin: client.isAdmin,
+        profileImageUrl: replitUser?.profileImageUrl,
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 
   // Client Profile Routes
-  app.get("/api/client/profile", requireAuth, async (req, res) => {
+  app.get("/api/client/profile", requireAuth, async (req: any, res) => {
     try {
-      const client = await storage.getClient(req.user!.id);
+      const client = req.client;
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -113,11 +197,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Department Routes
-  app.post("/api/client/departments", requireAuth, async (req, res) => {
+  app.post("/api/client/departments", requireAuth, async (req: any, res) => {
     try {
       const validatedData = createDepartmentSchema.parse(req.body);
       const department = await storage.createClientDepartment({
-        clientId: req.user!.id,
+        clientId: req.client.id,
         ...validatedData,
       });
       res.status(201).json(department);
@@ -132,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/client/departments/:id", requireAuth, async (req, res) => {
+  app.put("/api/client/departments/:id", requireAuth, async (req: any, res) => {
     try {
       const validatedData = updateDepartmentSchema.parse(req.body);
       const department = await storage.updateClientDepartment(req.params.id, validatedData);
@@ -154,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/client/departments/:id", requireAuth, async (req, res) => {
+  app.delete("/api/client/departments/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deleteClientDepartment(req.params.id);
       res.sendStatus(204);
@@ -164,11 +248,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Location Routes
-  app.post("/api/client/locations", requireAuth, async (req, res) => {
+  app.post("/api/client/locations", requireAuth, async (req: any, res) => {
     try {
       const validatedData = createLocationSchema.parse(req.body);
       const location = await storage.createClientLocation({
-        clientId: req.user!.id,
+        clientId: req.client.id,
         ...validatedData,
       });
       res.status(201).json(location);
@@ -183,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/client/locations/:id", requireAuth, async (req, res) => {
+  app.put("/api/client/locations/:id", requireAuth, async (req: any, res) => {
     try {
       const validatedData = updateLocationSchema.parse(req.body);
       const location = await storage.updateClientLocation(req.params.id, validatedData);
@@ -205,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/client/locations/:id", requireAuth, async (req, res) => {
+  app.delete("/api/client/locations/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deleteClientLocation(req.params.id);
       res.sendStatus(204);
@@ -215,9 +299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products Routes
-  app.get("/api/products", requireAuth, async (req, res) => {
+  app.get("/api/products", requireAuth, async (req: any, res) => {
     try {
-      const products = await storage.getProductsForClient(req.user!.id);
+      const products = await storage.getProductsForClient(req.client.id);
       res.json(products);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -225,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Client Management Routes
-  app.get("/api/admin/clients", requireAdmin, async (req, res) => {
+  app.get("/api/admin/clients", requireAdmin, async (req: any, res) => {
     try {
       const clients = await storage.getClients();
       const clientsBasicInfo = clients.map(client => ({
@@ -246,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+  app.get("/api/admin/clients/:id", requireAdmin, async (req: any, res) => {
     try {
       const client = await storage.getClient(req.params.id);
       if (!client) {
@@ -280,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/clients", requireAdmin, async (req, res) => {
+  app.post("/api/admin/clients", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createClientSchema.parse(req.body);
       const client = await storage.createClient(validatedData);
@@ -315,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+  app.put("/api/admin/clients/:id", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = updateClientSchema.parse(req.body);
       const client = await storage.updateClient(req.params.id, validatedData);
@@ -348,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/clients/:id", requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteClient(req.params.id);
       res.sendStatus(204);
@@ -361,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Department Management
-  app.post("/api/admin/clients/:clientId/departments", requireAdmin, async (req, res) => {
+  app.post("/api/admin/clients/:clientId/departments", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createDepartmentSchema.parse(req.body);
       const department = await storage.createClientDepartment({
@@ -383,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/departments/:id", requireAdmin, async (req, res) => {
+  app.put("/api/admin/departments/:id", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = updateDepartmentSchema.parse(req.body);
       const department = await storage.updateClientDepartment(req.params.id, validatedData);
@@ -408,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/departments/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/departments/:id", requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteClientDepartment(req.params.id);
       res.sendStatus(204);
@@ -421,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Location Management
-  app.post("/api/admin/clients/:clientId/locations", requireAdmin, async (req, res) => {
+  app.post("/api/admin/clients/:clientId/locations", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createLocationSchema.parse(req.body);
       const location = await storage.createClientLocation({
@@ -443,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/locations/:id", requireAdmin, async (req, res) => {
+  app.put("/api/admin/locations/:id", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = updateLocationSchema.parse(req.body);
       const location = await storage.updateClientLocation(req.params.id, validatedData);
@@ -468,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/locations/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/locations/:id", requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteClientLocation(req.params.id);
       res.sendStatus(204);
@@ -481,10 +565,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client Self-Service Profile Update
-  app.put("/api/client/profile", requireAuth, async (req, res) => {
+  app.put("/api/client/profile", requireAuth, async (req: any, res) => {
     try {
       const validatedData = updateOwnProfileSchema.parse(req.body);
-      const client = await storage.updateClient(req.user!.id, validatedData);
+      const client = await storage.updateClient(req.client.id, validatedData);
       if (!client) {
         return res.status(404).json({ 
           message: "Client not found",
@@ -514,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Product Management Routes
-  app.get("/api/products/all", requireAdmin, async (req, res) => {
+  app.get("/api/products/all", requireAdmin, async (req: any, res) => {
     try {
       const products = await storage.getProducts();
       res.json(products);
@@ -523,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", requireAdmin, async (req, res) => {
+  app.post("/api/products", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
@@ -542,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/products/:id", requireAdmin, async (req, res) => {
+  app.put("/api/products/:id", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = updateProductSchema.parse(req.body);
       const product = await storage.updateProduct(req.params.id, validatedData);
@@ -567,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/products/:id", requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteProduct(req.params.id);
       res.sendStatus(204);
@@ -580,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Price Import Route
-  app.post("/api/client/import-prices", requireAuth, uploadMemory.single('file'), async (req, res) => {
+  app.post("/api/client/import-prices", requireAuth, uploadMemory.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ 
@@ -590,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileContent = req.file.buffer.toString('utf-8');
-      const lines = fileContent.split('\n').filter(line => line.trim());
+      const lines = fileContent.split('\n').filter((line: string) => line.trim());
       
       // Skip header line
       const dataLines = lines.slice(1);
@@ -599,7 +683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (let i = 0; i < dataLines.length; i++) {
         const line = dataLines[i];
-        const [sku, price, currency] = line.split(',').map(s => s.trim());
+        const [sku, price, currency] = line.split(',').map((s: string) => s.trim());
         
         if (!sku || !price) {
           errors.push({
@@ -624,7 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const importedCount = await storage.bulkImportPricing(req.user!.id, pricingData);
+      const importedCount = await storage.bulkImportPricing(req.client.id, pricingData);
       
       res.json({ 
         message: `Successfully imported ${importedCount} prices`,
@@ -642,16 +726,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Order Templates Routes
-  app.get("/api/client/templates", requireAuth, async (req, res) => {
+  app.get("/api/client/templates", requireAuth, async (req: any, res) => {
     try {
-      const templates = await storage.getOrderTemplates(req.user!.id);
+      const templates = await storage.getOrderTemplates(req.client.id);
       res.json(templates);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
-  app.get("/api/client/templates/:id", requireAuth, async (req, res) => {
+  app.get("/api/client/templates/:id", requireAuth, async (req: any, res) => {
     try {
       const template = await storage.getOrderTemplate(req.params.id);
       if (!template) {
@@ -666,11 +750,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/client/templates", requireAuth, async (req, res) => {
+  app.post("/api/client/templates", requireAuth, async (req: any, res) => {
     try {
       const validatedData = saveTemplateSchema.parse(req.body);
       const template = await storage.createOrderTemplate({
-        clientId: req.user!.id,
+        clientId: req.client.id,
         nameEn: validatedData.nameEn,
         nameAr: validatedData.nameAr,
         items: JSON.stringify(validatedData.items),
@@ -687,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/client/templates/:id", requireAuth, async (req, res) => {
+  app.delete("/api/client/templates/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deleteOrderTemplate(req.params.id);
       res.sendStatus(204);
@@ -697,16 +781,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders Routes
-  app.get("/api/client/orders", requireAuth, async (req, res) => {
+  app.get("/api/client/orders", requireAuth, async (req: any, res) => {
     try {
-      const orders = await storage.getOrders(req.user!.id);
+      const orders = await storage.getOrders(req.client.id);
       res.json(orders);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
-  app.post("/api/client/orders", requireAuth, async (req, res) => {
+  app.post("/api/client/orders", requireAuth, async (req: any, res) => {
     try {
       // Validate request body with schema
       const validatedData = createOrderSchema.parse(req.body);
@@ -728,7 +812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ltaId = ltaIds[0];
 
       // Step 2: Validate client is assigned to this LTA
-      const clientLtas = await storage.getClientLtas(req.user!.id);
+      const clientLtas = await storage.getClientLtas(req.client.id);
       const isClientInLta = clientLtas.some(lta => lta.id === ltaId);
 
       if (!isClientInLta) {
@@ -786,7 +870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Step 4: Create order with ltaId
       const order = await storage.createOrder({
-        clientId: req.user!.id,
+        clientId: req.client.id,
         items: JSON.stringify(validatedItems),
         totalAmount: totalAmount.toFixed(2),
         status: validatedData.status || 'pending',
@@ -797,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send to Pipefy webhook if configured
       if (process.env.PIPEFY_WEBHOOK_URL) {
         try {
-          const client = await storage.getClient(req.user!.id);
+          const client = await storage.getClient(req.client.id);
           const pipefyResponse = await fetch(process.env.PIPEFY_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -846,7 +930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // LTA Management Endpoints (Admin)
-  app.post('/api/admin/ltas', requireAdmin, async (req, res) => {
+  app.post('/api/admin/ltas', requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertLtaSchema.parse(req.body);
       const lta = await storage.createLta(validatedData);
@@ -869,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/ltas', requireAdmin, async (req, res) => {
+  app.get('/api/admin/ltas', requireAdmin, async (req: any, res) => {
     try {
       const ltas = await storage.getAllLtas();
       res.json(ltas);
@@ -881,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/ltas/:id', requireAdmin, async (req, res) => {
+  app.get('/api/admin/ltas/:id', requireAdmin, async (req: any, res) => {
     try {
       const lta = await storage.getLta(req.params.id);
       if (!lta) {
@@ -899,7 +983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/ltas/:id', requireAdmin, async (req, res) => {
+  app.patch('/api/admin/ltas/:id', requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertLtaSchema.partial().parse(req.body);
       const lta = await storage.updateLta(req.params.id, validatedData);
@@ -928,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/ltas/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/admin/ltas/:id', requireAdmin, async (req: any, res) => {
     try {
       const orders = await storage.getOrders(req.params.id);
       const ltaOrders = orders.filter(order => order.ltaId === req.params.id);
@@ -961,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // LTA Products Endpoints (Admin)
-  app.post('/api/admin/ltas/:ltaId/products', requireAdmin, async (req, res) => {
+  app.post('/api/admin/ltas/:ltaId/products', requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertLtaProductSchema.parse({
         ltaId: req.params.ltaId,
@@ -993,7 +1077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/ltas/:ltaId/products/:productId', requireAdmin, async (req, res) => {
+  app.delete('/api/admin/ltas/:ltaId/products/:productId', requireAdmin, async (req: any, res) => {
     try {
       const removed = await storage.removeProductFromLta(req.params.ltaId, req.params.productId);
       if (!removed) {
@@ -1014,7 +1098,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/ltas/:ltaId/products', requireAdmin, async (req, res) => {
+  app.get('/api/admin/ltas/:ltaId/products', requireAdmin, async (req: any, res) => {
     try {
       const products = await storage.getProductsForLta(req.params.ltaId);
       res.json(products);
@@ -1026,7 +1110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/lta-products/:id', requireAdmin, async (req, res) => {
+  app.patch('/api/admin/lta-products/:id', requireAdmin, async (req: any, res) => {
     try {
       const { contractPrice, currency } = req.body;
       if (!contractPrice) {
@@ -1056,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk assign products to LTA
-  app.post('/api/admin/ltas/:ltaId/products/bulk', requireAdmin, async (req, res) => {
+  app.post('/api/admin/ltas/:ltaId/products/bulk', requireAdmin, async (req: any, res) => {
     try {
       const { ltaId } = req.params;
       const result = bulkAssignProductsSchema.safeParse({ ltaId, ...req.body });
@@ -1086,7 +1170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // LTA Clients Endpoints (Admin)
-  app.post('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req, res) => {
+  app.post('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertLtaClientSchema.parse({
         ltaId: req.params.ltaId,
@@ -1118,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/ltas/:ltaId/clients/:clientId', requireAdmin, async (req, res) => {
+  app.delete('/api/admin/ltas/:ltaId/clients/:clientId', requireAdmin, async (req: any, res) => {
     try {
       const removed = await storage.removeClientFromLta(req.params.ltaId, req.params.clientId);
       if (!removed) {
@@ -1139,7 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req, res) => {
+  app.get('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req: any, res) => {
     try {
       const ltaClients = await storage.getLtaClients(req.params.ltaId);
       const clients = [];
@@ -1167,9 +1251,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client LTA Endpoints
-  app.get('/api/client/ltas', requireAuth, async (req, res) => {
+  app.get('/api/client/ltas', requireAuth, async (req: any, res) => {
     try {
-      const ltas = await storage.getClientLtas(req.user!.id);
+      const ltas = await storage.getClientLtas(req.client.id);
       res.json(ltas);
     } catch (error: any) {
       res.status(500).json({
@@ -1180,7 +1264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image Upload Endpoint
-  app.post('/api/admin/products/:id/image', requireAdmin, uploadImage.single('image'), async (req, res) => {
+  app.post('/api/admin/products/:id/image', requireAdmin, uploadImage.single('image'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -1213,7 +1297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk Export Products
-  app.get('/api/admin/products/export', requireAdmin, async (req, res) => {
+  app.get('/api/admin/products/export', requireAdmin, async (req: any, res) => {
     try {
       const products = await storage.getProducts();
       
@@ -1251,7 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk Import Products
-  app.post('/api/admin/products/import', requireAdmin, uploadMemory.single('file'), async (req, res) => {
+  app.post('/api/admin/products/import', requireAdmin, uploadMemory.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -1261,7 +1345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const csvContent = req.file.buffer.toString('utf-8').replace(/^\uFEFF/, ''); // Remove BOM
-      const rows = csvContent.split('\n').filter(row => row.trim());
+      const rows = csvContent.split('\n').filter((row: string) => row.trim());
       
       if (rows.length < 2) {
         return res.status(400).json({
@@ -1270,7 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const header = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const header = rows[0].split(',').map((h: string) => h.trim().replace(/"/g, ''));
       const dataRows = rows.slice(1);
 
       const results = {

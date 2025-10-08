@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ShoppingCart as ShoppingCartComponent } from '@/components/ShoppingCart';
@@ -56,7 +56,7 @@ interface Order {
 }
 
 export default function OrderingPage() {
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -524,7 +524,7 @@ export default function OrderingPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => logoutMutation.mutate()}
+              onClick={() => window.location.href = '/api/logout'}
               data-testid="button-logout"
             >
               <LogOut className="h-5 w-5" />

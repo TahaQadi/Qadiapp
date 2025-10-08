@@ -20,6 +20,8 @@ import {
   type InsertLtaProduct,
   type InsertLtaClient,
   type AuthUser,
+  type User,
+  type UpsertUser,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -30,6 +32,10 @@ const MemoryStore = createMemoryStore(session);
 export interface IStorage {
   sessionStore: session.Store;
   
+  // Replit Auth User operations (required for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
   // Client Authentication
   getClientByUsername(username: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
@@ -39,6 +45,7 @@ export interface IStorage {
   getClients(): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined>;
+  deleteClient(id: string): Promise<void>;
   
   // Client Departments
   getClientDepartments(clientId: string): Promise<ClientDepartment[]>;
@@ -106,6 +113,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   public sessionStore: session.Store;
+  private users: Map<string, User>;
   private clients: Map<string, Client>;
   private clientDepartments: Map<string, ClientDepartment>;
   private clientLocations: Map<string, ClientLocation>;
@@ -122,6 +130,7 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
+    this.users = new Map();
     this.clients = new Map();
     this.clientDepartments = new Map();
     this.clientLocations = new Map();
@@ -132,6 +141,26 @@ export class MemStorage implements IStorage {
     this.ltas = new Map();
     this.ltaProducts = new Map();
     this.ltaClients = new Map();
+  }
+
+  // Replit Auth User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existingUser = this.users.get(userData.id!);
+    const user: User = {
+      id: userData.id!,
+      email: userData.email ?? null,
+      firstName: userData.firstName ?? null,
+      lastName: userData.lastName ?? null,
+      profileImageUrl: userData.profileImageUrl ?? null,
+      createdAt: existingUser?.createdAt ?? new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(user.id, user);
+    return user;
   }
 
   // Client Authentication
@@ -170,6 +199,7 @@ export class MemStorage implements IStorage {
     const client: Client = { 
       ...insertClient, 
       id, 
+      userId: insertClient.userId ?? null,
       email: insertClient.email ?? null, 
       phone: insertClient.phone ?? null,
       isAdmin: insertClient.isAdmin ?? false
@@ -192,6 +222,15 @@ export class MemStorage implements IStorage {
     };
     this.clients.set(id, updated);
     return updated;
+  }
+
+  async deleteClient(id: string): Promise<void> {
+    this.clients.delete(id);
+    // Also delete related data
+    const departments = Array.from(this.clientDepartments.values()).filter(d => d.clientId === id);
+    departments.forEach(d => this.clientDepartments.delete(d.id));
+    const locations = Array.from(this.clientLocations.values()).filter(l => l.clientId === id);
+    locations.forEach(l => this.clientLocations.delete(l.id));
   }
 
   // Client Departments

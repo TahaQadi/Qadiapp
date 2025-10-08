@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -75,7 +75,7 @@ interface ClientDetails {
 }
 
 export default function AdminClientsPage() {
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -257,7 +257,7 @@ export default function AdminClientsPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => logoutMutation.mutate()}
+              onClick={() => window.location.href = '/api/logout'}
               data-testid="button-logout"
             >
               <LogOut className="h-5 w-5" />

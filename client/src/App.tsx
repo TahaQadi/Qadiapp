@@ -5,10 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/lib/protected-route";
+import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
-import LoginPage from "@/pages/LoginPage";
+import LandingPage from "@/pages/LandingPage";
 import OrderingPage from "@/pages/OrderingPage";
 import ClientProfilePage from "@/pages/ClientProfilePage";
 import AdminPage from "@/pages/AdminPage";
@@ -31,7 +30,7 @@ function AdminRoute({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && user && !user.isAdmin) {
+    if (!isLoading && user && !(user as any).isAdmin) {
       toast({
         title: "Unauthorized",
         description: "Admin access required / مطلوب صلاحيات المسؤول",
@@ -53,12 +52,12 @@ function AdminRoute({
   if (!user) {
     return (
       <Route path={path}>
-        <Redirect to="/login" />
+        <LandingPage />
       </Route>
     );
   }
 
-  if (!user.isAdmin) {
+  if (!(user as any).isAdmin) {
     return (
       <Route path={path}>
         <Redirect to="/" />
@@ -70,15 +69,30 @@ function AdminRoute({
 }
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      <Route path="/login" component={LoginPage} />
-      <ProtectedRoute path="/" component={OrderingPage} />
-      <ProtectedRoute path="/profile" component={ClientProfilePage} />
-      <AdminRoute path="/admin" component={AdminPage} />
-      <AdminRoute path="/admin/clients" component={AdminClientsPage} />
-      <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
-      <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={LandingPage} />
+      ) : (
+        <>
+          <Route path="/" component={OrderingPage} />
+          <Route path="/profile" component={ClientProfilePage} />
+          <AdminRoute path="/admin" component={AdminPage} />
+          <AdminRoute path="/admin/clients" component={AdminClientsPage} />
+          <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
+          <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
+        </>
+      )}
       <Route component={NotFound} />
     </Switch>
   );
@@ -90,10 +104,8 @@ function App() {
       <TooltipProvider>
         <ThemeProvider>
           <LanguageProvider>
-            <AuthProvider>
-              <Router />
-              <Toaster />
-            </AuthProvider>
+            <Router />
+            <Toaster />
           </LanguageProvider>
         </ThemeProvider>
       </TooltipProvider>
