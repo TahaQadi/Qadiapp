@@ -348,6 +348,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteClient(req.params.id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error deleting client",
+        messageAr: "خطأ في حذف العميل"
+      });
+    }
+  });
+
+  // Admin Department Management
+  app.post("/api/admin/clients/:clientId/departments", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = createDepartmentSchema.parse(req.body);
+      const department = await storage.createClientDepartment({
+        clientId: req.params.clientId,
+        ...validatedData,
+      });
+      res.status(201).json(department);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error creating department",
+        messageAr: "خطأ في إنشاء القسم"
+      });
+    }
+  });
+
+  app.put("/api/admin/departments/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = updateDepartmentSchema.parse(req.body);
+      const department = await storage.updateClientDepartment(req.params.id, validatedData);
+      if (!department) {
+        return res.status(404).json({ 
+          message: "Department not found",
+          messageAr: "القسم غير موجود",
+        });
+      }
+      res.json(department);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error updating department",
+        messageAr: "خطأ في تحديث القسم"
+      });
+    }
+  });
+
+  app.delete("/api/admin/departments/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteClientDepartment(req.params.id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error deleting department",
+        messageAr: "خطأ في حذف القسم"
+      });
+    }
+  });
+
+  // Admin Location Management
+  app.post("/api/admin/clients/:clientId/locations", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = createLocationSchema.parse(req.body);
+      const location = await storage.createClientLocation({
+        clientId: req.params.clientId,
+        ...validatedData,
+      });
+      res.status(201).json(location);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error creating location",
+        messageAr: "خطأ في إنشاء الموقع"
+      });
+    }
+  });
+
+  app.put("/api/admin/locations/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = updateLocationSchema.parse(req.body);
+      const location = await storage.updateClientLocation(req.params.id, validatedData);
+      if (!location) {
+        return res.status(404).json({ 
+          message: "Location not found",
+          messageAr: "الموقع غير موجود",
+        });
+      }
+      res.json(location);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error updating location",
+        messageAr: "خطأ في تحديث الموقع"
+      });
+    }
+  });
+
+  app.delete("/api/admin/locations/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteClientLocation(req.params.id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error deleting location",
+        messageAr: "خطأ في حذف الموقع"
+      });
+    }
+  });
+
+  // Client Self-Service Profile Update
+  app.put("/api/client/profile", requireAuth, async (req, res) => {
+    try {
+      const validatedData = updateOwnProfileSchema.parse(req.body);
+      const client = await storage.updateClient(req.user!.id, validatedData);
+      if (!client) {
+        return res.status(404).json({ 
+          message: "Client not found",
+          messageAr: "العميل غير موجود",
+        });
+      }
+      res.json({
+        id: client.id,
+        username: client.username,
+        nameEn: client.nameEn,
+        nameAr: client.nameAr,
+        email: client.email,
+        phone: client.phone,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error updating profile",
+        messageAr: "خطأ في تحديث الملف الشخصي"
+      });
+    }
+  });
+
   // Admin Product Management Routes
   app.get("/api/products/all", requireAdmin, async (req, res) => {
     try {
