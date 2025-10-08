@@ -1010,6 +1010,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk Export Products
+  app.get('/api/admin/products/export', requireAdmin, async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      
+      const csvHeader = 'SKU,Name (EN),Name (AR),Description (EN),Description (AR),Category,Image URL,Custom Metadata\n';
+      const csvRows = products.map(p => {
+        const escapeCsv = (value: string | null | undefined) => {
+          if (!value) return '';
+          const escaped = value.replace(/"/g, '""');
+          return `"${escaped}"`;
+        };
+        
+        return [
+          escapeCsv(p.sku),
+          escapeCsv(p.nameEn),
+          escapeCsv(p.nameAr),
+          escapeCsv(p.descriptionEn),
+          escapeCsv(p.descriptionAr),
+          escapeCsv(p.category),
+          escapeCsv(p.imageUrl),
+          escapeCsv(p.metadata)
+        ].join(',');
+      }).join('\n');
+      
+      const csv = csvHeader + csvRows;
+      
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="products_${Date.now()}.csv"`);
+      res.send('\uFEFF' + csv); // Add BOM for Excel compatibility
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تصدير المنتجات"
+      });
+    }
+  });
+
+  // Bulk Import Products
+  app.post('/api/admin/products/import', requireAdmin, uploadMemory.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No CSV file uploaded",
+          messageAr: "لم يتم تحميل ملف CSV"
+        });
+      }
+
+      const csvContent = req.file.buffer.toString('utf-8').replace(/^\uFEFF/, ''); // Remove BOM
+      const rows = csvContent.split('\n').filter(row => row.trim());
+      
+      if (rows.length < 2) {
+        return res.status(400).json({
+          message: "CSV file is empty or invalid",
+          messageAr: "ملف CSV فارغ أو غير صالح"
+        });
+      }
+
+      const header = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const dataRows = rows.slice(1);
+
+      const results = {
+        success: [] as any[],
+        errors: [] as any[]
+      };
+
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        if (!row.trim()) continue;
+
+        try {
+          // Parse CSV row with quote handling
+          const values: string[] = [];
+          let currentValue = '';
+          let inQuotes = false;
+          
+          for (let j = 0; j < row.length; j++) {
+            const char = row[j];
+            
+            if (char === '"') {
+              if (inQuotes && row[j + 1] === '"') {
+                currentValue += '"';
+                j++;
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              values.push(currentValue.trim());
+              currentValue = '';
+            } else {
+              currentValue += char;
+            }
+          }
+          values.push(currentValue.trim());
+
+          const [sku, nameEn, nameAr, descriptionEn, descriptionAr, category, imageUrl, metadata] = values;
+
+          if (!sku || !nameEn || !nameAr) {
+            results.errors.push({
+              row: i + 2,
+              sku: sku || 'N/A',
+              message: 'SKU, Name (EN), and Name (AR) are required',
+              messageAr: 'رمز المنتج والاسم بالإنجليزية والاسم بالعربية مطلوبة'
+            });
+            continue;
+          }
+
+          // Check if product exists
+          const existingProduct = await storage.getProductBySku(sku);
+          
+          const productData = {
+            sku,
+            nameEn,
+            nameAr,
+            descriptionEn: descriptionEn || null,
+            descriptionAr: descriptionAr || null,
+            category: category || null,
+            imageUrl: imageUrl || null,
+            metadata: metadata || null
+          };
+
+          if (existingProduct) {
+            // Update existing product
+            const updated = await storage.updateProduct(existingProduct.id, productData);
+            results.success.push({
+              row: i + 2,
+              sku,
+              action: 'updated',
+              actionAr: 'تم التحديث'
+            });
+          } else {
+            // Create new product
+            const created = await storage.createProduct(productData);
+            results.success.push({
+              row: i + 2,
+              sku,
+              action: 'created',
+              actionAr: 'تم الإنشاء'
+            });
+          }
+        } catch (error: any) {
+          results.errors.push({
+            row: i + 2,
+            sku: values[0] || 'N/A',
+            message: error.message,
+            messageAr: 'حدث خطأ أثناء معالجة الصف'
+          });
+        }
+      }
+
+      res.json({
+        ...results,
+        message: `Import completed: ${results.success.length} succeeded, ${results.errors.length} failed`,
+        messageAr: `اكتمل الاستيراد: ${results.success.length} نجح، ${results.errors.length} فشل`
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء استيراد المنتجات"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
