@@ -13,12 +13,12 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart as CartIcon, LogOut, User, Search, Package, FileText, History, Settings, X } from 'lucide-react';
+import { ShoppingCart, Package, FileText, History, Settings, X, Loader2, User, Search, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -64,7 +64,7 @@ export default function OrderingPage() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { toast } = useToast();
-  
+
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,7 +80,7 @@ export default function OrderingPage() {
     queryKey: ['/api/products'],
   });
 
-  const { data: clientLtas = [] } = useQuery<Lta[]>({
+  const { data: clientLtas = [], isLoading: ltasLoading } = useQuery<Lta[]>({
     queryKey: ['/api/client/ltas'],
   });
 
@@ -134,39 +134,50 @@ export default function OrderingPage() {
   });
 
   // Get unique categories from products
-  const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+  const categories = ['all', ...new Set((products || []).map(p => p.category).filter(Boolean))];
 
-  const filteredProducts = products.filter(product => {
-    // Search filter
-    if (searchQuery) {
-      const name = language === 'ar' ? product.nameAr : product.nameEn;
-      const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
-      const searchLower = searchQuery.toLowerCase();
-      if (!name.toLowerCase().includes(searchLower) && 
-          !product.sku.toLowerCase().includes(searchLower) &&
-          !description.toLowerCase().includes(searchLower)) {
-        return false;
-      }
-    }
+  // Check for empty state or loading states
+  if (ltasLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
 
-    // Category filter
-    if (selectedCategory !== 'all' && product.category !== selectedCategory) {
-      return false;
-    }
+  if (clientLtas.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4 max-w-md p-8">
+          <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <Package className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-semibold">
+            {language === 'ar' ? 'لا توجد اتفاقيات متاحة' : 'No Contracts Available'}
+          </h2>
+          <p className="text-muted-foreground">
+            {language === 'ar'
+              ? 'لم يتم تعيينك لأي اتفاقية طويلة الأجل بعد. يرجى الاتصال بالمسؤول للحصول على إمكانية الوصول.'
+              : 'You have not been assigned to any Long-Term Agreements yet. Please contact your administrator for access.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-    // LTA filter
-    if (selectedLtaFilter !== 'all' && product.ltaId !== selectedLtaFilter) {
-      return false;
-    }
 
-    // Price range filter
-    const price = parseFloat(product.contractPrice);
-    if (price < priceRange[0] || price > priceRange[1]) {
-      return false;
-    }
+  const filteredProducts = selectedLtaFilter !== 'all'
+    ? (products || []).filter(p => {
+        const matchesLta = p.ltaId === selectedLtaFilter;
+        const matchesSearch = searchQuery === '' ||
+          p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.nameAr.includes(searchQuery) ||
+          p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+        return matchesLta && matchesSearch && matchesCategory;
+      })
+    : [];
 
-    return true;
-  });
 
   const handleAddToCart = (product: ProductWithLtaPrice) => {
     // Check if cart is empty or product is from same LTA
@@ -175,15 +186,15 @@ export default function OrderingPage() {
       toast({
         variant: 'destructive',
         title: language === 'en' ? 'Different Contract' : 'عقد مختلف',
-        description: language === 'en' 
+        description: language === 'en'
           ? 'This product is from a different LTA contract. Please complete or clear your current order first.'
           : 'هذا المنتج من عقد اتفاقية مختلف. يرجى إكمال أو مسح طلبك الحالي أولاً.',
       });
       return;
     }
-    
+
     const existingItem = cart.find(item => item.productId === product.id);
-    
+
     if (existingItem) {
       setCart(cart.map(item =>
         item.productId === product.id
@@ -201,15 +212,15 @@ export default function OrderingPage() {
         currency: product.currency,
         ltaId: product.ltaId,
       }]);
-      
+
       // Set active LTA if cart was empty
       if (!activeLtaId) {
         setActiveLtaId(product.ltaId);
       }
     }
-    
+
     toast({
-      description: language === 'ar' 
+      description: language === 'ar'
         ? `تمت إضافة ${product.nameAr} إلى السلة`
         : `${product.nameEn} added to cart`
     });
@@ -228,12 +239,12 @@ export default function OrderingPage() {
   const handleRemoveItem = (productId: string) => {
     const newCart = cart.filter(item => item.productId !== productId);
     setCart(newCart);
-    
+
     // If cart is empty, reset active LTA
     if (newCart.length === 0) {
       setActiveLtaId(null);
     }
-    
+
     toast({
       description: language === 'ar' ? 'تمت إزالة العنصر من السلة' : 'Item removed from cart'
     });
@@ -412,9 +423,9 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-    
+
     return (
-      <Card 
+      <Card
         className={cn(
           "flex flex-col overflow-hidden hover-elevate",
           isDifferentLta && "opacity-50"
@@ -424,8 +435,8 @@ export default function OrderingPage() {
         {/* Product Image */}
         <div className="relative w-full aspect-square bg-muted">
           {product.imageUrl ? (
-            <img 
-              src={product.imageUrl} 
+            <img
+              src={product.imageUrl}
               alt={name}
               className="w-full h-full object-cover"
               data-testid={`img-product-${product.id}`}
@@ -435,9 +446,9 @@ export default function OrderingPage() {
               <Package className="w-16 h-16 text-muted-foreground" />
             </div>
           )}
-          
+
         </div>
-        
+
         {/* Product Info */}
         <CardContent className="flex-1 p-4 space-y-2">
           <div>
@@ -446,13 +457,13 @@ export default function OrderingPage() {
             </h3>
             <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
           </div>
-          
+
           {description && (
             <p className="text-sm text-muted-foreground line-clamp-2">
               {description}
             </p>
           )}
-          
+
           <div className="flex items-center justify-between gap-2 pt-2">
             <div>
               <p className="text-lg font-bold font-mono" data-testid={`text-price-${product.id}`}>
@@ -462,7 +473,7 @@ export default function OrderingPage() {
                 {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
               </p>
             </div>
-            
+
             {/* Quantity in cart indicator */}
             {cartItem && (
               <Badge variant="outline" data-testid={`badge-in-cart-${product.id}`}>
@@ -471,7 +482,7 @@ export default function OrderingPage() {
             )}
           </div>
         </CardContent>
-        
+
         {/* Add to Cart */}
         <CardFooter className="p-4 pt-0">
           <Button
@@ -480,7 +491,7 @@ export default function OrderingPage() {
             className="w-full"
             data-testid={`button-add-to-cart-${product.id}`}
           >
-            <CartIcon className="w-4 h-4 me-2" />
+            <Package className="w-4 h-4 me-2" />
             {isDifferentLta
               ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
               : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
@@ -508,7 +519,7 @@ export default function OrderingPage() {
                 <FileText className="w-3 h-3" />
                 {(() => {
                   const activeLta = clientLtas.find(lta => lta.id === activeLtaId);
-                  return activeLta 
+                  return activeLta
                     ? (language === 'ar' ? activeLta.nameAr : activeLta.nameEn)
                     : (language === 'ar' ? 'العقد النشط' : 'Active Contract');
                 })()}
@@ -549,7 +560,7 @@ export default function OrderingPage() {
               onClick={() => setCartOpen(true)}
               data-testid="button-open-cart"
             >
-              <CartIcon className="h-5 w-5" />
+              <ShoppingCart className="h-5 w-5" />
               {cartItemCount > 0 && (
                 <Badge
                   variant="destructive"
@@ -592,91 +603,67 @@ export default function OrderingPage() {
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-0">
-            <div className="mb-6 space-y-4">
-              <div className="relative">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="ps-9"
-                  data-testid="input-search-products"
-                />
-              </div>
-
-              {/* Advanced Filters */}
-              <div className="flex flex-wrap gap-3">
-                {/* Category Filter */}
-                {categories.length > 0 && (
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-[180px]" data-testid="select-category">
-                      <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
-                      </SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {/* LTA Filter */}
-                {clientLtas.length > 1 && (
-                  <Select value={selectedLtaFilter} onValueChange={setSelectedLtaFilter}>
-                    <SelectTrigger className="w-[200px]" data-testid="select-lta-filter">
-                      <SelectValue placeholder={language === 'ar' ? 'العقد' : 'Contract'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {language === 'ar' ? 'جميع العقود' : 'All Contracts'}
-                      </SelectItem>
-                      {clientLtas.map(lta => (
-                        <SelectItem key={lta.id} value={lta.id}>
-                          {language === 'ar' ? lta.nameAr : lta.nameEn}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {/* Price Range Display */}
-                <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-background">
-                  <span className="text-sm text-muted-foreground">
-                    {language === 'ar' ? 'السعر:' : 'Price:'}
-                  </span>
-                  <span className="text-sm font-medium">
-                    {priceRange[0]} - {priceRange[1]}
-                  </span>
+            <div className="space-y-4 mb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <h1 className="text-2xl font-bold">{t('ordering.title')}</h1>
+                  <Badge variant="secondary">
+                    {filteredProducts.length} {t('ordering.products')}
+                  </Badge>
                 </div>
 
-                {/* Clear Filters */}
-                {(searchQuery || selectedCategory !== 'all' || selectedLtaFilter !== 'all') && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('all');
-                      setSelectedLtaFilter('all');
-                    }}
-                    data-testid="button-clear-filters"
-                  >
-                    <X className="w-4 h-4 me-2" />
-                    {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
-                  </Button>
+                {/* LTA Selector */}
+                <Select value={selectedLtaFilter} onValueChange={setSelectedLtaFilter}>
+                  <SelectTrigger className="w-[200px]" data-testid="select-lta-filter">
+                    <SelectValue placeholder={language === 'ar' ? 'العقد' : 'Contract'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {language === 'ar' ? 'جميع العقود' : 'All Contracts'}
+                    </SelectItem>
+                    {clientLtas.map(lta => (
+                      <SelectItem key={lta.id} value={lta.id}>
+                        {language === 'ar' ? lta.nameAr : lta.nameEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {selectedLtaFilter !== 'all' && (
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <Input
+                        type="search"
+                        placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="max-w-sm"
+                        data-testid="input-search-products"
+                      />
+                    </div>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-[180px]" data-testid="select-category">
+                        <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
+                        </SelectItem>
+                        {categories.filter(c => c !== 'all').map((category) => (
+                          <SelectItem key={category} value={category || ''}>
+                            {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </div>
 
               {/* Results count */}
               <div className="text-sm text-muted-foreground">
-                {language === 'ar' 
-                  ? `${filteredProducts.length} منتج` 
+                {language === 'ar'
+                  ? `${filteredProducts.length} منتج`
                   : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`}
               </div>
             </div>
@@ -707,7 +694,7 @@ export default function OrderingPage() {
                   {language === 'ar' ? 'لا توجد منتجات متاحة' : 'No Products Available'}
                 </h3>
                 <p className="text-muted-foreground">
-                  {language === 'ar' 
+                  {language === 'ar'
                     ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية الخاص بك بعد.'
                     : 'No products are assigned to your LTA contract yet.'}
                 </p>

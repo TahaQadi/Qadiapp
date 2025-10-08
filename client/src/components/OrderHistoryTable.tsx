@@ -25,8 +25,8 @@ interface Order {
 
 interface OrderHistoryTableProps {
   orders: Order[];
-  onViewDetails: (orderId: string) => void;
-  onReorder: (orderId: string) => void;
+  onViewDetails: (order: Order) => void;
+  onReorder?: (order: Order) => void;
 }
 
 export function OrderHistoryTable({ orders, onViewDetails, onReorder }: OrderHistoryTableProps) {
@@ -85,21 +85,23 @@ export function OrderHistoryTable({ orders, onViewDetails, onReorder }: OrderHis
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onViewDetails(order.id)}
+                      onClick={() => onViewDetails(order)}
                       data-testid={`button-view-order-${order.id}`}
                     >
                       <Eye className="h-4 w-4 me-1" />
                       {t('viewDetails')}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onReorder(order.id)}
-                      data-testid={`button-reorder-${order.id}`}
-                    >
-                      <RotateCcw className="h-4 w-4 me-1" />
-                      {t('reorder')}
-                    </Button>
+                    {onReorder && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onReorder(order)}
+                        data-testid={`button-reorder-${order.id}`}
+                      >
+                        <RotateCcw className="h-4 w-4 me-1" />
+                        {t('reorder')}
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
