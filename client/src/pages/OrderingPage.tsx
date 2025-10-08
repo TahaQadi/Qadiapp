@@ -137,15 +137,20 @@ export default function OrderingPage() {
   const categories = ['all', ...new Set((products || []).map(p => p.category).filter(Boolean))];
 
   // Check for empty state or loading states
-  if (ltasLoading) {
+  if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">
+            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (clientLtas.length === 0) {
+  if (!ltasLoading && clientLtas.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4 max-w-md p-8">
@@ -668,18 +673,38 @@ export default function OrderingPage() {
               </div>
             </div>
 
-            {productsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Card key={i} className="flex flex-col">
-                    <Skeleton className="w-full aspect-square" />
-                    <CardContent className="p-4 space-y-2">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-6 w-1/3 mt-2" />
-                    </CardContent>
-                  </Card>
-                ))}
+            {selectedLtaFilter === 'all' ? (
+              <Card className="p-8 text-center">
+                <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {language === 'ar' ? 'اختر عقد اتفاقية' : 'Select a Contract'}
+                </h3>
+                <p className="text-muted-foreground">
+                  {language === 'ar'
+                    ? 'يرجى اختيار عقد اتفاقية من القائمة أعلاه لعرض المنتجات المتاحة'
+                    : 'Please select an LTA contract from the dropdown above to view available products'}
+                </p>
+              </Card>
+            ) : productsLoading ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    {language === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <Card key={i} className="flex flex-col">
+                      <Skeleton className="w-full aspect-square" />
+                      <CardContent className="p-4 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-6 w-1/3 mt-2" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
@@ -705,13 +730,22 @@ export default function OrderingPage() {
           {/* Templates Tab */}
           <TabsContent value="templates" className="mt-0">
             {templatesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="p-4 animate-pulse">
-                    <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
-                  </Card>
-                ))}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    {language === 'ar' ? 'جاري تحميل القوالب...' : 'Loading templates...'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="p-4">
+                      <Skeleton className="h-5 w-3/4 mb-3" />
+                      <Skeleton className="h-4 w-1/2 mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </Card>
+                  ))}
+                </div>
               </div>
             ) : formattedTemplates.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -740,11 +774,22 @@ export default function OrderingPage() {
           {/* History Tab */}
           <TabsContent value="history" className="mt-0">
             {ordersLoading ? (
-              <Card className="p-4 animate-pulse">
-                <div className="h-4 bg-muted rounded w-full mb-2" />
-                <div className="h-4 bg-muted rounded w-full mb-2" />
-                <div className="h-4 bg-muted rounded w-full" />
-              </Card>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    {language === 'ar' ? 'جاري تحميل الطلبات...' : 'Loading orders...'}
+                  </span>
+                </div>
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                </Card>
+              </div>
             ) : (
               <OrderHistoryTable
                 orders={formattedOrders}

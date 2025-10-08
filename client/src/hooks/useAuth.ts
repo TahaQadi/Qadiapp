@@ -12,15 +12,23 @@ export interface AuthUser {
   profileImageUrl?: string | null;
 }
 
+// Renaming User to AuthUser to match the interface
 export function useAuth() {
-  const { data: user, isLoading } = useQuery<AuthUser>({
-    queryKey: ["/api/auth/user"],
+  const { data: user, isLoading, error } = useQuery<AuthUser | null>({
+    queryKey: ['/api/auth/user'],
     retry: false,
+    refetchOnWindowFocus: false,
   });
 
+  const logout = async () => {
+    window.location.href = '/api/logout';
+  };
+
   return {
-    user,
+    user: user ?? null,
     isLoading,
+    error,
+    logout,
     isAuthenticated: !!user,
   };
 }

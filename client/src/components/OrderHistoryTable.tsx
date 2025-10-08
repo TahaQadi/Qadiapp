@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Eye, RotateCcw } from 'lucide-react';
+import { Eye, RotateCcw, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
@@ -60,8 +60,20 @@ export function OrderHistoryTable({ orders, onViewDetails, onReorder }: OrderHis
         <TableBody>
           {orders.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                {t('noOrders')}
+              <TableCell colSpan={6} className="text-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-muted-foreground">{t('noOrders')}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {language === 'ar' 
+                        ? 'ابدأ بتقديم طلبك الأول من صفحة المنتجات'
+                        : 'Start by placing your first order from the products page'}
+                    </p>
+                  </div>
+                </div>
               </TableCell>
             </TableRow>
           ) : (
