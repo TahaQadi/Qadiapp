@@ -7,6 +7,7 @@ import { ShoppingCart as ShoppingCartComponent } from '@/components/ShoppingCart
 import { SaveTemplateDialog } from '@/components/SaveTemplateDialog';
 import { OrderTemplateCard } from '@/components/OrderTemplateCard';
 import { OrderHistoryTable } from '@/components/OrderHistoryTable';
+import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ interface Order {
   totalAmount: string;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered';
   createdAt: string;
+  pipefyCardId?: string;
 }
 
 export default function OrderingPage() {
@@ -66,6 +68,8 @@ export default function OrderingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [activeLtaId, setActiveLtaId] = useState<string | null>(null);
+  const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products'],
@@ -327,10 +331,11 @@ export default function OrderingPage() {
   };
 
   const handleViewOrderDetails = (orderId: string) => {
-    toast({
-      title: language === 'ar' ? 'عرض تفاصيل الطلب' : 'View order details',
-      description: `Order ID: ${orderId}`,
-    });
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setOrderDetailsDialogOpen(true);
+    }
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -343,7 +348,7 @@ export default function OrderingPage() {
       itemCount: orderItems.length,
       totalAmount: order.totalAmount,
       status: order.status,
-      currency: 'USD',
+      currency: orderItems[0]?.currency || 'USD',
     };
   });
 
@@ -673,6 +678,13 @@ export default function OrderingPage() {
         open={saveTemplateDialogOpen}
         onOpenChange={setSaveTemplateDialogOpen}
         onSave={handleSaveTemplate}
+      />
+
+      {/* Order Details Dialog */}
+      <OrderDetailsDialog
+        open={orderDetailsDialogOpen}
+        onOpenChange={setOrderDetailsDialogOpen}
+        order={selectedOrder}
       />
     </div>
   );
