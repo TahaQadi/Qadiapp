@@ -55,39 +55,21 @@ export default function LandingPage() {
         {/* Hero Section */}
         <div className="flex flex-col items-center justify-center min-h-[85vh] text-center py-16">
           <div className="mb-8 space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              <CheckCircle className="h-4 w-4" />
-              <span>{isArabic ? 'منصة موثوقة وآمنة' : 'Trusted & Secure Platform'}</span>
-            </div>
-            
             <h1 
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent" 
               dir={isArabic ? 'rtl' : 'ltr'}
             >
-              {isArabic ? 'نظام إدارة اتفاقيات الإمداد طويلة الأجل' : 'LTA Contract Fulfillment System'}
+              {isArabic ? 'نظام إدارة اتفاقيات الإمداد' : 'LTA Contract Fulfillment'}
             </h1>
             
             <p 
-              className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed" 
+              className="text-xl sm:text-2xl md:text-3xl text-muted-foreground max-w-2xl mx-auto" 
               dir={isArabic ? 'rtl' : 'ltr'}
             >
               {isArabic 
-                ? 'منصة شاملة لإدارة العقود والطلبات والعملاء بكفاءة وسهولة'
-                : 'A comprehensive platform for managing contracts, orders, and clients efficiently'}
+                ? 'طلبات واضحة، تنفيذ ذكي'
+                : 'Clear Orders, Smart Fulfillment'}
             </p>
-
-            {/* Benefits Pills */}
-            <div className="flex flex-wrap gap-3 justify-center mt-8" dir={isArabic ? 'rtl' : 'ltr'}>
-              {benefits.map((benefit, index) => (
-                <div 
-                  key={index}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-sm"
-                >
-                  <CheckCircle className="h-4 w-4 text-primary" />
-                  <span>{isArabic ? benefit.ar : benefit.en}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="mb-16">
