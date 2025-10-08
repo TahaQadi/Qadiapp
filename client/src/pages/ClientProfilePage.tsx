@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tantml:parameter>query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Button } from '@/components/ui/button';
@@ -102,7 +102,7 @@ export default function ClientProfilePage() {
       city: '',
       country: '',
       phone: '',
-      isHeadquarters: false,
+      isHeadquarters: false as boolean,
     },
   });
 
@@ -146,7 +146,7 @@ export default function ClientProfilePage() {
         city: editingLocation.city || '',
         country: editingLocation.country || '',
         phone: editingLocation.phone || '',
-        isHeadquarters: editingLocation.isHeadquarters,
+        isHeadquarters: !!editingLocation.isHeadquarters,
       });
       setLocationDialogOpen(true);
     } else {
