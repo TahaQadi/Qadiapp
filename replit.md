@@ -197,6 +197,7 @@ Preferred communication style: Simple, everyday language.
 - Client Assignment: Assign clients to LTAs (multi-LTA support)
 - Product Management: CRUD operations with image upload and custom metadata fields
 - Client Management: View/edit client information, departments, locations
+- User Management: Toggle admin privileges for any user with visual switch control
 
 **Client Features:**
 - View products from assigned LTA(s) in responsive grid (1-5 columns)
@@ -241,8 +242,18 @@ Preferred communication style: Simple, everyday language.
 - Simplified product management to focus on core catalog features
 - Orders no longer validate or track stock availability
 
-**Test Credentials:**
-- Admin: username `admin` / password `admin123`
-- Test Client: username `test` / password `test123`
-  - Assigned to: Office Supplies Contract 2024 (4 products)
-  - Assigned to: Technology Equipment Contract 2024 (3 products)
+**Authentication Migration to Replit Auth (October 8, 2025):**
+- Migrated from local username/password authentication to Replit Auth OAuth
+- Implemented automatic client creation for new Replit Auth users
+- First user to authenticate automatically becomes admin
+- Added admin user management UI with toggle switch to promote/demote users
+- Created PATCH /api/admin/clients/:id/admin-status endpoint for admin status management
+- Client records linked to Replit users via userId field
+- Preserved existing client data structure for compatibility
+- Users authenticate via Replit OAuth (no password required)
+
+**Authentication Flow:**
+- New users: Click login → Replit OAuth → Auto-create client record → First user gets admin
+- Existing users: Replit OAuth links to existing client via userId
+- Admin management: Admins can toggle admin status for any user via switch in Client Management page
+- Session-based authentication with 30-day cookie expiration

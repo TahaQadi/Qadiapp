@@ -81,6 +81,9 @@ async function getClientFromAuth(req: any, res: any, next: any) {
         return res.status(401).json({ message: "User not found" });
       }
       
+      // First user to log in becomes admin
+      const isFirstUser = clients.length === 0;
+      
       // Create a client record linked to this Replit Auth user
       client = await storage.createClient({
         userId: userId,
@@ -90,7 +93,7 @@ async function getClientFromAuth(req: any, res: any, next: any) {
         password: '', // Not used with Replit Auth
         email: replitUser.email || null,
         phone: null,
-        isAdmin: false,
+        isAdmin: isFirstUser,
       });
     }
 
@@ -137,6 +140,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let client = clients.find(c => c.userId === userId);
       
       if (!client && replitUser) {
+        // First user to log in becomes admin
+        const isFirstUser = clients.length === 0;
+        
         client = await storage.createClient({
           userId: userId,
           nameEn: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'User',
@@ -145,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           password: '', // Not used with Replit Auth
           email: replitUser.email || null,
           phone: null,
-          isAdmin: false,
+          isAdmin: isFirstUser,
         });
       }
       
@@ -441,6 +447,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Error deleting client",
         messageAr: "خطأ في حذف العميل"
+      });
+    }
+  });
+
+  // Toggle admin status for a client
+  app.patch("/api/admin/clients/:id/admin-status", requireAdmin, async (req: any, res) => {
+    try {
+      const { isAdmin } = req.body;
+      
+      if (typeof isAdmin !== 'boolean') {
+        return res.status(400).json({
+          message: "isAdmin must be a boolean",
+          messageAr: "يجب أن يكون isAdmin قيمة منطقية"
+        });
+      }
+
+      // Update the client
+      const client = await storage.updateClient(req.params.id, { isAdmin });
+      
+      if (!client) {
+        return res.status(404).json({ 
+          message: "Client not found",
+          messageAr: "العميل غير موجود",
+        });
+      }
+
+      // Atomic check: verify at least one admin exists after update
+      const allClients = await storage.getClients();
+      const adminClients = allClients.filter(c => c.isAdmin);
+      
+      if (adminClients.length === 0) {
+        // Rollback: restore admin status
+        await storage.updateClient(req.params.id, { isAdmin: true });
+        return res.status(400).json({
+          message: "Cannot demote the last admin. Promote another user to admin first.",
+          messageAr: "لا يمكن تخفيض رتبة المسؤول الأخير. قم بترقية مستخدم آخر إلى مسؤول أولاً.",
+        });
+      }
+
+      res.json({
+        id: client.id,
+        username: client.username,
+        nameEn: client.nameEn,
+        nameAr: client.nameAr,
+        email: client.email,
+        phone: client.phone,
+        isAdmin: client.isAdmin,
+        message: isAdmin 
+          ? "Client promoted to admin" 
+          : "Client demoted from admin",
+        messageAr: isAdmin 
+          ? "تمت ترقية العميل إلى مسؤول" 
+          : "تم تخفيض رتبة العميل من مسؤول"
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error updating admin status",
+        messageAr: "خطأ في تحديث حالة المسؤول"
       });
     }
   });

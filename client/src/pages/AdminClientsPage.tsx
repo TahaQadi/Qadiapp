@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { LogOut, User, Package, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -171,6 +172,29 @@ export default function AdminClientsPage() {
     onError: (error: any) => {
       toast({
         title: language === 'ar' ? 'خطأ في حذف العميل' : 'Error deleting client',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const toggleAdminMutation = useMutation({
+    mutationFn: async ({ id, isAdmin }: { id: string; isAdmin: boolean }) => {
+      const res = await apiRequest('PATCH', `/api/admin/clients/${id}/admin-status`, { isAdmin });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+      if (selectedClientId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      }
+      toast({
+        title: language === 'ar' ? data.messageAr : data.message,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في تحديث حالة المسؤول' : 'Error updating admin status',
         description: error.message,
         variant: 'destructive',
       });
@@ -475,6 +499,47 @@ export default function AdminClientsPage() {
                     <div className="font-medium" data-testid="text-username">
                       {clientDetails.client.username}
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck className={`h-5 w-5 ${clientDetails.client.isAdmin ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <div>
+                        <div className="font-medium">
+                          {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {(() => {
+                            const adminCount = clients.filter(c => c.isAdmin).length;
+                            const isLastAdmin = clientDetails.client.isAdmin && adminCount === 1;
+                            
+                            if (isLastAdmin) {
+                              return language === 'ar' 
+                                ? 'المسؤول الأخير - لا يمكن تخفيض الرتبة'
+                                : 'Last admin - cannot demote';
+                            }
+                            
+                            return language === 'ar' 
+                              ? (clientDetails.client.isAdmin ? 'لدى هذا المستخدم صلاحيات المسؤول' : 'مستخدم عادي')
+                              : (clientDetails.client.isAdmin ? 'This user has admin privileges' : 'Regular user');
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={clientDetails.client.isAdmin}
+                      onCheckedChange={(checked) => {
+                        toggleAdminMutation.mutate({ 
+                          id: clientDetails.client.id, 
+                          isAdmin: checked 
+                        });
+                      }}
+                      disabled={
+                        toggleAdminMutation.isPending || 
+                        (clientDetails.client.isAdmin && clients.filter(c => c.isAdmin).length === 1)
+                      }
+                      data-testid="switch-admin-status"
+                    />
                   </div>
 
                   <Separator />
