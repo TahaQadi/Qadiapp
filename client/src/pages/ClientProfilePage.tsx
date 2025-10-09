@@ -12,7 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building, MapPin, Phone, Mail, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Building, MapPin, Phone, Mail, Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
@@ -292,9 +293,16 @@ export default function ClientProfilePage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">
-          {language === 'ar' ? 'الملف الشخصي' : 'Client Profile'}
-        </h1>
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="icon" asChild data-testid="button-back">
+            <Link href="/">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">
+            {language === 'ar' ? 'الملف الشخصي' : 'Client Profile'}
+          </h1>
+        </div>
         <p className="text-muted-foreground">
           {language === 'ar' ? profile?.client.nameAr : profile?.client.nameEn}
         </p>
