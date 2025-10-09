@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -75,6 +75,15 @@ export default function OrderingPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products'],
@@ -490,17 +499,23 @@ export default function OrderingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#1a1a1a] to-black">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background">
+      <header className={`sticky top-0 z-50 border-b border-[#d4af37]/20 backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-black/80 shadow-lg shadow-[#d4af37]/10' : 'bg-transparent'}`}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
               alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-10 w-10 object-contain"
+              className="h-10 w-10 object-contain filter drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]"
             />
-            <h1 className="text-xl font-semibold truncate">
+            <h1 className="text-xl font-semibold truncate bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
               {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
             </h1>
           </div>
@@ -510,6 +525,7 @@ export default function OrderingPage() {
               variant="ghost"
               size="icon"
               asChild
+              className="hover:bg-[#d4af37]/10 hover:text-[#d4af37] transition-all duration-300"
               data-testid="button-profile"
             >
               <Link href="/profile">
@@ -521,6 +537,7 @@ export default function OrderingPage() {
                 variant="ghost"
                 size="icon"
                 asChild
+                className="hover:bg-[#d4af37]/10 hover:text-[#d4af37] transition-all duration-300"
                 data-testid="button-admin"
               >
                 <Link href="/admin">
@@ -534,15 +551,14 @@ export default function OrderingPage() {
             <Button
               variant="outline"
               size="icon"
-              className="relative"
+              className="relative border-[#d4af37]/30 hover:bg-[#d4af37]/10 hover:border-[#d4af37] transition-all duration-300"
               onClick={() => setCartOpen(true)}
               data-testid="button-open-cart"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartItemCount > 0 && (
                 <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-gradient-to-r from-[#d4af37] to-[#f9c800] text-black border-0"
                   data-testid="badge-cart-count"
                 >
                   {cartItemCount}
@@ -553,6 +569,7 @@ export default function OrderingPage() {
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
+              className="hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
               data-testid="button-logout"
             >
               <LogOut className="h-5 w-5" />
