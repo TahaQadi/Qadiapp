@@ -24,6 +24,17 @@ import {
   type UpsertUser,
   Notification,
   notifications,
+  clients,
+  clientDepartments,
+  clientLocations,
+  products,
+  clientPricing,
+  orderTemplates,
+  orders,
+  ltas,
+  ltaProducts,
+  ltaClients,
+  users,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -167,29 +178,45 @@ export class MemStorage implements IStorage {
 
   // Replit Auth User operations
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const existingUser = this.users.get(userData.id!);
-    const user: User = {
-      id: userData.id!,
-      email: userData.email ?? null,
-      firstName: userData.firstName ?? null,
-      lastName: userData.lastName ?? null,
-      profileImageUrl: userData.profileImageUrl ?? null,
-      createdAt: existingUser?.createdAt ?? new Date(),
-      updatedAt: new Date(),
-    };
-    this.users.set(user.id, user);
-    return user;
+    const existingUser = await this.getUser(userData.id!);
+    
+    if (existingUser) {
+      const updated = await this.db
+        .update(users)
+        .set({
+          email: userData.email ?? null,
+          firstName: userData.firstName ?? null,
+          lastName: userData.lastName ?? null,
+          profileImageUrl: userData.profileImageUrl ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userData.id!))
+        .returning();
+      return updated[0];
+    } else {
+      const inserted = await this.db
+        .insert(users)
+        .values({
+          id: userData.id!,
+          email: userData.email ?? null,
+          firstName: userData.firstName ?? null,
+          lastName: userData.lastName ?? null,
+          profileImageUrl: userData.profileImageUrl ?? null,
+        })
+        .returning();
+      return inserted[0];
+    }
   }
 
   // Client Authentication
   async getClientByUsername(username: string): Promise<Client | undefined> {
-    return Array.from(this.clients.values()).find(
-      (client) => client.username === username
-    );
+    const result = await this.db.select().from(clients).where(eq(clients.username, username)).limit(1);
+    return result[0];
   }
 
   async validateClientCredentials(username: string, password: string): Promise<AuthUser | null> {
@@ -209,177 +236,188 @@ export class MemStorage implements IStorage {
   }
 
   async getClients(): Promise<Client[]> {
-    return Array.from(this.clients.values());
+    return await this.db.select().from(clients);
   }
 
   async getClient(id: string): Promise<Client | undefined> {
-    return this.clients.get(id);
+    const result = await this.db.select().from(clients).where(eq(clients.id, id)).limit(1);
+    return result[0];
   }
 
   async createClient(insertClient: InsertClient): Promise<Client> {
-    const id = randomUUID();
-    const client: Client = {
-      ...insertClient,
-      id,
-      userId: insertClient.userId ?? null,
-      email: insertClient.email ?? null,
-      phone: insertClient.phone ?? null,
-      isAdmin: insertClient.isAdmin ?? false
-    };
-    this.clients.set(id, client);
-    return client;
+    const inserted = await this.db
+      .insert(clients)
+      .values({
+        nameEn: insertClient.nameEn,
+        nameAr: insertClient.nameAr,
+        username: insertClient.username,
+        password: insertClient.password,
+        userId: insertClient.userId ?? null,
+        email: insertClient.email ?? null,
+        phone: insertClient.phone ?? null,
+        isAdmin: insertClient.isAdmin ?? false,
+      })
+      .returning();
+    return inserted[0];
   }
 
   async updateClient(id: string, data: Partial<InsertClient>): Promise<Client | undefined> {
-    const { nameEn, nameAr, email, phone } = data;
-    const client = this.clients.get(id);
-    if (!client) return undefined;
-
-    const updated = {
-      ...client,
-      nameEn: nameEn ?? client.nameEn,
-      nameAr: nameAr ?? client.nameAr,
-      email: email ?? client.email,
-      phone: phone ?? client.phone,
-    };
-    this.clients.set(id, updated);
-    return updated;
+    const updated = await this.db
+      .update(clients)
+      .set({
+        nameEn: data.nameEn,
+        nameAr: data.nameAr,
+        email: data.email,
+        phone: data.phone,
+        isAdmin: data.isAdmin,
+      })
+      .where(eq(clients.id, id))
+      .returning();
+    return updated[0];
   }
 
   async deleteClient(id: string): Promise<void> {
-    this.clients.delete(id);
-    // Also delete related data
-    const departments = Array.from(this.clientDepartments.values()).filter(d => d.clientId === id);
-    departments.forEach(d => this.clientDepartments.delete(d.id));
-    const locations = Array.from(this.clientLocations.values()).filter(l => l.clientId === id);
-    locations.forEach(l => this.clientLocations.delete(l.id));
+    await this.db.delete(clients).where(eq(clients.id, id));
   }
 
   // Client Departments
   async getClientDepartments(clientId: string): Promise<ClientDepartment[]> {
-    return Array.from(this.clientDepartments.values()).filter(
-      (dept) => dept.clientId === clientId
-    );
+    return await this.db
+      .select()
+      .from(clientDepartments)
+      .where(eq(clientDepartments.clientId, clientId));
   }
 
   async createClientDepartment(insertDept: InsertClientDepartment): Promise<ClientDepartment> {
-    const id = randomUUID();
-    const department: ClientDepartment = {
-      ...insertDept,
-      id,
-      contactName: insertDept.contactName ?? null,
-      contactEmail: insertDept.contactEmail ?? null,
-      contactPhone: insertDept.contactPhone ?? null,
-    };
-    this.clientDepartments.set(id, department);
-    return department;
+    const inserted = await this.db
+      .insert(clientDepartments)
+      .values({
+        clientId: insertDept.clientId,
+        departmentType: insertDept.departmentType,
+        contactName: insertDept.contactName ?? null,
+        contactEmail: insertDept.contactEmail ?? null,
+        contactPhone: insertDept.contactPhone ?? null,
+      })
+      .returning();
+    return inserted[0];
   }
 
   async updateClientDepartment(id: string, updates: Partial<InsertClientDepartment>): Promise<ClientDepartment | undefined> {
-    const dept = this.clientDepartments.get(id);
-    if (!dept) return undefined;
-    const updated = { ...dept, ...updates };
-    this.clientDepartments.set(id, updated);
-    return updated;
+    const updated = await this.db
+      .update(clientDepartments)
+      .set(updates)
+      .where(eq(clientDepartments.id, id))
+      .returning();
+    return updated[0];
   }
 
   async deleteClientDepartment(id: string): Promise<void> {
-    this.clientDepartments.delete(id);
+    await this.db.delete(clientDepartments).where(eq(clientDepartments.id, id));
   }
 
   // Client Locations
   async getClientLocations(clientId: string): Promise<ClientLocation[]> {
-    return Array.from(this.clientLocations.values()).filter(
-      (loc) => loc.clientId === clientId
-    );
+    return await this.db
+      .select()
+      .from(clientLocations)
+      .where(eq(clientLocations.clientId, clientId));
   }
 
   async createClientLocation(insertLoc: InsertClientLocation): Promise<ClientLocation> {
-    const id = randomUUID();
-    const location: ClientLocation = {
-      ...insertLoc,
-      id,
-      city: insertLoc.city ?? null,
-      country: insertLoc.country ?? null,
-      isHeadquarters: insertLoc.isHeadquarters ?? false,
-      phone: insertLoc.phone ?? null,
-    };
-    this.clientLocations.set(id, location);
-    return location;
+    const inserted = await this.db
+      .insert(clientLocations)
+      .values({
+        clientId: insertLoc.clientId,
+        nameEn: insertLoc.nameEn,
+        nameAr: insertLoc.nameAr,
+        addressEn: insertLoc.addressEn,
+        addressAr: insertLoc.addressAr,
+        city: insertLoc.city ?? null,
+        country: insertLoc.country ?? null,
+        isHeadquarters: insertLoc.isHeadquarters ?? false,
+        phone: insertLoc.phone ?? null,
+      })
+      .returning();
+    return inserted[0];
   }
 
   async updateClientLocation(id: string, updates: Partial<InsertClientLocation>): Promise<ClientLocation | undefined> {
-    const loc = this.clientLocations.get(id);
-    if (!loc) return undefined;
-    const updated = { ...loc, ...updates };
-    this.clientLocations.set(id, updated);
-    return updated;
+    const updated = await this.db
+      .update(clientLocations)
+      .set(updates)
+      .where(eq(clientLocations.id, id))
+      .returning();
+    return updated[0];
   }
 
   async deleteClientLocation(id: string): Promise<void> {
-    this.clientLocations.delete(id);
+    await this.db.delete(clientLocations).where(eq(clientLocations.id, id));
   }
 
   // Products
   async getProducts(): Promise<Product[]> {
-    return Array.from(this.products.values());
+    return await this.db.select().from(products);
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
-    return this.products.get(id);
+    const result = await this.db.select().from(products).where(eq(products.id, id)).limit(1);
+    return result[0];
   }
 
   async getProductBySku(sku: string): Promise<Product | undefined> {
-    return Array.from(this.products.values()).find(
-      (product) => product.sku === sku
-    );
+    const result = await this.db.select().from(products).where(eq(products.sku, sku)).limit(1);
+    return result[0];
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const id = randomUUID();
-
-    const product: Product = {
-      ...insertProduct,
-      id,
-      descriptionEn: insertProduct.descriptionEn ?? null,
-      descriptionAr: insertProduct.descriptionAr ?? null,
-      imageUrl: insertProduct.imageUrl ?? null,
-      category: insertProduct.category ?? null,
-      metadata: insertProduct.metadata ?? null,
-    };
-    this.products.set(id, product);
-    return product;
+    const inserted = await this.db
+      .insert(products)
+      .values({
+        nameEn: insertProduct.nameEn,
+        nameAr: insertProduct.nameAr,
+        sku: insertProduct.sku,
+        descriptionEn: insertProduct.descriptionEn ?? null,
+        descriptionAr: insertProduct.descriptionAr ?? null,
+        imageUrl: insertProduct.imageUrl ?? null,
+        category: insertProduct.category ?? null,
+        metadata: insertProduct.metadata ?? null,
+      })
+      .returning();
+    return inserted[0];
   }
 
   async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
-    const product = this.products.get(id);
-    if (!product) return undefined;
-    const updated = { ...product, ...updates };
-    this.products.set(id, updated);
-    return updated;
+    const updated = await this.db
+      .update(products)
+      .set(updates)
+      .where(eq(products.id, id))
+      .returning();
+    return updated[0];
   }
 
   async deleteProduct(id: string): Promise<void> {
-    this.products.delete(id);
+    await this.db.delete(products).where(eq(products.id, id));
   }
 
   // Client Pricing
   async getClientPricing(clientId: string): Promise<ClientPricing[]> {
-    return Array.from(this.clientPricing.values()).filter(
-      (pricing) => pricing.clientId === clientId
-    );
+    return await this.db
+      .select()
+      .from(clientPricing)
+      .where(eq(clientPricing.clientId, clientId));
   }
 
   async createClientPricing(insertPricing: InsertClientPricing): Promise<ClientPricing> {
-    const id = randomUUID();
-    const pricing: ClientPricing = {
-      ...insertPricing,
-      id,
-      currency: insertPricing.currency ?? 'USD',
-      importedAt: new Date(),
-    };
-    this.clientPricing.set(id, pricing);
-    return pricing;
+    const inserted = await this.db
+      .insert(clientPricing)
+      .values({
+        clientId: insertPricing.clientId,
+        productId: insertPricing.productId,
+        price: insertPricing.price,
+        currency: insertPricing.currency ?? 'USD',
+      })
+      .returning();
+    return inserted[0];
   }
 
   async bulkImportPricing(
@@ -419,166 +457,169 @@ export class MemStorage implements IStorage {
 
   // Order Templates
   async getOrderTemplates(clientId: string): Promise<OrderTemplate[]> {
-    return Array.from(this.orderTemplates.values()).filter(
-      (template) => template.clientId === clientId
-    );
+    return await this.db
+      .select()
+      .from(orderTemplates)
+      .where(eq(orderTemplates.clientId, clientId));
   }
 
   async getOrderTemplate(id: string): Promise<OrderTemplate | undefined> {
-    return this.orderTemplates.get(id);
+    const result = await this.db.select().from(orderTemplates).where(eq(orderTemplates.id, id)).limit(1);
+    return result[0];
   }
 
   async createOrderTemplate(insertTemplate: InsertOrderTemplate): Promise<OrderTemplate> {
-    const id = randomUUID();
-    const template: OrderTemplate = {
-      ...insertTemplate,
-      id,
-      createdAt: new Date()
-    };
-    this.orderTemplates.set(id, template);
-    return template;
+    const inserted = await this.db
+      .insert(orderTemplates)
+      .values({
+        clientId: insertTemplate.clientId,
+        nameEn: insertTemplate.nameEn,
+        nameAr: insertTemplate.nameAr,
+        items: insertTemplate.items,
+      })
+      .returning();
+    return inserted[0];
   }
 
   async deleteOrderTemplate(id: string): Promise<void> {
-    this.orderTemplates.delete(id);
+    await this.db.delete(orderTemplates).where(eq(orderTemplates.id, id));
   }
 
   // Orders
   async getOrders(clientId: string): Promise<Order[]> {
-    return Array.from(this.orders.values()).filter(
-      (order) => order.clientId === clientId
-    );
+    return await this.db
+      .select()
+      .from(orders)
+      .where(eq(orders.clientId, clientId))
+      .orderBy(desc(orders.createdAt));
   }
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const id = randomUUID();
-    const order: Order = {
-      ...insertOrder,
-      id,
-      status: insertOrder.status ?? 'pending',
-      pipefyCardId: insertOrder.pipefyCardId ?? null,
-      ltaId: insertOrder.ltaId ?? null,
-      createdAt: new Date()
-    };
-    this.orders.set(id, order);
-    return order;
+    const inserted = await this.db
+      .insert(orders)
+      .values({
+        clientId: insertOrder.clientId,
+        ltaId: insertOrder.ltaId ?? null,
+        items: insertOrder.items,
+        totalAmount: insertOrder.totalAmount,
+        status: insertOrder.status ?? 'pending',
+        pipefyCardId: insertOrder.pipefyCardId ?? null,
+      })
+      .returning();
+    return inserted[0];
   }
 
   // LTA Management
   async createLta(insertLta: InsertLta): Promise<Lta> {
-    const id = randomUUID();
-    const lta: Lta = {
-      ...insertLta,
-      id,
-      descriptionEn: insertLta.descriptionEn ?? null,
-      descriptionAr: insertLta.descriptionAr ?? null,
-      status: insertLta.status ?? 'active',
-      createdAt: new Date(),
-    };
-    this.ltas.set(id, lta);
-    return lta;
+    const inserted = await this.db
+      .insert(ltas)
+      .values({
+        nameEn: insertLta.nameEn,
+        nameAr: insertLta.nameAr,
+        descriptionEn: insertLta.descriptionEn ?? null,
+        descriptionAr: insertLta.descriptionAr ?? null,
+        startDate: insertLta.startDate,
+        endDate: insertLta.endDate,
+        status: insertLta.status ?? 'active',
+      })
+      .returning();
+    return inserted[0];
   }
 
   async getLta(id: string): Promise<Lta | null> {
-    return this.ltas.get(id) || null;
+    const result = await this.db.select().from(ltas).where(eq(ltas.id, id)).limit(1);
+    return result[0] || null;
   }
 
   async getAllLtas(): Promise<Lta[]> {
-    return Array.from(this.ltas.values());
+    return await this.db.select().from(ltas);
   }
 
   async updateLta(id: string, updates: Partial<InsertLta>): Promise<Lta | null> {
-    const lta = this.ltas.get(id);
-    if (!lta) return null;
-
-    const updated = { ...lta, ...updates };
-    this.ltas.set(id, updated);
-    return updated;
+    const updated = await this.db
+      .update(ltas)
+      .set(updates)
+      .where(eq(ltas.id, id))
+      .returning();
+    return updated[0] || null;
   }
 
   async deleteLta(id: string): Promise<boolean> {
-    return this.ltas.delete(id);
+    await this.db.delete(ltas).where(eq(ltas.id, id));
+    return true;
   }
 
   // LTA Products
   async assignProductToLta(insertLtaProduct: InsertLtaProduct): Promise<LtaProduct> {
-    const id = randomUUID();
-    const ltaProduct: LtaProduct = {
-      ...insertLtaProduct,
-      id,
-      currency: insertLtaProduct.currency ?? 'USD',
-      createdAt: new Date(),
-    };
-    this.ltaProducts.set(id, ltaProduct);
-    return ltaProduct;
+    const inserted = await this.db
+      .insert(ltaProducts)
+      .values({
+        ltaId: insertLtaProduct.ltaId,
+        productId: insertLtaProduct.productId,
+        contractPrice: insertLtaProduct.contractPrice,
+        currency: insertLtaProduct.currency ?? 'USD',
+      })
+      .returning();
+    return inserted[0];
   }
 
   async removeProductFromLta(ltaId: string, productId: string): Promise<boolean> {
-    const ltaProduct = Array.from(this.ltaProducts.values()).find(
-      (lp) => lp.ltaId === ltaId && lp.productId === productId
-    );
-    if (!ltaProduct) return false;
-    return this.ltaProducts.delete(ltaProduct.id);
+    await this.db
+      .delete(ltaProducts)
+      .where(and(eq(ltaProducts.ltaId, ltaId), eq(ltaProducts.productId, productId)));
+    return true;
   }
 
   async getLtaProducts(ltaId: string): Promise<LtaProduct[]> {
-    return Array.from(this.ltaProducts.values()).filter(
-      (lp) => lp.ltaId === ltaId
-    );
+    return await this.db
+      .select()
+      .from(ltaProducts)
+      .where(eq(ltaProducts.ltaId, ltaId));
   }
 
   async updateLtaProductPrice(id: string, contractPrice: string, currency?: string): Promise<LtaProduct | null> {
-    const ltaProduct = this.ltaProducts.get(id);
-    if (!ltaProduct) return null;
-
-    const updated = {
-      ...ltaProduct,
-      contractPrice,
-      currency: currency ?? ltaProduct.currency,
-    };
-    this.ltaProducts.set(id, updated);
-    return updated;
+    const updated = await this.db
+      .update(ltaProducts)
+      .set({ contractPrice, currency })
+      .where(eq(ltaProducts.id, id))
+      .returning();
+    return updated[0] || null;
   }
 
   // LTA Clients
   async assignClientToLta(insertLtaClient: InsertLtaClient): Promise<LtaClient> {
-    const id = randomUUID();
-    const ltaClient: LtaClient = {
-      ...insertLtaClient,
-      id,
-      createdAt: new Date(),
-    };
-    this.ltaClients.set(id, ltaClient);
-    return ltaClient;
+    const inserted = await this.db
+      .insert(ltaClients)
+      .values({
+        ltaId: insertLtaClient.ltaId,
+        clientId: insertLtaClient.clientId,
+      })
+      .returning();
+    return inserted[0];
   }
 
   async removeClientFromLta(ltaId: string, clientId: string): Promise<boolean> {
-    const ltaClient = Array.from(this.ltaClients.values()).find(
-      (lc) => lc.ltaId === ltaId && lc.clientId === clientId
-    );
-    if (!ltaClient) return false;
-    return this.ltaClients.delete(ltaClient.id);
+    await this.db
+      .delete(ltaClients)
+      .where(and(eq(ltaClients.ltaId, ltaId), eq(ltaClients.clientId, clientId)));
+    return true;
   }
 
   async getLtaClients(ltaId: string): Promise<LtaClient[]> {
-    return Array.from(this.ltaClients.values()).filter(
-      (lc) => lc.ltaId === ltaId
-    );
+    return await this.db
+      .select()
+      .from(ltaClients)
+      .where(eq(ltaClients.ltaId, ltaId));
   }
 
   async getClientLtas(clientId: string): Promise<Lta[]> {
-    const clientLtaAssignments = Array.from(this.ltaClients.values()).filter(
-      (lc) => lc.clientId === clientId
-    );
-
-    const ltas: Lta[] = [];
-    for (const assignment of clientLtaAssignments) {
-      const lta = this.ltas.get(assignment.ltaId);
-      if (lta) {
-        ltas.push(lta);
-      }
-    }
-    return ltas;
+    const result = await this.db
+      .select({ lta: ltas })
+      .from(ltaClients)
+      .innerJoin(ltas, eq(ltaClients.ltaId, ltas.id))
+      .where(eq(ltaClients.clientId, clientId));
+    
+    return result.map(r => r.lta);
   }
 
   // Product queries for LTA context
