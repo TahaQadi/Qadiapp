@@ -508,19 +508,19 @@ export default function OrderingPage() {
 
       {/* Header */}
       <header className={`sticky top-0 z-50 border-b border-[#d4af37]/20 backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-black/80 shadow-lg shadow-[#d4af37]/10' : 'bg-transparent'}`}>
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <img
               src="/logo.png"
               alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-10 w-10 object-contain filter drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]"
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain filter drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0"
             />
-            <h1 className="text-xl font-semibold truncate bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
+            <h1 className="text-sm sm:text-xl font-semibold truncate bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
               {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
@@ -579,9 +579,9 @@ export default function OrderingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6" data-testid="tabs-list">
+          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6" data-testid="tabs-list">
             <TabsTrigger value="products" data-testid="tab-products">
               <Package className="h-4 w-4 me-2" />
               {language === 'ar' ? 'المنتجات' : 'Products'}
@@ -598,46 +598,48 @@ export default function OrderingPage() {
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-0">
-            <div className="space-y-4 mb-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-4">
-                  <h1 className="text-2xl font-bold">{t('ordering.title')}</h1>
-                  <Badge variant="secondary">
-                    {filteredProducts.length} {t('ordering.products')}
-                  </Badge>
+            <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+              <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <h1 className="text-xl sm:text-2xl font-bold">{t('ordering.title')}</h1>
+                    <Badge variant="secondary" className="text-xs sm:text-sm">
+                      {filteredProducts.length} {t('ordering.products')}
+                    </Badge>
+                  </div>
+
+                  {/* LTA Selector */}
+                  <Select value={selectedLtaFilter} onValueChange={setSelectedLtaFilter}>
+                    <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-lta-filter">
+                      <SelectValue placeholder={language === 'ar' ? 'العقد' : 'Contract'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        {language === 'ar' ? 'جميع العقود' : 'All Contracts'}
+                      </SelectItem>
+                      {clientLtas.map(lta => (
+                        <SelectItem key={lta.id} value={lta.id}>
+                          {language === 'ar' ? lta.nameAr : lta.nameEn}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* LTA Selector */}
-                <Select value={selectedLtaFilter} onValueChange={setSelectedLtaFilter}>
-                  <SelectTrigger className="w-[200px]" data-testid="select-lta-filter">
-                    <SelectValue placeholder={language === 'ar' ? 'العقد' : 'Contract'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {language === 'ar' ? 'جميع العقود' : 'All Contracts'}
-                    </SelectItem>
-                    {clientLtas.map(lta => (
-                      <SelectItem key={lta.id} value={lta.id}>
-                        {language === 'ar' ? lta.nameAr : lta.nameEn}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
                 {selectedLtaFilter !== 'all' && (
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <div className="flex-1">
                       <Input
                         type="search"
                         placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="max-w-sm"
+                        className="w-full"
                         data-testid="input-search-products"
                       />
                     </div>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-[180px]" data-testid="select-category">
+                      <SelectTrigger className="w-full sm:w-[180px]" data-testid="select-category">
                         <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
                       </SelectTrigger>
                       <SelectContent>
