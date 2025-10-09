@@ -81,6 +81,10 @@ export default function LandingPage() {
             src="/logo.png" 
             alt={isArabic ? 'شعار الشركة' : 'Company Logo'} 
             className="h-32 w-32 mx-auto mb-8 object-contain"
+            onError={(e) => {
+              console.error('Logo failed to load');
+              e.currentTarget.style.display = 'none';
+            }}
           />
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
             {isArabic ? 'نظام إدارة اتفاقيات الشراء طويلة الأجل' : 'Long Term Agreement Management System'}
