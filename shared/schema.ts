@@ -154,7 +154,10 @@ export const insertClientSchema = createInsertSchema(clients).omit({ id: true })
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
-export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, createdAt: true });
+export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, createdAt: true }).extend({
+  startDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
+  endDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
+});
 export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id: true, createdAt: true });
 export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: true, createdAt: true });
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
