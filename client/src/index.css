@@ -423,3 +423,24 @@
 .delay-1000 {
   animation-delay: 1s;
 }
+
+/* Al Qadi Gold Shimmer Animation */
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 175, 55, 0.3),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: goldShimmer 2s infinite;
+}
