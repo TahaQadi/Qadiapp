@@ -18,13 +18,15 @@ export default function AdminPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/logo.png" 
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
+              className="h-10 w-10 object-contain"
+            />
             <h1 className="text-xl font-semibold">
-              {language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
+              {language === 'ar' ? 'لوحة الإدارة' : 'Admin Dashboard'}
             </h1>
-            <Badge variant="secondary" className="hidden md:flex">
-              {language === 'ar' ? user?.nameAr : user?.nameEn}
-            </Badge>
           </div>
 
           <div className="flex items-center gap-2">

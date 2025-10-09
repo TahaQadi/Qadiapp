@@ -150,7 +150,7 @@ export default function OrderingPage() {
     );
   }
 
-  
+
 
 
   const filteredProducts = selectedLtaFilter !== 'all'
@@ -494,24 +494,15 @@ export default function OrderingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-semibold">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
+              className="h-10 w-10 object-contain"
+            />
+            <h1 className="text-xl font-semibold truncate">
               {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
             </h1>
-            <Badge variant="secondary" className="hidden md:flex">
-              {language === 'ar' ? user?.nameAr : user?.nameEn}
-            </Badge>
-            {activeLtaId && clientLtas.length > 0 && (
-              <Badge variant="outline" className="gap-2" data-testid="badge-active-lta">
-                <FileText className="w-3 h-3" />
-                {(() => {
-                  const activeLta = clientLtas.find(lta => lta.id === activeLtaId);
-                  return activeLta
-                    ? (language === 'ar' ? activeLta.nameAr : activeLta.nameEn)
-                    : (language === 'ar' ? 'العقد النشط' : 'Active Contract');
-                })()}
-              </Badge>
-            )}
           </div>
 
           <div className="flex items-center gap-2">

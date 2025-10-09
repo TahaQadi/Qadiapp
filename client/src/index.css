@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE */
+/* LIGHT MODE - Branded with company colors */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -14,55 +14,55 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 0 0% 98%;
+  --background: 0 0% 100%;
 
-  --foreground: 220 15% 20%;
+  --foreground: 140 20% 20%;
 
-  --border: 220 13% 91%;
+  --border: 45 30% 90%;
 
-  --card: 210 20% 96%;
+  --card: 0 0% 99%;
 
-  --card-foreground: 220 15% 20%;
+  --card-foreground: 140 20% 20%;
 
-  --card-border: 220 13% 88%;
+  --card-border: 45 30% 88%;
 
-  --sidebar: 0 0% 96%;
+  --sidebar: 0 0% 98%;
 
-  --sidebar-foreground: 220 15% 20%;
+  --sidebar-foreground: 140 20% 20%;
 
-  --sidebar-border: 220 13% 88%;
+  --sidebar-border: 45 30% 88%;
 
-  --sidebar-primary: 210 100% 45%;
+  --sidebar-primary: 45 85% 55%;
 
-  --sidebar-primary-foreground: 210 100% 98%;
+  --sidebar-primary-foreground: 140 35% 25%;
 
-  --sidebar-accent: 210 15% 92%;
+  --sidebar-accent: 45 50% 95%;
 
-  --sidebar-accent-foreground: 220 15% 25%;
+  --sidebar-accent-foreground: 140 20% 25%;
 
-  --sidebar-ring: 210 100% 45%;
+  --sidebar-ring: 45 85% 55%;
 
-  --popover: 210 20% 94%;
+  --popover: 0 0% 98%;
 
-  --popover-foreground: 220 15% 20%;
+  --popover-foreground: 140 20% 20%;
 
-  --popover-border: 220 13% 86%;
+  --popover-border: 45 30% 86%;
 
-  --primary: 210 100% 45%;
+  --primary: 45 85% 55%;
 
-  --primary-foreground: 210 100% 98%;
+  --primary-foreground: 140 35% 25%;
 
-  --secondary: 210 15% 90%;
+  --secondary: 140 30% 45%;
 
-  --secondary-foreground: 220 15% 25%;
+  --secondary-foreground: 0 0% 98%;
 
-  --muted: 210 12% 94%;
+  --muted: 45 20% 96%;
 
-  --muted-foreground: 220 10% 45%;
+  --muted-foreground: 140 10% 45%;
 
-  --accent: 210 15% 92%;
+  --accent: 45 50% 95%;
 
-  --accent-foreground: 220 15% 25%;
+  --accent-foreground: 140 20% 25%;
 
   --destructive: 0 84% 45%;
 
