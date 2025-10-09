@@ -87,12 +87,12 @@ function Router() {
         <>
           <Route path="/" component={OrderingPage} />
           <Route path="/profile" component={ClientProfilePage} />
-          <AdminRoute path="/admin" component={AdminPage} />
-          <AdminRoute path="/admin/clients" component={AdminClientsPage} />
-          <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
-          <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
         </>
       )}
+      <AdminRoute path="/admin" component={AdminPage} />
+      <AdminRoute path="/admin/clients" component={AdminClientsPage} />
+      <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
+      <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <Route component={NotFound} />
     </Switch>
   );

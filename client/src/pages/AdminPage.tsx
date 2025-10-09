@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LogOut, User, Plus, Pencil, Trash2, Package, FileText, X, ImageIcon, Download, Upload } from 'lucide-react';
+import { LogOut, User, Users, Plus, Pencil, Trash2, Package, FileText, X, ImageIcon, Download, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -462,6 +462,28 @@ export default function AdminPage() {
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
                     {language === 'ar' ? 'إدارة العقود والمنتجات والعملاء' : 'Manage contracts, products, and clients'}
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="hover-elevate cursor-pointer" 
+            onClick={() => setLocation('/admin/clients')}
+            data-testid="card-manage-clients"
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-primary/10">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">
+                    {language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {language === 'ar' ? 'إدارة معلومات العملاء والمستخدمين' : 'Manage client information and users'}
                   </p>
                 </div>
               </div>
