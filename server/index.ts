@@ -46,8 +46,8 @@ app.use((req, res, next) => {
     );
   }
 
-  // Seed data on startup
-  await seedData();
+  // Seed data disabled - using Replit Auth with auto-admin assignment
+  // await seedData();
 
   const server = await registerRoutes(app);
 
