@@ -62,14 +62,25 @@ export const clientLocations = pgTable("client_locations", {
 
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  nameEn: text("name_en").notNull(),
+  sku: text("sku").notNull().unique(),
   nameAr: text("name_ar").notNull(),
+  nameEn: text("name_en").notNull(),
+  categoryNum: text("category_num"),
+  unitType: text("unit_type"),
+  unit: text("unit"),
+  unitPerBox: text("unit_per_box"),
+  costPricePerBox: decimal("cost_price_per_box", { precision: 10, scale: 2 }),
+  specificationsAr: text("specifications_ar"),
+  vendor: text("vendor"),
+  vendorNum: text("vendor_num"),
+  mainCategory: text("main_category"),
+  category: text("category"),
+  costPricePerPiece: decimal("cost_price_per_piece", { precision: 10, scale: 2 }),
+  sellingPricePack: decimal("selling_price_pack", { precision: 10, scale: 2 }),
+  sellingPricePiece: decimal("selling_price_piece", { precision: 10, scale: 2 }),
+  imageUrl: text("image_url"),
   descriptionEn: text("description_en"),
   descriptionAr: text("description_ar"),
-  sku: text("sku").notNull().unique(),
-  imageUrl: text("image_url"),
-  category: text("category"),
-  metadata: text("metadata"),
 });
 
 export const ltas = pgTable("ltas", {
@@ -213,11 +224,21 @@ export const createOrderSchema = z.object({
 
 // Product management schemas
 export const createProductSchema = insertProductSchema.extend({
-  metadata: z.string().optional().nullable(),
+  categoryNum: z.string().optional(),
+  unitType: z.string().optional(),
+  unit: z.string().optional(),
+  unitPerBox: z.string().optional(),
+  costPricePerBox: z.string().optional(),
+  specificationsAr: z.string().optional(),
+  vendor: z.string().optional(),
+  vendorNum: z.string().optional(),
+  mainCategory: z.string().optional(),
+  category: z.string().optional(),
+  costPricePerPiece: z.string().optional(),
+  sellingPricePack: z.string().optional(),
+  sellingPricePiece: z.string().optional(),
 });
-export const updateProductSchema = createProductSchema.partial().extend({
-  metadata: z.string().optional().nullable(),
-});
+export const updateProductSchema = createProductSchema.partial();
 
 
 // Template save schema
