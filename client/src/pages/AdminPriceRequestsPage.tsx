@@ -90,6 +90,10 @@ export default function AdminPriceRequestsPage() {
       setPriceDialogOpen(false);
       setContractPrice('');
       setSelectedProduct(null);
+      setSelectedLtaId(null);
+      // Refresh the price requests list
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     },
     onError: (error: any) => {
       toast({
