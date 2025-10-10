@@ -144,7 +144,7 @@ export default function LandingPage() {
               />
             </div>
 
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-extrabold mb-4 sm:mb-6 leading-tight px-4">
+            <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 sm:mb-6 leading-tight px-4">
               <span className="bg-gradient-to-r from-[#d4af37] via-[#f9c800] to-[#d4af37] bg-clip-text text-transparent">
                 {isArabic ? 'إدارة طلباتك أصبحت أسهل' : 'Order Management Made Easy'}
               </span>
@@ -154,13 +154,13 @@ export default function LandingPage() {
               </span>
             </h2>
 
-            <p className="text-base sm:text-xl md:text-2xl text-gray-300 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-4">
+            <p className="text-sm sm:text-lg md:text-xl lg:text-2xl text-gray-300 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-4">
               {isArabic 
                 ? 'تحكم بعقودك، قدّم طلباتك، وتابع تنفيذها بسهولة ووضوح' 
                 : 'Manage your contracts, submit orders, and track execution with ease and clarity'}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-4 max-w-lg sm:max-w-none mx-auto">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -169,10 +169,10 @@ export default function LandingPage() {
                 <Button 
                   size="lg" 
                   onClick={handleLogin} 
-                  className="w-full sm:w-auto gap-2 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-[#d4af37] to-[#f9c800] hover:from-[#f9c800] hover:to-[#d4af37] text-black font-bold shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300"
+                  className="w-full sm:w-auto gap-2 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-5 lg:py-6 bg-gradient-to-r from-[#d4af37] to-[#f9c800] hover:from-[#f9c800] hover:to-[#d4af37] text-black font-bold shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300"
                 >
                   {isArabic ? 'تسجيل الدخول' : 'Sign In'}
-                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
                 </Button>
               </motion.div>
               <motion.div
@@ -183,10 +183,10 @@ export default function LandingPage() {
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="w-full sm:w-auto gap-2 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
+                  className="w-full sm:w-auto gap-2 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-5 lg:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
                 >
                   {isArabic ? 'طلب حساب تجريبي' : 'Request Demo'}
-                  <PlayCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
                 </Button>
               </motion.div>
             </div>
@@ -198,7 +198,7 @@ export default function LandingPage() {
       <section className="relative py-24 bg-gradient-to-b from-transparent via-[#222222]/50 to-transparent">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-4xl sm:text-5xl font-bold mb-16 text-center" 
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-12 sm:mb-16 text-center px-4" 
             dir={isArabic ? 'rtl' : 'ltr'}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -250,7 +250,7 @@ export default function LandingPage() {
       <section className="relative py-24">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-4xl sm:text-5xl font-bold mb-16 text-center" 
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-12 sm:mb-16 text-center px-4" 
             dir={isArabic ? 'rtl' : 'ltr'}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -300,13 +300,13 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl sm:text-5xl font-bold mb-12" dir={isArabic ? 'rtl' : 'ltr'}>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-8 sm:mb-12 px-4" dir={isArabic ? 'rtl' : 'ltr'}>
               <span className="bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
                 {isArabic ? 'وفّر وقتك، وركز على عملك' : 'Save Time, Focus on Your Business'}
               </span>
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
               {benefits.map((benefit, index) => (
                 <motion.div 
                   key={index}
@@ -339,28 +339,28 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
           >
             <Sparkles className="h-16 w-16 text-[#d4af37] mx-auto mb-6" />
-            <h3 className="text-3xl md:text-4xl font-bold mb-6 text-white" dir={isArabic ? 'rtl' : 'ltr'}>
+            <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-white px-4" dir={isArabic ? 'rtl' : 'ltr'}>
               {isArabic ? 'ابدأ الآن وجرّب الراحة في إدارة مشترياتك' : 'Start Now and Experience Easy Procurement Management'}
             </h3>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center mt-8 max-w-lg sm:max-w-none mx-auto px-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
                 <Button 
                   size="lg" 
                   onClick={handleLogin}
-                  className="gap-2 text-lg px-8 py-6 bg-gradient-to-r from-[#d4af37] to-[#f9c800] hover:from-[#f9c800] hover:to-[#d4af37] text-black font-bold shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300"
+                  className="w-full sm:w-auto gap-2 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-[#d4af37] to-[#f9c800] hover:from-[#f9c800] hover:to-[#d4af37] text-black font-bold shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300"
                 >
                   {isArabic ? 'تسجيل الدخول' : 'Sign In'}
-                  <ArrowRight className="h-6 w-6" />
+                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="gap-2 text-lg px-8 py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
+                  className="w-full sm:w-auto gap-2 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
                 >
                   {isArabic ? 'طلب عرض توضيحي' : 'Request Demo'}
-                  <PlayCircle className="h-6 w-6" />
+                  <PlayCircle className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
               </motion.div>
             </div>
@@ -370,8 +370,8 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="relative border-t border-[#d4af37]/20 bg-[#222222]/50 backdrop-blur-xl">
-        <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8" dir={isArabic ? 'rtl' : 'ltr'}>
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6 sm:gap-8" dir={isArabic ? 'rtl' : 'ltr'}>
             <div className="flex items-center gap-3">
               <img 
                 src="/logo.png" 
