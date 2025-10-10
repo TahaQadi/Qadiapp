@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, ArrowLeft, Plus, Pencil, Trash2, X, ImageIcon, Download, Upload } from 'lucide-react';
+import { LogOut, ArrowLeft, Plus, Pencil, Trash2, X, ImageIcon, Download, Upload, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -93,6 +93,11 @@ export default function AdminProductsPage() {
     total: number;
     processing: boolean;
   } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [vendorFilter, setVendorFilter] = useState<string>('all');
+  const itemsPerPage = 50;
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -460,6 +465,45 @@ export default function AdminProductsPage() {
     }
   };
 
+  // Filter products
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = searchQuery === '' || 
+      product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.nameAr.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    const matchesVendor = vendorFilter === 'all' || product.vendorId === vendorFilter;
+    
+    return matchesSearch && matchesCategory && matchesVendor;
+  });
+
+  // Get unique categories and vendors for filters
+  const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+  const productVendors = Array.from(new Set(products.map(p => p.vendorId).filter(Boolean)));
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleVendorChange = (value: string) => {
+    setVendorFilter(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -533,6 +577,64 @@ export default function AdminProductsPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Filters */}
+            <div className="space-y-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={language === 'ar' ? 'البحث...' : 'Search...'}
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-9"
+                    data-testid="input-search-products"
+                  />
+                </div>
+
+                {/* Category Filter */}
+                <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+                  <SelectTrigger data-testid="select-filter-category">
+                    <SelectValue placeholder={language === 'ar' ? 'جميع الفئات' : 'All Categories'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'جميع الفئات' : 'All Categories'}</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category || ''}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Vendor Filter */}
+                <Select value={vendorFilter} onValueChange={handleVendorChange}>
+                  <SelectTrigger data-testid="select-filter-vendor">
+                    <SelectValue placeholder={language === 'ar' ? 'جميع الموردين' : 'All Vendors'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'جميع الموردين' : 'All Vendors'}</SelectItem>
+                    {productVendors.map((vendorId) => {
+                      const vendor = vendors.find(v => v.id === vendorId);
+                      return vendor ? (
+                        <SelectItem key={vendor.id} value={vendor.id}>
+                          {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                        </SelectItem>
+                      ) : null;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Results count */}
+              <div className="text-sm text-muted-foreground">
+                {language === 'ar' 
+                  ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} من ${filteredProducts.length} منتج`
+                  : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} products`
+                }
+              </div>
+            </div>
+
             {productsLoading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -540,28 +642,29 @@ export default function AdminProductsPage() {
                 ))}
               </div>
             ) : (
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'ar' ? 'الصورة' : 'Image'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
-                      <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.length === 0 ? (
+              <>
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          {language === 'ar' ? 'لا توجد منتجات' : 'No products'}
-                        </TableCell>
+                        <TableHead>{language === 'ar' ? 'الصورة' : 'Image'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
+                        <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                       </TableRow>
-                    ) : (
-                      products.map((product) => (
-                        <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedProducts.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            {language === 'ar' ? 'لا توجد منتجات' : 'No products'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedProducts.map((product) => (
+                          <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
                           <TableCell>
                             {product.imageUrl ? (
                               <img 
@@ -612,6 +715,41 @@ export default function AdminProductsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' 
+                      ? `صفحة ${currentPage} من ${totalPages}`
+                      : `Page ${currentPage} of ${totalPages}`
+                    }
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      data-testid="button-prev-page"
+                    >
+                      <ChevronLeft className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'السابق' : 'Previous'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      data-testid="button-next-page"
+                    >
+                      {language === 'ar' ? 'التالي' : 'Next'}
+                      <ChevronRight className="h-4 w-4 ms-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
             )}
           </CardContent>
         </Card>
