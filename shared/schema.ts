@@ -158,7 +158,9 @@ export const orders = pgTable("orders", {
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
-  type: text("type").notNull(), // e.g., 'order_created', 'order_status_changed', 'system'
+  type: text("type", { 
+    enum: ['order_created', 'order_status_changed', 'system', 'price_request', 'price_request_sent', 'price_assigned'] 
+  }).notNull(),
   titleEn: text("title_en").notNull(),
   titleAr: text("title_ar").notNull(),
   messageEn: text("message_en").notNull(),

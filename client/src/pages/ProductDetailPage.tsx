@@ -47,7 +47,7 @@ export default function ProductDetailPage() {
     }
 
     if (!product?.hasPrice) {
-      window.location.href = '/wishlist';
+      window.location.href = '/price-request';
       return;
     }
 
@@ -265,7 +265,7 @@ export default function ProductDetailPage() {
                     </div>
                     <Button onClick={handleAddToCart} variant="outline" size="lg" className="w-full">
                       <Heart className="w-5 h-5 me-2" />
-                      {language === 'ar' ? 'أضف إلى قائمة الأمنيات' : 'Add to Wishlist'}
+                      {language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request'}
                     </Button>
                   </>
                 )}

@@ -63,30 +63,62 @@ export default function AdminPriceRequestsPage() {
     queryKey: ['/api/admin/ltas'],
   });
 
-  const { data: allProducts = [] } = useQuery<any[]>({
-    queryKey: ['/api/products/all'],
+  const { data: ltaAssignments } = useQuery<{
+    ltaClients: Array<{ ltaId: string; clientId: string }>;
+    ltaProducts: Array<{ ltaId: string; productId: string; contractPrice: string; currency: string }>;
+  }>({
+    queryKey: ['/api/admin/lta-assignments'],
   });
 
   const priceRequests = notifications.filter(n => n.type === 'price_request');
 
-  // Check if a product has been assigned to any LTA
-  const isProductAssignedToLta = (productId: string) => {
-    return allProducts.some((p: any) => p.id === productId && p.contractPrice !== null);
+  // Check if a product has been assigned to an LTA that the client has access to
+  const isProductAssignedToLta = (productId: string, clientId: string) => {
+    if (!ltaAssignments) return false;
+
+    // Find all LTAs that the client has access to
+    const clientLtaIds = ltaAssignments.ltaClients
+      .filter(lc => lc.clientId === clientId)
+      .map(lc => lc.ltaId);
+
+    // Check if the product is assigned to any of those LTAs
+    return ltaAssignments.ltaProducts.some(lp => 
+      lp.productId === productId && clientLtaIds.includes(lp.ltaId)
+    );
+  };
+
+  // Helper function to parse metadata safely
+  const parseMetadata = (metadataStr: string | null): PriceRequestMetadata => {
+    if (!metadataStr) {
+      return { 
+        clientId: '', 
+        clientNameEn: '', 
+        clientNameAr: '', 
+        productIds: [], 
+        products: [] 
+      };
+    }
+    
+    try {
+      return typeof metadataStr === 'string' ? JSON.parse(metadataStr) : metadataStr;
+    } catch {
+      return { 
+        clientId: '', 
+        clientNameEn: '', 
+        clientNameAr: '', 
+        productIds: [], 
+        products: [] 
+      };
+    }
   };
 
   // Check if all products in a request have been assigned
   const isRequestCompleted = (request: Notification) => {
-    const metadata: PriceRequestMetadata = (request.metadata as any) || { 
-      clientId: '', 
-      clientNameEn: '', 
-      clientNameAr: '', 
-      productIds: [], 
-      products: [] 
-    };
+    const metadata = parseMetadata(request.metadata);
     
     if (!metadata.products || metadata.products.length === 0) return false;
     
-    return metadata.products.every(product => isProductAssignedToLta(product.id));
+    return metadata.products.every(product => isProductAssignedToLta(product.id, metadata.clientId));
   };
 
   // Filter requests based on status
@@ -136,10 +168,11 @@ export default function AdminPriceRequestsPage() {
       setPriceDialogOpen(false);
       setContractPrice('');
       setSelectedProduct(null);
-      setSelectedLtaId(null);
+      setSelectedLtaId('');
       setSelectedRequest(null);
-      // Refresh the price requests list
+      // Refresh the price requests list and LTA assignments
       queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/lta-assignments'] });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
     },
@@ -168,7 +201,7 @@ export default function AdminPriceRequestsPage() {
       return;
     }
 
-    const metadata: PriceRequestMetadata = (selectedRequest?.metadata as any) || {};
+    const metadata = selectedRequest ? parseMetadata(selectedRequest.metadata) : null;
     
     assignProductMutation.mutate({
       ltaId: selectedLtaId,
@@ -277,15 +310,7 @@ export default function AdminPriceRequestsPage() {
         ) : (
           <div className="space-y-4">
             {filteredRequests.map((request) => {
-              // metadata is already an object from JSONB, not a string
-              const metadata: PriceRequestMetadata = (request.metadata as any) || { 
-                clientId: '', 
-                clientNameEn: '', 
-                clientNameAr: '', 
-                productIds: [], 
-                products: [] 
-              };
-
+              const metadata = parseMetadata(request.metadata);
               const completed = isRequestCompleted(request);
 
               return (
@@ -361,7 +386,7 @@ export default function AdminPriceRequestsPage() {
                           </TableHeader>
                           <TableBody>
                             {metadata.products.map((product) => {
-                              const hasPrice = isProductAssignedToLta(product.id);
+                              const hasPrice = isProductAssignedToLta(product.id, metadata.clientId);
                               return (
                                 <TableRow key={product.id}>
                                   <TableCell className="font-mono">{product.sku}</TableCell>

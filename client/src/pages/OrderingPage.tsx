@@ -438,8 +438,8 @@ export default function OrderingPage() {
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
 
-    const handleAddToWishlist = () => {
-      window.location.href = '/wishlist';
+    const handleAddToPriceRequest = () => {
+      window.location.href = '/price-request';
     };
 
     return (
@@ -518,7 +518,7 @@ export default function OrderingPage() {
           ) : null}
         </CardContent>
 
-        {/* Add to Cart or Add to Wishlist */}
+        {/* Add to Cart or Add to Price Request */}
         <CardFooter className="p-3 sm:p-4 pt-0">
           {product.hasPrice ? (
             <Button
@@ -537,14 +537,14 @@ export default function OrderingPage() {
             </Button>
           ) : (
             <Button
-              onClick={handleAddToWishlist}
+              onClick={handleAddToPriceRequest}
               variant="outline"
               className="w-full transition-all duration-300"
-              data-testid={`button-add-to-wishlist-${product.id}`}
+              data-testid={`button-add-to-price-request-${product.id}`}
             >
               <Heart className="w-4 h-4 me-2" />
               <span className="text-sm sm:text-base">
-                {language === 'ar' ? 'أضف إلى قائمة الأمنيات' : 'Add to Wishlist'}
+                {language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request'}
               </span>
             </Button>
           )}
@@ -581,9 +581,9 @@ export default function OrderingPage() {
               size="icon"
               asChild
               className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-              data-testid="button-wishlist"
+              data-testid="button-price-request"
             >
-              <Link href="/wishlist">
+              <Link href="/price-request">
                 <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>

@@ -1704,6 +1704,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all LTA assignments (for admin price request page)
+  app.get('/api/admin/lta-assignments', requireAdmin, async (req: any, res) => {
+    try {
+      const ltas = await storage.getAllLtas();
+      const assignments = {
+        ltaClients: [] as Array<{ ltaId: string; clientId: string }>,
+        ltaProducts: [] as Array<{ ltaId: string; productId: string; contractPrice: string; currency: string }>
+      };
+
+      // Fetch all LTA-client and LTA-product mappings
+      for (const lta of ltas) {
+        // Get clients for this LTA
+        const clients = await storage.getLtaClients(lta.id);
+        assignments.ltaClients.push(...clients.map(c => ({ ltaId: lta.id, clientId: c.clientId })));
+
+        // Get products for this LTA
+        const products = await storage.getProductsForLta(lta.id);
+        assignments.ltaProducts.push(...products.map(p => ({
+          ltaId: lta.id,
+          productId: p.id,
+          contractPrice: p.contractPrice || '',
+          currency: p.currency || 'USD'
+        })));
+      }
+
+      res.json(assignments);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب تعيينات الاتفاقيات"
+      });
+    }
+  });
+
   // Client LTA Endpoints
   app.get('/api/client/ltas', requireAuth, async (req: any, res) => {
     try {

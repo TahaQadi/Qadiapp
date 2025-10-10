@@ -17,7 +17,7 @@ import AdminClientsPage from "@/pages/AdminClientsPage";
 import AdminLtaListPage from "@/pages/AdminLtaListPage";
 import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import AdminPriceRequestsPage from '@/pages/AdminPriceRequestsPage';
-import WishlistPage from '@/pages/WishlistPage';
+import PriceRequestPage from '@/pages/PriceRequestPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CatalogPage from '@/pages/CatalogPage';
 import { ProtectedRoute } from '@/lib/protected-route';
@@ -108,7 +108,7 @@ function Router() {
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
 
-      <ProtectedRoute path="/wishlist" component={WishlistPage} />
+      <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       
       {/* Public product pages for SEO */}
       <Route path="/products/:sku" component={ProductDetailPage} />
