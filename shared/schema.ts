@@ -83,8 +83,6 @@ export const products = pgTable("products", {
   costPricePerBox: decimal("cost_price_per_box", { precision: 10, scale: 2 }),
   specificationsAr: text("specifications_ar"),
   vendorId: varchar("vendor_id").references(() => vendors.id, { onDelete: "set null" }),
-  vendor: text("vendor"), // Deprecated: kept for backward compatibility
-  vendorNum: text("vendor_num"), // Deprecated: kept for backward compatibility
   mainCategory: text("main_category"),
   category: text("category"),
   costPricePerPiece: decimal("cost_price_per_piece", { precision: 10, scale: 2 }),
