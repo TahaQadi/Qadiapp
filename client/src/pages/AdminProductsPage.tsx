@@ -352,15 +352,15 @@ export default function AdminProductsPage() {
   };
 
   const downloadTemplate = () => {
-    const csvHeader = 'SKU,Name (EN),Name (AR),Description (EN),Description (AR),Category,Image URL,Custom Metadata\n';
-    const csvExample = '"SAMPLE-001","Sample Product","منتج عينة","Sample description","وصف عينة","Electronics","",""';
+    const csvHeader = 'SKU,Name (EN),Name (AR),Category Num,Unit Type,Unit,Unit Per Box,Cost Price Per Box,Cost Price Per Piece,Specifications (AR),Vendor Number,Main Category,Category,Selling Price Pack,Selling Price Piece,Description (EN),Description (AR),Image URL\n';
+    const csvExample = '"SAMPLE-001","Sample Product","منتج عينة","1101","Box","Piece","12","120.00","10.50","مواصفات المنتج","V001","Electronics","Mobile Phones","130.00","11.00","Sample product description","وصف المنتج النموذجي",""';
     const csv = csvHeader + csvExample;
     
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv; charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'products_template.csv';
+    a.download = 'products_import_template.csv';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -1270,26 +1270,38 @@ export default function AdminProductsPage() {
           </DialogHeader>
           
           <div className="space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <label className="text-sm font-medium">
-                  {language === 'ar' ? 'ملف CSV' : 'CSV File'}
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={downloadTemplate}
-                  className="h-auto p-0"
-                  data-testid="button-download-template"
-                >
-                  {language === 'ar' ? 'تحميل النموذج' : 'Download Template'}
-                </Button>
+            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {language === 'ar' ? 'قالب CSV' : 'CSV Template'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ar' 
+                    ? 'قم بتنزيل القالب لمعرفة التنسيق الصحيح' 
+                    : 'Download the template to see the correct format'}
+                </p>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={downloadTemplate}
+                data-testid="button-download-template"
+              >
+                <Download className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'تحميل القالب' : 'Download Template'}
+              </Button>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">
+                {language === 'ar' ? 'ملف CSV' : 'CSV File'}
+              </label>
               <Input
                 type="file"
                 accept=".csv"
                 onChange={handleImportFileChange}
+                className="mt-2"
                 data-testid="input-import-file"
               />
               {importFile && (
