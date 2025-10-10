@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart, Package, FileText, History, Settings, X, Loader2, User, Search, LogOut } from 'lucide-react';
+import { ShoppingCart, Package, FileText, History, Settings, X, Loader2, User, Search, LogOut, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -588,6 +588,17 @@ export default function OrderingPage() {
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-wishlist"
+            >
+              <Link href="/wishlist">
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
