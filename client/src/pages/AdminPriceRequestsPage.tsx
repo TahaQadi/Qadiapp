@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -180,7 +179,7 @@ export default function AdminPriceRequestsPage() {
           <div className="space-y-4">
             {priceRequests.map((request) => {
               const metadata: PriceRequestMetadata = request.metadata 
-                ? JSON.parse(request.metadata)
+                ? (request.metadata as any)
                 : { clientId: '', clientNameEn: '', clientNameAr: '', productIds: [], products: [] };
 
               return (
@@ -218,7 +217,7 @@ export default function AdminPriceRequestsPage() {
                           <p className="text-sm">{metadata.message}</p>
                         </div>
                       )}
-                      
+
                       <div>
                         <h4 className="font-semibold mb-3">
                           {language === 'ar' ? 'المنتجات المطلوبة:' : 'Requested Products:'}
