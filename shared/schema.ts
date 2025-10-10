@@ -153,10 +153,7 @@ export const notifications = pgTable("notifications", {
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
-export const insertProductSchema = createInsertSchema(products).omit({ id: true }).extend({
-  category: z.string().optional(),
-  categoryNumber: z.string().optional(),
-});
+export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, createdAt: true }).extend({
   startDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
   endDate: z.union([z.date(), z.string().transform(str => new Date(str))]),

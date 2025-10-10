@@ -48,7 +48,6 @@ export const products = pgTable('products', {
   descriptionEn: text('description_en').notNull(),
   descriptionAr: text('description_ar').notNull(),
   category: text('category'),
-  categoryNumber: text('category_number'),
   imageUrl: text('image_url'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
