@@ -432,29 +432,9 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-    const [requestingPrice, setRequestingPrice] = useState(false);
 
-    const handleRequestPrice = async () => {
-      setRequestingPrice(true);
-      try {
-        const res = await apiRequest('POST', '/api/client/price-request', {
-          productIds: [product.id],
-          message: null
-        });
-        const data = await res.json();
-        toast({
-          title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
-          description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
-        });
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: language === 'ar' ? 'خطأ' : 'Error',
-          description: error.message,
-        });
-      } finally {
-        setRequestingPrice(false);
-      }
+    const handleAddToWishlist = () => {
+      window.location.href = '/wishlist';
     };
 
     return (
@@ -525,7 +505,7 @@ export default function OrderingPage() {
           )}
         </CardContent>
 
-        {/* Add to Cart or Request Price */}
+        {/* Add to Cart or Add to Wishlist */}
         <CardFooter className="p-3 sm:p-4 pt-0">
           {product.hasPrice ? (
             <Button
@@ -544,19 +524,14 @@ export default function OrderingPage() {
             </Button>
           ) : (
             <Button
-              onClick={handleRequestPrice}
-              disabled={requestingPrice}
+              onClick={handleAddToWishlist}
               variant="outline"
               className="w-full transition-all duration-300"
-              data-testid={`button-request-price-${product.id}`}
+              data-testid={`button-add-to-wishlist-${product.id}`}
             >
-              {requestingPrice ? (
-                <Loader2 className="w-4 h-4 me-2 animate-spin" />
-              ) : (
-                <Package className="w-4 h-4 me-2" />
-              )}
+              <Heart className="w-4 h-4 me-2" />
               <span className="text-sm sm:text-base">
-                {language === 'ar' ? 'طلب عرض سعر' : 'Request Price Offer'}
+                {language === 'ar' ? 'أضف إلى قائمة الرغبات' : 'Add to Wishlist'}
               </span>
             </Button>
           )}
