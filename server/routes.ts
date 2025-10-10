@@ -1380,6 +1380,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body
       });
       const ltaProduct = await storage.assignProductToLta(validatedData);
+      
+      // Notify client if clientId is provided (from price request)
+      if (req.body.clientId) {
+        try {
+          const product = await storage.getProduct(validatedData.productId);
+          const lta = await storage.getLta(req.params.ltaId);
+          
+          if (product && lta) {
+            await storage.createNotification({
+              clientId: req.body.clientId,
+              type: 'price_assigned',
+              titleEn: 'Price Offer Ready',
+              titleAr: 'عرض السعر جاهز',
+              messageEn: `Your price request for ${product.nameEn} has been processed. Price: ${validatedData.contractPrice} ${validatedData.currency}`,
+              messageAr: `تمت معالجة طلب السعر الخاص بـ ${product.nameAr}. السعر: ${validatedData.contractPrice} ${validatedData.currency}`,
+              metadata: JSON.stringify({
+                productId: product.id,
+                sku: product.sku,
+                ltaId: lta.id,
+                ltaNameEn: lta.nameEn,
+                ltaNameAr: lta.nameAr,
+                contractPrice: validatedData.contractPrice,
+                currency: validatedData.currency,
+              }),
+            });
+          }
+        } catch (notifError) {
+          console.error('Error creating price assignment notification:', notifError);
+          // Don't fail the request if notification fails
+        }
+      }
+      
       res.status(201).json({
         ...ltaProduct,
         message: "Product assigned to LTA successfully",

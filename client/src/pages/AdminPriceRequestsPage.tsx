@@ -53,6 +53,7 @@ export default function AdminPriceRequestsPage() {
   const [contractPrice, setContractPrice] = useState('');
   const [currency, setCurrency] = useState('USD');
   const [selectedLtaId, setSelectedLtaId] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -62,7 +63,38 @@ export default function AdminPriceRequestsPage() {
     queryKey: ['/api/admin/ltas'],
   });
 
+  const { data: allProducts = [] } = useQuery<any[]>({
+    queryKey: ['/api/products/all'],
+  });
+
   const priceRequests = notifications.filter(n => n.type === 'price_request');
+
+  // Check if a product has been assigned to any LTA
+  const isProductAssignedToLta = (productId: string) => {
+    return allProducts.some((p: any) => p.id === productId && p.contractPrice !== null);
+  };
+
+  // Check if all products in a request have been assigned
+  const isRequestCompleted = (request: Notification) => {
+    const metadata: PriceRequestMetadata = (request.metadata as any) || { 
+      clientId: '', 
+      clientNameEn: '', 
+      clientNameAr: '', 
+      productIds: [], 
+      products: [] 
+    };
+    
+    if (!metadata.products || metadata.products.length === 0) return false;
+    
+    return metadata.products.every(product => isProductAssignedToLta(product.id));
+  };
+
+  // Filter requests based on status
+  const filteredRequests = priceRequests.filter(request => {
+    if (statusFilter === 'all') return true;
+    const completed = isRequestCompleted(request);
+    return statusFilter === 'completed' ? completed : !completed;
+  });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -74,15 +106,16 @@ export default function AdminPriceRequestsPage() {
   });
 
   const assignProductMutation = useMutation({
-    mutationFn: async (data: { ltaId: string; productId: string; contractPrice: string; currency: string }) => {
+    mutationFn: async (data: { ltaId: string; productId: string; contractPrice: string; currency: string; clientId?: string }) => {
       const res = await apiRequest('POST', `/api/admin/ltas/${data.ltaId}/products`, {
         productId: data.productId,
         contractPrice: data.contractPrice,
         currency: data.currency,
+        clientId: data.clientId,
       });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast({
         title: language === 'ar' ? 'تم إضافة المنتج' : 'Product Added',
         description: language === 'ar' ? 'تم إضافة المنتج إلى الاتفاقية بنجاح' : 'Product added to LTA successfully',
@@ -91,9 +124,11 @@ export default function AdminPriceRequestsPage() {
       setContractPrice('');
       setSelectedProduct(null);
       setSelectedLtaId(null);
+      setSelectedRequest(null);
       // Refresh the price requests list
       queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
     },
     onError: (error: any) => {
       toast({
@@ -120,11 +155,14 @@ export default function AdminPriceRequestsPage() {
       return;
     }
 
+    const metadata: PriceRequestMetadata = (selectedRequest?.metadata as any) || {};
+    
     assignProductMutation.mutate({
       ltaId: selectedLtaId,
       productId: selectedProduct.id,
       contractPrice,
       currency,
+      clientId: metadata.clientId,
     });
   };
 
@@ -161,27 +199,64 @@ export default function AdminPriceRequestsPage() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
+        {/* Filter Tabs */}
+        {priceRequests.length > 0 && (
+          <div className="flex gap-2 mb-6">
+            <Button
+              variant={statusFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('all')}
+            >
+              {language === 'ar' ? 'الكل' : 'All'}
+              <Badge variant="secondary" className="ms-2">
+                {priceRequests.length}
+              </Badge>
+            </Button>
+            <Button
+              variant={statusFilter === 'pending' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('pending')}
+            >
+              {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
+              <Badge variant="secondary" className="ms-2">
+                {priceRequests.filter(r => !isRequestCompleted(r)).length}
+              </Badge>
+            </Button>
+            <Button
+              variant={statusFilter === 'completed' ? 'default' : 'outline'}
+              onClick={() => setStatusFilter('completed')}
+            >
+              {language === 'ar' ? 'مكتمل' : 'Completed'}
+              <Badge variant="secondary" className="ms-2">
+                {priceRequests.filter(r => isRequestCompleted(r)).length}
+              </Badge>
+            </Button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
             </p>
           </div>
-        ) : priceRequests.length === 0 ? (
+        ) : filteredRequests.length === 0 ? (
           <Card className="p-12 text-center">
             <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">
               {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
             </h3>
             <p className="text-muted-foreground">
-              {language === 'ar' 
-                ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
-                : 'No price requests have been received yet'}
+              {statusFilter === 'all' 
+                ? (language === 'ar' 
+                  ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
+                  : 'No price requests have been received yet')
+                : (language === 'ar'
+                  ? `لا توجد طلبات ${statusFilter === 'pending' ? 'قيد الانتظار' : 'مكتملة'}`
+                  : `No ${statusFilter} requests`)}
             </p>
           </Card>
         ) : (
           <div className="space-y-4">
-            {priceRequests.map((request) => {
+            {filteredRequests.map((request) => {
               // metadata is already an object from JSONB, not a string
               const metadata: PriceRequestMetadata = (request.metadata as any) || { 
                 clientId: '', 
@@ -191,16 +266,24 @@ export default function AdminPriceRequestsPage() {
                 products: [] 
               };
 
+              const completed = isRequestCompleted(request);
+
               return (
-                <Card key={request.id} className={!request.isRead ? 'border-primary' : ''}>
+                <Card key={request.id} className={!request.isRead && !completed ? 'border-primary' : completed ? 'border-green-500/30' : ''}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <CardTitle className="flex items-center gap-2">
-                          {!request.isRead && (
+                          {!request.isRead && !completed && (
                             <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
                           )}
                           {language === 'ar' ? metadata.clientNameAr : metadata.clientNameEn}
+                          {completed && (
+                            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                              <Check className="h-3 w-3 me-1" />
+                              {language === 'ar' ? 'مكتمل' : 'Completed'}
+                            </Badge>
+                          )}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
                           <Clock className="inline h-3 w-3 mr-1" />
@@ -240,22 +323,32 @@ export default function AdminPriceRequestsPage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {metadata.products.map((product) => (
-                              <TableRow key={product.id}>
-                                <TableCell className="font-mono">{product.sku}</TableCell>
-                                <TableCell>
-                                  {language === 'ar' ? product.nameAr : product.nameEn}
-                                </TableCell>
-                                <TableCell className="text-end">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleAssignPrice(product, request)}
-                                  >
-                                    {language === 'ar' ? 'تعيين سعر' : 'Assign Price'}
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {metadata.products.map((product) => {
+                              const hasPrice = isProductAssignedToLta(product.id);
+                              return (
+                                <TableRow key={product.id}>
+                                  <TableCell className="font-mono">{product.sku}</TableCell>
+                                  <TableCell>
+                                    {language === 'ar' ? product.nameAr : product.nameEn}
+                                  </TableCell>
+                                  <TableCell className="text-end">
+                                    {hasPrice ? (
+                                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                                        <Check className="h-3 w-3 me-1" />
+                                        {language === 'ar' ? 'تم التعيين' : 'Assigned'}
+                                      </Badge>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleAssignPrice(product, request)}
+                                      >
+                                        {language === 'ar' ? 'تعيين سعر' : 'Assign Price'}
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
                           </TableBody>
                         </Table>
                       </div>
