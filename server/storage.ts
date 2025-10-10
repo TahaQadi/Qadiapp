@@ -42,7 +42,7 @@ import {
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import crypto from "crypto";
 import { db } from "./db";
 
@@ -640,7 +640,15 @@ export class MemStorage implements IStorage {
     return true;
   }
 
-  async getLtaProducts(ltaId: string): Promise<LtaProduct[]> {
+  async getLtaProducts(ltaId: string | string[]): Promise<LtaProduct[]> {
+    // Accept either a single ltaId or an array for bulk queries
+    if (Array.isArray(ltaId)) {
+      if (ltaId.length === 0) return [];
+      return await this.db
+        .select()
+        .from(ltaProducts)
+        .where(inArray(ltaProducts.ltaId, ltaId));
+    }
     return await this.db
       .select()
       .from(ltaProducts)
@@ -711,40 +719,50 @@ export class MemStorage implements IStorage {
     return productsWithPricing;
   }
 
-  // Get all products with client's LTA prices (if assigned)
+  // Get all products with client's LTA prices (if assigned) - OPTIMIZED
   async getAllProductsWithClientPrices(clientId: string): Promise<Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }>> {
     const allProducts = await this.getProducts();
     const clientLtas = await this.getClientLtas(clientId);
-    const productsWithPricing: Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }> = [];
-
-    for (const product of allProducts) {
-      let hasPrice = false;
-      let contractPrice: string | undefined;
-      let currency: string | undefined;
-      let ltaId: string | undefined;
-
-      // Check if product is in any of client's LTAs
-      for (const lta of clientLtas) {
-        const ltaProducts = await this.getLtaProducts(lta.id);
-        const ltaProduct = ltaProducts.find(lp => lp.productId === product.id);
-
-        if (ltaProduct) {
-          hasPrice = true;
-          contractPrice = ltaProduct.contractPrice;
-          currency = ltaProduct.currency;
-          ltaId = lta.id;
-          break;
-        }
+    
+    // Get all LTA IDs for this client
+    const ltaIds = clientLtas.map(lta => lta.id);
+    
+    // Load ALL lta products for client's LTAs in ONE query (instead of N queries)
+    const allLtaProducts = ltaIds.length > 0 
+      ? await this.getLtaProducts(ltaIds) 
+      : [];
+    
+    // Build a lookup map for fast access: productId -> ltaProduct
+    const ltaProductMap = new Map<string, LtaProduct>();
+    for (const ltaProduct of allLtaProducts) {
+      // Store the first match (priority to first LTA)
+      if (!ltaProductMap.has(ltaProduct.productId)) {
+        ltaProductMap.set(ltaProduct.productId, ltaProduct);
       }
-
-      productsWithPricing.push({
-        ...product,
-        contractPrice,
-        currency,
-        ltaId,
-        hasPrice,
-      });
     }
+    
+    // Map products with pricing info
+    const productsWithPricing: Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }> = allProducts.map(product => {
+      const ltaProduct = ltaProductMap.get(product.id);
+      
+      if (ltaProduct) {
+        return {
+          ...product,
+          contractPrice: ltaProduct.contractPrice,
+          currency: ltaProduct.currency,
+          ltaId: ltaProduct.ltaId,
+          hasPrice: true,
+        };
+      }
+      
+      return {
+        ...product,
+        contractPrice: undefined,
+        currency: undefined,
+        ltaId: undefined,
+        hasPrice: false,
+      };
+    });
 
     return productsWithPricing;
   }
