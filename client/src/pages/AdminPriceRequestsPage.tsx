@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Check, Clock, Package, User, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive } from 'lucide-react';
 import { Link } from 'wouter';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -101,6 +101,19 @@ export default function AdminPriceRequestsPage() {
       await apiRequest('PATCH', `/api/client/notifications/${id}/read`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+    },
+  });
+
+  const archiveRequestMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest('DELETE', `/api/client/notifications/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الأرشفة' : 'Archived',
+        description: language === 'ar' ? 'تم أرشفة الطلب بنجاح' : 'Request archived successfully',
+      });
       queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
     },
   });
@@ -290,16 +303,27 @@ export default function AdminPriceRequestsPage() {
                           {formatDate(request.createdAt)}
                         </p>
                       </div>
-                      {!request.isRead && (
+                      <div className="flex gap-2">
+                        {!request.isRead && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => markAsReadMutation.mutate(request.id)}
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            {language === 'ar' ? 'وضع علامة كمقروء' : 'Mark as Read'}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => markAsReadMutation.mutate(request.id)}
+                          onClick={() => archiveRequestMutation.mutate(request.id)}
+                          disabled={archiveRequestMutation.isPending}
                         >
-                          <Check className="h-4 w-4 mr-2" />
-                          {language === 'ar' ? 'وضع علامة كمقروء' : 'Mark as Read'}
+                          <Archive className="h-4 w-4 mr-2" />
+                          {language === 'ar' ? 'أرشفة' : 'Archive'}
                         </Button>
-                      )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
