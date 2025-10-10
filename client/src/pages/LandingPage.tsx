@@ -1,9 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 
 export default function LandingPage() {
   const { language } = useLanguage();
@@ -81,12 +81,11 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Animated gold particles background */}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black flex items-center justify-center p-4">
+      {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#f9c800]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#d4af37]/3 rounded-full blur-[100px] animate-pulse-slow"></div>
+        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
       {/* Header */}
@@ -144,7 +143,7 @@ export default function LandingPage() {
                 className="relative h-40 w-40 sm:h-64 sm:w-64 mx-auto object-contain drop-shadow-2xl"
               />
             </div>
-            
+
             <h2 className="text-3xl sm:text-5xl md:text-7xl font-extrabold mb-4 sm:mb-6 leading-tight px-4">
               <span className="bg-gradient-to-r from-[#d4af37] via-[#f9c800] to-[#d4af37] bg-clip-text text-transparent">
                 {isArabic ? 'إدارة طلباتك أصبحت أسهل' : 'Order Management Made Easy'}
@@ -154,13 +153,13 @@ export default function LandingPage() {
                 {isArabic ? 'مع بوابة القاضي' : 'with Al Qadi Portal'}
               </span>
             </h2>
-            
+
             <p className="text-base sm:text-xl md:text-2xl text-gray-300 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-4">
               {isArabic 
                 ? 'تحكم بعقودك، قدّم طلباتك، وتابع تنفيذها بسهولة ووضوح' 
                 : 'Manage your contracts, submit orders, and track execution with ease and clarity'}
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -228,15 +227,15 @@ export default function LandingPage() {
                   <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#d4af37] to-[#f9c800] flex items-center justify-center text-black font-bold text-xl">
                     {index + 1}
                   </div>
-                  
+
                   <div className="mt-16 mb-4">
                     <Icon className="h-12 w-12 text-[#d4af37]" />
                   </div>
-                  
+
                   <h3 className="font-bold text-2xl mb-3 text-white">
                     {isArabic ? step.titleAr : step.titleEn}
                   </h3>
-                  
+
                   <p className="text-gray-400 leading-relaxed">
                     {isArabic ? step.descAr : step.descEn}
                   </p>
@@ -280,7 +279,7 @@ export default function LandingPage() {
                   <div className="mb-4 inline-flex p-4 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#f9c800]/20 group-hover:from-[#d4af37]/30 group-hover:to-[#f9c800]/30 transition-all duration-300">
                     <Icon className="h-8 w-8 text-[#d4af37]" />
                   </div>
-                  
+
                   <h3 className="font-bold text-xl text-white">
                     {isArabic ? feature.titleAr : feature.titleEn}
                   </h3>
@@ -306,7 +305,7 @@ export default function LandingPage() {
                 {isArabic ? 'وفّر وقتك، وركز على عملك' : 'Save Time, Focus on Your Business'}
               </span>
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {benefits.map((benefit, index) => (
                 <motion.div 
@@ -384,7 +383,7 @@ export default function LandingPage() {
                 <p className="text-xs text-gray-500">{isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
               </div>
             </div>
-            
+
             <div className="text-sm space-y-3">
               <h3 className="font-semibold text-[#d4af37] mb-3">
                 {isArabic ? 'تواصل معنا' : 'Contact Us'}

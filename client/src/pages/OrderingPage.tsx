@@ -461,7 +461,7 @@ export default function OrderingPage() {
             </div>
           )}
           {cartItem && (
-            <Badge 
+            <Badge
               className="absolute top-2 end-2 bg-primary text-primary-foreground shadow-md"
               data-testid={`badge-in-cart-${product.id}`}
             >
@@ -469,7 +469,7 @@ export default function OrderingPage() {
             </Badge>
           )}
           {!product.hasPrice && (
-            <Badge 
+            <Badge
               variant="outline"
               className="absolute top-2 start-2 bg-background/90"
             >
@@ -549,7 +549,7 @@ export default function OrderingPage() {
       </div>
 
       {/* Header */}
-      <header className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-background/95 border-border shadow-lg' : 'bg-background/80 border-border/50'}`}>
+      <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${scrolled ? 'bg-background/95 border-border shadow-lg' : 'bg-background/80 border-border/50'}`}>
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <img
@@ -724,13 +724,13 @@ export default function OrderingPage() {
               <Card className="p-8 sm:p-12 text-center border-dashed">
                 <Package className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-muted-foreground/50" />
                 <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                  {clientLtas.length === 0 
+                  {clientLtas.length === 0
                     ? (language === 'ar' ? 'لا توجد عقود متاحة' : 'No Contracts Available')
                     : (language === 'ar' ? 'اختر عقد اتفاقية' : 'Select a Contract')
                   }
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-4">
-                  {clientLtas.length === 0 
+                  {clientLtas.length === 0
                     ? (language === 'ar'
                       ? 'لم يتم تعيينك إلى أي عقد اتفاقية بعد. يرجى التواصل مع المسؤول لتفعيل حسابك.'
                       : 'You have not been assigned to any LTA contracts yet. Please contact an administrator to activate your account.')
