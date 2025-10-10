@@ -833,14 +833,13 @@ export default function AdminProductsPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger data-testid="select-vendor">
                           <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{language === 'ar' ? 'لا يوجد' : 'None'}</SelectItem>
                         {vendors.map((vendor) => (
                           <SelectItem key={vendor.id} value={vendor.id}>
                             {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
@@ -1144,14 +1143,13 @@ export default function AdminProductsPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger data-testid="select-edit-vendor">
                           <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{language === 'ar' ? 'لا يوجد' : 'None'}</SelectItem>
                         {vendors.map((vendor) => (
                           <SelectItem key={vendor.id} value={vendor.id}>
                             {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
