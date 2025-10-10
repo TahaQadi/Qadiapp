@@ -18,8 +18,11 @@ import AdminLtaListPage from "@/pages/AdminLtaListPage";
 import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import AdminPriceRequestsPage from '@/pages/AdminPriceRequestsPage';
 import WishlistPage from '@/pages/WishlistPage';
+import ProductDetailPage from '@/pages/ProductDetailPage';
+import CatalogPage from '@/pages/CatalogPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 import "./lib/i18n";
+import { HelmetProvider } from 'react-helmet-async';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -106,6 +109,11 @@ function Router() {
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
 
       <ProtectedRoute path="/wishlist" component={WishlistPage} />
+      
+      {/* Public product pages for SEO */}
+      <Route path="/products/:sku" component={ProductDetailPage} />
+      <Route path="/catalog/:category" component={CatalogPage} />
+      <Route path="/catalog" component={CatalogPage} />
 
       <Route component={NotFound} />
     </Switch>
@@ -115,14 +123,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <Router />
-            <Toaster />
-          </LanguageProvider>
-        </ThemeProvider>
-      </TooltipProvider>
+      <HelmetProvider>
+        <TooltipProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <Router />
+              <Toaster />
+            </LanguageProvider>
+          </ThemeProvider>
+        </TooltipProvider>
+      </HelmetProvider>
     </QueryClientProvider>
   );
 }

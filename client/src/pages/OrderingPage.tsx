@@ -143,26 +143,8 @@ export default function OrderingPage() {
     },
   });
 
-  // Get unique categories from products with counts
-  const categoryData = (products || []).reduce((acc, product) => {
-    const category = product.category || 'uncategorized';
-    if (!acc[category]) {
-      acc[category] = { count: 0, mainCategory: product.mainCategory || '' };
-    }
-    acc[category].count++;
-    return acc;
-  }, {} as Record<string, { count: number; mainCategory: string }>);
-
-  const categories = ['all', ...Object.keys(categoryData).sort()];
-
-  // Group categories by main category for hierarchical view
-  const categoryGroups = categories.reduce((acc, cat) => {
-    if (cat === 'all') return acc;
-    const mainCat = categoryData[cat]?.mainCategory || 'Other';
-    if (!acc[mainCat]) acc[mainCat] = [];
-    acc[mainCat].push(cat);
-    return acc;
-  }, {} as Record<string, string[]>);
+  // Get unique categories from products
+  const categories = ['all', ...new Set((products || []).map(p => p.category).filter(Boolean))];
 
   // Check for empty state or loading states
   if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
@@ -465,7 +447,8 @@ export default function OrderingPage() {
         data-testid={`card-product-${product.id}`}
       >
         {/* Product Image */}
-        <div className="relative w-full aspect-square bg-muted/50">
+        <Link href={`/products/${product.sku}`}>
+          <div className="relative w-full aspect-square bg-muted/50 cursor-pointer">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -478,6 +461,7 @@ export default function OrderingPage() {
               <Package className="w-16 h-16 text-muted-foreground/40" />
             </div>
           )}
+        </Link>
           {cartItem && (
             <Badge
               className="absolute top-2 end-2 bg-primary text-primary-foreground shadow-md"
@@ -499,9 +483,11 @@ export default function OrderingPage() {
         {/* Product Info */}
         <CardContent className="flex-1 p-3 sm:p-4 space-y-2">
           <div>
-            <h3 className="font-semibold text-sm sm:text-base line-clamp-1 text-card-foreground" data-testid={`text-product-name-${product.id}`}>
-              {name}
-            </h3>
+            <Link href={`/products/${product.sku}`}>
+              <h3 className="font-semibold text-sm sm:text-base line-clamp-1 text-card-foreground hover:text-primary cursor-pointer transition-colors" data-testid={`text-product-name-${product.id}`}>
+                {name}
+              </h3>
+            </Link>
             <p className="text-xs text-muted-foreground mt-0.5">SKU: {product.sku}</p>
           </div>
 
@@ -706,16 +692,33 @@ export default function OrderingPage() {
                 </div>
 
                 {selectedLtaFilter !== 'all' && (
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="search"
-                      placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full h-10 sm:h-11 ps-10"
-                      data-testid="input-search-products"
-                    />
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        type="search"
+                        placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-10 sm:h-11 ps-10"
+                        data-testid="input-search-products"
+                      />
+                    </div>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-11" data-testid="select-category">
+                        <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
+                        </SelectItem>
+                        {categories.filter(c => c !== 'all').map((category) => (
+                          <SelectItem key={category} value={category || ''}>
+                            {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </div>
@@ -788,89 +791,10 @@ export default function OrderingPage() {
                 </div>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="flex gap-4">
-                {/* Category Sidebar */}
-                <aside className="hidden lg:block w-64 flex-shrink-0">
-                  <Card className="sticky top-24 p-4">
-                    <h3 className="font-semibold mb-4 text-base">
-                      {language === 'ar' ? 'الفئات' : 'Categories'}
-                    </h3>
-                    <div className="space-y-1">
-                      <Button
-                        variant={selectedCategory === 'all' ? 'secondary' : 'ghost'}
-                        className="w-full justify-between h-9 px-3"
-                        onClick={() => setSelectedCategory('all')}
-                      >
-                        <span className="text-sm">{language === 'ar' ? 'جميع الفئات' : 'All Categories'}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {filteredProducts.length}
-                        </Badge>
-                      </Button>
-                      
-                      {Object.entries(categoryGroups).map(([mainCat, subCats]) => (
-                        <div key={mainCat} className="space-y-1">
-                          <div className="text-xs font-semibold text-muted-foreground px-3 py-2 mt-2">
-                            {mainCat}
-                          </div>
-                          {subCats.map((cat) => {
-                            const count = categoryData[cat]?.count || 0;
-                            return (
-                              <Button
-                                key={cat}
-                                variant={selectedCategory === cat ? 'secondary' : 'ghost'}
-                                className="w-full justify-between h-9 px-3 text-start"
-                                onClick={() => setSelectedCategory(cat)}
-                              >
-                                <span className="text-sm truncate">{cat}</span>
-                                <Badge variant="outline" className="text-xs ml-2">
-                                  {count}
-                                </Badge>
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                </aside>
-
-                {/* Mobile Category Filter */}
-                <div className="lg:hidden w-full mb-4">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-full h-10" data-testid="select-category-mobile">
-                      <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {language === 'ar' ? 'جميع الفئات' : 'All Categories'} ({filteredProducts.length})
-                      </SelectItem>
-                      {categories.filter(c => c !== 'all').map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category} ({categoryData[category]?.count || 0})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Products Grid */}
-                <div className="flex-1">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {selectedCategory === 'all' 
-                        ? (language === 'ar' ? 'جميع المنتجات' : 'All Products')
-                        : selectedCategory}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {filteredProducts.length} {language === 'ar' ? 'منتج' : 'products'}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-                    {filteredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
             ) : (
               <Card className="p-8 sm:p-12 text-center border-dashed">
