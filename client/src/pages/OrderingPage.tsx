@@ -634,7 +634,7 @@ export default function OrderingPage() {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
+          <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
             <TabsTrigger value="products" className="text-sm sm:text-base" data-testid="tab-products">
               <Package className="h-4 w-4 me-1 sm:me-2" />
               <span className="hidden xs:inline">{language === 'ar' ? 'المنتجات' : 'Products'}</span>
@@ -644,11 +644,6 @@ export default function OrderingPage() {
               <FileText className="h-4 w-4 me-1 sm:me-2" />
               <span className="hidden xs:inline">{t('templates')}</span>
               <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="wishlist" className="text-sm sm:text-base" data-testid="tab-wishlist">
-              <Heart className="h-4 w-4 me-1 sm:me-2" />
-              <span className="hidden xs:inline">{language === 'ar' ? 'قائمة الرغبات' : 'Wishlist'}</span>
-              <span className="xs:hidden">{language === 'ar' ? 'رغبات' : 'Wish'}</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="text-sm sm:text-base" data-testid="tab-history">
               <History className="h-4 w-4 me-1 sm:me-2" />
@@ -854,25 +849,6 @@ export default function OrderingPage() {
                 <p className="text-sm text-muted-foreground mt-2">{t('createTemplate')}</p>
               </div>
             )}
-          </TabsContent>
-
-          {/* Wishlist Tab */}
-          <TabsContent value="wishlist" className="mt-0">
-            <Card className="p-8 sm:p-12 text-center border-dashed">
-              <Heart className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                {language === 'ar' ? 'قائمة الرغبات' : 'Wishlist'}
-              </h3>
-              <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-4">
-                {language === 'ar'
-                  ? 'أضف المنتجات إلى قائمة الرغبات واطلب عرض سعر لها'
-                  : 'Add products to your wishlist and request price offers'}
-              </p>
-              <Button onClick={() => window.location.href = '/wishlist'} className="mt-2">
-                <Heart className="h-4 w-4 me-2" />
-                {language === 'ar' ? 'الذهاب إلى قائمة الرغبات' : 'Go to Wishlist'}
-              </Button>
-            </Card>
           </TabsContent>
 
           {/* History Tab */}
