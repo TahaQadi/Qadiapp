@@ -214,31 +214,34 @@ export default function AdminPriceRequestsPage() {
       <main className="container mx-auto px-4 py-6">
         {/* Filter Tabs */}
         {priceRequests.length > 0 && (
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-3 mb-6">
             <Button
               variant={statusFilter === 'all' ? 'default' : 'outline'}
               onClick={() => setStatusFilter('all')}
+              className="gap-2"
             >
               {language === 'ar' ? 'الكل' : 'All'}
-              <Badge variant="secondary" className="ms-2">
+              <Badge variant={statusFilter === 'all' ? 'secondary' : 'outline'}>
                 {priceRequests.length}
               </Badge>
             </Button>
             <Button
               variant={statusFilter === 'pending' ? 'default' : 'outline'}
               onClick={() => setStatusFilter('pending')}
+              className="gap-2"
             >
               {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
-              <Badge variant="secondary" className="ms-2">
+              <Badge variant={statusFilter === 'pending' ? 'secondary' : 'outline'}>
                 {priceRequests.filter(r => !isRequestCompleted(r)).length}
               </Badge>
             </Button>
             <Button
               variant={statusFilter === 'completed' ? 'default' : 'outline'}
               onClick={() => setStatusFilter('completed')}
+              className="gap-2"
             >
               {language === 'ar' ? 'مكتمل' : 'Completed'}
-              <Badge variant="secondary" className="ms-2">
+              <Badge variant={statusFilter === 'completed' ? 'secondary' : 'outline'}>
                 {priceRequests.filter(r => isRequestCompleted(r)).length}
               </Badge>
             </Button>
@@ -252,20 +255,24 @@ export default function AdminPriceRequestsPage() {
             </p>
           </div>
         ) : filteredRequests.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">
-              {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
-            </h3>
-            <p className="text-muted-foreground">
-              {statusFilter === 'all' 
-                ? (language === 'ar' 
-                  ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
-                  : 'No price requests have been received yet')
-                : (language === 'ar'
-                  ? `لا توجد طلبات ${statusFilter === 'pending' ? 'قيد الانتظار' : 'مكتملة'}`
-                  : `No ${statusFilter} requests`)}
-            </p>
+          <Card className="p-16 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Package className="h-20 w-20 text-muted-foreground opacity-50" />
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">
+                  {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  {statusFilter === 'all' 
+                    ? (language === 'ar' 
+                      ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
+                      : 'No price requests have been received yet')
+                    : (language === 'ar'
+                      ? `لا توجد طلبات ${statusFilter === 'pending' ? 'قيد الانتظار' : 'مكتملة'}`
+                      : `No ${statusFilter} requests`)}
+                </p>
+              </div>
+            </div>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -303,15 +310,18 @@ export default function AdminPriceRequestsPage() {
                           {formatDate(request.createdAt)}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         {!request.isRead && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => markAsReadMutation.mutate(request.id)}
+                            className="gap-2"
                           >
-                            <Check className="h-4 w-4 mr-2" />
-                            {language === 'ar' ? 'وضع علامة كمقروء' : 'Mark as Read'}
+                            <Check className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              {language === 'ar' ? 'وضع علامة كمقروء' : 'Mark as Read'}
+                            </span>
                           </Button>
                         )}
                         <Button
@@ -319,9 +329,12 @@ export default function AdminPriceRequestsPage() {
                           size="sm"
                           onClick={() => archiveRequestMutation.mutate(request.id)}
                           disabled={archiveRequestMutation.isPending}
+                          className="gap-2"
                         >
-                          <Archive className="h-4 w-4 mr-2" />
-                          {language === 'ar' ? 'أرشفة' : 'Archive'}
+                          <Archive className="h-4 w-4" />
+                          <span className="hidden sm:inline">
+                            {language === 'ar' ? 'أرشفة' : 'Archive'}
+                          </span>
                         </Button>
                       </div>
                     </div>
@@ -393,20 +406,22 @@ export default function AdminPriceRequestsPage() {
               {language === 'ar' ? 'تعيين سعر للمنتج' : 'Assign Product Price'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
                 {language === 'ar' ? 'المنتج' : 'Product'}
               </p>
-              <p className="font-medium">
-                {selectedProduct && (language === 'ar' ? selectedProduct.nameAr : selectedProduct?.nameEn)}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                SKU: {selectedProduct?.sku}
-              </p>
+              <div className="space-y-1">
+                <p className="font-medium text-base">
+                  {selectedProduct && (language === 'ar' ? selectedProduct.nameAr : selectedProduct?.nameEn)}
+                </p>
+                <p className="text-sm text-muted-foreground font-mono">
+                  SKU: {selectedProduct?.sku}
+                </p>
+              </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="lta-select">
                 {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
               </Label>
@@ -424,7 +439,7 @@ export default function AdminPriceRequestsPage() {
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="contract-price">
                 {language === 'ar' ? 'السعر التعاقدي' : 'Contract Price'}
               </Label>
@@ -435,10 +450,11 @@ export default function AdminPriceRequestsPage() {
                 value={contractPrice}
                 onChange={(e) => setContractPrice(e.target.value)}
                 placeholder="0.00"
+                className="font-mono"
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="currency">
                 {language === 'ar' ? 'العملة' : 'Currency'}
               </Label>
