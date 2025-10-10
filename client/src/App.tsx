@@ -18,6 +18,7 @@ import AdminLtaListPage from "@/pages/AdminLtaListPage";
 import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import AdminPriceRequestsPage from '@/pages/AdminPriceRequestsPage';
 import WishlistPage from '@/pages/WishlistPage';
+import ProductDetailPage from './pages/ProductDetailPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 import "./lib/i18n";
 import { useToast } from "@/hooks/use-toast";
@@ -100,6 +101,7 @@ function Router() {
       <AdminRoute path="/admin" component={AdminPage} />
       <AdminRoute path="/admin/products" component={AdminProductsPage} />
       <AdminRoute path="/admin/vendors" component={AdminVendorsPage} />
+      <Route path="/product/:sku" component={ProductDetailPage} />
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
       <AdminRoute path="/admin/price-requests" component={AdminPriceRequestsPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
