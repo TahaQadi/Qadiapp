@@ -86,13 +86,6 @@ export default function OrderingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-select first LTA when LTAs load
-  useEffect(() => {
-    if (!selectedLtaFilter && clientLtas.length > 0) {
-      setSelectedLtaFilter(clientLtas[0].id);
-    }
-  }, [clientLtas, selectedLtaFilter]);
-
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products'],
   });
@@ -100,6 +93,13 @@ export default function OrderingPage() {
   const { data: clientLtas = [], isLoading: ltasLoading } = useQuery<Lta[]>({
     queryKey: ['/api/client/ltas'],
   });
+
+  // Auto-select first LTA when LTAs load
+  useEffect(() => {
+    if (!selectedLtaFilter && clientLtas.length > 0) {
+      setSelectedLtaFilter(clientLtas[0].id);
+    }
+  }, [clientLtas, selectedLtaFilter]);
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery<Template[]>({
     queryKey: ['/api/client/templates'],
