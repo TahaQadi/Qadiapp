@@ -3,8 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import multer from "multer";
-import { 
-  loginSchema, 
+import {
+  loginSchema,
   priceImportRowSchema,
   createDepartmentSchema,
   updateDepartmentSchema,
@@ -55,7 +55,7 @@ const uploadImage = multer({
     const allowedTypes = /jpeg|jpg|png|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       cb(null, true);
     } else {
@@ -75,17 +75,17 @@ async function getClientFromAuth(req: any, res: any, next: any) {
     // Find client linked to this Replit Auth user
     const clients = await storage.getClients();
     let client = clients.find(c => c.userId === userId);
-    
+
     // If no client exists, this is first login - create a client record
     if (!client) {
       const replitUser = await storage.getUser(userId);
       if (!replitUser) {
         return res.status(401).json({ message: "User not found" });
       }
-      
+
       // First user to log in becomes admin
       const isFirstUser = clients.length === 0;
-      
+
       // Create a client record linked to this Replit Auth user
       client = await storage.createClient({
         userId: userId,
@@ -119,7 +119,7 @@ async function requireAuth(req: any, res: any, next: any) {
 async function requireAdmin(req: any, res: any, next: any) {
   await requireAuth(req, res, () => {
     if (!(req as any).client?.isAdmin) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: "Unauthorized - Admin access required",
         messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
       });
@@ -136,15 +136,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const replitUser = await storage.getUser(userId);
-      
+
       // Find or create client linked to this user
       const clients = await storage.getClients();
       let client = clients.find(c => c.userId === userId);
-      
+
       if (!client && replitUser) {
         // First user to log in becomes admin
         const isFirstUser = clients.length === 0;
-        
+
         client = await storage.createClient({
           userId: userId,
           nameEn: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'User',
@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isAdmin: isFirstUser,
         });
       }
-      
+
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(department);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
@@ -230,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateDepartmentSchema.parse(req.body);
       const department = await storage.updateClientDepartment(req.params.id, validatedData);
       if (!department) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Department not found",
           messageAr: "القسم غير موجود",
         });
@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(department);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(location);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
@@ -281,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateLocationSchema.parse(req.body);
       const location = await storage.updateClientLocation(req.params.id, validatedData);
       if (!location) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Location not found",
           messageAr: "الموقع غير موجود",
         });
@@ -289,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(location);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
@@ -321,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/client/price-request", requireAuth, async (req: any, res) => {
     try {
       const { productIds, message } = req.body;
-      
+
       if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
         return res.status(400).json({
           message: "Product IDs are required",
@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const client = await storage.getClient(req.client.id);
       const products = [];
-      
+
       for (const productId of productIds) {
         const product = await storage.getProduct(productId);
         if (product) {
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
       res.json(clientsBasicInfo);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching clients",
         messageAr: "خطأ في جلب العملاء"
       });
@@ -409,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const client = await storage.getClient(req.params.id);
       if (!client) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Client not found",
           messageAr: "العميل غير موجود",
         });
@@ -432,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         locations,
       });
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching client details",
         messageAr: "خطأ في جلب تفاصيل العميل"
       });
@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
@@ -467,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messageAr: "اسم المستخدم موجود بالفعل"
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error creating client",
         messageAr: "خطأ في إنشاء العميل"
       });
@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateClientSchema.parse(req.body);
       const client = await storage.updateClient(req.params.id, validatedData);
       if (!client) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Client not found",
           messageAr: "العميل غير موجود",
         });
@@ -495,12 +495,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error updating client",
         messageAr: "خطأ في تحديث العميل"
       });
@@ -512,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteClient(req.params.id);
       res.sendStatus(204);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error deleting client",
         messageAr: "خطأ في حذف العميل"
       });
@@ -523,7 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/clients/:id/admin-status", requireAdmin, async (req: any, res) => {
     try {
       const { isAdmin } = req.body;
-      
+
       if (typeof isAdmin !== 'boolean') {
         return res.status(400).json({
           message: "isAdmin must be a boolean",
@@ -533,9 +533,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update the client
       const client = await storage.updateClient(req.params.id, { isAdmin });
-      
+
       if (!client) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Client not found",
           messageAr: "العميل غير موجود",
         });
@@ -544,7 +544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Atomic check: verify at least one admin exists after update
       const allClients = await storage.getClients();
       const adminClients = allClients.filter(c => c.isAdmin);
-      
+
       if (adminClients.length === 0) {
         // Rollback: restore admin status
         await storage.updateClient(req.params.id, { isAdmin: true });
@@ -562,15 +562,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
-        message: isAdmin 
-          ? "Client promoted to admin" 
+        message: isAdmin
+          ? "Client promoted to admin"
           : "Client demoted from admin",
-        messageAr: isAdmin 
-          ? "تمت ترقية العميل إلى مسؤول" 
+        messageAr: isAdmin
+          ? "تمت ترقية العميل إلى مسؤول"
           : "تم تخفيض رتبة العميل من مسؤول"
       });
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error updating admin status",
         messageAr: "خطأ في تحديث حالة المسؤول"
       });
@@ -588,12 +588,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(department);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error creating department",
         messageAr: "خطأ في إنشاء القسم"
       });
@@ -605,7 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateDepartmentSchema.parse(req.body);
       const department = await storage.updateClientDepartment(req.params.id, validatedData);
       if (!department) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Department not found",
           messageAr: "القسم غير موجود",
         });
@@ -613,12 +613,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(department);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error updating department",
         messageAr: "خطأ في تحديث القسم"
       });
@@ -630,7 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteClientDepartment(req.params.id);
       res.sendStatus(204);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error deleting department",
         messageAr: "خطأ في حذف القسم"
       });
@@ -648,12 +648,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(location);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error creating location",
         messageAr: "خطأ في إنشاء الموقع"
       });
@@ -665,7 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateLocationSchema.parse(req.body);
       const location = await storage.updateClientLocation(req.params.id, validatedData);
       if (!location) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Location not found",
           messageAr: "الموقع غير موجود",
         });
@@ -673,12 +673,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(location);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error updating location",
         messageAr: "خطأ في تحديث الموقع"
       });
@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteClientLocation(req.params.id);
       res.sendStatus(204);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error deleting location",
         messageAr: "خطأ في حذف الموقع"
       });
@@ -703,7 +703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vendors = await storage.getVendors();
       res.json(vendors);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching vendors",
         messageAr: "خطأ في جلب الموردين"
       });
@@ -714,14 +714,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const vendor = await storage.getVendor(req.params.id);
       if (!vendor) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Vendor not found",
           messageAr: "المورد غير موجود",
         });
       }
       res.json(vendor);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching vendor",
         messageAr: "خطأ في جلب المورد"
       });
@@ -731,26 +731,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/vendors", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createVendorSchema.parse(req.body);
-      
+
       // Check for duplicate vendor number
       const existingVendor = await storage.getVendorByNumber(validatedData.vendorNumber);
       if (existingVendor) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Vendor number already exists",
           messageAr: "رقم المورد موجود بالفعل"
         });
       }
-      
+
       const vendor = await storage.createVendor(validatedData);
       res.status(201).json(vendor);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error creating vendor",
         messageAr: "خطأ في إنشاء المورد"
       });
@@ -760,21 +760,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/vendors/:id", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = updateVendorSchema.parse(req.body);
-      
+
       // Check for duplicate vendor number if it's being updated
       if (validatedData.vendorNumber) {
         const existingVendor = await storage.getVendorByNumber(validatedData.vendorNumber);
         if (existingVendor && existingVendor.id !== req.params.id) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: "Vendor number already exists",
             messageAr: "رقم المورد موجود بالفعل"
           });
         }
       }
-      
+
       const vendor = await storage.updateVendor(req.params.id, validatedData);
       if (!vendor) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Vendor not found",
           messageAr: "المورد غير موجود",
         });
@@ -782,12 +782,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(vendor);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error updating vendor",
         messageAr: "خطأ في تحديث المورد"
       });
@@ -799,7 +799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteVendor(req.params.id);
       res.sendStatus(204);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error deleting vendor",
         messageAr: "خطأ في حذف المورد"
       });
@@ -812,7 +812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateOwnProfileSchema.parse(req.body);
       const client = await storage.updateClient(req.client.id, validatedData);
       if (!client) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Client not found",
           messageAr: "العميل غير موجود",
         });
@@ -827,12 +827,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error updating profile",
         messageAr: "خطأ في تحديث الملف الشخصي"
       });
@@ -856,12 +856,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(product);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء إنشاء المنتج",
       });
@@ -873,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = updateProductSchema.parse(req.body);
       const product = await storage.updateProduct(req.params.id, validatedData);
       if (!product) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Product not found",
           messageAr: "المنتج غير موجود",
         });
@@ -881,12 +881,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء تحديث المنتج",
       });
@@ -898,7 +898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteProduct(req.params.id);
       res.sendStatus(204);
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء حذف المنتج",
       });
@@ -909,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/client/import-prices", requireAuth, uploadMemory.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "No file uploaded",
           messageAr: "لم يتم تحميل أي ملف",
         });
@@ -917,7 +917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const fileContent = req.file.buffer.toString('utf-8');
       const lines = fileContent.split('\n').filter((line: string) => line.trim());
-      
+
       // Skip header line
       const dataLines = lines.slice(1);
       const pricingData = [];
@@ -926,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < dataLines.length; i++) {
         const line = dataLines[i];
         const [sku, price, currency] = line.split(',').map((s: string) => s.trim());
-        
+
         if (!sku || !price) {
           errors.push({
             line: i + 2,
@@ -951,8 +951,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const importedCount = await storage.bulkImportPricing(req.client.id, pricingData);
-      
-      res.json({ 
+
+      res.json({
         message: `Successfully imported ${importedCount} prices`,
         messageAr: `تم استيراد ${importedCount} سعر بنجاح`,
         imported: importedCount,
@@ -960,7 +960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errors: errors.length > 0 ? errors : undefined,
       });
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء استيراد الأسعار",
       });
@@ -981,7 +981,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const template = await storage.getOrderTemplate(req.params.id);
       if (!template) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Template not found",
           messageAr: "القالب غير موجود",
         });
@@ -1004,7 +1004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(template);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
@@ -1036,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate request body with schema
       const validatedData = createOrderSchema.parse(req.body);
-      
+
       // Step 1: Extract and validate ltaId from items
       const ltaIds = Array.from(new Set(validatedData.items.map(item => item.ltaId)));
       if (ltaIds.length === 0) {
@@ -1082,7 +1082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messageAr: `المنتج ${item.sku} غير متاح في هذه الاتفاقية`,
           });
         }
-        
+
         // Validate price matches LTA contract price
         const ltaProductInfo = ltaProductMap.get(item.productId)!;
         if (item.price !== ltaProductInfo.price) {
@@ -1190,12 +1190,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(finalOrder);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء إنشاء الطلب",
       });
@@ -1225,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const notification = await storage.markNotificationAsRead(req.params.id);
       if (!notification) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Notification not found",
           messageAr: "الإشعار غير موجود",
         });
@@ -1239,7 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/client/notifications/mark-all-read", requireAuth, async (req: any, res) => {
     try {
       await storage.markAllNotificationsAsRead(req.client.id);
-      res.json({ 
+      res.json({
         message: "All notifications marked as read",
         messageAr: "تم وضع علامة مقروء على جميع الإشعارات",
       });
@@ -1344,7 +1344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getOrders(req.params.id);
       const ltaOrders = orders.filter(order => order.ltaId === req.params.id);
-      
+
       if (ltaOrders.length > 0) {
         return res.status(400).json({
           message: "Cannot delete LTA with existing orders",
@@ -1380,13 +1380,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body
       });
       const ltaProduct = await storage.assignProductToLta(validatedData);
-      
+
       // Notify client if clientId is provided (from price request)
       if (req.body.clientId) {
         try {
           const product = await storage.getProduct(validatedData.productId);
           const lta = await storage.getLta(req.params.ltaId);
-          
+
           if (product && lta) {
             await storage.createNotification({
               clientId: req.body.clientId,
@@ -1411,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Don't fail the request if notification fails
         }
       }
-      
+
       res.status(201).json({
         ...ltaProduct,
         message: "Product assigned to LTA successfully",
@@ -1587,7 +1587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ltaClients = await storage.getLtaClients(req.params.ltaId);
       const clients = [];
-      
+
       for (const ltaClient of ltaClients) {
         const client = await storage.getClient(ltaClient.clientId);
         if (client) {
@@ -1600,7 +1600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       res.json(clients);
     } catch (error: any) {
       res.status(500).json({
@@ -1635,7 +1635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const imageUrl = `/attached_assets/products/${req.file.filename}`;
       const product = await storage.updateProduct(req.params.id, { imageUrl });
-      
+
       if (!product) {
         return res.status(404).json({
           message: "Product not found",
@@ -1659,46 +1659,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk Export Products
   app.get('/api/admin/products/export', requireAdmin, async (req: any, res) => {
     try {
-      const products = await storage.getProducts();
-      const vendors = await storage.getVendors();
-      
-      // Create vendor lookup map
-      const vendorMap = new Map(vendors.map(v => [v.id, v.vendorNumber]));
-      
-      const csvHeader = 'SKU,Name (EN),Name (AR),Category Num,Unit Type,Unit,Unit Per Box,Cost Price Per Box,Cost Price Per Piece,Specifications (AR),Vendor Number,Main Category,Category,Selling Price Pack,Selling Price Piece,Description (EN),Description (AR),Image URL\n';
-      const csvRows = products.map(p => {
-        const escapeCsv = (value: string | null | undefined) => {
-          if (!value) return '';
-          const escaped = value.replace(/"/g, '""');
-          return `"${escaped}"`;
-        };
-        
-        const vendorNumber = p.vendorId ? vendorMap.get(p.vendorId) || '' : '';
-        
-        return [
-          escapeCsv(p.sku),
-          escapeCsv(p.nameEn),
-          escapeCsv(p.nameAr),
-          escapeCsv(p.categoryNum),
-          escapeCsv(p.unitType),
-          escapeCsv(p.unit),
-          escapeCsv(p.unitPerBox),
-          escapeCsv(p.costPricePerBox),
-          escapeCsv(p.costPricePerPiece),
-          escapeCsv(p.specificationsAr),
-          escapeCsv(vendorNumber),
-          escapeCsv(p.mainCategory),
-          escapeCsv(p.category),
-          escapeCsv(p.sellingPricePack),
-          escapeCsv(p.sellingPricePiece),
-          escapeCsv(p.descriptionEn),
-          escapeCsv(p.descriptionAr),
-          escapeCsv(p.imageUrl)
-        ].join(',');
-      }).join('\n');
-      
-      const csv = csvHeader + csvRows;
-      
+      const products = await storage.getAllProducts();
+
+      const csv = [
+        'SKU,Name (EN),Name (AR),Category Num,Unit Type,Unit,Unit Per Box,Cost Price Per Box,Cost Price Per Piece,Specifications (AR),Vendor Number,Main Category,Category,Selling Price Pack,Selling Price Piece,Description (EN),Description (AR),Image URL',
+        ...products.map((p: any) => {
+          const vendor = p.vendorId ? `"${p.vendorId}"` : '""';
+          const escapeCsv = (value: string | null | undefined) => {
+            if (!value) return '';
+            const escaped = value.replace(/"/g, '""');
+            return `"${escaped}"`;
+          };
+          return [
+            escapeCsv(p.sku),
+            escapeCsv(p.nameEn),
+            escapeCsv(p.nameAr),
+            escapeCsv(p.categoryNum),
+            escapeCsv(p.unitType),
+            escapeCsv(p.unit),
+            escapeCsv(p.unitPerBox),
+            escapeCsv(p.costPricePerBox),
+            escapeCsv(p.costPricePerPiece),
+            escapeCsv(p.specificationsAr),
+            vendor,
+            escapeCsv(p.mainCategory),
+            escapeCsv(p.category),
+            escapeCsv(p.sellingPricePack),
+            escapeCsv(p.sellingPricePiece),
+            escapeCsv(p.descriptionEn),
+            escapeCsv(p.descriptionAr),
+            escapeCsv(p.imageUrl)
+          ].join(',');
+        })
+      ].join('\n');
+
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="products_${Date.now()}.csv"`);
       res.send('\uFEFF' + csv); // Add BOM for Excel compatibility
@@ -1722,7 +1716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const csvContent = req.file.buffer.toString('utf-8').replace(/^\uFEFF/, ''); // Remove BOM
       const rows = csvContent.split('\n').filter((row: string) => row.trim());
-      
+
       if (rows.length < 2) {
         return res.status(400).json({
           message: "CSV file is empty or invalid",
@@ -1746,10 +1740,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Parse CSV row with quote handling
           let currentValue = '';
           let inQuotes = false;
-          
+
           for (let j = 0; j < row.length; j++) {
             const char = row[j];
-            
+
             if (char === '"') {
               if (inQuotes && row[j + 1] === '"') {
                 currentValue += '"';
@@ -1780,7 +1774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Check if vendor exists by vendor number
           const existingVendor = await storage.getVendorByNumber(vendorNumber);
-          
+
           const vendorData = {
             vendorNumber,
             nameEn,
@@ -1844,7 +1838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const csvContent = req.file.buffer.toString('utf-8').replace(/^\uFEFF/, ''); // Remove BOM
       const rows = csvContent.split('\n').filter((row: string) => row.trim());
-      
+
       if (rows.length < 2) {
         return res.status(400).json({
           message: "CSV file is empty or invalid",
@@ -1869,10 +1863,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Parse CSV row with quote handling
           let currentValue = '';
           let inQuotes = false;
-          
+
           for (let j = 0; j < row.length; j++) {
             const char = row[j];
-            
+
             if (char === '"') {
               if (inQuotes && row[j + 1] === '"') {
                 currentValue += '"';
@@ -1915,7 +1909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Check if product exists
           const existingProduct = await storage.getProductBySku(sku);
-          
+
           const productData = {
             sku,
             nameEn,
