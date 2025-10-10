@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Upload, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -45,7 +45,13 @@ export default function AdminVendorsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResults, setImportResults] = useState<{
+    success: Array<{ row: number; vendorNumber: string; action: string; actionAr: string }>;
+    errors: Array<{ row: number; vendorNumber: string; message: string; messageAr: string }>;
+  } | null>(null);
 
   const { data: vendors = [], isLoading } = useQuery<Vendor[]>({
     queryKey: ['/api/admin/vendors'],
@@ -177,6 +183,77 @@ export default function AdminVendorsPage() {
     }
   };
 
+  const bulkImportMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await apiRequest('POST', '/api/admin/vendors/import', formData, true);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/vendors'] });
+      setImportResults(data);
+      setImportFile(null);
+      toast({
+        title: language === 'ar' ? 'تم الاستيراد' : 'Import Completed',
+        description: language === 'ar' 
+          ? `تم استيراد ${data.success.length} مورد بنجاح`
+          : `Successfully imported ${data.success.length} vendors`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل الاستيراد' : 'Import failed'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const downloadCSVTemplate = () => {
+    const headers = ['Vendor Number', 'Name (EN)', 'Name (AR)', 'Email', 'Phone', 'Address'];
+    const sampleData = ['V001', 'ABC Company', 'شركة ABC', 'contact@abc.com', '+966123456789', 'Riyadh, Saudi Arabia'];
+    
+    const csv = [
+      headers.join(','),
+      sampleData.join(','),
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'vendor_import_template.csv';
+    link.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        variant: 'destructive',
+        description: language === 'ar' ? 'يرجى تحميل ملف CSV' : 'Please upload a CSV file',
+      });
+      return;
+    }
+
+    setImportFile(file);
+    setImportResults(null);
+  };
+
+  const handleBulkImport = () => {
+    if (!importFile) {
+      toast({
+        variant: 'destructive',
+        description: language === 'ar' ? 'يرجى اختيار ملف' : 'Please select a file',
+      });
+      return;
+    }
+
+    bulkImportMutation.mutate(importFile);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b">
@@ -206,13 +283,22 @@ export default function AdminVendorsPage() {
             <CardTitle data-testid="text-vendors-title">
               {language === 'ar' ? 'قائمة الموردين' : 'Vendors List'}
             </CardTitle>
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button data-testid="button-add-vendor">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {language === 'ar' ? 'إضافة مورد' : 'Add Vendor'}
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setBulkImportDialogOpen(true)}
+                data-testid="button-bulk-import"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {language === 'ar' ? 'استيراد جماعي' : 'Bulk Import'}
+              </Button>
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button data-testid="button-add-vendor">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {language === 'ar' ? 'إضافة مورد' : 'Add Vendor'}
+                  </Button>
+                </DialogTrigger>
               <DialogContent data-testid="dialog-create-vendor">
                 <DialogHeader>
                   <DialogTitle>
@@ -538,6 +624,116 @@ export default function AdminVendorsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Import Dialog */}
+      <Dialog open={bulkImportDialogOpen} onOpenChange={setBulkImportDialogOpen}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-bulk-import">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'استيراد موردين جماعي' : 'Bulk Import Vendors'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'ar'
+                ? 'قم بتحميل ملف CSV يحتوي على بيانات الموردين'
+                : 'Upload a CSV file containing vendor data'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
+              <div>
+                <p className="font-medium">{language === 'ar' ? 'قالب CSV' : 'CSV Template'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? 'قم بتنزيل قالب CSV لمعرفة التنسيق الصحيح'
+                    : 'Download CSV template to see the correct format'}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={downloadCSVTemplate}
+                data-testid="button-download-template"
+              >
+                <Download className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'تنزيل القالب' : 'Download Template'}
+              </Button>
+            </div>
+
+            <div>
+              <Label htmlFor="csv-file">
+                {language === 'ar' ? 'ملف CSV' : 'CSV File'}
+              </Label>
+              <Input
+                id="csv-file"
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                data-testid="input-csv-file"
+              />
+            </div>
+
+            {importFile && (
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm">
+                  {language === 'ar' ? 'الملف المحدد:' : 'Selected file:'} {importFile.name}
+                </p>
+              </div>
+            )}
+
+            {importResults && (
+              <div className="space-y-3">
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                    {language === 'ar'
+                      ? `تم استيراد ${importResults.success.length} مورد بنجاح`
+                      : `Successfully imported ${importResults.success.length} vendors`}
+                  </p>
+                </div>
+
+                {importResults.errors.length > 0 && (
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p className="text-sm font-medium text-destructive mb-2">
+                      {language === 'ar'
+                        ? `فشل ${importResults.errors.length} مورد:`
+                        : `${importResults.errors.length} vendors failed:`}
+                    </p>
+                    <ul className="text-sm space-y-1 max-h-40 overflow-y-auto">
+                      {importResults.errors.map((item, i) => (
+                        <li key={i} className="text-destructive">
+                          {language === 'ar' ? 'صف' : 'Row'} {item.row}: {item.vendorNumber} - {language === 'ar' ? item.messageAr : item.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setBulkImportDialogOpen(false);
+                setImportFile(null);
+                setImportResults(null);
+              }}
+              data-testid="button-cancel-import"
+            >
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button
+              onClick={handleBulkImport}
+              disabled={!importFile || bulkImportMutation.isPending}
+              data-testid="button-submit-import"
+            >
+              {bulkImportMutation.isPending
+                ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...')
+                : (language === 'ar' ? 'استيراد' : 'Import')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
