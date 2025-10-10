@@ -73,7 +73,7 @@ function AdminRoute({
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -89,7 +89,9 @@ function Router() {
         <Route path="/" component={LandingPage} />
       ) : (
         <>
-          <Route path="/" component={OrderingPage} />
+          <Route path="/">
+            {(user as any)?.isAdmin ? <Redirect to="/admin" /> : <OrderingPage />}
+          </Route>
           <Route path="/profile" component={ClientProfilePage} />
         </>
       )}
