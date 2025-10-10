@@ -292,20 +292,23 @@ export default function AdminVendorsPage() {
             <CardTitle data-testid="text-vendors-title">
               {language === 'ar' ? 'قائمة الموردين' : 'Vendors List'}
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant="outline"
                 onClick={() => setBulkImportDialogOpen(true)}
                 data-testid="button-bulk-import"
+                className="flex-1 sm:flex-none"
               >
                 <Upload className="mr-2 h-4 w-4" />
-                {language === 'ar' ? 'استيراد جماعي' : 'Bulk Import'}
+                <span className="hidden sm:inline">{language === 'ar' ? 'استيراد جماعي' : 'Bulk Import'}</span>
+                <span className="sm:hidden">{language === 'ar' ? 'استيراد' : 'Import'}</span>
               </Button>
               <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button data-testid="button-add-vendor">
+                  <Button data-testid="button-add-vendor" className="flex-1 sm:flex-none">
                     <Plus className="mr-2 h-4 w-4" />
-                    {language === 'ar' ? 'إضافة مورد' : 'Add Vendor'}
+                    <span className="hidden sm:inline">{language === 'ar' ? 'إضافة مورد' : 'Add Vendor'}</span>
+                    <span className="sm:hidden">{language === 'ar' ? 'إضافة' : 'Add'}</span>
                   </Button>
                 </DialogTrigger>
               <DialogContent data-testid="dialog-create-vendor">
@@ -426,50 +429,91 @@ export default function AdminVendorsPage() {
                 {language === 'ar' ? 'لا توجد موردين' : 'No vendors found'}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 font-semibold">
-                        {language === 'ar' ? 'رقم المورد' : 'Vendor #'}
-                      </th>
-                      <th className="text-left p-3 font-semibold">
-                        {language === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}
-                      </th>
-                      <th className="text-left p-3 font-semibold">
-                        {language === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}
-                      </th>
-                      <th className="text-left p-3 font-semibold">
-                        {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                      </th>
-                      <th className="text-left p-3 font-semibold">
-                        {language === 'ar' ? 'الهاتف' : 'Phone'}
-                      </th>
-                      <th className="text-left p-3 font-semibold">
-                        {language === 'ar' ? 'الإجراءات' : 'Actions'}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vendors.map((vendor) => (
-                      <tr key={vendor.id} className="border-b" data-testid={`row-vendor-${vendor.id}`}>
-                        <td className="p-3" data-testid={`text-vendor-number-${vendor.id}`}>
-                          {vendor.vendorNumber}
-                        </td>
-                        <td className="p-3" data-testid={`text-name-en-${vendor.id}`}>
-                          {vendor.nameEn}
-                        </td>
-                        <td className="p-3" data-testid={`text-name-ar-${vendor.id}`}>
-                          {vendor.nameAr}
-                        </td>
-                        <td className="p-3" data-testid={`text-email-${vendor.id}`}>
-                          {vendor.contactEmail || '-'}
-                        </td>
-                        <td className="p-3" data-testid={`text-phone-${vendor.id}`}>
-                          {vendor.contactPhone || '-'}
-                        </td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-semibold">
+                          {language === 'ar' ? 'رقم المورد' : 'Vendor #'}
+                        </th>
+                        <th className="text-left p-3 font-semibold">
+                          {language === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}
+                        </th>
+                        <th className="text-left p-3 font-semibold">
+                          {language === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}
+                        </th>
+                        <th className="text-left p-3 font-semibold">
+                          {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                        </th>
+                        <th className="text-left p-3 font-semibold">
+                          {language === 'ar' ? 'الهاتف' : 'Phone'}
+                        </th>
+                        <th className="text-left p-3 font-semibold">
+                          {language === 'ar' ? 'الإجراءات' : 'Actions'}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendors.map((vendor) => (
+                        <tr key={vendor.id} className="border-b" data-testid={`row-vendor-${vendor.id}`}>
+                          <td className="p-3" data-testid={`text-vendor-number-${vendor.id}`}>
+                            {vendor.vendorNumber}
+                          </td>
+                          <td className="p-3" data-testid={`text-name-en-${vendor.id}`}>
+                            {vendor.nameEn}
+                          </td>
+                          <td className="p-3" data-testid={`text-name-ar-${vendor.id}`}>
+                            {vendor.nameAr}
+                          </td>
+                          <td className="p-3" data-testid={`text-email-${vendor.id}`}>
+                            {vendor.contactEmail || '-'}
+                          </td>
+                          <td className="p-3" data-testid={`text-phone-${vendor.id}`}>
+                            {vendor.contactPhone || '-'}
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleEdit(vendor)}
+                                data-testid={`button-edit-${vendor.id}`}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleDelete(vendor)}
+                                data-testid={`button-delete-${vendor.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                  {vendors.map((vendor) => (
+                    <Card key={vendor.id} className="p-4" data-testid={`card-vendor-${vendor.id}`}>
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-muted-foreground">
+                              {language === 'ar' ? 'رقم المورد' : 'Vendor #'}
+                            </p>
+                            <p className="font-medium" data-testid={`text-vendor-number-${vendor.id}`}>
+                              {vendor.vendorNumber}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
                             <Button
                               variant="outline"
                               size="icon"
@@ -487,12 +531,52 @@ export default function AdminVendorsPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {language === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}
+                          </p>
+                          <p className="font-medium" data-testid={`text-name-en-${vendor.id}`}>
+                            {vendor.nameEn}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {language === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}
+                          </p>
+                          <p className="font-medium" data-testid={`text-name-ar-${vendor.id}`}>
+                            {vendor.nameAr}
+                          </p>
+                        </div>
+
+                        {vendor.contactEmail && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                            </p>
+                            <p className="text-sm truncate" data-testid={`text-email-${vendor.id}`}>
+                              {vendor.contactEmail}
+                            </p>
+                          </div>
+                        )}
+
+                        {vendor.contactPhone && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              {language === 'ar' ? 'الهاتف' : 'Phone'}
+                            </p>
+                            <p className="text-sm" data-testid={`text-phone-${vendor.id}`}>
+                              {vendor.contactPhone}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -637,7 +721,7 @@ export default function AdminVendorsPage() {
 
       {/* Bulk Import Dialog */}
       <Dialog open={bulkImportDialogOpen} onOpenChange={setBulkImportDialogOpen}>
-        <DialogContent className="max-w-2xl" data-testid="dialog-bulk-import">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-bulk-import">
           <DialogHeader>
             <DialogTitle>
               {language === 'ar' ? 'استيراد موردين جماعي' : 'Bulk Import Vendors'}
