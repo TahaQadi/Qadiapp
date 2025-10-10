@@ -60,6 +60,17 @@ export const clientLocations = pgTable("client_locations", {
   phone: text("phone"),
 });
 
+export const vendors = pgTable("vendors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorNumber: text("vendor_number").notNull().unique(),
+  nameEn: text("name_en").notNull(),
+  nameAr: text("name_ar").notNull(),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sku: text("sku").notNull().unique(),
@@ -71,8 +82,9 @@ export const products = pgTable("products", {
   unitPerBox: text("unit_per_box"),
   costPricePerBox: decimal("cost_price_per_box", { precision: 10, scale: 2 }),
   specificationsAr: text("specifications_ar"),
-  vendor: text("vendor"),
-  vendorNum: text("vendor_num"),
+  vendorId: varchar("vendor_id").references(() => vendors.id, { onDelete: "set null" }),
+  vendor: text("vendor"), // Deprecated: kept for backward compatibility
+  vendorNum: text("vendor_num"), // Deprecated: kept for backward compatibility
   mainCategory: text("main_category"),
   category: text("category"),
   costPricePerPiece: decimal("cost_price_per_piece", { precision: 10, scale: 2 }),
@@ -164,6 +176,7 @@ export const notifications = pgTable("notifications", {
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
+export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, createdAt: true }).extend({
   startDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
@@ -207,6 +220,10 @@ export const updateDepartmentSchema = createDepartmentSchema.partial();
 // Location validation schemas
 export const createLocationSchema = insertClientLocationSchema.omit({ clientId: true });
 export const updateLocationSchema = createLocationSchema.partial();
+
+// Vendor validation schemas
+export const createVendorSchema = insertVendorSchema;
+export const updateVendorSchema = createVendorSchema.partial();
 
 // Order creation schema
 export const createOrderSchema = z.object({
@@ -286,6 +303,7 @@ export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 export type Client = typeof clients.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;
 export type ClientLocation = typeof clientLocations.$inferSelect;
+export type Vendor = typeof vendors.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Lta = typeof ltas.$inferSelect;
 export type LtaProduct = typeof ltaProducts.$inferSelect;
@@ -298,6 +316,7 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertClientDepartment = z.infer<typeof insertClientDepartmentSchema>;
 export type InsertClientLocation = z.infer<typeof insertClientLocationSchema>;
+export type InsertVendor = z.infer<typeof insertVendorSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertLta = z.infer<typeof insertLtaSchema>;
 export type InsertLtaProduct = z.infer<typeof insertLtaProductSchema>;
