@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
-import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles } from "lucide-react";
+import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -385,7 +385,7 @@ export default function LandingPage() {
               </div>
             </div>
             
-            <div className="text-sm space-y-2">
+            <div className="text-sm space-y-3">
               <h3 className="font-semibold text-[#d4af37] mb-3">
                 {isArabic ? 'تواصل معنا' : 'Contact Us'}
               </h3>
@@ -411,6 +411,15 @@ export default function LandingPage() {
                 </span>{' '}
                 {isArabic ? 'البيرة - أم الشرايط بالقرب من المدرسة التركية' : 'Albierh - UmAlshrayt near Turkish school'}
               </p>
+              <a 
+                href="https://wa.me/970592555532" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-[#25D366]/50"
+              >
+                <Phone className="h-5 w-5" />
+                {isArabic ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}
+              </a>
             </div>
           </div>
         </div>
