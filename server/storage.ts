@@ -2,6 +2,7 @@ import {
   type Client,
   type ClientDepartment,
   type ClientLocation,
+  type Vendor,
   type Product,
   type ClientPricing,
   type OrderTemplate,
@@ -12,6 +13,7 @@ import {
   type InsertClient,
   type InsertClientDepartment,
   type InsertClientLocation,
+  type InsertVendor,
   type InsertProduct,
   type InsertClientPricing,
   type InsertOrderTemplate,
@@ -27,6 +29,7 @@ import {
   clients,
   clientDepartments,
   clientLocations,
+  vendors,
   products,
   clientPricing,
   orderTemplates,
@@ -74,6 +77,14 @@ export interface IStorage {
   createClientLocation(location: InsertClientLocation): Promise<ClientLocation>;
   updateClientLocation(id: string, location: Partial<InsertClientLocation>): Promise<ClientLocation | undefined>;
   deleteClientLocation(id: string): Promise<void>;
+
+  // Vendors
+  getVendors(): Promise<Vendor[]>;
+  getVendor(id: string): Promise<Vendor | undefined>;
+  getVendorByNumber(vendorNumber: string): Promise<Vendor | undefined>;
+  createVendor(vendor: InsertVendor): Promise<Vendor>;
+  updateVendor(id: string, vendor: Partial<InsertVendor>): Promise<Vendor | undefined>;
+  deleteVendor(id: string): Promise<void>;
 
   // Products
   getProducts(): Promise<Product[]>;
@@ -356,6 +367,49 @@ export class MemStorage implements IStorage {
 
   async deleteClientLocation(id: string): Promise<void> {
     await this.db.delete(clientLocations).where(eq(clientLocations.id, id));
+  }
+
+  // Vendors
+  async getVendors(): Promise<Vendor[]> {
+    return await this.db.select().from(vendors);
+  }
+
+  async getVendor(id: string): Promise<Vendor | undefined> {
+    const result = await this.db.select().from(vendors).where(eq(vendors.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getVendorByNumber(vendorNumber: string): Promise<Vendor | undefined> {
+    const result = await this.db.select().from(vendors).where(eq(vendors.vendorNumber, vendorNumber)).limit(1);
+    return result[0];
+  }
+
+  async createVendor(insertVendor: InsertVendor): Promise<Vendor> {
+    const inserted = await this.db
+      .insert(vendors)
+      .values({
+        vendorNumber: insertVendor.vendorNumber,
+        nameEn: insertVendor.nameEn,
+        nameAr: insertVendor.nameAr,
+        contactEmail: insertVendor.contactEmail ?? null,
+        contactPhone: insertVendor.contactPhone ?? null,
+        address: insertVendor.address ?? null,
+      })
+      .returning();
+    return inserted[0];
+  }
+
+  async updateVendor(id: string, updates: Partial<InsertVendor>): Promise<Vendor | undefined> {
+    const updated = await this.db
+      .update(vendors)
+      .set(updates)
+      .where(eq(vendors.id, id))
+      .returning();
+    return updated[0];
+  }
+
+  async deleteVendor(id: string): Promise<void> {
+    await this.db.delete(vendors).where(eq(vendors.id, id));
   }
 
   // Products
