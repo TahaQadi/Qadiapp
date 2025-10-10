@@ -1857,7 +1857,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const results = {
         success: [] as any[],
-        errors: [] as any[]
+        errors: [] as any[],
+        total: dataRows.length
       };
 
       for (let i = 0; i < dataRows.length; i++) {

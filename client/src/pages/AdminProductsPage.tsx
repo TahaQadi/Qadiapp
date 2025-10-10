@@ -88,6 +88,11 @@ export default function AdminProductsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importResults, setImportResults] = useState<any>(null);
+  const [importProgress, setImportProgress] = useState<{
+    current: number;
+    total: number;
+    processing: boolean;
+  } | null>(null);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -282,6 +287,13 @@ export default function AdminProductsPage() {
       const formData = new FormData();
       formData.append('file', file);
       
+      // Read file to get total count
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      const totalRows = Math.max(0, lines.length - 1); // Exclude header
+      
+      setImportProgress({ current: 0, total: totalRows, processing: true });
+      
       const response = await fetch('/api/admin/products/import', {
         method: 'POST',
         credentials: 'include',
@@ -299,11 +311,13 @@ export default function AdminProductsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setImportResults(data);
+      setImportProgress(null);
       toast({
         description: language === 'ar' ? data.messageAr : data.message,
       });
     },
     onError: (error: Error) => {
+      setImportProgress(null);
       toast({
         variant: 'destructive',
         description: error.message,
@@ -1256,6 +1270,7 @@ export default function AdminProductsPage() {
         if (!open) {
           setImportFile(null);
           setImportResults(null);
+          setImportProgress(null);
         }
       }}>
         <DialogContent className="max-w-2xl" data-testid="dialog-import-products">
@@ -1310,6 +1325,28 @@ export default function AdminProductsPage() {
                 </p>
               )}
             </div>
+
+            {importProgress && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">
+                    {language === 'ar' ? 'جاري الاستيراد...' : 'Importing...'}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {language === 'ar' 
+                      ? `${importProgress.current} من ${importProgress.total}`
+                      : `${importProgress.current} of ${importProgress.total}`
+                    }
+                  </span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${importProgress.total > 0 ? (importProgress.current / importProgress.total) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {importResults && (
               <div className="space-y-2">
@@ -1379,10 +1416,10 @@ export default function AdminProductsPage() {
             </Button>
             <Button
               onClick={handleImport}
-              disabled={!importFile || importProductsMutation.isPending}
+              disabled={!importFile || importProductsMutation.isPending || importProgress?.processing}
               data-testid="button-submit-import"
             >
-              {importProductsMutation.isPending 
+              {importProductsMutation.isPending || importProgress?.processing
                 ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...') 
                 : (language === 'ar' ? 'استيراد' : 'Import')
               }
