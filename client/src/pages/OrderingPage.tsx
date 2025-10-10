@@ -441,11 +441,10 @@ export default function OrderingPage() {
       <Card
         className={cn(
           "flex flex-col overflow-hidden transition-all duration-300 border-card-border bg-card",
-          "hover:shadow-lg hover:border-primary/30 cursor-pointer",
+          "hover:shadow-lg hover:border-primary/30",
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
-        onClick={() => setLocation(`/product/${product.sku}`)}
       >
         {/* Product Image */}
         <div className="relative w-full aspect-square bg-muted/50">
@@ -510,10 +509,7 @@ export default function OrderingPage() {
         <CardFooter className="p-3 sm:p-4 pt-0">
           {product.hasPrice ? (
             <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCart(product);
-              }}
+              onClick={() => handleAddToCart(product)}
               disabled={isDifferentLta}
               className="w-full transition-all duration-300"
               data-testid={`button-add-to-cart-${product.id}`}
@@ -528,10 +524,7 @@ export default function OrderingPage() {
             </Button>
           ) : (
             <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToWishlist();
-              }}
+              onClick={handleAddToWishlist}
               variant="outline"
               className="w-full transition-all duration-300"
               data-testid={`button-add-to-wishlist-${product.id}`}
