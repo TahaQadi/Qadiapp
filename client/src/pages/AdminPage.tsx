@@ -5,7 +5,7 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -84,7 +84,7 @@ export default function AdminPage() {
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
+
         {/* Floating particles */}
         <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
         <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
@@ -115,22 +115,22 @@ export default function AdminPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all duration-300"
-              data-testid="button-profile"
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-ordering"
             >
-              <Link href="/profile">
-                <User className="h-5 w-5" />
+              <Link href="/ordering">
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
             <Button
               variant="ghost"
               size="icon"
               asChild
-              className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all duration-300"
-              data-testid="button-ordering"
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-profile"
             >
-              <Link href="/">
-                <Package className="h-5 w-5" />
+              <Link href="/profile">
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
             <LanguageToggle />
@@ -167,7 +167,7 @@ export default function AdminPage() {
           {dashboardCards.map((card, index) => {
             const Icon = card.icon;
             const isHovered = hoveredCard === card.id;
-            
+
             return (
               <Card 
                 key={card.id}
@@ -192,7 +192,7 @@ export default function AdminPage() {
                   absolute inset-0 bg-gradient-to-br ${isHovered ? card.hoverGradient : card.gradient}
                   transition-all duration-500 opacity-0 group-hover:opacity-100
                 `} />
-                
+
                 {/* Shimmer Effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 

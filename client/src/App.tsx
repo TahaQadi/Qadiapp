@@ -93,6 +93,7 @@ function Router() {
           <Route path="/">
             {(user as any)?.isAdmin ? <Redirect to="/admin" /> : <OrderingPage />}
           </Route>
+          <ProtectedRoute path="/ordering" component={OrderingPage} />
           <Route path="/profile" component={ClientProfilePage} />
         </>
       )}
