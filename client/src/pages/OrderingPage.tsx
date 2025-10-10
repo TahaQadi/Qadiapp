@@ -472,14 +472,6 @@ export default function OrderingPage() {
               {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
             </Badge>
           )}
-          {!product.hasPrice && (
-            <Badge
-              variant="outline"
-              className="absolute top-2 start-2 bg-background/90"
-            >
-              {language === 'ar' ? 'بدون سعر' : 'No Price'}
-            </Badge>
-          )}
         </div>
 
         {/* Product Info */}
@@ -499,7 +491,8 @@ export default function OrderingPage() {
             </p>
           )}
 
-          {product.hasPrice && product.contractPrice && (
+          {/* Show contract price if available, otherwise show default selling price */}
+          {product.hasPrice && product.contractPrice ? (
             <div className="pt-2">
               <p className="text-lg sm:text-xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
                 {product.contractPrice} {product.currency}
@@ -508,7 +501,16 @@ export default function OrderingPage() {
                 {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
               </p>
             </div>
-          )}
+          ) : product.sellingPricePerPiece ? (
+            <div className="pt-2">
+              <p className="text-lg sm:text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
+                {product.sellingPricePerPiece} {language === 'ar' ? 'ش' : 'ILS'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Price per Piece (Reference)'}
+              </p>
+            </div>
+          ) : null}
         </CardContent>
 
         {/* Add to Cart or Add to Wishlist */}
