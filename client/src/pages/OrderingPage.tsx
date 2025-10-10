@@ -501,10 +501,10 @@ export default function OrderingPage() {
                 {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
               </p>
             </div>
-          ) : product.sellingPricePerPiece ? (
+          ) : product.sellingPricePiece ? (
             <div className="pt-2">
               <p className="text-lg sm:text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                {product.sellingPricePerPiece} {language === 'ar' ? 'ش' : 'ILS'}
+                {product.sellingPricePiece} {language === 'ar' ? 'ش' : 'ILS'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Price per Piece (Reference)'}
