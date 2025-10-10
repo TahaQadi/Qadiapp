@@ -537,7 +537,7 @@ export default function OrderingPage() {
             >
               <Heart className="w-4 h-4 me-2" />
               <span className="text-sm sm:text-base">
-                {language === 'ar' ? 'أضف إلى قائمة الرغبات' : 'Add to Wishlist'}
+                {language === 'ar' ? 'أضف إلى قائمة الأمنيات' : 'Add to Wishlist'}
               </span>
             </Button>
           )}

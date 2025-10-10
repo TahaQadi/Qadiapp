@@ -265,7 +265,7 @@ export default function ProductDetailPage() {
                     </div>
                     <Button onClick={handleAddToCart} variant="outline" size="lg" className="w-full">
                       <Heart className="w-5 h-5 me-2" />
-                      {language === 'ar' ? 'أضف إلى قائمة الرغبات' : 'Add to Wishlist'}
+                      {language === 'ar' ? 'أضف إلى قائمة الأمنيات' : 'Add to Wishlist'}
                     </Button>
                   </>
                 )}

@@ -86,7 +86,7 @@ export default function WishlistPage() {
     if (exists) {
       toast({
         description: language === 'ar' 
-          ? 'المنتج موجود بالفعل في قائمة الرغبات' 
+          ? 'المنتج موجود بالفعل في قائمة الأمنيات' 
           : 'Product already in wishlist'
       });
       return;
@@ -101,7 +101,7 @@ export default function WishlistPage() {
 
     toast({
       description: language === 'ar'
-        ? `تمت إضافة ${product.nameAr} إلى قائمة الرغبات`
+        ? `تمت إضافة ${product.nameAr} إلى قائمة الأمنيات`
         : `${product.nameEn} added to wishlist`
     });
   };
@@ -147,7 +147,7 @@ export default function WishlistPage() {
               </Link>
             </Button>
             <h1 className="text-xl font-semibold">
-              {language === 'ar' ? 'قائمة الرغبات' : 'Wishlist'}
+              {language === 'ar' ? 'قائمة الأمنيات' : 'Wishlist'}
             </h1>
             {wishlist.length > 0 && (
               <Badge variant="secondary">{wishlist.length}</Badge>
@@ -264,7 +264,7 @@ export default function WishlistPage() {
               <CardHeader>
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Heart className="h-5 w-5" />
-                  {language === 'ar' ? 'قائمة الرغبات' : 'Wishlist'}
+                  {language === 'ar' ? 'قائمة الأمنيات' : 'Wishlist'}
                 </h3>
               </CardHeader>
               <CardContent className="space-y-3">
