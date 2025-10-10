@@ -141,6 +141,10 @@ export interface IStorage {
   markAllNotificationsAsRead(clientId: string): Promise<void>;
   deleteNotification(id: string): Promise<void>;
   getUnreadNotificationCount(clientId: string): Promise<number>;
+
+  // New methods
+  getAllProductsWithClientPrices(clientId: string): Promise<Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }>>;
+  getAdminClients(): Promise<Client[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -184,7 +188,7 @@ export class MemStorage implements IStorage {
 
   async upsertUser(userData: UpsertUser): Promise<User> {
     const existingUser = await this.getUser(userData.id!);
-    
+
     if (existingUser) {
       const updated = await this.db
         .update(users)
@@ -618,7 +622,7 @@ export class MemStorage implements IStorage {
       .from(ltaClients)
       .innerJoin(ltas, eq(ltaClients.ltaId, ltas.id))
       .where(eq(ltaClients.clientId, clientId));
-    
+
     return result.map(r => r.lta);
   }
 
@@ -628,7 +632,7 @@ export class MemStorage implements IStorage {
     const productsWithPricing: Array<Product & { contractPrice: string; currency: string }> = [];
 
     for (const ltaProduct of ltaProducts) {
-      const product = this.products.get(ltaProduct.productId);
+      const product = await this.getProduct(ltaProduct.productId);
       if (product) {
         productsWithPricing.push({
           ...product,
@@ -639,6 +643,52 @@ export class MemStorage implements IStorage {
     }
 
     return productsWithPricing;
+  }
+
+  // Get all products with client's LTA prices (if assigned)
+  async getAllProductsWithClientPrices(clientId: string): Promise<Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }>> {
+    const allProducts = await this.getProducts();
+    const clientLtas = await this.getClientLtas(clientId);
+    const productsWithPricing: Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }> = [];
+
+    for (const product of allProducts) {
+      let hasPrice = false;
+      let contractPrice: string | undefined;
+      let currency: string | undefined;
+      let ltaId: string | undefined;
+
+      // Check if product is in any of client's LTAs
+      for (const lta of clientLtas) {
+        const ltaProducts = await this.getLtaProducts(lta.id);
+        const ltaProduct = ltaProducts.find(lp => lp.productId === product.id);
+
+        if (ltaProduct) {
+          hasPrice = true;
+          contractPrice = ltaProduct.contractPrice;
+          currency = ltaProduct.currency;
+          ltaId = lta.id;
+          break;
+        }
+      }
+
+      productsWithPricing.push({
+        ...product,
+        contractPrice,
+        currency,
+        ltaId,
+        hasPrice,
+      });
+    }
+
+    return productsWithPricing;
+  }
+
+  // Get admin clients
+  async getAdminClients(): Promise<Client[]> {
+    return await this.db
+      .select()
+      .from(clients)
+      .where(eq(clients.isAdmin, true));
   }
 
   async getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>> {

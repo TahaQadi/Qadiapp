@@ -26,9 +26,10 @@ import type { Product, Lta } from '@shared/schema';
 import { cn } from '@/lib/utils';
 
 interface ProductWithLtaPrice extends Product {
-  contractPrice: string;
-  currency: string;
-  ltaId: string;
+  contractPrice?: string;
+  currency?: string;
+  ltaId?: string;
+  hasPrice: boolean;
 }
 
 interface CartItem {
@@ -164,7 +165,7 @@ export default function OrderingPage() {
 
   const filteredProducts = selectedLtaFilter !== 'all'
     ? (products || []).filter(p => {
-        const matchesLta = p.ltaId === selectedLtaFilter;
+        const matchesLta = selectedLtaFilter === 'no-price' ? !p.hasPrice : p.ltaId === selectedLtaFilter;
         const matchesSearch = searchQuery === '' ||
           p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.nameAr.includes(searchQuery) ||
@@ -176,6 +177,18 @@ export default function OrderingPage() {
 
 
   const handleAddToCart = (product: ProductWithLtaPrice) => {
+    // Check if product has a price
+    if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'No Price Available' : 'لا يوجد سعر',
+        description: language === 'en'
+          ? 'Please request a price offer for this product first.'
+          : 'يرجى طلب عرض سعر لهذا المنتج أولاً.',
+      });
+      return;
+    }
+
     // Check if cart is empty or product is from same LTA
     if (activeLtaId && activeLtaId !== product.ltaId) {
       // Show warning dialog asking user to clear cart or cancel
@@ -419,6 +432,30 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
+    const [requestingPrice, setRequestingPrice] = useState(false);
+
+    const handleRequestPrice = async () => {
+      setRequestingPrice(true);
+      try {
+        const res = await apiRequest('POST', '/api/client/price-request', {
+          productIds: [product.id],
+          message: null
+        });
+        const data = await res.json();
+        toast({
+          title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
+          description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+        });
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: language === 'ar' ? 'خطأ' : 'Error',
+          description: error.message,
+        });
+      } finally {
+        setRequestingPrice(false);
+      }
+    };
 
     return (
       <Card
@@ -451,6 +488,14 @@ export default function OrderingPage() {
               {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
             </Badge>
           )}
+          {!product.hasPrice && (
+            <Badge 
+              variant="outline"
+              className="absolute top-2 start-2 bg-background/90"
+            >
+              {language === 'ar' ? 'بدون سعر' : 'No Price'}
+            </Badge>
+          )}
         </div>
 
         {/* Product Info */}
@@ -468,32 +513,53 @@ export default function OrderingPage() {
             </p>
           )}
 
-          <div className="pt-2">
-            <p className="text-lg sm:text-xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
-              {product.contractPrice} {product.currency}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
-            </p>
-          </div>
+          {product.hasPrice && product.contractPrice && (
+            <div className="pt-2">
+              <p className="text-lg sm:text-xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
+                {product.contractPrice} {product.currency}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
+              </p>
+            </div>
+          )}
         </CardContent>
 
-        {/* Add to Cart */}
+        {/* Add to Cart or Request Price */}
         <CardFooter className="p-3 sm:p-4 pt-0">
-          <Button
-            onClick={() => handleAddToCart(product)}
-            disabled={isDifferentLta}
-            className="w-full transition-all duration-300"
-            data-testid={`button-add-to-cart-${product.id}`}
-          >
-            <Package className="w-4 h-4 me-2" />
-            <span className="text-sm sm:text-base">
-              {isDifferentLta
-                ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-                : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
-              }
-            </span>
-          </Button>
+          {product.hasPrice ? (
+            <Button
+              onClick={() => handleAddToCart(product)}
+              disabled={isDifferentLta}
+              className="w-full transition-all duration-300"
+              data-testid={`button-add-to-cart-${product.id}`}
+            >
+              <Package className="w-4 h-4 me-2" />
+              <span className="text-sm sm:text-base">
+                {isDifferentLta
+                  ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                  : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
+                }
+              </span>
+            </Button>
+          ) : (
+            <Button
+              onClick={handleRequestPrice}
+              disabled={requestingPrice}
+              variant="outline"
+              className="w-full transition-all duration-300"
+              data-testid={`button-request-price-${product.id}`}
+            >
+              {requestingPrice ? (
+                <Loader2 className="w-4 h-4 me-2 animate-spin" />
+              ) : (
+                <Package className="w-4 h-4 me-2" />
+              )}
+              <span className="text-sm sm:text-base">
+                {language === 'ar' ? 'طلب عرض سعر' : 'Request Price Offer'}
+              </span>
+            </Button>
+          )}
         </CardFooter>
       </Card>
     );
@@ -628,6 +694,9 @@ export default function OrderingPage() {
                           {language === 'ar' ? lta.nameAr : lta.nameEn}
                         </SelectItem>
                       ))}
+                      <SelectItem value="no-price">
+                        {language === 'ar' ? 'منتجات بدون أسعار' : 'Products Without Prices'}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

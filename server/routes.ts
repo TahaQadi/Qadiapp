@@ -305,13 +305,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Products Routes
+  // Products Routes - Get all products with client's LTA prices (if any)
   app.get("/api/products", requireAuth, async (req: any, res) => {
     try {
-      const products = await storage.getProductsForClient(req.client.id);
+      const products = await storage.getAllProductsWithClientPrices(req.client.id);
       res.json(products);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Request price offer for products
+  app.post("/api/client/price-request", requireAuth, async (req: any, res) => {
+    try {
+      const { productIds, message } = req.body;
+      
+      if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+        return res.status(400).json({
+          message: "Product IDs are required",
+          messageAr: "معرفات المنتجات مطلوبة"
+        });
+      }
+
+      const client = await storage.getClient(req.client.id);
+      const products = [];
+      
+      for (const productId of productIds) {
+        const product = await storage.getProduct(productId);
+        if (product) {
+          products.push(product);
+        }
+      }
+
+      // Create notification for admins
+      const admins = await storage.getAdminClients();
+      for (const admin of admins) {
+        await storage.createNotification({
+          clientId: admin.id,
+          type: 'price_request',
+          titleEn: 'New Price Offer Request',
+          titleAr: 'طلب عرض سعر جديد',
+          messageEn: `${client?.nameEn} has requested pricing for ${products.length} product(s)`,
+          messageAr: `طلب ${client?.nameAr} تسعير لـ ${products.length} منتج`,
+          metadata: JSON.stringify({
+            clientId: req.client.id,
+            clientNameEn: client?.nameEn,
+            clientNameAr: client?.nameAr,
+            productIds,
+            products: products.map(p => ({ id: p.id, sku: p.sku, nameEn: p.nameEn, nameAr: p.nameAr })),
+            message: message || null
+          }),
+        });
+      }
+
+      // Create notification for client
+      await storage.createNotification({
+        clientId: req.client.id,
+        type: 'price_request_sent',
+        titleEn: 'Price Request Submitted',
+        titleAr: 'تم إرسال طلب السعر',
+        messageEn: `Your price request for ${products.length} product(s) has been sent to administrators`,
+        messageAr: `تم إرسال طلب السعر الخاص بك لـ ${products.length} منتج إلى المسؤولين`,
+        metadata: JSON.stringify({ productIds }),
+      });
+
+      res.json({
+        message: "Price request submitted successfully",
+        messageAr: "تم إرسال طلب السعر بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء إرسال طلب السعر"
+      });
     }
   });
 
