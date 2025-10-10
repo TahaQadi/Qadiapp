@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
-import { Package, ShoppingCart, FileText, Globe, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles } from "lucide-react";
+import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -63,9 +63,9 @@ export default function LandingPage() {
       titleAr: "سجل الطلبات والفواتير",
     },
     {
-      icon: Globe,
-      titleEn: "Multi-language Support",
-      titleAr: "دعم متعدد اللغات",
+      icon: BarChart3,
+      titleEn: "Analytics & Insights",
+      titleAr: "تحليلات ومؤشرات استهلاك",
     },
     {
       icon: MessageSquare,
@@ -372,7 +372,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative border-t border-[#d4af37]/20 bg-[#222222]/50 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-8" dir={isArabic ? 'rtl' : 'ltr'}>
             <div className="flex items-center gap-3">
               <img 
                 src="/logo.png" 
@@ -384,8 +384,33 @@ export default function LandingPage() {
                 <p className="text-xs text-gray-500">{isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
               </div>
             </div>
-            <div className="text-center text-sm text-gray-400">
-              <p>{isArabic ? 'تواصل معنا' : 'Contact Us'}</p>
+            
+            <div className="text-sm space-y-2">
+              <h3 className="font-semibold text-[#d4af37] mb-3">
+                {isArabic ? 'تواصل معنا' : 'Contact Us'}
+              </h3>
+              <p className="text-gray-400">
+                <span className="font-medium text-white">
+                  {isArabic ? 'البريد الإلكتروني:' : 'Email:'}
+                </span>{' '}
+                <a href="mailto:taha@qadi.ps" className="text-[#d4af37] hover:text-[#f9c800] transition-colors">
+                  taha@qadi.ps
+                </a>
+              </p>
+              <p className="text-gray-400">
+                <span className="font-medium text-white">
+                  {isArabic ? 'الهاتف:' : 'Phone:'}
+                </span>{' '}
+                <a href="tel:+970592555532" className="text-[#d4af37] hover:text-[#f9c800] transition-colors">
+                  +970 59 255 5532
+                </a>
+              </p>
+              <p className="text-gray-400">
+                <span className="font-medium text-white">
+                  {isArabic ? 'العنوان:' : 'Address:'}
+                </span>{' '}
+                {isArabic ? 'البيرة - أم الشرايط بالقرب من المدرسة التركية' : 'Albierh - UmAlshrayt near Turkish school'}
+              </p>
             </div>
           </div>
         </div>
