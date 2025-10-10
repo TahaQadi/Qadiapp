@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LogOut, ArrowLeft, Plus, Pencil, Trash2, X, ImageIcon, Download, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -28,7 +29,17 @@ const productFormSchema = z.object({
   descriptionAr: z.string().optional(),
   sku: z.string().min(1, 'SKU is required'),
   category: z.string().optional(),
-  metadata: z.string().optional(),
+  categoryNum: z.string().optional(),
+  mainCategory: z.string().optional(),
+  unitType: z.string().optional(),
+  unit: z.string().optional(),
+  unitPerBox: z.string().optional(),
+  costPricePerBox: z.string().optional(),
+  costPricePerPiece: z.string().optional(),
+  sellingPricePack: z.string().optional(),
+  sellingPricePiece: z.string().optional(),
+  specificationsAr: z.string().optional(),
+  vendorId: z.string().optional().nullable(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -41,8 +52,25 @@ interface Product {
   descriptionAr?: string | null;
   sku: string;
   category?: string | null;
+  categoryNum?: string | null;
+  mainCategory?: string | null;
+  unitType?: string | null;
+  unit?: string | null;
+  unitPerBox?: string | null;
+  costPricePerBox?: string | null;
+  costPricePerPiece?: string | null;
+  sellingPricePack?: string | null;
+  sellingPricePiece?: string | null;
+  specificationsAr?: string | null;
+  vendorId?: string | null;
   imageUrl?: string | null;
-  metadata?: string | null;
+}
+
+interface Vendor {
+  id: string;
+  vendorNumber: string;
+  nameEn: string;
+  nameAr: string;
 }
 
 export default function AdminProductsPage() {
@@ -65,6 +93,10 @@ export default function AdminProductsPage() {
     queryKey: ['/api/products/all'],
   });
 
+  const { data: vendors = [] } = useQuery<Vendor[]>({
+    queryKey: ['/api/admin/vendors'],
+  });
+
   const createForm = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -74,7 +106,17 @@ export default function AdminProductsPage() {
       descriptionAr: '',
       sku: '',
       category: '',
-      metadata: '',
+      categoryNum: '',
+      mainCategory: '',
+      unitType: '',
+      unit: '',
+      unitPerBox: '',
+      costPricePerBox: '',
+      costPricePerPiece: '',
+      sellingPricePack: '',
+      sellingPricePiece: '',
+      specificationsAr: '',
+      vendorId: null,
     },
   });
 
@@ -87,7 +129,17 @@ export default function AdminProductsPage() {
       descriptionAr: '',
       sku: '',
       category: '',
-      metadata: '',
+      categoryNum: '',
+      mainCategory: '',
+      unitType: '',
+      unit: '',
+      unitPerBox: '',
+      costPricePerBox: '',
+      costPricePerPiece: '',
+      sellingPricePack: '',
+      sellingPricePiece: '',
+      specificationsAr: '',
+      vendorId: null,
     },
   });
 
@@ -344,7 +396,17 @@ export default function AdminProductsPage() {
       descriptionAr: product.descriptionAr || '',
       sku: product.sku,
       category: product.category || '',
-      metadata: product.metadata || '',
+      categoryNum: product.categoryNum || '',
+      mainCategory: product.mainCategory || '',
+      unitType: product.unitType || '',
+      unit: product.unit || '',
+      unitPerBox: product.unitPerBox || '',
+      costPricePerBox: product.costPricePerBox || '',
+      costPricePerPiece: product.costPricePerPiece || '',
+      sellingPricePack: product.sellingPricePack || '',
+      sellingPricePiece: product.sellingPricePiece || '',
+      specificationsAr: product.specificationsAr || '',
+      vendorId: product.vendorId || null,
     });
     setImagePreview(product.imageUrl || null);
     setImageFile(null);
@@ -636,23 +698,170 @@ export default function AdminProductsPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="categoryNum"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'رقم الفئة' : 'Category Number'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-category-num" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="mainCategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'الفئة الرئيسية' : 'Main Category'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-main-category" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="unitType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'نوع الوحدة' : 'Unit Type'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-unit-type" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'الوحدة' : 'Unit'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-unit" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="unitPerBox"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-unit-per-box" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="costPricePerBox"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-cost-price-box" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="costPricePerPiece"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-cost-price-piece" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="sellingPricePack"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-selling-price-pack" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="sellingPricePiece"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-selling-price-piece" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={createForm.control}
-                name="metadata"
+                name="vendorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'حقول مخصصة (JSON)' : 'Custom Fields (JSON)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-vendor">
+                          <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">{language === 'ar' ? 'لا يوجد' : 'None'}</SelectItem>
+                        {vendors.map((vendor) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={createForm.control}
+                name="specificationsAr"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'المواصفات (عربي)' : 'Specifications (Arabic)'}</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        {...field} 
-                        value={field.value || ''}
-                        placeholder={language === 'ar' ? '{"اللون": "أزرق", "الوزن": "5 كغ"}' : '{"color": "blue", "weight": "5kg"}'}
-                        data-testid="input-product-metadata"
-                      />
+                      <Textarea {...field} value={field.value || ''} data-testid="input-specifications-ar" />
                     </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'ar' ? 'حقول مخصصة اختيارية بتنسيق JSON' : 'Optional custom fields in JSON format'}
-                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -800,23 +1009,170 @@ export default function AdminProductsPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="categoryNum"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'رقم الفئة' : 'Category Number'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-category-num" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="mainCategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'الفئة الرئيسية' : 'Main Category'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-main-category" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="unitType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'نوع الوحدة' : 'Unit Type'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-unit-type" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'الوحدة' : 'Unit'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-unit" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="unitPerBox"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-unit-per-box" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="costPricePerBox"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-cost-price-box" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="costPricePerPiece"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-cost-price-piece" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="sellingPricePack"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-selling-price-pack" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="sellingPricePiece"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} data-testid="input-edit-selling-price-piece" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={editForm.control}
-                name="metadata"
+                name="vendorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'حقول مخصصة (JSON)' : 'Custom Fields (JSON)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-edit-vendor">
+                          <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">{language === 'ar' ? 'لا يوجد' : 'None'}</SelectItem>
+                        {vendors.map((vendor) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="specificationsAr"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'المواصفات (عربي)' : 'Specifications (Arabic)'}</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        {...field} 
-                        value={field.value || ''}
-                        placeholder={language === 'ar' ? '{"اللون": "أزرق", "الوزن": "5 كغ"}' : '{"color": "blue", "weight": "5kg"}'}
-                        data-testid="input-edit-product-metadata"
-                      />
+                      <Textarea {...field} value={field.value || ''} data-testid="input-edit-specifications-ar" />
                     </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'ar' ? 'حقول مخصصة اختيارية بتنسيق JSON' : 'Optional custom fields in JSON format'}
-                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
