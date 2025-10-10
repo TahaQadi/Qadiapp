@@ -423,13 +423,14 @@ export default function OrderingPage() {
     return (
       <Card
         className={cn(
-          "flex flex-col overflow-hidden hover-elevate",
-          isDifferentLta && "opacity-50"
+          "flex flex-col overflow-hidden transition-all duration-300 border-card-border bg-card",
+          "hover:shadow-lg hover:border-primary/30",
+          isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
       >
         {/* Product Image */}
-        <div className="relative w-full aspect-square bg-muted">
+        <div className="relative w-full aspect-square bg-muted/50">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -439,59 +440,59 @@ export default function OrderingPage() {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-16 h-16 text-muted-foreground" />
+              <Package className="w-16 h-16 text-muted-foreground/40" />
             </div>
           )}
-
+          {cartItem && (
+            <Badge 
+              className="absolute top-2 end-2 bg-primary text-primary-foreground shadow-md"
+              data-testid={`badge-in-cart-${product.id}`}
+            >
+              {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+            </Badge>
+          )}
         </div>
 
         {/* Product Info */}
-        <CardContent className="flex-1 p-4 space-y-2">
+        <CardContent className="flex-1 p-3 sm:p-4 space-y-2">
           <div>
-            <h3 className="font-semibold text-base line-clamp-1" data-testid={`text-product-name-${product.id}`}>
+            <h3 className="font-semibold text-sm sm:text-base line-clamp-1 text-card-foreground" data-testid={`text-product-name-${product.id}`}>
               {name}
             </h3>
-            <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">SKU: {product.sku}</p>
           </div>
 
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
               {description}
             </p>
           )}
 
-          <div className="flex items-center justify-between gap-2 pt-2">
-            <div>
-              <p className="text-lg font-bold font-mono" data-testid={`text-price-${product.id}`}>
-                {product.contractPrice} {product.currency}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
-              </p>
-            </div>
-
-            {/* Quantity in cart indicator */}
-            {cartItem && (
-              <Badge variant="outline" data-testid={`badge-in-cart-${product.id}`}>
-                {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
-              </Badge>
-            )}
+          <div className="pt-2">
+            <p className="text-lg sm:text-xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
+              {product.contractPrice} {product.currency}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
+            </p>
           </div>
         </CardContent>
 
         {/* Add to Cart */}
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-3 sm:p-4 pt-0">
           <Button
             onClick={() => handleAddToCart(product)}
             disabled={isDifferentLta}
-            className="w-full"
+            className="w-full transition-all duration-300"
             data-testid={`button-add-to-cart-${product.id}`}
           >
             <Package className="w-4 h-4 me-2" />
-            {isDifferentLta
-              ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-              : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
-            }
+            <span className="text-sm sm:text-base">
+              {isDifferentLta
+                ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
+              }
+            </span>
           </Button>
         </CardFooter>
       </Card>
@@ -499,23 +500,23 @@ export default function OrderingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-[#1a1a1a] to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    <div className="min-h-screen bg-background">
+      {/* Animated background elements - theme aware */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-30">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
       {/* Header */}
-      <header className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-background/80 border-border shadow-lg' : 'bg-background/50 border-border/50'}`}>
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+      <header className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-background/95 border-border shadow-lg' : 'bg-background/80 border-border/50'}`}>
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <img
               src="/logo.png"
               alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0"
+              className="h-9 w-9 sm:h-11 sm:w-11 object-contain flex-shrink-0"
             />
-            <h1 className="text-sm sm:text-xl font-semibold truncate text-primary">
+            <h1 className="text-base sm:text-xl lg:text-2xl font-semibold truncate text-foreground">
               {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
             </h1>
           </div>
@@ -525,11 +526,11 @@ export default function OrderingPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
               data-testid="button-profile"
             >
               <Link href="/profile">
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
             {user?.isAdmin && (
@@ -537,11 +538,11 @@ export default function OrderingPage() {
                 variant="ghost"
                 size="icon"
                 asChild
-                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+                className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
                 data-testid="button-admin"
               >
                 <Link href="/admin">
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
             )}
@@ -551,14 +552,14 @@ export default function OrderingPage() {
             <Button
               variant="outline"
               size="icon"
-              className="relative hover:bg-primary/10 hover:border-primary transition-all duration-300"
+              className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
               onClick={() => setCartOpen(true)}
               data-testid="button-open-cart"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
               {cartItemCount > 0 && (
                 <Badge
-                  className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0"
+                  className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
                   data-testid="badge-cart-count"
                 >
                   {cartItemCount}
@@ -569,49 +570,54 @@ export default function OrderingPage() {
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
-              className="text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-300"
               data-testid="button-logout"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6" data-testid="tabs-list">
-            <TabsTrigger value="products" data-testid="tab-products">
-              <Package className="h-4 w-4 me-2" />
-              {language === 'ar' ? 'المنتجات' : 'Products'}
+          <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
+            <TabsTrigger value="products" className="text-sm sm:text-base" data-testid="tab-products">
+              <Package className="h-4 w-4 me-1 sm:me-2" />
+              <span className="hidden xs:inline">{language === 'ar' ? 'المنتجات' : 'Products'}</span>
+              <span className="xs:hidden">{language === 'ar' ? 'منتجات' : 'Items'}</span>
             </TabsTrigger>
-            <TabsTrigger value="templates" data-testid="tab-templates">
-              <FileText className="h-4 w-4 me-2" />
-              {t('templates')}
+            <TabsTrigger value="templates" className="text-sm sm:text-base" data-testid="tab-templates">
+              <FileText className="h-4 w-4 me-1 sm:me-2" />
+              <span className="hidden xs:inline">{t('templates')}</span>
+              <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
             </TabsTrigger>
-            <TabsTrigger value="history" data-testid="tab-history">
-              <History className="h-4 w-4 me-2" />
-              {t('history')}
+            <TabsTrigger value="history" className="text-sm sm:text-base" data-testid="tab-history">
+              <History className="h-4 w-4 me-1 sm:me-2" />
+              <span className="hidden xs:inline">{t('history')}</span>
+              <span className="xs:hidden">{language === 'ar' ? 'سجل' : 'Hist'}</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-0">
-            <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-              <div className="flex flex-col gap-3 sm:gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <h1 className="text-xl sm:text-2xl font-bold">{t('ordering.title')}</h1>
-                    <Badge variant="secondary" className="text-xs sm:text-sm">
-                      {filteredProducts.length} {t('ordering.products')}
+            <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
+              <div className="flex flex-col gap-4 sm:gap-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                      {t('ordering.title')}
+                    </h2>
+                    <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
+                      {filteredProducts.length}
                     </Badge>
                   </div>
 
                   {/* LTA Selector */}
                   <Select value={selectedLtaFilter} onValueChange={setSelectedLtaFilter}>
-                    <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-lta-filter">
-                      <SelectValue placeholder={language === 'ar' ? 'العقد' : 'Contract'} />
+                    <SelectTrigger className="w-full sm:w-[220px] h-10 sm:h-11" data-testid="select-lta-filter">
+                      <SelectValue placeholder={language === 'ar' ? 'اختر العقد' : 'Select Contract'} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">
@@ -628,18 +634,19 @@ export default function OrderingPage() {
 
                 {selectedLtaFilter !== 'all' && (
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <div className="flex-1">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                       <Input
                         type="search"
                         placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full"
+                        className="w-full h-10 sm:h-11 ps-10"
                         data-testid="input-search-products"
                       />
                     </div>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-full sm:w-[180px]" data-testid="select-category">
+                      <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-11" data-testid="select-category">
                         <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
                       </SelectTrigger>
                       <SelectContent>
@@ -656,22 +663,15 @@ export default function OrderingPage() {
                   </div>
                 )}
               </div>
-
-              {/* Results count */}
-              <div className="text-sm text-muted-foreground">
-                {language === 'ar'
-                  ? `${filteredProducts.length} منتج`
-                  : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''}`}
-              </div>
             </div>
 
             {selectedLtaFilter === 'all' ? (
-              <Card className="p-8 text-center">
-                <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">
+              <Card className="p-8 sm:p-12 text-center border-dashed">
+                <Package className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
                   {language === 'ar' ? 'اختر عقد اتفاقية' : 'Select a Contract'}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
                   {language === 'ar'
                     ? 'يرجى اختيار عقد اتفاقية من القائمة أعلاه لعرض المنتجات المتاحة'
                     : 'Please select an LTA contract from the dropdown above to view available products'}
@@ -699,18 +699,18 @@ export default function OrderingPage() {
                 </div>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
-              <Card className="p-8 text-center">
-                <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">
+              <Card className="p-8 sm:p-12 text-center border-dashed">
+                <Package className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
                   {language === 'ar' ? 'لا توجد منتجات متاحة' : 'No Products Available'}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
                   {language === 'ar'
                     ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية الخاص بك بعد.'
                     : 'No products are assigned to your LTA contract yet.'}
