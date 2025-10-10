@@ -507,15 +507,15 @@ export default function OrderingPage() {
       </div>
 
       {/* Header */}
-      <header className={`sticky top-0 z-50 border-b border-[#d4af37]/20 backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-black/80 shadow-lg shadow-[#d4af37]/10' : 'bg-transparent'}`}>
+      <header className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${scrolled ? 'bg-background/80 border-border shadow-lg' : 'bg-background/50 border-border/50'}`}>
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <img
               src="/logo.png"
               alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain filter drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0"
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0"
             />
-            <h1 className="text-sm sm:text-xl font-semibold truncate bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
+            <h1 className="text-sm sm:text-xl font-semibold truncate text-primary">
               {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
             </h1>
           </div>
@@ -525,7 +525,7 @@ export default function OrderingPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="hover:bg-[#d4af37]/10 hover:text-[#d4af37] transition-all duration-300"
+              className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
               data-testid="button-profile"
             >
               <Link href="/profile">
@@ -537,7 +537,7 @@ export default function OrderingPage() {
                 variant="ghost"
                 size="icon"
                 asChild
-                className="hover:bg-[#d4af37]/10 hover:text-[#d4af37] transition-all duration-300"
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
                 data-testid="button-admin"
               >
                 <Link href="/admin">
@@ -551,14 +551,14 @@ export default function OrderingPage() {
             <Button
               variant="outline"
               size="icon"
-              className="relative border-[#d4af37]/30 hover:bg-[#d4af37]/10 hover:border-[#d4af37] transition-all duration-300"
+              className="relative hover:bg-primary/10 hover:border-primary transition-all duration-300"
               onClick={() => setCartOpen(true)}
               data-testid="button-open-cart"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartItemCount > 0 && (
                 <Badge
-                  className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-gradient-to-r from-[#d4af37] to-[#f9c800] text-black border-0"
+                  className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0"
                   data-testid="badge-cart-count"
                 >
                   {cartItemCount}
@@ -569,7 +569,7 @@ export default function OrderingPage() {
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
-              className="hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
+              className="text-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
               data-testid="button-logout"
             >
               <LogOut className="h-5 w-5" />
