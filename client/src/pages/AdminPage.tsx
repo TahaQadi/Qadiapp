@@ -141,6 +141,28 @@ export default function AdminPage() {
               </div>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="bg-[#222222]/50 backdrop-blur-sm border-[#d4af37]/20 hover:border-[#d4af37] hover:shadow-lg hover:shadow-[#d4af37]/20 transition-all duration-300 cursor-pointer group" 
+            onClick={() => setLocation('/admin/price-requests')}
+            data-testid="card-price-requests"
+          >
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#f9c800]/10 group-hover:from-[#d4af37]/30 group-hover:to-[#f9c800]/20 transition-all duration-300 flex-shrink-0">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-[#d4af37]" />
+                </div>
+                <div className="min-w-0">
+                  <CardTitle className="text-base sm:text-lg text-white">
+                    {language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}
+                  </CardTitle>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                    {language === 'ar' ? 'إدارة طلبات عروض الأسعار من العملاء' : 'Manage client price quote requests'}
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>
