@@ -88,9 +88,6 @@ export default function AdminProductsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importResults, setImportResults] = useState<any>(null);
-  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
-  const [showMappingDialog, setShowMappingDialog] = useState(false);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -281,10 +278,9 @@ export default function AdminProductsPage() {
   });
 
   const importProductsMutation = useMutation({
-    mutationFn: async ({ file, mapping }: { file: File; mapping: Record<string, string> }) => {
+    mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('mapping', JSON.stringify(mapping));
       
       const response = await fetch('/api/admin/products/import', {
         method: 'POST',
@@ -303,7 +299,6 @@ export default function AdminProductsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setImportResults(data);
-      setShowMappingDialog(false);
       toast({
         description: language === 'ar' ? data.messageAr : data.message,
       });
@@ -337,33 +332,10 @@ export default function AdminProductsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImportFile(file);
-
-    // Parse CSV headers
-    const text = await file.text();
-    const lines = text.replace(/^\uFEFF/, '').split('\n');
-    if (lines.length > 0) {
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-      setCsvHeaders(headers);
-      
-      // Auto-map common column names
-      const autoMapping: Record<string, string> = {};
-      headers.forEach(header => {
-        const lower = header.toLowerCase();
-        if (lower.includes('sku') || lower === 'sku') autoMapping['sku'] = header;
-        if (lower.includes('name') && lower.includes('en')) autoMapping['nameEn'] = header;
-        if (lower.includes('name') && lower.includes('ar')) autoMapping['nameAr'] = header;
-        if (lower.includes('description') && lower.includes('en')) autoMapping['descriptionEn'] = header;
-        if (lower.includes('description') && lower.includes('ar')) autoMapping['descriptionAr'] = header;
-        if (lower.includes('category') && !lower.includes('num') && !lower.includes('main')) autoMapping['category'] = header;
-        if (lower.includes('vendor')) autoMapping['vendorNumber'] = header;
-      });
-      setColumnMapping(autoMapping);
-      setShowMappingDialog(true);
+    if (file) {
+      setImportFile(file);
     }
   };
 
@@ -375,16 +347,8 @@ export default function AdminProductsPage() {
       });
       return;
     }
-
-    if (!columnMapping['sku'] || !columnMapping['nameEn'] || !columnMapping['nameAr']) {
-      toast({
-        variant: 'destructive',
-        description: language === 'ar' ? 'الرجاء تحديد الأعمدة المطلوبة' : 'Please map required columns (SKU, Name EN, Name AR)',
-      });
-      return;
-    }
     
-    await importProductsMutation.mutateAsync({ file: importFile, mapping: columnMapping });
+    await importProductsMutation.mutateAsync(importFile);
   };
 
   const downloadTemplate = () => {
@@ -1286,96 +1250,12 @@ export default function AdminProductsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Column Mapping Dialog */}
-      <Dialog open={showMappingDialog} onOpenChange={setShowMappingDialog}>
-        <DialogContent className="max-w-3xl" data-testid="dialog-column-mapping">
-          <DialogHeader>
-            <DialogTitle>{language === 'ar' ? 'تعيين الأعمدة' : 'Map Columns'}</DialogTitle>
-            <DialogDescription>
-              {language === 'ar' 
-                ? 'قم بتعيين أعمدة CSV إلى حقول المنتج المقابلة'
-                : 'Map your CSV columns to the corresponding product fields'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {[
-              { key: 'sku', label: language === 'ar' ? 'رمز المنتج' : 'SKU', required: true },
-              { key: 'nameEn', label: language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (EN)', required: true },
-              { key: 'nameAr', label: language === 'ar' ? 'الاسم (عربي)' : 'Name (AR)', required: true },
-              { key: 'descriptionEn', label: language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (EN)', required: false },
-              { key: 'descriptionAr', label: language === 'ar' ? 'الوصف (عربي)' : 'Description (AR)', required: false },
-              { key: 'category', label: language === 'ar' ? 'الفئة' : 'Category', required: false },
-              { key: 'categoryNum', label: language === 'ar' ? 'رقم الفئة' : 'Category Number', required: false },
-              { key: 'mainCategory', label: language === 'ar' ? 'الفئة الرئيسية' : 'Main Category', required: false },
-              { key: 'unitType', label: language === 'ar' ? 'نوع الوحدة' : 'Unit Type', required: false },
-              { key: 'unit', label: language === 'ar' ? 'الوحدة' : 'Unit', required: false },
-              { key: 'unitPerBox', label: language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box', required: false },
-              { key: 'costPricePerBox', label: language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box', required: false },
-              { key: 'costPricePerPiece', label: language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece', required: false },
-              { key: 'sellingPricePack', label: language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack', required: false },
-              { key: 'sellingPricePiece', label: language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece', required: false },
-              { key: 'specificationsAr', label: language === 'ar' ? 'المواصفات' : 'Specifications', required: false },
-              { key: 'vendorNumber', label: language === 'ar' ? 'رقم المورد' : 'Vendor Number', required: false },
-              { key: 'imageUrl', label: language === 'ar' ? 'رابط الصورة' : 'Image URL', required: false },
-            ].map(({ key, label, required }) => (
-              <div key={key} className="grid grid-cols-2 gap-4 items-center">
-                <label className="text-sm font-medium">
-                  {label}
-                  {required && <span className="text-destructive ms-1">*</span>}
-                </label>
-                <Select
-                  value={columnMapping[key] || ''}
-                  onValueChange={(value) => setColumnMapping(prev => ({ ...prev, [key]: value }))}
-                >
-                  <SelectTrigger data-testid={`select-mapping-${key}`}>
-                    <SelectValue placeholder={language === 'ar' ? 'اختر عموداً' : 'Select column'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">
-                      {language === 'ar' ? 'لا شيء' : 'None'}
-                    </SelectItem>
-                    {csvHeaders.map(header => (
-                      <SelectItem key={header} value={header}>
-                        {header}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowMappingDialog(false)}
-              data-testid="button-cancel-mapping"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!columnMapping['sku'] || !columnMapping['nameEn'] || !columnMapping['nameAr'] || importProductsMutation.isPending}
-              data-testid="button-confirm-mapping"
-            >
-              {importProductsMutation.isPending 
-                ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...') 
-                : (language === 'ar' ? 'استيراد' : 'Import')
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Import Products Dialog */}
       <Dialog open={importDialogOpen} onOpenChange={(open) => {
         setImportDialogOpen(open);
         if (!open) {
           setImportFile(null);
           setImportResults(null);
-          setCsvHeaders([]);
-          setColumnMapping({});
         }
       }}>
         <DialogContent className="max-w-2xl" data-testid="dialog-import-products">
@@ -1483,7 +1363,17 @@ export default function AdminProductsPage() {
               onClick={() => setImportDialogOpen(false)}
               data-testid="button-cancel-import"
             >
-              {language === 'ar' ? 'إغلاق' : 'Close'}
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!importFile || importProductsMutation.isPending}
+              data-testid="button-submit-import"
+            >
+              {importProductsMutation.isPending 
+                ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...') 
+                : (language === 'ar' ? 'استيراد' : 'Import')
+              }
             </Button>
           </DialogFooter>
         </DialogContent>

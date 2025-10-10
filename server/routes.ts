@@ -1842,8 +1842,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const mapping = req.body.mapping ? JSON.parse(req.body.mapping) : null;
-
       const csvContent = req.file.buffer.toString('utf-8').replace(/^\uFEFF/, ''); // Remove BOM
       const rows = csvContent.split('\n').filter((row: string) => row.trim());
       
@@ -1854,7 +1852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const headers = rows[0].split(',').map((h: string) => h.trim().replace(/"/g, ''));
+      const header = rows[0].split(',').map((h: string) => h.trim().replace(/"/g, ''));
       const dataRows = rows.slice(1);
 
       const results = {
@@ -1862,58 +1860,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errors: [] as any[]
       };
 
-      // Parse CSV helper
-      const parseCSVRow = (row: string): string[] => {
-        const values: string[] = [];
-        let currentValue = '';
-        let inQuotes = false;
-        
-        for (let j = 0; j < row.length; j++) {
-          const char = row[j];
-          
-          if (char === '"') {
-            if (inQuotes && row[j + 1] === '"') {
-              currentValue += '"';
-              j++;
-            } else {
-              inQuotes = !inQuotes;
-            }
-          } else if (char === ',' && !inQuotes) {
-            values.push(currentValue.trim());
-            currentValue = '';
-          } else {
-            currentValue += char;
-          }
-        }
-        values.push(currentValue.trim());
-        return values;
-      };
-
       for (let i = 0; i < dataRows.length; i++) {
         const row = dataRows[i];
         if (!row.trim()) continue;
 
+        let values: string[] = [];
         try {
-          const values = parseCSVRow(row);
+          // Parse CSV row with quote handling
+          let currentValue = '';
+          let inQuotes = false;
           
-          // Create a map of header to value
-          const rowData: Record<string, string> = {};
-          headers.forEach((header, idx) => {
-            rowData[header] = values[idx] || '';
-          });
-
-          // Extract values using mapping or default headers
-          const getValue = (key: string) => {
-            if (mapping && mapping[key]) {
-              return rowData[mapping[key]] || null;
+          for (let j = 0; j < row.length; j++) {
+            const char = row[j];
+            
+            if (char === '"') {
+              if (inQuotes && row[j + 1] === '"') {
+                currentValue += '"';
+                j++;
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              values.push(currentValue.trim());
+              currentValue = '';
+            } else {
+              currentValue += char;
             }
-            // Fallback to exact header match
-            return rowData[key] || null;
-          };
+          }
+          values.push(currentValue.trim());
 
-          const sku = getValue('sku');
-          const nameEn = getValue('nameEn');
-          const nameAr = getValue('nameAr');
+          const [
+            sku, nameEn, nameAr, categoryNum, unitType, unit, unitPerBox,
+            costPricePerBox, costPricePerPiece, specificationsAr, vendorNumber,
+            mainCategory, category, sellingPricePack, sellingPricePiece,
+            descriptionEn, descriptionAr, imageUrl
+          ] = values;
 
           if (!sku || !nameEn || !nameAr) {
             results.errors.push({
@@ -1927,7 +1908,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Look up vendor by vendor number
           let vendorId = null;
-          const vendorNumber = getValue('vendorNumber');
           if (vendorNumber) {
             const vendor = await storage.getVendorByNumber(vendorNumber);
             vendorId = vendor?.id || null;
@@ -1940,26 +1920,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sku,
             nameEn,
             nameAr,
-            categoryNum: getValue('categoryNum'),
-            unitType: getValue('unitType'),
-            unit: getValue('unit'),
-            unitPerBox: getValue('unitPerBox'),
-            costPricePerBox: getValue('costPricePerBox'),
-            costPricePerPiece: getValue('costPricePerPiece'),
-            specificationsAr: getValue('specificationsAr'),
+            categoryNum: categoryNum || null,
+            unitType: unitType || null,
+            unit: unit || null,
+            unitPerBox: unitPerBox || null,
+            costPricePerBox: costPricePerBox || null,
+            costPricePerPiece: costPricePerPiece || null,
+            specificationsAr: specificationsAr || null,
             vendorId,
-            mainCategory: getValue('mainCategory'),
-            category: getValue('category'),
-            sellingPricePack: getValue('sellingPricePack'),
-            sellingPricePiece: getValue('sellingPricePiece'),
-            descriptionEn: getValue('descriptionEn'),
-            descriptionAr: getValue('descriptionAr'),
-            imageUrl: getValue('imageUrl')
+            mainCategory: mainCategory || null,
+            category: category || null,
+            sellingPricePack: sellingPricePack || null,
+            sellingPricePiece: sellingPricePiece || null,
+            descriptionEn: descriptionEn || null,
+            descriptionAr: descriptionAr || null,
+            imageUrl: imageUrl || null
           };
 
           if (existingProduct) {
             // Update existing product
-            await storage.updateProduct(existingProduct.id, productData);
+            const updated = await storage.updateProduct(existingProduct.id, productData);
             results.success.push({
               row: i + 2,
               sku,
@@ -1968,7 +1948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           } else {
             // Create new product
-            await storage.createProduct(productData);
+            const created = await storage.createProduct(productData);
             results.success.push({
               row: i + 2,
               sku,
@@ -1977,7 +1957,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } catch (error: any) {
-          const values = parseCSVRow(row);
           results.errors.push({
             row: i + 2,
             sku: values[0] || 'N/A',
