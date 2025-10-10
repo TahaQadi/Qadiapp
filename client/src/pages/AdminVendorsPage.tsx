@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Plus, Pencil, Trash2, Upload, Download } from 'lucide-react';
@@ -187,7 +188,15 @@ export default function AdminVendorsPage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await apiRequest('POST', '/api/admin/vendors/import', formData, true);
+      const res = await fetch('/api/admin/vendors/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Import failed');
+      }
       return await res.json();
     },
     onSuccess: (data) => {
@@ -405,6 +414,7 @@ export default function AdminVendorsPage() {
                 </Form>
               </DialogContent>
             </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
