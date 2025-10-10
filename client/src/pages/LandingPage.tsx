@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
-import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles } from "lucide-react";
+import { Package, ShoppingCart, FileText, Globe, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -63,9 +63,9 @@ export default function LandingPage() {
       titleAr: "سجل الطلبات والفواتير",
     },
     {
-      icon: BarChart3,
-      titleEn: "Analytics & Insights",
-      titleAr: "تحليلات ومؤشرات استهلاك",
+      icon: Globe,
+      titleEn: "Multi-language Support",
+      titleAr: "دعم متعدد اللغات",
     },
     {
       icon: MessageSquare,
