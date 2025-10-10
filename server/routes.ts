@@ -1628,8 +1628,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/products/export', requireAdmin, async (req: any, res) => {
     try {
       const products = await storage.getProducts();
+      const vendors = await storage.getVendors();
       
-      const csvHeader = 'SKU,Name (EN),Name (AR),Description (EN),Description (AR),Category,Image URL,Custom Metadata\n';
+      // Create vendor lookup map
+      const vendorMap = new Map(vendors.map(v => [v.id, v.vendorNumber]));
+      
+      const csvHeader = 'SKU,Name (EN),Name (AR),Category Num,Unit Type,Unit,Unit Per Box,Cost Price Per Box,Cost Price Per Piece,Specifications (AR),Vendor Number,Main Category,Category,Selling Price Pack,Selling Price Piece,Description (EN),Description (AR),Image URL\n';
       const csvRows = products.map(p => {
         const escapeCsv = (value: string | null | undefined) => {
           if (!value) return '';
@@ -1637,15 +1641,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return `"${escaped}"`;
         };
         
+        const vendorNumber = p.vendorId ? vendorMap.get(p.vendorId) || '' : '';
+        
         return [
           escapeCsv(p.sku),
           escapeCsv(p.nameEn),
           escapeCsv(p.nameAr),
+          escapeCsv(p.categoryNum),
+          escapeCsv(p.unitType),
+          escapeCsv(p.unit),
+          escapeCsv(p.unitPerBox),
+          escapeCsv(p.costPricePerBox),
+          escapeCsv(p.costPricePerPiece),
+          escapeCsv(p.specificationsAr),
+          escapeCsv(vendorNumber),
+          escapeCsv(p.mainCategory),
+          escapeCsv(p.category),
+          escapeCsv(p.sellingPricePack),
+          escapeCsv(p.sellingPricePiece),
           escapeCsv(p.descriptionEn),
           escapeCsv(p.descriptionAr),
-          escapeCsv(p.category),
-          escapeCsv(p.imageUrl),
-          escapeCsv(p.metadata)
+          escapeCsv(p.imageUrl)
         ].join(',');
       }).join('\n');
       
@@ -1719,7 +1735,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           values.push(currentValue.trim());
 
-          const [sku, nameEn, nameAr, descriptionEn, descriptionAr, category, imageUrl, metadata] = values;
+          const [
+            sku, nameEn, nameAr, categoryNum, unitType, unit, unitPerBox,
+            costPricePerBox, costPricePerPiece, specificationsAr, vendorNumber,
+            mainCategory, category, sellingPricePack, sellingPricePiece,
+            descriptionEn, descriptionAr, imageUrl
+          ] = values;
 
           if (!sku || !nameEn || !nameAr) {
             results.errors.push({
@@ -1731,6 +1752,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
+          // Look up vendor by vendor number
+          let vendorId = null;
+          if (vendorNumber) {
+            const vendor = await storage.getVendorByNumber(vendorNumber);
+            vendorId = vendor?.id || null;
+          }
+
           // Check if product exists
           const existingProduct = await storage.getProductBySku(sku);
           
@@ -1738,11 +1766,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sku,
             nameEn,
             nameAr,
+            categoryNum: categoryNum || null,
+            unitType: unitType || null,
+            unit: unit || null,
+            unitPerBox: unitPerBox || null,
+            costPricePerBox: costPricePerBox || null,
+            costPricePerPiece: costPricePerPiece || null,
+            specificationsAr: specificationsAr || null,
+            vendorId,
+            mainCategory: mainCategory || null,
+            category: category || null,
+            sellingPricePack: sellingPricePack || null,
+            sellingPricePiece: sellingPricePiece || null,
             descriptionEn: descriptionEn || null,
             descriptionAr: descriptionAr || null,
-            category: category || null,
-            imageUrl: imageUrl || null,
-            metadata: metadata || null
+            imageUrl: imageUrl || null
           };
 
           if (existingProduct) {
