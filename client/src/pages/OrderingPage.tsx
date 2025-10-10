@@ -447,21 +447,23 @@ export default function OrderingPage() {
         data-testid={`card-product-${product.id}`}
       >
         {/* Product Image */}
-        <Link href={`/products/${product.sku}`}>
-          <div className="relative w-full aspect-square bg-muted/50 cursor-pointer">
-          {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={name}
-              className="w-full h-full object-cover"
-              data-testid={`img-product-${product.id}`}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-16 h-16 text-muted-foreground/40" />
+        <div className="relative w-full aspect-square bg-muted/50">
+          <Link href={`/products/${product.sku}`}>
+            <div className="w-full h-full cursor-pointer">
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={name}
+                  className="w-full h-full object-cover"
+                  data-testid={`img-product-${product.id}`}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package className="w-16 h-16 text-muted-foreground/40" />
+                </div>
+              )}
             </div>
-          )}
-        </Link>
+          </Link>
           {cartItem && (
             <Badge
               className="absolute top-2 end-2 bg-primary text-primary-foreground shadow-md"
