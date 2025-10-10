@@ -141,7 +141,7 @@ export default function LandingPage() {
               <img 
                 src="/logo.png" 
                 alt={isArabic ? 'شعار القاضي' : 'Al Qadi Logo'} 
-                className="relative h-20 w-20 sm:h-32 sm:w-32 mx-auto object-contain drop-shadow-2xl"
+                className="relative h-40 w-40 sm:h-64 sm:w-64 mx-auto object-contain drop-shadow-2xl"
               />
             </div>
             
