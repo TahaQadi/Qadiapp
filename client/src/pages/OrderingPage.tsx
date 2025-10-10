@@ -146,8 +146,8 @@ export default function OrderingPage() {
   // Get unique categories from products
   const categories = ['all', ...new Set((products || []).map(p => p.category).filter(Boolean))];
 
-  // Check for empty state or loading states - only block on critical data
-  if (ltasLoading || productsLoading) {
+  // Check for empty state or loading states
+  if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
@@ -809,7 +809,25 @@ export default function OrderingPage() {
 
           {/* Templates Tab */}
           <TabsContent value="templates" className="mt-0">
-            {formattedTemplates.length > 0 ? (
+            {templatesLoading ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    {language === 'ar' ? 'جاري تحميل القوالب...' : 'Loading templates...'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="p-4">
+                      <Skeleton className="h-5 w-3/4 mb-3" />
+                      <Skeleton className="h-4 w-1/2 mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : formattedTemplates.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {formattedTemplates.map((template) => (
                   <OrderTemplateCard
@@ -835,11 +853,30 @@ export default function OrderingPage() {
 
           {/* History Tab */}
           <TabsContent value="history" className="mt-0">
-            <OrderHistoryTable
-              orders={formattedOrders}
-              onViewDetails={handleViewOrderDetails}
-              onReorder={handleReorder}
-            />
+            {ordersLoading ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    {language === 'ar' ? 'جاري تحميل الطلبات...' : 'Loading orders...'}
+                  </span>
+                </div>
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                </Card>
+              </div>
+            ) : (
+              <OrderHistoryTable
+                orders={formattedOrders}
+                onViewDetails={handleViewOrderDetails}
+                onReorder={handleReorder}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </main>
