@@ -178,9 +178,14 @@ export default function AdminPriceRequestsPage() {
         ) : (
           <div className="space-y-4">
             {priceRequests.map((request) => {
-              const metadata: PriceRequestMetadata = request.metadata 
-                ? (request.metadata as any)
-                : { clientId: '', clientNameEn: '', clientNameAr: '', productIds: [], products: [] };
+              // metadata is already an object from JSONB, not a string
+              const metadata: PriceRequestMetadata = (request.metadata as any) || { 
+                clientId: '', 
+                clientNameEn: '', 
+                clientNameAr: '', 
+                productIds: [], 
+                products: [] 
+              };
 
               return (
                 <Card key={request.id} className={!request.isRead ? 'border-primary' : ''}>
