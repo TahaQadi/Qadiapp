@@ -15,6 +15,8 @@ import {
   saveTemplateSchema,
   createProductSchema,
   updateProductSchema,
+  createVendorSchema,
+  updateVendorSchema,
   createClientSchema,
   updateClientSchema,
   updateOwnProfileSchema,
@@ -691,6 +693,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Error deleting location",
         messageAr: "خطأ في حذف الموقع"
+      });
+    }
+  });
+
+  // Admin Vendor Management
+  app.get("/api/admin/vendors", requireAdmin, async (req: any, res) => {
+    try {
+      const vendors = await storage.getVendors();
+      res.json(vendors);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error fetching vendors",
+        messageAr: "خطأ في جلب الموردين"
+      });
+    }
+  });
+
+  app.get("/api/admin/vendors/:id", requireAdmin, async (req: any, res) => {
+    try {
+      const vendor = await storage.getVendor(req.params.id);
+      if (!vendor) {
+        return res.status(404).json({ 
+          message: "Vendor not found",
+          messageAr: "المورد غير موجود",
+        });
+      }
+      res.json(vendor);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error fetching vendor",
+        messageAr: "خطأ في جلب المورد"
+      });
+    }
+  });
+
+  app.post("/api/admin/vendors", requireAdmin, async (req: any, res) => {
+    try {
+      const validatedData = createVendorSchema.parse(req.body);
+      
+      // Check for duplicate vendor number
+      const existingVendor = await storage.getVendorByNumber(validatedData.vendorNumber);
+      if (existingVendor) {
+        return res.status(400).json({ 
+          message: "Vendor number already exists",
+          messageAr: "رقم المورد موجود بالفعل"
+        });
+      }
+      
+      const vendor = await storage.createVendor(validatedData);
+      res.status(201).json(vendor);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error creating vendor",
+        messageAr: "خطأ في إنشاء المورد"
+      });
+    }
+  });
+
+  app.put("/api/admin/vendors/:id", requireAdmin, async (req: any, res) => {
+    try {
+      const validatedData = updateVendorSchema.parse(req.body);
+      
+      // Check for duplicate vendor number if it's being updated
+      if (validatedData.vendorNumber) {
+        const existingVendor = await storage.getVendorByNumber(validatedData.vendorNumber);
+        if (existingVendor && existingVendor.id !== req.params.id) {
+          return res.status(400).json({ 
+            message: "Vendor number already exists",
+            messageAr: "رقم المورد موجود بالفعل"
+          });
+        }
+      }
+      
+      const vendor = await storage.updateVendor(req.params.id, validatedData);
+      if (!vendor) {
+        return res.status(404).json({ 
+          message: "Vendor not found",
+          messageAr: "المورد غير موجود",
+        });
+      }
+      res.json(vendor);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({ 
+        message: "Error updating vendor",
+        messageAr: "خطأ في تحديث المورد"
+      });
+    }
+  });
+
+  app.delete("/api/admin/vendors/:id", requireAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteVendor(req.params.id);
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Error deleting vendor",
+        messageAr: "خطأ في حذف المورد"
       });
     }
   });
