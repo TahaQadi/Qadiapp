@@ -669,13 +669,46 @@ export default function OrderingPage() {
               <Card className="p-8 sm:p-12 text-center border-dashed">
                 <Package className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-muted-foreground/50" />
                 <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                  {language === 'ar' ? 'اختر عقد اتفاقية' : 'Select a Contract'}
+                  {clientLtas.length === 0 
+                    ? (language === 'ar' ? 'لا توجد عقود متاحة' : 'No Contracts Available')
+                    : (language === 'ar' ? 'اختر عقد اتفاقية' : 'Select a Contract')
+                  }
                 </h3>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-                  {language === 'ar'
-                    ? 'يرجى اختيار عقد اتفاقية من القائمة أعلاه لعرض المنتجات المتاحة'
-                    : 'Please select an LTA contract from the dropdown above to view available products'}
+                <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-4">
+                  {clientLtas.length === 0 
+                    ? (language === 'ar'
+                      ? 'لم يتم تعيينك إلى أي عقد اتفاقية بعد. يرجى التواصل مع المسؤول لتفعيل حسابك.'
+                      : 'You have not been assigned to any LTA contracts yet. Please contact an administrator to activate your account.')
+                    : (language === 'ar'
+                      ? 'يرجى اختيار عقد اتفاقية من القائمة أعلاه لعرض المنتجات المتاحة'
+                      : 'Please select an LTA contract from the dropdown above to view available products')
+                  }
                 </p>
+                {clientLtas.length === 0 && (
+                  <div className="mt-6 p-4 bg-muted/50 rounded-lg max-w-md mx-auto">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {language === 'ar' ? 'معلومات الاتصال:' : 'Contact Information:'}
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <p className="flex items-center justify-center gap-2 text-foreground">
+                        <span className="font-medium">
+                          {language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}
+                        </span>
+                        <a href="mailto:taha@qadi.ps" className="text-primary hover:underline">
+                          taha@qadi.ps
+                        </a>
+                      </p>
+                      <p className="flex items-center justify-center gap-2 text-foreground">
+                        <span className="font-medium">
+                          {language === 'ar' ? 'الهاتف:' : 'Phone:'}
+                        </span>
+                        <a href="tel:+970592555532" className="text-primary hover:underline">
+                          +970 59 255 5532
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </Card>
             ) : productsLoading ? (
               <div className="space-y-4">
