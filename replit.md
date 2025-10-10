@@ -257,3 +257,17 @@ Preferred communication style: Simple, everyday language.
 - Existing users: Replit OAuth links to existing client via userId
 - Admin management: Admins can toggle admin status for any user via switch in Client Management page
 - Session-based authentication with 30-day cookie expiration
+
+**Vendor Management System (October 10, 2025):**
+- Created comprehensive vendor management with dedicated vendors table
+- Database schema: vendorNumber (unique), nameEn, nameAr, contactEmail, contactPhone, address
+- Updated products table with vendorId foreign key (replaces text vendor fields)
+- Full vendor CRUD operations in storage layer with vendorNumber lookup
+- Admin-only vendor API routes with bilingual error messages and validation
+- AdminVendorsPage: create/edit/delete vendors with bilingual UI
+- Dashboard integration: Vendor Management card with Truck icon on /admin
+- CSV import/export enhanced to handle all 18 product fields
+- CSV vendor matching: imports use vendor number to set vendorId
+- Product pricing enhancement: Added cost/selling prices for box/piece, unit info, categoryNum, specifications (AR)
+- Pricing fields for admin reference only (don't affect LTA contract prices)
+- Backend fully supports all product fields via API and CSV functionality
