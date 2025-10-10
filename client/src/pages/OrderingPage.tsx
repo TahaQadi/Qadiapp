@@ -94,10 +94,10 @@ export default function OrderingPage() {
     queryKey: ['/api/client/ltas'],
   });
 
-  // Auto-select first LTA when LTAs load
+  // Auto-select "All Products" tab when LTAs load
   useEffect(() => {
     if (!selectedLtaFilter && clientLtas.length > 0) {
-      setSelectedLtaFilter(clientLtas[0].id);
+      setSelectedLtaFilter('all');
     }
   }, [clientLtas, selectedLtaFilter]);
 
@@ -171,7 +171,7 @@ export default function OrderingPage() {
 
 
   const filteredProducts = (products || []).filter(p => {
-    const matchesLta = p.ltaId === selectedLtaFilter;
+    const matchesLta = selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter;
     const matchesSearch = searchQuery === '' ||
       p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.nameAr.includes(searchQuery) ||
@@ -674,6 +674,13 @@ export default function OrderingPage() {
                   <Tabs value={selectedLtaFilter} onValueChange={setSelectedLtaFilter} className="w-full">
                     <div className="relative">
                       <TabsList className="w-full inline-flex items-center justify-start h-auto gap-2 p-1 bg-muted rounded-md overflow-x-auto flex-nowrap">
+                        <TabsTrigger
+                          value="all"
+                          className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-[120px]"
+                          data-testid="tab-lta-all"
+                        >
+                          {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
+                        </TabsTrigger>
                         {clientLtas.map(lta => (
                           <TabsTrigger
                             key={lta.id}
