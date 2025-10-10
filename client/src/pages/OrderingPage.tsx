@@ -74,7 +74,7 @@ export default function OrderingPage() {
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('all');
+  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [scrolled, setScrolled] = useState(false);
 
@@ -85,6 +85,13 @@ export default function OrderingPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Auto-select first LTA when LTAs load
+  useEffect(() => {
+    if (!selectedLtaFilter && clientLtas.length > 0) {
+      setSelectedLtaFilter(clientLtas[0].id);
+    }
+  }, [clientLtas, selectedLtaFilter]);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products'],
@@ -163,17 +170,15 @@ export default function OrderingPage() {
 
 
 
-  const filteredProducts = selectedLtaFilter !== 'all'
-    ? (products || []).filter(p => {
-        const matchesLta = selectedLtaFilter === 'no-price' ? !p.hasPrice : p.ltaId === selectedLtaFilter;
-        const matchesSearch = searchQuery === '' ||
-          p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.nameAr.includes(searchQuery) ||
-          p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-        return matchesLta && matchesSearch && matchesCategory;
-      })
-    : [];
+  const filteredProducts = (products || []).filter(p => {
+    const matchesLta = p.ltaId === selectedLtaFilter;
+    const matchesSearch = searchQuery === '' ||
+      p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.nameAr.includes(searchQuery) ||
+      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+    return matchesLta && matchesSearch && matchesCategory;
+  });
 
 
   const handleAddToCart = (product: ProductWithLtaPrice) => {
@@ -663,39 +668,39 @@ export default function OrderingPage() {
           {/* Products Tab */}
           <TabsContent value="products" className="mt-0">
             <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-              <div className="flex flex-col gap-4 sm:gap-5">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
-                      {t('ordering.title')}
-                    </h2>
-                    <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
-                      {filteredProducts.length}
-                    </Badge>
-                  </div>
+              {/* LTA Tabs */}
+              {clientLtas.length > 0 && (
+                <div className="bg-card/50 rounded-lg p-3 sm:p-4 border border-border/50">
+                  <Tabs value={selectedLtaFilter} onValueChange={setSelectedLtaFilter} className="w-full">
+                    <div className="relative">
+                      <TabsList className="w-full inline-flex items-center justify-start h-auto gap-2 p-1 bg-muted rounded-md overflow-x-auto flex-nowrap">
+                        {clientLtas.map(lta => (
+                          <TabsTrigger
+                            key={lta.id}
+                            value={lta.id}
+                            className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-[120px]"
+                            data-testid={`tab-lta-${lta.id}`}
+                          >
+                            {language === 'ar' ? lta.nameAr : lta.nameEn}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
+                  </Tabs>
+                </div>
+              )}
 
-                  {/* LTA Selector */}
-                  <Select value={selectedLtaFilter} onValueChange={setSelectedLtaFilter}>
-                    <SelectTrigger className="w-full sm:w-[220px] h-10 sm:h-11" data-testid="select-lta-filter">
-                      <SelectValue placeholder={language === 'ar' ? 'اختر العقد' : 'Select Contract'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {language === 'ar' ? 'جميع العقود' : 'All Contracts'}
-                      </SelectItem>
-                      {clientLtas.map(lta => (
-                        <SelectItem key={lta.id} value={lta.id}>
-                          {language === 'ar' ? lta.nameAr : lta.nameEn}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="no-price">
-                        {language === 'ar' ? 'منتجات بدون أسعار' : 'Products Without Prices'}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-col gap-4 sm:gap-5">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                    {t('ordering.title')}
+                  </h2>
+                  <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
+                    {filteredProducts.length}
+                  </Badge>
                 </div>
 
-                {selectedLtaFilter !== 'all' && (
+                {selectedLtaFilter && (
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
