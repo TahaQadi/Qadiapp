@@ -74,7 +74,7 @@ export default function OrderingPage() {
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('');
+  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [scrolled, setScrolled] = useState(false);
 
@@ -94,12 +94,6 @@ export default function OrderingPage() {
     queryKey: ['/api/client/ltas'],
   });
 
-  // Auto-select "All Products" tab when LTAs load
-  useEffect(() => {
-    if (!selectedLtaFilter && clientLtas.length > 0) {
-      setSelectedLtaFilter('all');
-    }
-  }, [clientLtas, selectedLtaFilter]);
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery<Template[]>({
     queryKey: ['/api/client/templates'],
