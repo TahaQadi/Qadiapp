@@ -1738,6 +1738,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate PDF price offer for a price request
+  app.post('/api/admin/price-requests/:notificationId/generate-pdf', requireAdmin, async (req: any, res) => {
+    try {
+      const { PDFGenerator } = await import('./pdf-generator');
+      const { language = 'en', ltaId, validityDays = 30, notes } = req.body;
+
+      // Get the notification
+      const notification = await storage.getNotification(req.params.notificationId);
+      if (!notification || notification.type !== 'price_request') {
+        return res.status(404).json({
+          message: "Price request not found",
+          messageAr: "طلب السعر غير موجود"
+        });
+      }
+
+      const metadata = JSON.parse(notification.metadata || '{}');
+      
+      // Get client details
+      const client = await storage.getClient(metadata.clientId);
+      if (!client) {
+        return res.status(404).json({
+          message: "Client not found",
+          messageAr: "العميل غير موجود"
+        });
+      }
+
+      // Get LTA details
+      const lta = await storage.getLta(ltaId);
+      if (!lta) {
+        return res.status(404).json({
+          message: "LTA not found",
+          messageAr: "الاتفاقية غير موجودة"
+        });
+      }
+
+      // Get products with prices from LTA
+      const ltaProducts = await storage.getProductsForLta(ltaId);
+      const requestedProductIds = metadata.productIds || [];
+      
+      const items = requestedProductIds
+        .map((productId: string) => {
+          const product = ltaProducts.find(p => p.id === productId);
+          if (!product || !product.contractPrice) return null;
+          return {
+            sku: product.sku,
+            nameEn: product.nameEn,
+            nameAr: product.nameAr,
+            contractPrice: product.contractPrice,
+            currency: product.currency || 'USD'
+          };
+        })
+        .filter((item: any) => item !== null);
+
+      if (items.length === 0) {
+        return res.status(400).json({
+          message: "No priced products found for this request",
+          messageAr: "لم يتم العثور على منتجات بأسعار لهذا الطلب"
+        });
+      }
+
+      // Generate PDF
+      const offerDate = new Date();
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + validityDays);
+
+      const pdfBuffer = await PDFGenerator.generatePriceOffer({
+        offerId: `PO-${Date.now()}`,
+        offerDate: offerDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+        clientNameEn: client.nameEn,
+        clientNameAr: client.nameAr,
+        clientEmail: client.email || undefined,
+        clientPhone: client.phone || undefined,
+        ltaNameEn: lta.nameEn,
+        ltaNameAr: lta.nameAr,
+        items,
+        validUntil: validUntil.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+        notes: notes || undefined,
+        language: language as 'en' | 'ar'
+      });
+
+      // Send PDF as download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="price_offer_${client.nameEn.replace(/\s/g, '_')}_${Date.now()}.pdf"`);
+      res.send(pdfBuffer);
+
+      // Create notification for client about the price offer
+      await storage.createNotification({
+        clientId: metadata.clientId,
+        type: 'price_offer_ready',
+        titleEn: 'Price Offer Document Ready',
+        titleAr: 'مستند عرض السعر جاهز',
+        messageEn: `Your official price offer document has been generated and is ready for review.`,
+        messageAr: `تم إنشاء مستند عرض السعر الرسمي الخاص بك وهو جاهز للمراجعة.`,
+        metadata: JSON.stringify({
+          notificationId: notification.id,
+          ltaId,
+          productCount: items.length
+        }),
+      });
+
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      res.status(500).json({
+        message: error.message || "Failed to generate PDF",
+        messageAr: "فشل إنشاء ملف PDF"
+      });
+    }
+  });
+
   // Client LTA Endpoints
   app.get('/api/client/ltas', requireAuth, async (req: any, res) => {
     try {

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive } from 'lucide-react';
 import { Link } from 'wouter';
@@ -54,6 +55,11 @@ export default function AdminPriceRequestsPage() {
   const [currency, setCurrency] = useState('USD');
   const [selectedLtaId, setSelectedLtaId] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedRequestForPdf, setSelectedRequestForPdf] = useState<Notification | null>(null);
+  const [pdfLtaId, setPdfLtaId] = useState('');
+  const [pdfValidityDays, setPdfValidityDays] = useState('30');
+  const [pdfNotes, setPdfNotes] = useState('');
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -181,6 +187,45 @@ export default function AdminPriceRequestsPage() {
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error.message,
+      });
+    },
+  });
+
+  const generatePdfMutation = useMutation({
+    mutationFn: async (data: { notificationId: string; ltaId: string; validityDays: number; notes?: string }) => {
+      const res = await apiRequest('POST', `/api/admin/price-requests/${data.notificationId}/generate-pdf`, {
+        language,
+        ltaId: data.ltaId,
+        validityDays: data.validityDays,
+        notes: data.notes,
+      });
+      return res.blob();
+    },
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `price_offer_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: language === 'ar' ? 'تم إنشاء PDF' : 'PDF Generated',
+        description: language === 'ar' ? 'تم إنشاء مستند عرض السعر بنجاح' : 'Price offer document generated successfully',
+      });
+      setPdfDialogOpen(false);
+      setPdfLtaId('');
+      setPdfValidityDays('30');
+      setPdfNotes('');
+      setSelectedRequestForPdf(null);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل إنشاء PDF' : 'Failed to generate PDF'),
       });
     },
   });
@@ -336,7 +381,23 @@ export default function AdminPriceRequestsPage() {
                         </p>
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        {!request.isRead && (
+                        {completed && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequestForPdf(request);
+                              setPdfDialogOpen(true);
+                            }}
+                            className="gap-2"
+                          >
+                            <Package className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              {language === 'ar' ? 'إنشاء PDF' : 'Generate PDF'}
+                            </span>
+                          </Button>
+                        )}
+                        {!request.isRead && !completed && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -510,6 +571,94 @@ export default function AdminPriceRequestsPage() {
               {assignProductMutation.isPending
                 ? (language === 'ar' ? 'جاري الإضافة...' : 'Adding...')
                 : (language === 'ar' ? 'إضافة' : 'Add')
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Generation Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'إنشاء مستند عرض السعر' : 'Generate Price Offer Document'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="pdf-lta-select">
+                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
+              </Label>
+              <Select value={pdfLtaId} onValueChange={setPdfLtaId}>
+                <SelectTrigger id="pdf-lta-select">
+                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {ltas.map((lta) => (
+                    <SelectItem key={lta.id} value={lta.id}>
+                      {language === 'ar' ? lta.nameAr : lta.nameEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="validity-days">
+                {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Offer Validity (days)'}
+              </Label>
+              <Input
+                id="validity-days"
+                type="number"
+                value={pdfValidityDays}
+                onChange={(e) => setPdfValidityDays(e.target.value)}
+                placeholder="30"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pdf-notes">
+                {language === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Additional Notes (Optional)'}
+              </Label>
+              <Textarea
+                id="pdf-notes"
+                value={pdfNotes}
+                onChange={(e) => setPdfNotes(e.target.value)}
+                placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPdfDialogOpen(false)}
+            >
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={() => {
+                if (!pdfLtaId || !selectedRequestForPdf) {
+                  toast({
+                    variant: 'destructive',
+                    title: language === 'ar' ? 'خطأ' : 'Error',
+                    description: language === 'ar' ? 'يرجى اختيار اتفاقية' : 'Please select an LTA',
+                  });
+                  return;
+                }
+                generatePdfMutation.mutate({
+                  notificationId: selectedRequestForPdf.id,
+                  ltaId: pdfLtaId,
+                  validityDays: parseInt(pdfValidityDays) || 30,
+                  notes: pdfNotes || undefined,
+                });
+              }}
+              disabled={generatePdfMutation.isPending}
+            >
+              {generatePdfMutation.isPending
+                ? (language === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
+                : (language === 'ar' ? 'إنشاء PDF' : 'Generate PDF')
               }
             </Button>
           </DialogFooter>
