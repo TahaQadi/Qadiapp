@@ -147,6 +147,7 @@ export interface IStorage {
     messageAr: string;
     metadata?: string;
   }): Promise<Notification>;
+  getNotification(id: string): Promise<Notification | null>;
   getClientNotifications(clientId: string): Promise<Notification[]>;
   markNotificationAsRead(id: string): Promise<Notification | null>;
   markAllNotificationsAsRead(clientId: string): Promise<void>;
@@ -862,6 +863,17 @@ export class MemStorage implements IStorage {
     }).returning();
 
     return result[0];
+  }
+
+  async getNotification(id: string): Promise<Notification | null> {
+    const result = await this.db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id))
+      .limit(1)
+      .execute();
+
+    return result[0] || null;
   }
 
   async getClientNotifications(clientId: string): Promise<Notification[]> {
