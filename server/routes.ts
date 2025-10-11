@@ -1753,7 +1753,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const metadata = JSON.parse(notification.metadata || '{}');
+      // metadata is already parsed as an object (jsonb type), no need to JSON.parse
+      const metadata = notification.metadata || {};
       
       // Get client details
       const client = await storage.getClient(metadata.clientId);
