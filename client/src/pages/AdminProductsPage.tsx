@@ -757,253 +757,312 @@ export default function AdminProductsPage() {
 
       {/* Create Product Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-2xl" data-testid="dialog-create-product">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="dialog-create-product">
           <DialogHeader>
             <DialogTitle>{language === 'ar' ? 'منتج جديد' : 'New Product'}</DialogTitle>
           </DialogHeader>
           <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit(handleCreateProduct)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="nameEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-name-en" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+            <form onSubmit={createForm.handleSubmit(handleCreateProduct)} className="space-y-6">
+              {/* Image Upload Section - Prominent at top */}
+              <div className="border-2 border-dashed rounded-lg p-6 bg-muted/50">
+                <FormLabel className="text-base mb-3 block">{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
+                <div className="flex flex-col md:flex-row gap-4 items-center">
+                  {imagePreview ? (
+                    <div className="relative w-48 h-48 border-2 rounded-lg overflow-hidden shadow-md">
+                      <img src={imagePreview} alt="Product" className="w-full h-full object-cover" data-testid="preview-product-image" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 shadow-lg"
+                        onClick={() => {setImagePreview(null); setImageFile(null);}}
+                        data-testid="button-remove-image"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-48 h-48 border-2 border-dashed rounded-lg flex items-center justify-center bg-background">
+                      <ImageIcon className="w-16 h-16 text-muted-foreground" />
+                    </div>
                   )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="nameAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-name-ar" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                      data-testid="input-product-image"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? 'اختر صورة (PNG, JPG, WEBP - حد أقصى 5MB)' 
+                        : 'Select image (PNG, JPG, WEBP - max 5MB)'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="descriptionEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} data-testid="input-description-en" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="descriptionAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} data-testid="input-description-ar" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'معلومات أساسية' : 'Basic Information'}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'رمز المنتج' : 'SKU'} *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-sku" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="vendorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-vendor">
+                              <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vendors.map((vendor) => (
+                              <SelectItem key={vendor.id} value={vendor.id}>
+                                {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="nameEn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'} *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-name-en" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="nameAr"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'} *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-name-ar" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="descriptionEn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} data-testid="input-description-en" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="descriptionAr"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} data-testid="input-description-ar" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-sku" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الفئة' : 'Category'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-category" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Categories */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'التصنيفات' : 'Categories'}
+                </h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="mainCategory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الفئة الرئيسية' : 'Main Category'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} data-testid="input-main-category" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الفئة' : 'Category'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-category" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="categoryNum"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'رقم الفئة' : 'Category Number'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} data-testid="input-category-num" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="categoryNum"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'رقم الفئة' : 'Category Number'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-category-num" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="mainCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الفئة الرئيسية' : 'Main Category'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-main-category" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Units & Packaging */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'الوحدات والتعبئة' : 'Units & Packaging'}
+                </h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="unitType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'نوع الوحدة' : 'Unit Type'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} placeholder="Box, Pack, Piece" data-testid="input-unit-type" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الوحدة' : 'Unit'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} data-testid="input-unit" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="unitPerBox"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" data-testid="input-unit-per-box" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="unitType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'نوع الوحدة' : 'Unit Type'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-unit-type" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الوحدة' : 'Unit'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-unit" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="unitPerBox"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-unit-per-box" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Pricing */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'التسعير' : 'Pricing'}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="costPricePerBox"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-cost-price-box" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="costPricePerPiece"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-cost-price-piece" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="sellingPricePack"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-selling-price-pack" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="sellingPricePiece"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-selling-price-piece" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="costPricePerBox"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-cost-price-box" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="costPricePerPiece"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-cost-price-piece" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={createForm.control}
-                  name="sellingPricePack"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-selling-price-pack" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="sellingPricePiece"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-selling-price-piece" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={createForm.control}
-                name="vendorId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-vendor">
-                          <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {vendors.map((vendor) => (
-                          <SelectItem key={vendor.id} value={vendor.id}>
-                            {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              {/* Specifications */}
               <FormField
                 control={createForm.control}
                 name="specificationsAr"
@@ -1011,39 +1070,14 @@ export default function AdminProductsPage() {
                   <FormItem>
                     <FormLabel>{language === 'ar' ? 'المواصفات (عربي)' : 'Specifications (Arabic)'}</FormLabel>
                     <FormControl>
-                      <Textarea {...field} value={field.value || ''} data-testid="input-specifications-ar" />
+                      <Textarea {...field} value={field.value || ''} rows={4} data-testid="input-specifications-ar" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="space-y-2">
-                <FormLabel>{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
-                {imagePreview && (
-                  <div className="relative w-32 h-32 border rounded-md overflow-hidden">
-                    <img src={imagePreview} alt="Product" className="w-full h-full object-cover" data-testid="preview-product-image" />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6"
-                      onClick={() => {setImagePreview(null); setImageFile(null);}}
-                      data-testid="button-remove-image"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-                <Input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleImageChange}
-                  data-testid="input-product-image"
-                />
-              </div>
-
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -1067,253 +1101,312 @@ export default function AdminProductsPage() {
 
       {/* Edit Product Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl" data-testid="dialog-edit-product">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="dialog-edit-product">
           <DialogHeader>
             <DialogTitle>{language === 'ar' ? 'تعديل المنتج' : 'Edit Product'}</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleUpdateProduct)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="nameEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-name-en" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+            <form onSubmit={editForm.handleSubmit(handleUpdateProduct)} className="space-y-6">
+              {/* Image Upload Section - Prominent at top */}
+              <div className="border-2 border-dashed rounded-lg p-6 bg-muted/50">
+                <FormLabel className="text-base mb-3 block">{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
+                <div className="flex flex-col md:flex-row gap-4 items-center">
+                  {imagePreview ? (
+                    <div className="relative w-48 h-48 border-2 rounded-lg overflow-hidden shadow-md">
+                      <img src={imagePreview} alt="Product" className="w-full h-full object-cover" data-testid="preview-edit-product-image" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 shadow-lg"
+                        onClick={() => {setImagePreview(selectedProduct?.imageUrl || null); setImageFile(null);}}
+                        data-testid="button-remove-edit-image"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-48 h-48 border-2 border-dashed rounded-lg flex items-center justify-center bg-background">
+                      <ImageIcon className="w-16 h-16 text-muted-foreground" />
+                    </div>
                   )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="nameAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-name-ar" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                      data-testid="input-edit-product-image"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? 'اختر صورة جديدة (PNG, JPG, WEBP - حد أقصى 5MB)' 
+                        : 'Select new image (PNG, JPG, WEBP - max 5MB)'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="descriptionEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} data-testid="input-edit-description-en" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="descriptionAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} data-testid="input-edit-description-ar" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'معلومات أساسية' : 'Basic Information'}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'رمز المنتج' : 'SKU'} *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-edit-sku" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="vendorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-edit-vendor">
+                              <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vendors.map((vendor) => (
+                              <SelectItem key={vendor.id} value={vendor.id}>
+                                {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="nameEn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'} *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-edit-name-en" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="nameAr"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'} *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-edit-name-ar" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="descriptionEn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} data-testid="input-edit-description-en" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="descriptionAr"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} data-testid="input-edit-description-ar" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-sku" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الفئة' : 'Category'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-category" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Categories */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'التصنيفات' : 'Categories'}
+                </h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="mainCategory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الفئة الرئيسية' : 'Main Category'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} data-testid="input-edit-main-category" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الفئة' : 'Category'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-edit-category" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="categoryNum"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'رقم الفئة' : 'Category Number'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} data-testid="input-edit-category-num" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="categoryNum"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'رقم الفئة' : 'Category Number'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-category-num" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="mainCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الفئة الرئيسية' : 'Main Category'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-main-category" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Units & Packaging */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'الوحدات والتعبئة' : 'Units & Packaging'}
+                </h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="unitType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'نوع الوحدة' : 'Unit Type'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} placeholder="Box, Pack, Piece" data-testid="input-edit-unit-type" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الوحدة' : 'Unit'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} data-testid="input-edit-unit" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="unitPerBox"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" data-testid="input-edit-unit-per-box" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="unitType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'نوع الوحدة' : 'Unit Type'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-unit-type" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'الوحدة' : 'Unit'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-unit" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="unitPerBox"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'وحدة لكل صندوق' : 'Unit Per Box'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-unit-per-box" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Pricing */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                  {language === 'ar' ? 'التسعير' : 'Pricing'}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="costPricePerBox"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-edit-cost-price-box" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="costPricePerPiece"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-edit-cost-price-piece" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="sellingPricePack"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-edit-selling-price-pack" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="sellingPricePiece"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} type="number" step="0.01" data-testid="input-edit-selling-price-piece" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="costPricePerBox"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (صندوق)' : 'Cost Price Per Box'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-cost-price-box" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="costPricePerPiece"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر التكلفة (قطعة)' : 'Cost Price Per Piece'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-cost-price-piece" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="sellingPricePack"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر البيع (عبوة)' : 'Selling Price Pack'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-selling-price-pack" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="sellingPricePiece"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'سعر البيع (قطعة)' : 'Selling Price Piece'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ''} data-testid="input-edit-selling-price-piece" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={editForm.control}
-                name="vendorId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'المورد' : 'Vendor'}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-edit-vendor">
-                          <SelectValue placeholder={language === 'ar' ? 'اختر مورداً' : 'Select a vendor'} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {vendors.map((vendor) => (
-                          <SelectItem key={vendor.id} value={vendor.id}>
-                            {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              {/* Specifications */}
               <FormField
                 control={editForm.control}
                 name="specificationsAr"
@@ -1321,39 +1414,14 @@ export default function AdminProductsPage() {
                   <FormItem>
                     <FormLabel>{language === 'ar' ? 'المواصفات (عربي)' : 'Specifications (Arabic)'}</FormLabel>
                     <FormControl>
-                      <Textarea {...field} value={field.value || ''} data-testid="input-edit-specifications-ar" />
+                      <Textarea {...field} value={field.value || ''} rows={4} data-testid="input-edit-specifications-ar" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="space-y-2">
-                <FormLabel>{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
-                {imagePreview && (
-                  <div className="relative w-32 h-32 border rounded-md overflow-hidden">
-                    <img src={imagePreview} alt="Product" className="w-full h-full object-cover" data-testid="preview-edit-product-image" />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6"
-                      onClick={() => {setImagePreview(selectedProduct?.imageUrl || null); setImageFile(null);}}
-                      data-testid="button-remove-edit-image"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-                <Input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleImageChange}
-                  data-testid="input-edit-product-image"
-                />
-              </div>
-
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button 
                   type="button" 
                   variant="outline" 
