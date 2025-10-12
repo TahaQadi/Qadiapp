@@ -20,7 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingCart, Package, FileText, History, Settings, X, Loader2, User, Search, LogOut, Heart, Send } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Save, Eye, Loader2, DollarSign, AlertCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -387,7 +388,7 @@ export default function OrderingPage() {
 
   const handleAddToPriceRequest = (product: ProductWithLtaPrice) => {
     const exists = priceRequestList.find(item => item.productId === product.id);
-    
+
     if (exists) {
       toast({
         description: language === 'ar' 
@@ -671,23 +672,47 @@ export default function OrderingPage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-                onClick={() => setPriceRequestDialogOpen(true)}
-                data-testid="button-price-request"
-              >
-                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {priceRequestList.length > 0 && (
-                  <Badge
-                    className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
-                    data-testid="badge-price-request-count"
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                    data-testid="button-price-request"
                   >
-                    {priceRequestList.length}
-                  </Badge>
-                )}
-              </Button>
+                    <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                    {priceRequestList.length > 0 && (
+                      <Badge
+                        className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
+                        data-testid="badge-price-request-count"
+                      >
+                        {priceRequestList.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="p-2">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2"
+                    onClick={() => setPriceRequestDialogOpen(true)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span className="text-sm">
+                      {language === 'ar' ? 'عرض قائمة طلبات الأسعار' : 'View Price Request List'}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2"
+                    onClick={() => { /* TODO: Add functionality to add products from here */ }}
+                  >
+                    <Package className="h-4 w-4" />
+                    <span className="text-sm">
+                      {language === 'ar' ? 'إضافة منتجات' : 'Add Products'}
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -996,11 +1021,17 @@ export default function OrderingPage() {
               {priceRequestList.length === 0 ? (
                 <div className="text-center py-8">
                   <Heart className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-4">
                     {language === 'ar' 
-                      ? 'قائمتك فارغة. أضف منتجات من صفحة المنتجات.' 
-                      : 'Your list is empty. Add products from the products page.'}
+                      ? 'قائمتك فارغة. أضف منتجات من صفحة طلبات الأسعار.' 
+                      : 'Your list is empty. Add products from the price request page.'}
                   </p>
+                  <Button asChild>
+                    <Link href="/price-request">
+                      <Heart className="h-4 w-4 me-2" />
+                      {language === 'ar' ? 'انتقل إلى صفحة طلبات الأسعار' : 'Go to Price Request Page'}
+                    </Link>
+                  </Button>
                 </div>
               ) : (
                 <>
@@ -1043,12 +1074,15 @@ export default function OrderingPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setPriceRequestDialogOpen(false)}>
-                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                {language === 'ar' ? 'إغلاق' : 'Close'}
               </Button>
               {priceRequestList.length > 0 && (
                 <Button onClick={handleSubmitPriceRequest} disabled={requestPriceMutation.isPending}>
                   <Send className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'إرسال الطلب' : 'Send Request'}
+                  {requestPriceMutation.isPending 
+                    ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
+                    : (language === 'ar' ? 'إرسال الطلب' : 'Send Request')
+                  }
                 </Button>
               )}
             </DialogFooter>
