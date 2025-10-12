@@ -37,7 +37,8 @@ export default function ProductDetailPage() {
     return slugifiedName === productName;
   });
 
-  const isLoading = productsLoading;
+  // Show loading only if products are still loading AND we haven't found the product yet
+  const isLoading = productsLoading && !product;
 
   const { data: relatedProducts = [] } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products/category', product?.category],

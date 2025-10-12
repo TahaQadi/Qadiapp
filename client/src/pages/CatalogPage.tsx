@@ -234,13 +234,13 @@ export default function CatalogPage() {
                       .replace(/^-+|-+$/g, '');
                     return (
                       <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
-                        <Card className="h-full hover:shadow-lg transition-all cursor-pointer group" data-testid={`card-product-${product.id}`}>
+                        <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden group" data-testid={`card-product-${product.id}`}>
                           <div className="relative aspect-square bg-muted overflow-hidden">
                             {product.imageUrl ? (
                               <img
                                 src={product.imageUrl}
                                 alt={name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                 loading="lazy"
                                 data-testid={`img-product-${product.id}`}
                               />
