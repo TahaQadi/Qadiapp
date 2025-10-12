@@ -26,12 +26,20 @@ export async function generateSitemap(): Promise<string> {
   }));
 
   // Generate product pages
-  const productPages = allProducts.map(product => ({
-    url: `/products/${product.sku}`,
-    priority: '0.7',
-    changefreq: 'weekly',
-    lastmod: product.updatedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-  }));
+  const productPages = allProducts.map(product => {
+    const slugifiedName = product.nameEn.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return {
+      url: `/products/${slugifiedSubCategory}/${slugifiedName}`,
+      priority: '0.7',
+      changefreq: 'weekly',
+      lastmod: product.updatedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+    };
+  });
 
   const allPages = [...staticPages, ...categoryPages, ...productPages];
 
@@ -47,7 +55,12 @@ export async function generateSitemap(): Promise<string> {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${allPages.map(page => {
-    const productImage = productsWithImages.find(p => page.url.includes(p.sku));
+    const productImage = productsWithImages.find(p => {
+      const slugifiedName = p.nameEn.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      return page.url.includes(slugifiedName);
+    });
     return `  <url>
     <loc>${baseUrl}${page.url}</loc>
     <changefreq>${page.changefreq}</changefreq>

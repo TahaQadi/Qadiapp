@@ -109,9 +109,9 @@ function Router() {
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
-      
+
       {/* Public product pages for SEO */}
-      <Route path="/products/:sku" component={ProductDetailPage} />
+      <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
       <Route path="/catalog/:category" component={CatalogPage} />
       <Route path="/catalog" component={CatalogPage} />
 

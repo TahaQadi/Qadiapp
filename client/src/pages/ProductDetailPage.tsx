@@ -1,4 +1,3 @@
-
 import { useRoute, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -115,7 +114,7 @@ export default function ProductDetailPage() {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         {product.imageUrl && <meta name="twitter:image" content={product.imageUrl} />}
-        
+
         {/* Product Structured Data */}
         <script type="application/ld+json">
           {JSON.stringify({
@@ -295,7 +294,7 @@ export default function ProductDetailPage() {
                         {language === 'ar' ? 'السعر' : 'Price'}
                       </p>
                       <p className="text-lg text-muted-foreground">
-                        {user 
+                        {user
                           ? (language === 'ar' ? 'يرجى طلب عرض سعر' : 'Please request a quote')
                           : (language === 'ar' ? 'سجل الدخول لمعرفة الأسعار' : 'Login to view pricing')
                         }
@@ -346,8 +345,14 @@ export default function ProductDetailPage() {
                 .slice(0, 5)
                 .map((relatedProduct) => {
                   const relatedName = language === 'ar' ? relatedProduct.nameAr : relatedProduct.nameEn;
+                  const slugifiedName = relatedProduct.nameEn.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                  const slugifiedSubCategory = (relatedProduct.subCategory || 'products').toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
                   return (
-                    <Link key={relatedProduct.id} href={`/products/${relatedProduct.sku}`}>
+                    <Link key={relatedProduct.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
                       <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                         <div className="aspect-square bg-muted">
                           {relatedProduct.imageUrl ? (

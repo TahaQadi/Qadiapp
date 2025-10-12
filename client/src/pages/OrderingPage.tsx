@@ -457,7 +457,7 @@ export default function OrderingPage() {
       >
         {/* Product Image */}
         <div className="relative w-full aspect-square bg-muted/50">
-          <Link href={`/products/${product.sku}`}>
+          <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
             <div className="w-full h-full cursor-pointer">
               {product.imageUrl ? (
                 <img
@@ -486,7 +486,7 @@ export default function OrderingPage() {
         {/* Product Info */}
         <CardContent className="flex-1 p-3 sm:p-4 space-y-2">
           <div>
-            <Link href={`/products/${product.sku}`}>
+            <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
               <h3 className="font-semibold text-sm sm:text-base line-clamp-1 text-card-foreground hover:text-primary cursor-pointer transition-colors" data-testid={`text-product-name-${product.id}`}>
                 {name}
               </h3>

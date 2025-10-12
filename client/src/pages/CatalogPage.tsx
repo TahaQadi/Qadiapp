@@ -1,4 +1,3 @@
-
 import { useRoute, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -34,7 +33,7 @@ export default function CatalogPage() {
 
   // Extract unique main categories and subcategories
   const mainCategories = [...new Set(products.map(p => p.mainCategory).filter(Boolean))];
-  
+
   const getSubCategories = (mainCat: string) => {
     return [...new Set(products
       .filter(p => p.mainCategory === mainCat)
@@ -71,7 +70,7 @@ export default function CatalogPage() {
       p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.nameAr.includes(searchQuery) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     if (selectedSubCategory) {
       return matchesSearch && p.subCategory === selectedSubCategory;
     }
@@ -199,7 +198,7 @@ export default function CatalogPage() {
                         className="cursor-pointer hover:shadow-lg transition-shadow"
                         onClick={() => setSelectedMainCategory(mainCat)}
                       >
-                        <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
+                        <CardContent className="p-6 flex flex-col items-center justify-center min-h-[140px]">
                           <IconComponent className="h-12 w-12 mb-3 text-primary" />
                           <h3 className="font-semibold text-lg">{mainCat}</h3>
                           <p className="text-sm text-muted-foreground mt-1">
@@ -225,8 +224,14 @@ export default function CatalogPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredProducts.map((product) => {
                     const name = language === 'ar' ? product.nameAr : product.nameEn;
+                    const slugifiedName = product.nameEn.toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '');
+                    const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '');
                     return (
-                      <Link key={product.id} href={`/products/${product.sku}`}>
+                      <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
                         <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                           <div className="relative aspect-square bg-muted">
                             {product.imageUrl ? (

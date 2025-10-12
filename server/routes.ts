@@ -2411,22 +2411,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dynamic meta tags for social media crawlers
-  app.get('/api/meta-tags/product/:sku', async (req, res) => {
+  app.get('/api/meta-tags/product/:subCategory/:productName', async (req, res) => {
     try {
       const products = await storage.getProducts();
-      const product = products.find(p => p.sku === req.params.sku);
+      const product = products.find(p => {
+        const slugifiedName = p.nameEn.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        return slugifiedName === req.params.productName;
+      });
       
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });
       }
 
       const baseUrl = process.env.BASE_URL || 'https://your-domain.com';
+      const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
       
       res.json({
         title: `${product.nameEn} - Al Qadi Portal`,
         description: product.descriptionEn || product.nameEn,
         image: product.imageUrl ? `${baseUrl}${product.imageUrl}` : `${baseUrl}/logo.png`,
-        url: `${baseUrl}/products/${product.sku}`,
+        url: `${baseUrl}/products/${slugifiedSubCategory}/${req.params.productName}`,
         keywords: `${product.sku}, ${product.nameEn}, ${product.nameAr}, ${product.category || 'products'}`,
       });
     } catch (error: any) {
