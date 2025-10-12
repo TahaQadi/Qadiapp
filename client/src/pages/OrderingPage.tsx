@@ -18,7 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart, Package, FileText, History, Settings, X, Loader2, User, Search, LogOut, Heart } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { ShoppingCart, Package, FileText, History, Settings, X, Loader2, User, Search, LogOut, Heart, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -80,6 +82,9 @@ export default function OrderingPage() {
   const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [scrolled, setScrolled] = useState(false);
+  const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
+  const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
+  const [priceRequestMessage, setPriceRequestMessage] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -143,6 +148,30 @@ export default function OrderingPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/client/templates'] });
       toast({
         title: t('templateDeleted'),
+      });
+    },
+  });
+
+  const requestPriceMutation = useMutation({
+    mutationFn: async (data: { productIds: string[]; message: string }) => {
+      const res = await apiRequest('POST', '/api/client/price-request', data);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+      setPriceRequestList([]);
+      setPriceRequestMessage('');
+      setPriceRequestDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
       });
     },
   });
@@ -356,6 +385,62 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
+  const handleAddToPriceRequest = (product: ProductWithLtaPrice) => {
+    const exists = priceRequestList.find(item => item.productId === product.id);
+    
+    if (exists) {
+      toast({
+        description: language === 'ar' 
+          ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
+          : 'Product already in price request list'
+      });
+      return;
+    }
+
+    setPriceRequestList([...priceRequestList, {
+      productId: product.id,
+      productSku: product.sku,
+      productNameEn: product.nameEn,
+      productNameAr: product.nameAr,
+      quantity: 1,
+      price: '0',
+      currency: 'USD',
+      ltaId: '',
+    }]);
+
+    toast({
+      description: language === 'ar'
+        ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
+        : `${product.nameEn} added to price request list`
+    });
+  };
+
+  const handleRemoveFromPriceRequest = (productId: string) => {
+    setPriceRequestList(priceRequestList.filter(item => item.productId !== productId));
+    toast({
+      description: language === 'ar' ? 'تمت إزالة المنتج' : 'Product removed'
+    });
+  };
+
+  const handleSubmitPriceRequest = () => {
+    if (priceRequestList.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'قائمة فارغة' : 'Empty List',
+        description: language === 'ar' 
+          ? 'يرجى إضافة منتجات إلى القائمة أولاً' 
+          : 'Please add products to the list first'
+      });
+      return;
+    }
+
+    const productIds = priceRequestList.map(item => item.productId);
+    requestPriceMutation.mutate({
+      productIds,
+      message: priceRequestMessage.trim() || '',
+    });
+  };
+
   const handleReorder = (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
@@ -441,10 +526,7 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-
-    const handleAddToPriceRequest = () => {
-      window.location.href = '/price-request';
-    };
+    const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
 
     return (
       <Card
@@ -541,14 +623,17 @@ export default function OrderingPage() {
             </Button>
           ) : (
             <Button
-              onClick={handleAddToPriceRequest}
-              variant="outline"
+              onClick={() => handleAddToPriceRequest(product)}
+              variant={inPriceRequest ? "secondary" : "outline"}
               className="w-full transition-all duration-300"
               data-testid={`button-add-to-price-request-${product.id}`}
             >
-              <Heart className="w-4 h-4 me-2" />
+              <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
               <span className="text-sm sm:text-base">
-                {language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request'}
+                {inPriceRequest
+                  ? (language === 'ar' ? 'في قائمة الطلبات' : 'In Request List')
+                  : (language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request')
+                }
               </span>
             </Button>
           )}
@@ -587,15 +672,21 @@ export default function OrderingPage() {
 
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                asChild
-                className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                onClick={() => setPriceRequestDialogOpen(true)}
                 data-testid="button-price-request"
               >
-                <Link href="/price-request">
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Link>
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                {priceRequestList.length > 0 && (
+                  <Badge
+                    className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
+                    data-testid="badge-price-request-count"
+                  >
+                    {priceRequestList.length}
+                  </Badge>
+                )}
               </Button>
               <Button
                 variant="ghost"
@@ -892,6 +983,77 @@ export default function OrderingPage() {
           onOpenChange={setOrderDetailsDialogOpen}
           order={selectedOrder}
         />
+
+        {/* Price Request Dialog */}
+        <Dialog open={priceRequestDialogOpen} onOpenChange={setPriceRequestDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {priceRequestList.length === 0 ? (
+                <div className="text-center py-8">
+                  <Heart className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'ar' 
+                      ? 'قائمتك فارغة. أضف منتجات من صفحة المنتجات.' 
+                      : 'Your list is empty. Add products from the products page.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {priceRequestList.map((item) => (
+                      <div key={item.productId} className="flex items-center justify-between gap-2 p-3 rounded-lg border">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {language === 'ar' ? item.productNameAr : item.productNameEn}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            SKU: {item.productSku}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveFromPriceRequest(item.productId)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {language === 'ar' ? 'رسالة إضافية (اختياري)' : 'Additional Message (Optional)'}
+                    </label>
+                    <Textarea
+                      value={priceRequestMessage}
+                      onChange={(e) => setPriceRequestMessage(e.target.value)}
+                      placeholder={language === 'ar' 
+                        ? 'أضف أي ملاحظات أو تفاصيل إضافية...' 
+                        : 'Add any notes or additional details...'}
+                      rows={4}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPriceRequestDialogOpen(false)}>
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </Button>
+              {priceRequestList.length > 0 && (
+                <Button onClick={handleSubmitPriceRequest} disabled={requestPriceMutation.isPending}>
+                  <Send className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'إرسال الطلب' : 'Send Request'}
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
