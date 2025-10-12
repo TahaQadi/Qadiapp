@@ -3,20 +3,29 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, Search, ChevronRight, Laptop, Printer, Monitor, Keyboard, Mouse, Headphones, Cable, Speaker, Camera, Smartphone, Tablet, Watch, HardDrive, Cpu, MemoryStick, Wifi, Router, Boxes } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Package, Search, ChevronRight, Laptop, Printer, Monitor, Keyboard, Mouse, Headphones, Cable, Speaker, Camera, Smartphone, Tablet, Watch, HardDrive, Cpu, MemoryStick, Wifi, Router, Boxes, Filter } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@shared/schema';
 import { SEO } from "@/components/SEO";
+
+interface Vendor {
+  id: string;
+  vendorNumber: string;
+  nameEn: string;
+  nameAr: string;
+}
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
   currency?: string;
   ltaId?: string;
   hasPrice: boolean;
+  vendorId?: string | null;
 }
 
 export default function CatalogPage() {
@@ -26,9 +35,15 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: products = [], isLoading } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products/public'],
+  });
+
+  const { data: vendors = [] } = useQuery<Vendor[]>({
+    queryKey: ['/api/admin/vendors'],
   });
 
   // Extract unique main categories and subcategories
@@ -64,20 +79,29 @@ export default function CatalogPage() {
     return Package;
   };
 
-  // Filter products based on search and category selection
+  // Get vendor name helper
+  const getVendorName = (vendorId: string | null | undefined) => {
+    if (!vendorId) return null;
+    const vendor = vendors.find(v => v.id === vendorId);
+    return vendor ? (language === 'ar' ? vendor.nameAr : vendor.nameEn) : null;
+  };
+
+  // Filter products based on search, category, and vendor
   const filteredProducts = products.filter(p => {
     const matchesSearch = searchQuery === '' || 
       p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.nameAr.includes(searchQuery) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
 
+    const matchesVendor = selectedVendor === 'all' || p.vendorId === selectedVendor;
+
     if (selectedSubCategory) {
-      return matchesSearch && p.subCategory === selectedSubCategory;
+      return matchesSearch && matchesVendor && p.category === selectedSubCategory;
     }
     if (selectedMainCategory) {
-      return matchesSearch && p.mainCategory === selectedMainCategory;
+      return matchesSearch && matchesVendor && p.mainCategory === selectedMainCategory;
     }
-    return matchesSearch;
+    return matchesSearch && matchesVendor;
   });
 
   const pageTitle = category && category !== 'all' 
@@ -119,8 +143,8 @@ export default function CatalogPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* Search */}
-        <div className="mb-6">
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -129,8 +153,57 @@ export default function CatalogPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="ps-10"
+              data-testid="input-search-products"
             />
           </div>
+
+          {/* Filters */}
+          {(selectedMainCategory || selectedSubCategory) && (
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="gap-2"
+                data-testid="button-toggle-filters"
+              >
+                <Filter className="h-4 w-4" />
+                {language === 'ar' ? 'فلاتر' : 'Filters'}
+              </Button>
+
+              {showFilters && vendors.length > 0 && (
+                <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                  <SelectTrigger className="w-[200px]" data-testid="select-vendor-filter">
+                    <SelectValue placeholder={language === 'ar' ? 'المورد' : 'Vendor'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'جميع الموردين' : 'All Vendors'}</SelectItem>
+                    {vendors.map((vendor) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {selectedVendor !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  {language === 'ar' ? 'المورد: ' : 'Vendor: '}
+                  {getVendorName(selectedVendor)}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0 hover:bg-transparent"
+                    onClick={() => setSelectedVendor('all')}
+                    data-testid="button-clear-vendor-filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Breadcrumb Navigation */}
@@ -224,40 +297,58 @@ export default function CatalogPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredProducts.map((product) => {
                     const name = language === 'ar' ? product.nameAr : product.nameEn;
+                    const vendorName = getVendorName(product.vendorId);
                     const slugifiedName = product.nameEn.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
-                    const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
+                    const slugifiedSubCategory = (product.category || 'products').toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
                     return (
                       <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
-                        <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                        <Card className="h-full hover:shadow-lg hover-elevate transition-all cursor-pointer overflow-hidden" data-testid={`card-product-${product.id}`}>
                           <div className="relative aspect-square bg-muted">
                             {product.imageUrl ? (
                               <img
                                 src={product.imageUrl}
                                 alt={name}
                                 className="w-full h-full object-cover"
+                                loading="lazy"
+                                data-testid={`img-product-${product.id}`}
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package className="w-12 h-12 text-muted-foreground/40" />
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                                <Package className="w-12 h-12 text-muted-foreground/30" />
                               </div>
                             )}
-                            {product.subCategory && (
-                              <Badge className="absolute top-2 left-2" variant="secondary">
-                                {product.subCategory}
+                            {product.category && (
+                              <Badge className="absolute top-2 left-2 text-xs" variant="secondary">
+                                {product.category}
+                              </Badge>
+                            )}
+                            {product.hasPrice && product.contractPrice && (
+                              <Badge className="absolute top-2 right-2 text-xs bg-primary/90 hover:bg-primary">
+                                {product.contractPrice} {product.currency}
                               </Badge>
                             )}
                           </div>
-                          <CardContent className="p-3">
-                            <h3 className="font-medium text-sm line-clamp-2 mb-1">
+                          <CardContent className="p-3 space-y-1">
+                            <h3 className="font-medium text-sm line-clamp-2 leading-tight" data-testid={`text-product-name-${product.id}`}>
                               {name}
                             </h3>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground font-mono">
                               {product.sku}
                             </p>
+                            {vendorName && (
+                              <p className="text-xs text-muted-foreground truncate" title={vendorName}>
+                                {vendorName}
+                              </p>
+                            )}
+                            {product.unitType && (
+                              <p className="text-xs text-muted-foreground">
+                                {product.unitType}
+                              </p>
+                            )}
                           </CardContent>
                         </Card>
                       </Link>
