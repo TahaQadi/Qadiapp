@@ -31,6 +31,7 @@ import path from "path";
 import crypto from "crypto";
 import fs from "fs";
 import { emailService } from "./email";
+import { generateSitemap } from "./sitemap";
 
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 
@@ -85,7 +86,7 @@ const uploadDocument = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = /pdf|doc|docx|xls|xlsx|txt|zip/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    
+
     if (extname) {
       cb(null, true);
     } else {
@@ -1918,8 +1919,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse metadata - it's stored as jsonb but may come as string or object
       let metadata: any = {};
       try {
-        metadata = typeof notification.metadata === 'string' 
-          ? JSON.parse(notification.metadata) 
+        metadata = typeof notification.metadata === 'string'
+          ? JSON.parse(notification.metadata)
           : notification.metadata || {};
       } catch (e) {
         console.error('Failed to parse notification metadata:', e);
@@ -1928,7 +1929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messageAr: "بيانات الإشعار غير صالحة"
         });
       }
-      
+
       // Get client details
       const client = await storage.getClient(metadata.clientId);
       if (!client) {
@@ -1950,7 +1951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get products with prices from LTA
       const ltaProducts = await storage.getProductsForLta(ltaId);
       const requestedProductIds = metadata.productIds || [];
-      
+
       const items = requestedProductIds
         .map((productId: string) => {
           const product = ltaProducts.find(p => p.id === productId);
@@ -2404,6 +2405,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messageAr: "حدث خطأ أثناء استيراد المنتجات"
       });
     }
+  });
+
+  // SEO Routes
+  app.get('/sitemap.xml', async (_req, res) => {
+    try {
+      const sitemap = await generateSitemap();
+      res.header('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  app.get('/robots.txt', (_req, res) => {
+    const baseUrl = process.env.BASE_URL || 'https://your-domain.com';
+    const robotsTxt = `User-agent: *
+Allow: /
+Allow: /catalog
+Allow: /catalog/*
+Allow: /products/*
+
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /profile
+Disallow: /ordering
+Disallow: /price-request
+
+Sitemap: ${baseUrl}/sitemap.xml`;
+
+    res.header('Content-Type', 'text/plain');
+    res.send(robotsTxt);
   });
 
   const httpServer = createServer(app);

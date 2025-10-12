@@ -1,4 +1,3 @@
-
 import { useRoute, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -11,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Package, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@shared/schema';
+import { SEO } from "@/components/SEO";
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -43,11 +43,19 @@ export default function CatalogPage() {
     ? `${category} - ${language === 'ar' ? 'الكتالوج' : 'Catalog'}`
     : (language === 'ar' ? 'الكتالوج' : 'Product Catalog');
 
+  const pageDescription = `Browse our ${category || 'product'} catalog. Find products related to ${category || 'all categories'}.`;
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={pageTitle}
+        description={pageDescription}
+        keywords={`${category || 'products'}, catalog, shop, ${language === 'ar' ? 'منتجات، كتالوج، تسوق' : 'products, catalog, shop'}`}
+        pathname={`/catalog/${category || ''}`}
+      />
       <Helmet>
         <title>{pageTitle}</title>
-        <meta name="description" content={`Browse our ${category || 'product'} catalog`} />
+        <meta name="description" content={pageDescription} />
       </Helmet>
 
       {/* Header */}

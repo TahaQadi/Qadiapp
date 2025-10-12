@@ -4,10 +4,38 @@ import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, Me
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { SEO } from "@/components/SEO";
 
 export default function LandingPage() {
   const { language } = useLanguage();
   const isArabic = language === 'ar';
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Al Qadi Co.",
+    "alternateName": isArabic ? "شركة القاضي" : "Al Qadi Company",
+    "url": window.location.origin,
+    "logo": `${window.location.origin}/logo.png`,
+    "description": isArabic
+      ? "شركة القاضي للتوريدات - نظام متكامل لإدارة الطلبات والعقود"
+      : "Al Qadi Supplies - Complete order and contract management system",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": isArabic ? "البيرة - أم الشرايط بالقرب من المدرسة التركية" : "Albierh - UmAlshrayt near Turkish school",
+      "addressCountry": "PS"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+970-59-255-5532",
+      "contactType": "customer service",
+      "email": "taha@qadi.ps",
+      "availableLanguage": ["en", "ar"]
+    },
+    "sameAs": [
+      `https://wa.me/970592555532`
+    ]
+  };
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -81,7 +109,18 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+    <>
+      <SEO
+        title={isArabic ? "الصفحة الرئيسية" : "Home"}
+        description={isArabic 
+          ? "نظام إدارة الطلبات من القاضي - تحكم بعقودك، قدّم طلباتك، وتابع تنفيذها بسهولة ووضوح"
+          : "Al Qadi Order Management System - Manage your contracts, submit orders, and track execution with ease and clarity"}
+        keywords={isArabic
+          ? "القاضي, نظام طلبات, إدارة عقود, أسعار مخصصة, توريدات, فلسطين, البيرة"
+          : "Al Qadi, order management, contract management, custom pricing, supplies, Palestine, Ramallah"}
+        structuredData={structuredData}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
@@ -424,5 +463,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
