@@ -1,3 +1,6 @@
+
+import { renderToString } from 'react-dom/server';
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -2404,6 +2407,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error.message,
         messageAr: "حدث خطأ أثناء استيراد المنتجات"
       });
+    }
+  });
+
+  // Dynamic meta tags for social media crawlers
+  app.get('/api/meta-tags/product/:sku', async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const product = products.find(p => p.sku === req.params.sku);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      const baseUrl = process.env.BASE_URL || 'https://your-domain.com';
+      
+      res.json({
+        title: `${product.nameEn} - Al Qadi Portal`,
+        description: product.descriptionEn || product.nameEn,
+        image: product.imageUrl ? `${baseUrl}${product.imageUrl}` : `${baseUrl}/logo.png`,
+        url: `${baseUrl}/products/${product.sku}`,
+        keywords: `${product.sku}, ${product.nameEn}, ${product.nameAr}, ${product.category || 'products'}`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

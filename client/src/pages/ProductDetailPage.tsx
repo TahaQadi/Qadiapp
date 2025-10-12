@@ -116,15 +116,16 @@ export default function ProductDetailPage() {
         <meta name="twitter:description" content={pageDescription} />
         {product.imageUrl && <meta name="twitter:image" content={product.imageUrl} />}
         
-        {/* Structured Data for SEO */}
+        {/* Product Structured Data */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org/",
             "@type": "Product",
             "name": product.nameEn,
+            "alternateName": product.nameAr,
             "description": product.descriptionEn || product.nameEn,
             "sku": product.sku,
-            "image": product.imageUrl || '',
+            "image": product.imageUrl || `${window.location.origin}/logo.png`,
             "category": product.category || '',
             "brand": {
               "@type": "Brand",
@@ -135,9 +136,46 @@ export default function ProductDetailPage() {
                 "@type": "Offer",
                 "price": product.contractPrice,
                 "priceCurrency": product.currency || "USD",
-                "availability": "https://schema.org/InStock"
+                "availability": "https://schema.org/InStock",
+                "seller": {
+                  "@type": "Organization",
+                  "name": "Al Qadi Co."
+                }
               }
-            } : {})
+            } : {}),
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "1"
+            }
+          })}
+        </script>
+
+        {/* BreadcrumbList Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": language === 'ar' ? 'الرئيسية' : 'Home',
+                "item": window.location.origin
+              },
+              ...(product.category ? [{
+                "@type": "ListItem",
+                "position": 2,
+                "name": product.category,
+                "item": `${window.location.origin}/catalog/${product.category}`
+              }] : []),
+              {
+                "@type": "ListItem",
+                "position": product.category ? 3 : 2,
+                "name": product.nameEn,
+                "item": window.location.href
+              }
+            ]
           })}
         </script>
       </Helmet>

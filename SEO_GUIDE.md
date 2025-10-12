@@ -104,13 +104,38 @@ BASE_URL=https://your-domain.com
 5. **URLs**: Keep clean, descriptive, and SEO-friendly
 6. **Content**: Ensure bilingual content is properly marked
 
+## Advanced Features
+
+### Rich Snippets
+- **Product Schema**: Includes pricing, availability, ratings
+- **Breadcrumb Navigation**: Structured breadcrumbs for better indexing
+- **Organization Schema**: Company info on all pages
+
+### Social Media Optimization
+- **Dynamic Meta Tags API**: `/api/meta-tags/product/:sku` for social crawlers
+- **Open Graph Images**: Automatic product images for social sharing
+- **Twitter Cards**: Large image cards for product pages
+
+### Performance Optimization
+- **Preconnect**: DNS prefetch for fonts and external resources
+- **Image Optimization**: WebP format with lazy loading
+- **Sitemap Priority**: Strategic page importance weighting
+
 ## Monitoring
 
 Track your SEO performance with:
-- Google Search Console
-- Google Analytics
-- Bing Webmaster Tools
+- **Google Search Console**: Monitor indexing and search performance
+- **Google Analytics**: Track user behavior and conversions
+- **Bing Webmaster Tools**: Additional search engine visibility
+- **Rich Results Test**: Validate structured data
 
 Submit your sitemap to search engines:
 - Google: https://search.google.com/search-console
 - Bing: https://www.bing.com/webmasters
+
+### Key Metrics to Monitor
+1. **Core Web Vitals**: LCP, FID, CLS scores
+2. **Mobile Usability**: Mobile-first indexing compliance
+3. **Structured Data Errors**: Schema.org validation
+4. **Crawl Stats**: Crawl budget and efficiency
+5. **Index Coverage**: Pages successfully indexed

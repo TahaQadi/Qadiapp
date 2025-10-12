@@ -81,6 +81,28 @@ export function SEO({
           {JSON.stringify(structuredData)}
         </script>
       )}
+
+      {/* Default Organization Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "Al Qadi Co.",
+          "alternateName": isArabic ? "شركة القاضي" : "Al Qadi Company",
+          "url": window.location.origin,
+          "logo": `${window.location.origin}/logo.png`,
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+970-59-255-5532",
+            "contactType": "customer service",
+            "email": "taha@qadi.ps",
+            "availableLanguage": ["en", "ar"]
+          },
+          "sameAs": [
+            `https://wa.me/970592555532`
+          ]
+        })}
+      </script>
     </Helmet>
   );
 }
