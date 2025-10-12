@@ -1742,6 +1742,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/price-requests/:notificationId/generate-pdf', requireAdmin, async (req: any, res) => {
     try {
       const { PDFGenerator } = await import('./pdf-generator');
+      const { PDFStorage } = await import('./object-storage');
+
+
+  // Download PDF from Object Storage
+  app.get('/api/pdf/download/:fileName(*)', requireAuth, async (req: any, res) => {
+    try {
+      const { PDFStorage } = await import('./object-storage');
+      const fileName = req.params.fileName;
+
+      if (!fileName) {
+        return res.status(400).json({
+          message: "File name is required",
+          messageAr: "اسم الملف مطلوب"
+        });
+      }
+
+      const downloadResult = await PDFStorage.downloadPDF(fileName);
+
+      if (!downloadResult.ok || !downloadResult.data) {
+        return res.status(404).json({
+          message: "PDF not found",
+          messageAr: "لم يتم العثور على PDF",
+          error: downloadResult.error
+        });
+      }
+
+      // Extract just the filename for the download
+      const displayFileName = fileName.split('/').pop() || 'document.pdf';
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
+      res.send(downloadResult.data);
+    } catch (error: any) {
+      console.error('PDF download error:', error);
+      res.status(500).json({
+        message: error.message || "Failed to download PDF",
+        messageAr: "فشل تنزيل PDF"
+      });
+    }
+  });
+
       const { language = 'en', ltaId, validityDays = 30, notes } = req.body;
 
       // Get the notification
@@ -1830,10 +1871,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         language: language as 'en' | 'ar'
       });
 
-      // Send PDF as download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="price_offer_${client.nameEn.replace(/\s/g, '_')}_${Date.now()}.pdf"`);
-      res.send(pdfBuffer);
+      // Save PDF to Object Storage
+      const fileName = `price_offer_${client.nameEn.replace(/\s/g, '_')}_${Date.now()}.pdf`;
+      const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName);
+
+      if (!uploadResult.ok) {
+        return res.status(500).json({
+          message: "Failed to save PDF",
+          messageAr: "فشل حفظ ملف PDF",
+          error: uploadResult.error
+        });
+      }
 
       // Create notification for client about the price offer
       await storage.createNotification({
@@ -1848,6 +1896,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ltaId,
           productCount: items.length
         }),
+        pdfFileName: uploadResult.fileName,
+      });
+
+      // Return success with file information
+      res.json({
+        message: language === 'ar' ? 'تم إنشاء وحفظ PDF بنجاح' : 'PDF generated and saved successfully',
+        fileName: uploadResult.fileName,
+        clientId: metadata.clientId
       });
 
     } catch (error: any) {
