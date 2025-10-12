@@ -222,9 +222,24 @@ export default function LandingPage() {
                 <Button 
                   size="lg" 
                   variant="outline"
+                  onClick={() => window.location.href = '/catalog'}
                   className="w-full sm:w-auto gap-2 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-5 lg:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
                 >
-                  {isArabic ? 'طلب حساب تجريبي' : 'Request Demo'}
+                  {isArabic ? 'تصفح الكتالوج' : 'Browse Catalog'}
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
+              >
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="w-full sm:w-auto gap-2 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-5 lg:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
+                >
+                  {isArabic ? 'طلب عرض توضيحي' : 'Request Demo'}
                   <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
                 </Button>
               </motion.div>
@@ -390,6 +405,17 @@ export default function LandingPage() {
                 >
                   {isArabic ? 'تسجيل الدخول' : 'Sign In'}
                   <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => window.location.href = '/catalog'}
+                  className="w-full sm:w-auto gap-2 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
+                >
+                  {isArabic ? 'تصفح الكتالوج' : 'Browse Catalog'}
+                  <Package className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
