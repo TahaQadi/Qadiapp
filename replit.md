@@ -89,7 +89,15 @@ Preferred communication style: Simple, everyday language.
    - Unique constraint on (ltaId, clientId)
    - Allows clients to belong to multiple LTAs
 
-4. **Products** - Master product catalog
+4. **LTA Documents** - Contract documents and attachments
+   - Stores documents related to each LTA (contracts, agreements, PDFs, etc.)
+   - Bilingual document names
+   - File metadata (name, URL, size, type)
+   - Upload tracking (uploadedBy, createdAt)
+   - Supports PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP files (10MB max)
+   - Cascading delete when LTA is deleted
+
+5. **Products** - Master product catalog
    - SKU-based identification
    - Bilingual names and descriptions
    - Image URL support (nullable)
@@ -213,6 +221,18 @@ Preferred communication style: Simple, everyday language.
 - Responsive design with mobile-first approach
 - Dark/light theme support
 - Pipefy webhook integration for order processing
+
+## Recent Changes (October 2025)
+
+**LTA Document Management (October 11, 2025):**
+- Added LTA documents table for storing contract-related files
+- Implemented document upload functionality with Multer (PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP)
+- Created API endpoints: POST/GET/DELETE `/api/admin/ltas/:ltaId/documents`
+- Document file storage in `attached_assets/documents/` with unique naming
+- Storage layer methods: createLtaDocument, getLtaDocuments, getLtaDocument, deleteLtaDocument
+- File size limit: 10MB per document
+- Bilingual document names with metadata tracking (file size, type, uploader, timestamp)
+- Automatic file cleanup on document deletion
 
 ## Recent Changes (October 2025)
 

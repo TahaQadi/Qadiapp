@@ -49,9 +49,16 @@ const ltaClientSchema = z.object({
   clientId: z.string().min(1, 'Client is required'),
 });
 
+const ltaDocumentSchema = z.object({
+  nameEn: z.string().min(1, 'English name is required'),
+  nameAr: z.string().min(1, 'Arabic name is required'),
+  file: z.any(),
+});
+
 type LtaFormValues = z.infer<typeof ltaFormSchema>;
 type LtaProductFormValues = z.infer<typeof ltaProductSchema>;
 type LtaClientFormValues = z.infer<typeof ltaClientSchema>;
+type LtaDocumentFormValues = z.infer<typeof ltaDocumentSchema>;
 
 interface Lta {
   id: string;
@@ -79,6 +86,19 @@ interface Client {
   nameEn: string;
   nameAr: string;
   email?: string | null;
+}
+
+interface LtaDocument {
+  id: string;
+  ltaId: string;
+  nameEn: string;
+  nameAr: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  uploadedBy: string;
+  createdAt: string;
 }
 
 interface LtaProduct {
@@ -112,8 +132,12 @@ export default function AdminLtaDetailPage() {
     success: number;
     failed: Array<{ sku: string; error: string }>;
   } | null>(null);
+  const [uploadDocumentDialogOpen, setUploadDocumentDialogOpen] = useState(false);
+  const [deleteDocumentDialogOpen, setDeleteDocumentDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<LtaDocument | null>(null);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
 
-  const { data: lta, isLoading: ltaLoading } = useQuery<Lta>({
+  const { data: lta, isLoading: ltaLoading} = useQuery<Lta>({
     queryKey: ['/api/admin/ltas', ltaId],
     enabled: !!ltaId,
   });
@@ -137,6 +161,18 @@ export default function AdminLtaDetailPage() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch clients');
+      return res.json();
+    },
+    enabled: !!ltaId,
+  });
+
+  const { data: ltaDocuments = [], isLoading: documentsLoading } = useQuery<LtaDocument[]>({
+    queryKey: ['/api/admin/ltas', ltaId, 'documents'],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/ltas/${ltaId}/documents`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch documents');
       return res.json();
     },
     enabled: !!ltaId,
@@ -183,6 +219,19 @@ export default function AdminLtaDetailPage() {
     resolver: zodResolver(ltaClientSchema),
     defaultValues: {
       clientId: '',
+    },
+  });
+
+  const uploadDocumentSchema = z.object({
+    nameEn: z.string().min(1, 'English name is required'),
+    nameAr: z.string().min(1, 'Arabic name is required'),
+  });
+
+  const uploadDocumentForm = useForm<{ nameEn: string; nameAr: string }>({
+    resolver: zodResolver(uploadDocumentSchema),
+    defaultValues: {
+      nameEn: '',
+      nameAr: '',
     },
   });
 
@@ -353,6 +402,75 @@ export default function AdminLtaDetailPage() {
     },
   });
 
+  const uploadDocumentMutation = useMutation({
+    mutationFn: async (data: { nameEn: string; nameAr: string; file: File }) => {
+      const formData = new FormData();
+      formData.append('nameEn', data.nameEn);
+      formData.append('nameAr', data.nameAr);
+      formData.append('document', data.file);
+      
+      const response = await fetch(`/api/admin/ltas/${ltaId}/documents`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/ltas', ltaId, 'documents'] });
+      toast({
+        title: language === 'ar' ? 'تم رفع المستند بنجاح' : 'Document uploaded successfully',
+      });
+      setUploadDocumentDialogOpen(false);
+      setDocumentFile(null);
+      uploadDocumentForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ في رفع المستند' : 'Error uploading document',
+        description: error.message,
+      });
+    },
+  });
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async (documentId: string) => {
+      const response = await fetch(`/api/admin/ltas/${ltaId}/documents/${documentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Delete failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/ltas', ltaId, 'documents'] });
+      toast({
+        title: language === 'ar' ? 'تم حذف المستند بنجاح' : 'Document deleted successfully',
+      });
+      setDeleteDocumentDialogOpen(false);
+      setSelectedDocument(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ في حذف المستند' : 'Error deleting document',
+        description: error.message,
+      });
+    },
+  });
+
   const handleEditLta = () => {
     if (lta) {
       editLtaForm.reset({
@@ -390,6 +508,23 @@ export default function AdminLtaDetailPage() {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return format(date, 'PP', { locale: language === 'ar' ? ar : undefined });
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
+
+  const handleDownloadDocument = (doc: LtaDocument) => {
+    window.open(doc.fileUrl, '_blank');
+  };
+
+  const handleDeleteDocument = (doc: LtaDocument) => {
+    setSelectedDocument(doc);
+    setDeleteDocumentDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -723,6 +858,85 @@ KB-001,89.99,SAR`;
                               <Trash2 className="h-4 w-4 me-1" />
                               {language === 'ar' ? 'إزالة' : 'Remove'}
                             </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Section 4: LTA Documents */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <CardTitle>{language === 'ar' ? 'مستندات الاتفاقية' : 'LTA Documents'}</CardTitle>
+            <Button 
+              onClick={() => setUploadDocumentDialogOpen(true)}
+              data-testid="button-upload-document"
+            >
+              <Plus className="h-4 w-4 me-2" />
+              {language === 'ar' ? 'رفع مستند' : 'Upload Document'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {documentsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === 'ar' ? 'اسم المستند' : 'Document Name'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'نوع الملف' : 'File Type'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'الحجم' : 'Size'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'تاريخ الرفع' : 'Uploaded'}</TableHead>
+                      <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ltaDocuments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          {language === 'ar' ? 'لا توجد مستندات' : 'No documents'}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      ltaDocuments.map((doc) => (
+                        <TableRow key={doc.id} data-testid={`row-document-${doc.id}`}>
+                          <TableCell className="font-medium">
+                            {language === 'ar' ? doc.nameAr : doc.nameEn}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{doc.fileType.split('/').pop()?.toUpperCase()}</TableCell>
+                          <TableCell className="text-sm">{formatFileSize(doc.fileSize)}</TableCell>
+                          <TableCell className="text-sm">{formatDate(doc.createdAt)}</TableCell>
+                          <TableCell className="text-end">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownloadDocument(doc)}
+                                data-testid={`button-download-${doc.id}`}
+                              >
+                                <Download className="h-4 w-4 me-1" />
+                                {language === 'ar' ? 'تنزيل' : 'Download'}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteDocument(doc)}
+                                data-testid={`button-delete-document-${doc.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 me-1" />
+                                {language === 'ar' ? 'حذف' : 'Delete'}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -1272,6 +1486,146 @@ KB-001,89.99,SAR`;
               {bulkImportMutation.isPending
                 ? (language === 'ar' ? 'جاري الاستيراد...' : 'Importing...')
                 : (language === 'ar' ? 'استيراد' : 'Import')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Document Dialog */}
+      <Dialog open={uploadDocumentDialogOpen} onOpenChange={setUploadDocumentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{language === 'ar' ? 'رفع مستند' : 'Upload Document'}</DialogTitle>
+          </DialogHeader>
+          <Form {...uploadDocumentForm}>
+            <form
+              onSubmit={uploadDocumentForm.handleSubmit((data) => {
+                if (!documentFile) {
+                  toast({
+                    variant: 'destructive',
+                    title: language === 'ar' ? 'الرجاء اختيار ملف' : 'Please select a file',
+                  });
+                  return;
+                }
+                uploadDocumentMutation.mutate({
+                  nameEn: data.nameEn,
+                  nameAr: data.nameAr,
+                  file: documentFile,
+                });
+              })}
+              className="space-y-4"
+            >
+              <FormField
+                control={uploadDocumentForm.control}
+                name="nameEn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'الاسم بالإنجليزية' : 'Name (English)'}</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-document-name-en" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={uploadDocumentForm.control}
+                name="nameAr"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'الاسم بالعربية' : 'Name (Arabic)'}</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-document-name-ar" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormItem>
+                <FormLabel>{language === 'ar' ? 'الملف' : 'File'}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                    onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                    data-testid="input-document-file"
+                  />
+                </FormControl>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? 'PDF، DOC، DOCX، XLS، XLSX، TXT، ZIP (حد أقصى 10 ميجابايت)'
+                    : 'PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP (Max 10MB)'}
+                </p>
+              </FormItem>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setUploadDocumentDialogOpen(false);
+                    setDocumentFile(null);
+                    uploadDocumentForm.reset();
+                  }}
+                  data-testid="button-cancel-upload-document"
+                >
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={uploadDocumentMutation.isPending || !documentFile}
+                  data-testid="button-submit-upload-document"
+                >
+                  {uploadDocumentMutation.isPending
+                    ? (language === 'ar' ? 'جاري الرفع...' : 'Uploading...')
+                    : (language === 'ar' ? 'رفع' : 'Upload')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Document Dialog */}
+      <Dialog open={deleteDocumentDialogOpen} onOpenChange={setDeleteDocumentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{language === 'ar' ? 'حذف المستند' : 'Delete Document'}</DialogTitle>
+            <DialogDescription>
+              {language === 'ar'
+                ? 'هل أنت متأكد من حذف هذا المستند؟ لا يمكن التراجع عن هذا الإجراء.'
+                : 'Are you sure you want to delete this document? This action cannot be undone.'}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDocument && (
+            <div className="p-4 bg-muted rounded-md">
+              <p className="font-medium">{language === 'ar' ? selectedDocument.nameAr : selectedDocument.nameEn}</p>
+              <p className="text-sm text-muted-foreground">{selectedDocument.fileName}</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDocumentDialogOpen(false);
+                setSelectedDocument(null);
+              }}
+              data-testid="button-cancel-delete-document"
+            >
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedDocument) {
+                  deleteDocumentMutation.mutate(selectedDocument.id);
+                }
+              }}
+              disabled={deleteDocumentMutation.isPending}
+              data-testid="button-confirm-delete-document"
+            >
+              {deleteDocumentMutation.isPending
+                ? (language === 'ar' ? 'جاري الحذف...' : 'Deleting...')
+                : (language === 'ar' ? 'حذف' : 'Delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
