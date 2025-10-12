@@ -200,6 +200,7 @@ Preferred communication style: Simple, everyday language.
 
 **Admin Features:**
 - LTA Management: Create/edit/delete contracts, set dates and status
+- LTA Document Management: Upload/download/delete contract documents (PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP up to 10MB)
 - Product Assignment: Assign products to LTAs with contract pricing (individual or bulk CSV import)
 - Bulk Product Import: CSV upload for assigning multiple products to LTA at once
 - Client Assignment: Assign clients to LTAs (multi-LTA support)
@@ -224,15 +225,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
-**LTA Document Management (October 11, 2025):**
+**LTA Document Management (October 11-12, 2025):**
 - Added LTA documents table for storing contract-related files
 - Implemented document upload functionality with Multer (PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP)
 - Created API endpoints: POST/GET/DELETE `/api/admin/ltas/:ltaId/documents`
-- Document file storage in `attached_assets/documents/` with unique naming
+- Document file storage in `attached_assets/lta-documents/` with unique naming
 - Storage layer methods: createLtaDocument, getLtaDocuments, getLtaDocument, deleteLtaDocument
 - File size limit: 10MB per document
 - Bilingual document names with metadata tracking (file size, type, uploader, timestamp)
 - Automatic file cleanup on document deletion
+- Frontend implementation: Complete document management UI in AdminLtaDetailPage
+- Upload dialog with form validation for bilingual names and file selection
+- Delete confirmation dialog with document details
+- Documents table showing name, type, size, upload date, and action buttons
+- React Query integration with proper cache invalidation
+- Download functionality opens documents in new tab
+- Admin-only feature with full bilingual support
 
 ## Recent Changes (October 2025)
 
