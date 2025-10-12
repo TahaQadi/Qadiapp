@@ -146,7 +146,6 @@ export interface IStorage {
     messageEn: string;
     messageAr: string;
     metadata?: string;
-    pdfFileName?: string;
   }): Promise<Notification>;
   getNotification(id: string): Promise<Notification | null>;
   getClientNotifications(clientId: string): Promise<Notification[]>;
@@ -852,7 +851,6 @@ export class MemStorage implements IStorage {
     messageEn: string;
     messageAr: string;
     metadata?: string;
-    pdfFileName?: string;
   }): Promise<Notification> {
     const result = await this.db.insert(notifications).values({
       clientId: data.clientId,
@@ -862,7 +860,6 @@ export class MemStorage implements IStorage {
       messageEn: data.messageEn,
       messageAr: data.messageAr,
       metadata: data.metadata || null,
-      pdfFileName: data.pdfFileName || null,
     }).returning();
 
     return result[0];

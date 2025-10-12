@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Bell, Check, CheckCheck, Trash2, X, Package } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,14 +17,13 @@ import { cn } from '@/lib/utils';
 
 interface Notification {
   id: string;
-  type: string;
+  type: 'order_created' | 'order_status_changed' | 'system';
   titleEn: string;
   titleAr: string;
   messageEn: string;
   messageAr: string;
   isRead: boolean;
-  metadata?: string;
-  pdfFileName?: string | null;
+  metadata: string | null;
   createdAt: string;
 }
 
@@ -167,45 +166,34 @@ export function NotificationCenter() {
                           <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {language === 'ar' ? notification.messageAr : notification.messageEn}
                       </p>
-                      {notification.pdfFileName && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(`/api/pdf/download/${notification.pdfFileName}`, '_blank');
-                          }}
-                        >
-                          <Package className="h-4 w-4 me-2" />
-                          {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
-                        </Button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsReadMutation.mutate(notification.id);
-                          }}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteNotificationMutation.mutate(notification.id)}
-                        disabled={deleteNotificationMutation.isPending}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(notification.createdAt)}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {!notification.isRead && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => markAsReadMutation.mutate(notification.id)}
+                              disabled={markAsReadMutation.isPending}
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                            disabled={deleteNotificationMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

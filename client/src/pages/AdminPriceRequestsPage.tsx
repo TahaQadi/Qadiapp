@@ -28,7 +28,6 @@ interface Notification {
   messageAr: string;
   isRead: boolean;
   metadata: string | null;
-  pdfFileName?: string | null;
   createdAt: string;
 }
 
@@ -200,19 +199,27 @@ export default function AdminPriceRequestsPage() {
         validityDays: data.validityDays,
         notes: data.notes,
       });
-      return res.json();
+      return res.blob();
     },
-    onSuccess: (data) => {
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `price_offer_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
       toast({
         title: language === 'ar' ? 'تم إنشاء PDF' : 'PDF Generated',
-        description: data.message || (language === 'ar' ? 'تم إنشاء مستند عرض السعر بنجاح' : 'Price offer document generated successfully'),
+        description: language === 'ar' ? 'تم إنشاء مستند عرض السعر بنجاح' : 'Price offer document generated successfully',
       });
       setPdfDialogOpen(false);
       setPdfLtaId('');
       setPdfValidityDays('30');
       setPdfNotes('');
       setSelectedRequestForPdf(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
     },
     onError: (error: any) => {
       toast({
@@ -375,37 +382,20 @@ export default function AdminPriceRequestsPage() {
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {completed && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRequestForPdf(request);
-                                setPdfDialogOpen(true);
-                              }}
-                              className="gap-2"
-                            >
-                              <Package className="h-4 w-4" />
-                              <span className="hidden sm:inline">
-                                {language === 'ar' ? 'إنشاء PDF' : 'Generate PDF'}
-                              </span>
-                            </Button>
-                            {request.pdfFileName && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  window.open(`/api/pdf/download/${request.pdfFileName}`, '_blank');
-                                }}
-                                className="gap-2"
-                              >
-                                <Package className="h-4 w-4" />
-                                <span className="hidden sm:inline">
-                                  {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
-                                </span>
-                              </Button>
-                            )}
-                          </>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequestForPdf(request);
+                              setPdfDialogOpen(true);
+                            }}
+                            className="gap-2"
+                          >
+                            <Package className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              {language === 'ar' ? 'إنشاء PDF' : 'Generate PDF'}
+                            </span>
+                          </Button>
                         )}
                         {!request.isRead && !completed && (
                           <Button
