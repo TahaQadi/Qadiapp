@@ -1753,8 +1753,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // metadata is already parsed as an object (jsonb type), no need to JSON.parse
-      const metadata = notification.metadata || {};
+      // Parse metadata - it's stored as jsonb but may come as string or object
+      let metadata: any = {};
+      try {
+        metadata = typeof notification.metadata === 'string' 
+          ? JSON.parse(notification.metadata) 
+          : notification.metadata || {};
+      } catch (e) {
+        console.error('Failed to parse notification metadata:', e);
+        return res.status(400).json({
+          message: "Invalid notification metadata",
+          messageAr: "بيانات الإشعار غير صالحة"
+        });
+      }
       
       // Get client details
       const client = await storage.getClient(metadata.clientId);
