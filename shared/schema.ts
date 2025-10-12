@@ -125,6 +125,19 @@ export const ltaClients = pgTable("lta_clients", {
   uniqueLtaClient: unique().on(table.ltaId, table.clientId),
 }));
 
+export const ltaDocuments = pgTable("lta_documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "cascade" }),
+  nameEn: text("name_en").notNull(),
+  nameAr: text("name_ar").notNull(),
+  fileName: text("file_name").notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileSize: integer("file_size").notNull(),
+  fileType: text("file_type").notNull(),
+  uploadedBy: varchar("uploaded_by").notNull().references(() => clients.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const clientPricing = pgTable("client_pricing", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
@@ -184,6 +197,7 @@ export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, created
 });
 export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id: true, createdAt: true });
 export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: true, createdAt: true });
+export const insertLtaDocumentSchema = createInsertSchema(ltaDocuments).omit({ id: true, createdAt: true });
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
@@ -308,6 +322,7 @@ export type Product = typeof products.$inferSelect;
 export type Lta = typeof ltas.$inferSelect;
 export type LtaProduct = typeof ltaProducts.$inferSelect;
 export type LtaClient = typeof ltaClients.$inferSelect;
+export type LtaDocument = typeof ltaDocuments.$inferSelect;
 export type ClientPricing = typeof clientPricing.$inferSelect;
 export type OrderTemplate = typeof orderTemplates.$inferSelect;
 export type Order = typeof orders.$inferSelect;
