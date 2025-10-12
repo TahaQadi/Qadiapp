@@ -72,7 +72,7 @@ export default function CatalogPage() {
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (selectedSubCategory) {
-      return matchesSearch && p.category === selectedSubCategory;
+      return matchesSearch && p.subCategory === selectedSubCategory;
     }
     if (selectedMainCategory) {
       return matchesSearch && p.mainCategory === selectedMainCategory;
@@ -229,12 +229,12 @@ export default function CatalogPage() {
                     const slugifiedName = product.nameEn.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
-                    const slugifiedSubCategory = (product.category || 'products').toLowerCase()
+                    const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
                     return (
                       <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
-                        <Card className="h-full hover:shadow-lg hover-elevate transition-all cursor-pointer overflow-hidden group" data-testid={`card-product-${product.id}`}>
+                        <Card className="h-full hover:shadow-lg transition-all cursor-pointer group" data-testid={`card-product-${product.id}`}>
                           <div className="relative aspect-square bg-muted overflow-hidden">
                             {product.imageUrl ? (
                               <img
@@ -249,9 +249,9 @@ export default function CatalogPage() {
                                 <Package className="w-12 h-12 text-muted-foreground/30" />
                               </div>
                             )}
-                            {product.category && (
+                            {product.subCategory && (
                               <Badge className="absolute top-2 left-2 text-xs" variant="secondary">
-                                {product.category}
+                                {product.subCategory}
                               </Badge>
                             )}
                             {product.hasPrice && product.contractPrice && (

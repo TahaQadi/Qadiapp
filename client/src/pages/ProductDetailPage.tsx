@@ -19,16 +19,25 @@ interface ProductWithLtaPrice extends Product {
 }
 
 export default function ProductDetailPage() {
-  const [, params] = useRoute('/products/:sku');
-  const sku = params?.sku;
+  const [, params] = useRoute('/products/:subCategory/:productName');
+  const productName = params?.productName;
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
 
-  const { data: product, isLoading } = useQuery<ProductWithLtaPrice>({
-    queryKey: ['/api/products/sku', sku],
-    enabled: !!sku,
+  // Fetch all products and find by name slug
+  const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
+    queryKey: ['/api/products/public'],
   });
+
+  const product = products.find(p => {
+    const slugifiedName = p.nameEn.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return slugifiedName === productName;
+  });
+
+  const isLoading = productsLoading;
 
   const { data: relatedProducts = [] } = useQuery<ProductWithLtaPrice[]>({
     queryKey: ['/api/products/category', product?.category],
