@@ -434,43 +434,43 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative border-t border-[#d4af37]/20 bg-[#222222]/50 backdrop-blur-xl">
+      <footer className="relative border-t border-[#d4af37]/30 bg-black backdrop-blur-xl">
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 sm:gap-8" dir={isArabic ? 'rtl' : 'ltr'}>
             <div className="flex items-center gap-3">
               <img 
                 src="/logo.png" 
                 alt={isArabic ? 'شعار القاضي' : 'Al Qadi Logo'} 
-                className="h-12 w-12 object-contain"
+                className="h-12 w-12 object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]"
               />
               <div>
-                <p className="text-sm text-gray-400">© 2025 Al Qadi Co.</p>
-                <p className="text-xs text-gray-500">{isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
+                <p className="text-sm text-white/90 font-medium">© 2025 Al Qadi Co.</p>
+                <p className="text-xs text-white/60">{isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
               </div>
             </div>
 
             <div className="text-sm space-y-3">
-              <h3 className="font-semibold text-[#d4af37] mb-3">
+              <h3 className="font-semibold text-[#d4af37] mb-3 text-base">
                 {isArabic ? 'تواصل معنا' : 'Contact Us'}
               </h3>
-              <p className="text-gray-400">
-                <span className="font-medium text-white">
+              <p className="text-white/70">
+                <span className="font-medium text-[#f9c800]">
                   {isArabic ? 'البريد الإلكتروني:' : 'Email:'}
                 </span>{' '}
-                <a href="mailto:taha@qadi.ps" className="text-[#d4af37] hover:text-[#f9c800] transition-colors">
+                <a href="mailto:taha@qadi.ps" className="text-[#d4af37] hover:text-[#f9c800] transition-colors underline-offset-4 hover:underline">
                   taha@qadi.ps
                 </a>
               </p>
-              <p className="text-gray-400">
-                <span className="font-medium text-white">
+              <p className="text-white/70">
+                <span className="font-medium text-[#f9c800]">
                   {isArabic ? 'الهاتف:' : 'Phone:'}
                 </span>{' '}
-                <a href="tel:+970592555532" className="text-[#d4af37] hover:text-[#f9c800] transition-colors">
+                <a href="tel:+970592555532" className="text-[#d4af37] hover:text-[#f9c800] transition-colors underline-offset-4 hover:underline">
                   +970 59 255 5532
                 </a>
               </p>
-              <p className="text-gray-400">
-                <span className="font-medium text-white">
+              <p className="text-white/70">
+                <span className="font-medium text-[#f9c800]">
                   {isArabic ? 'العنوان:' : 'Address:'}
                 </span>{' '}
                 {isArabic ? 'البيرة - أم الشرايط بالقرب من المدرسة التركية' : 'Albierh - UmAlshrayt near Turkish school'}
