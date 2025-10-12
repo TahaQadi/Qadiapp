@@ -164,19 +164,14 @@ export default function OrderingPage() {
 
 
 
-  // Get client's LTA IDs
-  const clientLtaIds = clientLtas.map(lta => lta.id);
-
   const filteredProducts = (products || []).filter(p => {
-    // Only show products that have a price AND are from client's assigned LTAs
-    const isInClientLta = p.hasPrice && p.ltaId && clientLtaIds.includes(p.ltaId);
     const matchesLta = selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter;
     const matchesSearch = searchQuery === '' ||
       p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.nameAr.includes(searchQuery) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    return isInClientLta && matchesLta && matchesSearch && matchesCategory;
+    return matchesLta && matchesSearch && matchesCategory;
   });
 
 
@@ -436,10 +431,6 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-    
-    // Check if product is from client's assigned LTAs
-    const clientLtaIds = clientLtas.map(lta => lta.id);
-    const isInClientLta = product.hasPrice && product.ltaId && clientLtaIds.includes(product.ltaId);
 
     const handleAddToPriceRequest = () => {
       window.location.href = '/price-request';
@@ -523,7 +514,7 @@ export default function OrderingPage() {
 
         {/* Add to Cart or Add to Price Request */}
         <CardFooter className="p-3 sm:p-4 pt-0">
-          {isInClientLta ? (
+          {product.hasPrice ? (
             <Button
               onClick={() => handleAddToCart(product)}
               disabled={isDifferentLta}
@@ -547,7 +538,7 @@ export default function OrderingPage() {
             >
               <Heart className="w-4 h-4 me-2" />
               <span className="text-sm sm:text-base">
-                {language === 'ar' ? 'طلب عرض سعر' : 'Request Price Offer'}
+                {language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request'}
               </span>
             </Button>
           )}
