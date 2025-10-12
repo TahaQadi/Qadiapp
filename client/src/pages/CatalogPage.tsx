@@ -188,40 +188,8 @@ export default function CatalogPage() {
               </div>
             )}
 
-            {/* Subcategories List */}
-            {selectedMainCategory && !selectedSubCategory && !searchQuery && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">
-                  {language === 'ar' ? 'الفئات الفرعية' : 'Subcategories'}
-                </h2>
-                <div className="space-y-2 mb-8">
-                  {getSubCategories(selectedMainCategory).map((subCat) => (
-                    <Card
-                      key={subCat}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSelectedSubCategory(subCat)}
-                    >
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Package className="h-5 w-5 text-primary" />
-                          <div>
-                            <h3 className="font-medium">{subCat}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {products.filter(p => p.subCategory === subCat).length}{' '}
-                              {language === 'ar' ? 'منتج' : 'products'}
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Products Grid */}
-            {(selectedSubCategory || searchQuery || (!selectedMainCategory && !selectedSubCategory)) && filteredProducts.length > 0 && (
+            {(selectedMainCategory || selectedSubCategory || searchQuery || (!selectedMainCategory && !selectedSubCategory)) && filteredProducts.length > 0 && (
               <>
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-muted-foreground">
