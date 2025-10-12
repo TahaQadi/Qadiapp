@@ -64,6 +64,36 @@ const uploadImage = multer({
   }
 });
 
+// Document upload configuration
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'attached_assets/documents/';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + crypto.randomUUID();
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadDocument = multer({
+  storage: documentStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for documents
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|xls|xlsx|txt|zip/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    
+    if (extname) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only document files are allowed (PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP)'));
+    }
+  }
+});
+
 // Middleware to get client data from Replit Auth user
 async function getClientFromAuth(req: any, res: any, next: any) {
   try {
@@ -1734,6 +1764,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: error.message,
         messageAr: "حدث خطأ أثناء جلب تعيينات الاتفاقيات"
+      });
+    }
+  });
+
+  // LTA Documents Endpoints (Admin)
+  app.post('/api/admin/ltas/:ltaId/documents', requireAdmin, uploadDocument.single('document'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No document file uploaded",
+          messageAr: "لم يتم تحميل ملف المستند"
+        });
+      }
+
+      const { nameEn, nameAr } = req.body;
+      if (!nameEn || !nameAr) {
+        return res.status(400).json({
+          message: "Document name (English and Arabic) is required",
+          messageAr: "اسم المستند (بالإنجليزية والعربية) مطلوب"
+        });
+      }
+
+      const fileUrl = `/attached_assets/documents/${req.file.filename}`;
+      const document = await storage.createLtaDocument({
+        ltaId: req.params.ltaId,
+        nameEn,
+        nameAr,
+        fileName: req.file.originalname,
+        fileUrl,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        uploadedBy: req.client.id,
+      });
+
+      res.status(201).json({
+        ...document,
+        message: "Document uploaded successfully",
+        messageAr: "تم تحميل المستند بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء تحميل المستند"
+      });
+    }
+  });
+
+  app.get('/api/admin/ltas/:ltaId/documents', requireAdmin, async (req: any, res) => {
+    try {
+      const documents = await storage.getLtaDocuments(req.params.ltaId);
+      res.json(documents);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء جلب المستندات"
+      });
+    }
+  });
+
+  app.delete('/api/admin/ltas/:ltaId/documents/:documentId', requireAdmin, async (req: any, res) => {
+    try {
+      const document = await storage.getLtaDocument(req.params.documentId);
+      if (!document) {
+        return res.status(404).json({
+          message: "Document not found",
+          messageAr: "المستند غير موجود"
+        });
+      }
+
+      // Delete file from disk
+      const filePath = path.join(process.cwd(), document.fileUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      const deleted = await storage.deleteLtaDocument(req.params.documentId);
+      if (!deleted) {
+        return res.status(404).json({
+          message: "Document not found",
+          messageAr: "المستند غير موجود"
+        });
+      }
+
+      res.json({
+        message: "Document deleted successfully",
+        messageAr: "تم حذف المستند بنجاح"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        messageAr: "حدث خطأ أثناء حذف المستند"
       });
     }
   });
