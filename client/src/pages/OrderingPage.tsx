@@ -398,7 +398,7 @@ export default function OrderingPage() {
       return;
     }
 
-    setPriceRequestList([...priceRequestList, {
+    const newItem = {
       productId: product.id,
       productSku: product.sku,
       productNameEn: product.nameEn,
@@ -407,7 +407,9 @@ export default function OrderingPage() {
       price: '0',
       currency: 'USD',
       ltaId: '',
-    }]);
+    };
+
+    setPriceRequestList(prev => [...prev, newItem]);
 
     toast({
       description: language === 'ar'
@@ -436,6 +438,19 @@ export default function OrderingPage() {
     }
 
     const productIds = priceRequestList.map(item => item.productId);
+    
+    // Validate we have product IDs
+    if (productIds.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' 
+          ? 'لا توجد منتجات صالحة للإرسال' 
+          : 'No valid products to send'
+      });
+      return;
+    }
+
     requestPriceMutation.mutate({
       productIds,
       message: priceRequestMessage.trim() || '',
@@ -1073,12 +1088,24 @@ export default function OrderingPage() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPriceRequestDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setPriceRequestDialogOpen(false)}
+                data-testid="button-close-price-request-dialog"
+              >
                 {language === 'ar' ? 'إغلاق' : 'Close'}
               </Button>
               {priceRequestList.length > 0 && (
-                <Button onClick={handleSubmitPriceRequest} disabled={requestPriceMutation.isPending}>
-                  <Send className="h-4 w-4 me-2" />
+                <Button 
+                  onClick={handleSubmitPriceRequest} 
+                  disabled={requestPriceMutation.isPending}
+                  data-testid="button-send-price-request"
+                >
+                  {requestPriceMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 me-2" />
+                  )}
                   {requestPriceMutation.isPending 
                     ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
                     : (language === 'ar' ? 'إرسال الطلب' : 'Send Request')
