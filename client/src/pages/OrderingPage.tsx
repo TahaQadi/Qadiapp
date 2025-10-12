@@ -547,16 +547,16 @@ export default function OrderingPage() {
     return (
       <Card
         className={cn(
-          "flex flex-col overflow-hidden transition-all duration-300 border-card-border bg-card",
-          "hover:shadow-lg hover:border-primary/30",
+          "group flex flex-col overflow-hidden transition-all duration-300 border-card-border bg-card",
+          "hover:shadow-xl hover:border-primary/40 hover:-translate-y-1",
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
       >
         {/* Product Image */}
-        <div className="relative w-full aspect-square bg-muted/50">
+        <div className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden">
           <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
-            <div className="w-full h-full cursor-pointer">
+            <div className="w-full h-full cursor-pointer group-hover:scale-105 transition-transform duration-300">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
@@ -566,73 +566,109 @@ export default function OrderingPage() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Package className="w-16 h-16 text-muted-foreground/40" />
+                  <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
                 </div>
               )}
             </div>
           </Link>
-          {cartItem && (
-            <Badge
-              className="absolute top-2 end-2 bg-primary text-primary-foreground shadow-md"
-              data-testid={`badge-in-cart-${product.id}`}
-            >
-              {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
-            </Badge>
-          )}
+          
+          {/* Badges */}
+          <div className="absolute top-2 end-2 flex flex-col gap-2">
+            {cartItem && (
+              <Badge
+                className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm"
+                data-testid={`badge-in-cart-${product.id}`}
+              >
+                {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+              </Badge>
+            )}
+            {product.category && (
+              <Badge
+                variant="secondary"
+                className="bg-background/80 backdrop-blur-sm text-xs"
+              >
+                {product.category}
+              </Badge>
+            )}
+          </div>
+
+          {/* Quick Action Overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
+              <Button variant="secondary" size="sm" className="backdrop-blur-md">
+                <Eye className="w-4 h-4 me-2" />
+                {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Product Info */}
-        <CardContent className="flex-1 p-3 sm:p-4 space-y-2">
+        <CardContent className="flex-1 p-4 space-y-3">
           <div>
             <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
-              <h3 className="font-semibold text-sm sm:text-base line-clamp-1 text-card-foreground hover:text-primary cursor-pointer transition-colors" data-testid={`text-product-name-${product.id}`}>
+              <h3 className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary cursor-pointer transition-colors min-h-[3rem]" data-testid={`text-product-name-${product.id}`}>
                 {name}
               </h3>
             </Link>
-            <p className="text-xs text-muted-foreground mt-0.5">SKU: {product.sku}</p>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">SKU: {product.sku}</p>
           </div>
 
           {description && (
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
               {description}
             </p>
           )}
 
-          {/* Show contract price if available, otherwise show default selling price */}
-          {product.hasPrice && product.contractPrice ? (
-            <div className="pt-2">
-              <p className="text-lg sm:text-xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
-                {product.contractPrice} {product.currency}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
-              </p>
-            </div>
-          ) : product.sellingPricePiece ? (
-            <div className="pt-2">
-              <p className="text-lg sm:text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                {product.sellingPricePiece} {language === 'ar' ? 'ش' : 'ILS'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Price per Piece (Reference)'}
-              </p>
-            </div>
-          ) : null}
+          {/* Pricing Section */}
+          <div className="pt-2 border-t border-border/50">
+            {product.hasPrice && product.contractPrice ? (
+              <div className="space-y-1">
+                <p className="text-2xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
+                  {product.contractPrice} <span className="text-sm font-normal">{product.currency}</span>
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
+                </p>
+              </div>
+            ) : product.sellingPricePiece ? (
+              <div className="space-y-1">
+                <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
+                  {product.sellingPricePiece} <span className="text-sm font-normal">{language === 'ar' ? 'ش' : 'ILS'}</span>
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Reference Price'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
 
-        {/* Add to Cart or Add to Price Request */}
-        <CardFooter className="p-3 sm:p-4 pt-0">
+        {/* Action Buttons */}
+        <CardFooter className="p-4 pt-0 gap-2">
           {product.hasPrice ? (
             <Button
               onClick={() => handleAddToCart(product)}
               disabled={isDifferentLta}
-              className="w-full transition-all duration-300"
+              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
+              size="lg"
               data-testid={`button-add-to-cart-${product.id}`}
             >
-              <Package className="w-4 h-4 me-2" />
-              <span className="text-sm sm:text-base">
+              <ShoppingCart className="w-4 h-4 me-2" />
+              <span>
                 {isDifferentLta
                   ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                  : cartItem
+                  ? (language === 'ar' ? 'أضف المزيد' : 'Add More')
                   : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
                 }
               </span>
@@ -642,13 +678,14 @@ export default function OrderingPage() {
               onClick={() => handleAddToPriceRequest(product)}
               variant={inPriceRequest ? "secondary" : "outline"}
               className="w-full transition-all duration-300"
+              size="lg"
               data-testid={`button-add-to-price-request-${product.id}`}
             >
               <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
-              <span className="text-sm sm:text-base">
+              <span>
                 {inPriceRequest
                   ? (language === 'ar' ? 'في قائمة الطلبات' : 'In Request List')
-                  : (language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request')
+                  : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
                 }
               </span>
             </Button>
@@ -826,76 +863,157 @@ export default function OrderingPage() {
                   </div>
 
                   {selectedLtaFilter && (
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                        <Input
-                          type="search"
-                          placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full h-10 sm:h-11 ps-10"
-                          data-testid="input-search-products"
-                        />
-                      </div>
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-11" data-testid="select-category">
-                          <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">
-                            {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
-                          </SelectItem>
-                          {categories.filter(c => c !== 'all').map((category) => (
-                            <SelectItem key={category} value={category || ''}>
-                              {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')}
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                          <Input
+                            type="search"
+                            placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-11 ps-10 border-2 focus-visible:ring-2"
+                            data-testid="input-search-products"
+                          />
+                          {searchQuery && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                              onClick={() => setSearchQuery('')}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                          <SelectTrigger className="w-full sm:w-[220px] h-11 border-2" data-testid="select-category">
+                            <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              {language === 'ar' ? 'جميع الفئات' : 'All Categories'} ({products.filter(p => selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter).length})
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            {categories.filter(c => c !== 'all').map((category) => {
+                              const count = products.filter(p => 
+                                p.category === category && 
+                                (selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter)
+                              ).length;
+                              return (
+                                <SelectItem key={category} value={category || ''}>
+                                  {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')} ({count})
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Active Filters */}
+                      {(searchQuery || selectedCategory !== 'all') && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-muted-foreground">
+                            {language === 'ar' ? 'الفلاتر النشطة:' : 'Active filters:'}
+                          </span>
+                          {searchQuery && (
+                            <Badge variant="secondary" className="gap-1">
+                              {language === 'ar' ? 'بحث:' : 'Search:'} "{searchQuery}"
+                              <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} />
+                            </Badge>
+                          )}
+                          {selectedCategory !== 'all' && (
+                            <Badge variant="secondary" className="gap-1">
+                              {selectedCategory}
+                              <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('all')} />
+                            </Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setSelectedCategory('all');
+                            }}
+                            className="h-6 text-xs"
+                          >
+                            {language === 'ar' ? 'مسح الكل' : 'Clear all'}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
 
               {productsLoading ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>
                       {language === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {Array.from({ length: 8 }).map((_, i) => (
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                    {Array.from({ length: 12 }).map((_, i) => (
                       <Card key={i} className="flex flex-col">
                         <Skeleton className="w-full aspect-square" />
-                        <CardContent className="p-4 space-y-2">
-                          <Skeleton className="h-5 w-3/4" />
+                        <CardContent className="p-4 space-y-3">
+                          <Skeleton className="h-6 w-3/4" />
                           <Skeleton className="h-4 w-1/2" />
-                          <Skeleton className="h-6 w-1/3 mt-2" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-8 w-1/3 mt-2" />
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 </div>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                <div className="space-y-4">
+                  {/* Results count and sort */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'عرض' : 'Showing'} <span className="font-semibold text-foreground">{filteredProducts.length}</span> {language === 'ar' ? 'منتج' : 'products'}
+                    </p>
+                  </div>
+
+                  {/* Product Grid */}
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <Card className="p-8 sm:p-12 text-center border-dashed">
-                  <Package className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
-                    {language === 'ar' ? 'لا توجد منتجات متاحة' : 'No Products Available'}
-                  </h3>
-                  <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-                    {language === 'ar'
-                      ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية الخاص بك بعد.'
-                      : 'No products are assigned to your LTA contract yet.'}
-                  </p>
+                <Card className="p-12 text-center border-2 border-dashed">
+                  <div className="max-w-md mx-auto space-y-4">
+                    <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
+                      <Search className="w-10 h-10 text-muted-foreground/50" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">
+                      {language === 'ar' ? 'لا توجد منتجات' : 'No Products Found'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {searchQuery || selectedCategory !== 'all'
+                        ? (language === 'ar'
+                          ? 'لم نتمكن من العثور على أي منتجات تطابق معايير البحث الخاصة بك.'
+                          : 'We couldn\'t find any products matching your search criteria.')
+                        : (language === 'ar'
+                          ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية الخاص بك بعد.'
+                          : 'No products are assigned to your LTA contract yet.')
+                      }
+                    </p>
+                    {(searchQuery || selectedCategory !== 'all') && (
+                      <Button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSelectedCategory('all');
+                        }}
+                        variant="outline"
+                      >
+                        {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
+                      </Button>
+                    )}
+                  </div>
                 </Card>
               )}
             </TabsContent>
