@@ -913,6 +913,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get product by subcategory and name (public for SEO with new URL structure)
+  app.get("/api/products/:subCategory/:productName", async (req, res) => {
+    try {
+      const { productName } = req.params;
+      const allProducts = await storage.getProducts();
+      
+      // Find product by matching slugified name
+      const product = allProducts.find(p => {
+        const slugifiedName = p.nameEn.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        return slugifiedName === productName;
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // If user is authenticated, include pricing info
+      if (req.user?.id) {
+        const clientId = req.user.id;
+        const clientLtas = await storage.getClientLtas(clientId);
+        const ltaIds = clientLtas.map(lta => lta.id);
+        const ltaProducts = await storage.getLtaProducts(ltaIds);
+
+        const ltaProduct = ltaProducts.find(lp => lp.productId === product.id);
+
+        return res.json({
+          ...product,
+          contractPrice: ltaProduct?.contractPrice,
+          currency: ltaProduct?.currency,
+          ltaId: ltaProduct?.ltaId,
+          hasPrice: !!ltaProduct,
+        });
+      }
+
+      // Public view without pricing
+      return res.json({
+        ...product,
+        hasPrice: false,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Get products by category (public for SEO)
   app.get("/api/products/category/:category", async (req, res) => {
     try {

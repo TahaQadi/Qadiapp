@@ -204,12 +204,18 @@ export default function ProductDetailPage() {
           <Link href="/" className="hover:text-foreground">
             {language === 'ar' ? 'الرئيسية' : 'Home'}
           </Link>
-          {product.category && (
+          {product.mainCategory && (
             <>
               <span className="mx-2">/</span>
-              <Link href={`/catalog/${product.category}`} className="hover:text-foreground">
-                {product.category}
+              <Link href="/catalog" className="hover:text-foreground">
+                {product.mainCategory}
               </Link>
+            </>
+          )}
+          {product.subCategory && (
+            <>
+              <span className="mx-2">/</span>
+              <span className="text-foreground">{product.subCategory}</span>
             </>
           )}
           <span className="mx-2">/</span>
