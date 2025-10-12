@@ -687,46 +687,23 @@ export default function OrderingPage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-                    data-testid="button-price-request"
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                onClick={() => setPriceRequestDialogOpen(true)}
+                data-testid="button-price-request"
+              >
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                {priceRequestList.length > 0 && (
+                  <Badge
+                    className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
+                    data-testid="badge-price-request-count"
                   >
-                    <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                    {priceRequestList.length > 0 && (
-                      <Badge
-                        className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
-                        data-testid="badge-price-request-count"
-                      >
-                        {priceRequestList.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="p-2">
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2"
-                    onClick={() => setPriceRequestDialogOpen(true)}
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span className="text-sm">
-                      {language === 'ar' ? 'عرض قائمة طلبات الأسعار' : 'View Price Request List'}
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2"
-                    onClick={() => { /* TODO: Add functionality to add products from here */ }}
-                  >
-                    <Package className="h-4 w-4" />
-                    <span className="text-sm">
-                      {language === 'ar' ? 'إضافة منتجات' : 'Add Products'}
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    {priceRequestList.length}
+                  </Badge>
+                )}
+              </Button>
 
               <Button
                 variant="ghost"
@@ -1038,14 +1015,12 @@ export default function OrderingPage() {
                   <Heart className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
                   <p className="text-sm text-muted-foreground mb-4">
                     {language === 'ar' 
-                      ? 'قائمتك فارغة. أضف منتجات من صفحة طلبات الأسعار.' 
-                      : 'Your list is empty. Add products from the price request page.'}
+                      ? 'قائمتك فارغة. أضف منتجات بدون أسعار من صفحة المنتجات أدناه.' 
+                      : 'Your list is empty. Add products without prices from the products page below.'}
                   </p>
-                  <Button asChild>
-                    <Link href="/price-request">
-                      <Heart className="h-4 w-4 me-2" />
-                      {language === 'ar' ? 'انتقل إلى صفحة طلبات الأسعار' : 'Go to Price Request Page'}
-                    </Link>
+                  <Button onClick={() => setPriceRequestDialogOpen(false)}>
+                    <Package className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'تصفح المنتجات' : 'Browse Products'}
                   </Button>
                 </div>
               ) : (
