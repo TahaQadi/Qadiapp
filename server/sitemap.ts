@@ -35,14 +35,31 @@ export async function generateSitemap(): Promise<string> {
 
   const allPages = [...staticPages, ...categoryPages, ...productPages];
 
+  // Get products with images for image sitemap
+  const productsWithImages = await db.select({
+    sku: products.sku,
+    imageUrl: products.imageUrl,
+    nameEn: products.nameEn,
+    nameAr: products.nameAr,
+  }).from(products).where(products.imageUrl);
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allPages.map(page => `  <url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${allPages.map(page => {
+    const productImage = productsWithImages.find(p => page.url.includes(p.sku));
+    return `  <url>
     <loc>${baseUrl}${page.url}</loc>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
-    ${page.lastmod ? `<lastmod>${page.lastmod}</lastmod>` : ''}
-  </url>`).join('\n')}
+    ${page.lastmod ? `<lastmod>${page.lastmod}</lastmod>` : ''}${productImage && productImage.imageUrl ? `
+    <image:image>
+      <image:loc>${baseUrl}${productImage.imageUrl}</image:loc>
+      <image:title>${productImage.nameEn}</image:title>
+      <image:caption>${productImage.nameAr}</image:caption>
+    </image:image>` : ''}
+  </url>`;
+  }).join('\n')}
 </urlset>`;
 
   return sitemap;

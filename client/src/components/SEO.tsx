@@ -91,6 +91,14 @@ export function SEO({
           "alternateName": isArabic ? "شركة القاضي" : "Al Qadi Company",
           "url": window.location.origin,
           "logo": `${window.location.origin}/logo.png`,
+          "description": isArabic 
+            ? "نظام متكامل لإدارة الطلبات والعقود مع أسعار مخصصة ومتابعة الطلبات وإدارة الفواتير"
+            : "Complete order management system with custom contracts, pricing, order tracking, and invoice management",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": isArabic ? "البيرة - أم الشرايط بالقرب من المدرسة التركية" : "Albierh - UmAlshrayt near Turkish school",
+            "addressCountry": "PS"
+          },
           "contactPoint": {
             "@type": "ContactPoint",
             "telephone": "+970-59-255-5532",
@@ -101,6 +109,25 @@ export function SEO({
           "sameAs": [
             `https://wa.me/970592555532`
           ]
+        })}
+      </script>
+
+      {/* WebSite Structured Data for Sitelinks Search Box */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Al Qadi Portal",
+          "alternateName": isArabic ? "بوابة القاضي" : "Al Qadi Portal",
+          "url": window.location.origin,
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": `${window.location.origin}/catalog?q={search_term_string}`
+            },
+            "query-input": "required name=search_term_string"
+          }
         })}
       </script>
     </Helmet>

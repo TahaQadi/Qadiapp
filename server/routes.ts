@@ -2467,6 +2467,18 @@ Sitemap: ${baseUrl}/sitemap.xml`;
     res.send(robotsTxt);
   });
 
+  app.get('/feed.xml', async (_req, res) => {
+    try {
+      const { generateRSSFeed } = await import('./rss-feed');
+      const feed = await generateRSSFeed();
+      res.header('Content-Type', 'application/rss+xml');
+      res.send(feed);
+    } catch (error) {
+      console.error('Error generating RSS feed:', error);
+      res.status(500).send('Error generating RSS feed');
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
