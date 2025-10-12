@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, Search, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Package, Search, ChevronRight, Laptop, Printer, Monitor, Keyboard, Mouse, Headphones, Cable, Speaker, Camera, Smartphone, Tablet, Watch, HardDrive, Cpu, MemoryStick, Wifi, Router, Boxes } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@shared/schema';
 import { SEO } from "@/components/SEO";
@@ -40,6 +40,29 @@ export default function CatalogPage() {
       .filter(p => p.mainCategory === mainCat)
       .map(p => p.subCategory)
       .filter(Boolean))];
+  };
+
+  // Get icon for category
+  const getCategoryIcon = (category: string) => {
+    const categoryLower = category.toLowerCase();
+    if (categoryLower.includes('computer') || categoryLower.includes('laptop')) return Laptop;
+    if (categoryLower.includes('printer')) return Printer;
+    if (categoryLower.includes('monitor') || categoryLower.includes('display')) return Monitor;
+    if (categoryLower.includes('keyboard')) return Keyboard;
+    if (categoryLower.includes('mouse')) return Mouse;
+    if (categoryLower.includes('headphone') || categoryLower.includes('audio')) return Headphones;
+    if (categoryLower.includes('cable') || categoryLower.includes('wire')) return Cable;
+    if (categoryLower.includes('speaker')) return Speaker;
+    if (categoryLower.includes('camera')) return Camera;
+    if (categoryLower.includes('phone') || categoryLower.includes('mobile')) return Smartphone;
+    if (categoryLower.includes('tablet')) return Tablet;
+    if (categoryLower.includes('watch')) return Watch;
+    if (categoryLower.includes('storage') || categoryLower.includes('drive')) return HardDrive;
+    if (categoryLower.includes('processor') || categoryLower.includes('cpu')) return Cpu;
+    if (categoryLower.includes('memory') || categoryLower.includes('ram')) return MemoryStick;
+    if (categoryLower.includes('network') || categoryLower.includes('wifi')) return Wifi;
+    if (categoryLower.includes('router')) return Router;
+    return Package;
   };
 
   // Filter products based on search and category selection
@@ -168,28 +191,31 @@ export default function CatalogPage() {
                   {language === 'ar' ? 'الفئات الرئيسية' : 'Main Categories'}
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-                  {mainCategories.map((mainCat) => (
-                    <Card
-                      key={mainCat}
-                      className="cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => setSelectedMainCategory(mainCat)}
-                    >
-                      <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
-                        <Package className="h-12 w-12 mb-3 text-primary" />
-                        <h3 className="font-semibold text-lg">{mainCat}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {products.filter(p => p.mainCategory === mainCat).length}{' '}
-                          {language === 'ar' ? 'منتج' : 'products'}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {mainCategories.map((mainCat) => {
+                    const IconComponent = getCategoryIcon(mainCat);
+                    return (
+                      <Card
+                        key={mainCat}
+                        className="cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => setSelectedMainCategory(mainCat)}
+                      >
+                        <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
+                          <IconComponent className="h-12 w-12 mb-3 text-primary" />
+                          <h3 className="font-semibold text-lg">{mainCat}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {products.filter(p => p.mainCategory === mainCat).length}{' '}
+                            {language === 'ar' ? 'منتج' : 'products'}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Products Grid */}
-            {(selectedMainCategory || selectedSubCategory || searchQuery || (!selectedMainCategory && !selectedSubCategory)) && filteredProducts.length > 0 && (
+            {(selectedMainCategory || selectedSubCategory || searchQuery) && filteredProducts.length > 0 && (
               <>
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-muted-foreground">
