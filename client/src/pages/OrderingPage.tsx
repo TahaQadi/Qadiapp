@@ -587,12 +587,25 @@ export default function OrderingPage() {
     return (
       <Card
         className={cn(
-          "group flex flex-col overflow-hidden transition-all duration-300 border-card-border bg-card",
-          "hover:shadow-xl hover:border-primary/40 hover:-translate-y-1",
+          "group flex flex-col overflow-hidden transition-all duration-500 ease-out
+          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+          border-border/50 dark:border-[#d4af37]/20 
+          hover:border-primary dark:hover:border-[#d4af37] 
+          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+          hover:scale-105 hover:-translate-y-2
+          animate-fade-in",
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
       >
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-amber-500/10 
+          group-hover:from-orange-500/30 group-hover:to-amber-500/20
+          transition-all duration-500 opacity-0 group-hover:opacity-100" />
+
+        {/* Shimmer Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
         {/* Product Image */}
         <div className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden">
           <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
@@ -644,7 +657,7 @@ export default function OrderingPage() {
         </div>
 
         {/* Product Info */}
-        <CardContent className="flex-1 p-4 space-y-3">
+        <CardContent className="flex-1 p-4 space-y-3 relative z-10">
           <div>
             <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
               <h3 className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary cursor-pointer transition-colors" data-testid={`text-product-name-${product.id}`}>
@@ -741,6 +754,12 @@ export default function OrderingPage() {
             </Button>
           )}
         </CardFooter>
+
+        {/* Bottom accent line */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 
+          bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
+          transition-all duration-500
+          opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
       </Card>
     );
   }
@@ -752,25 +771,35 @@ export default function OrderingPage() {
         description={isArabic ? "إدارة طلباتك وسلة التسوق" : "Manage your orders and shopping cart"}
         noIndex={true}
       />
-      <div className="min-h-screen bg-background" dir={isArabic ? 'rtl' : 'ltr'}>
-        {/* Animated background elements - theme aware */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-30">
-          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={isArabic ? 'rtl' : 'ltr'}>
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+          {/* Floating particles */}
+          <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
+          <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
         </div>
 
         {/* Header */}
-        <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${scrolled ? 'bg-background/95 border-border shadow-lg' : 'bg-background/80 border-border/50'}`}>
+        <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
           <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <img
                 src="/logo.png"
                 alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-                className="h-9 w-9 sm:h-11 sm:w-11 object-contain flex-shrink-0"
+                className="h-9 w-9 sm:h-11 sm:w-11 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
               />
-              <h1 className="text-base sm:text-xl lg:text-2xl font-semibold truncate text-foreground">
-                {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
-              </h1>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl lg:text-2xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                  {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
+                </h1>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
@@ -850,7 +879,19 @@ export default function OrderingPage() {
         </header>
 
         {/* Main Content */}
-        <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 relative z-10">
+          {/* Welcome Section */}
+          <div className="mb-8 animate-slide-down">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+              {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
+            </h2>
+            <p className="text-muted-foreground">
+              {language === 'ar' 
+                ? 'إدارة طلباتك وسلة التسوق من مكان واحد' 
+                : 'Manage your orders and shopping cart from one place'}
+            </p>
+          </div>
+
           <Tabs defaultValue="products" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
               <TabsTrigger value="products" className="text-sm sm:text-base" data-testid="tab-products">

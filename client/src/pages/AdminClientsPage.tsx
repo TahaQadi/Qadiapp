@@ -233,26 +233,45 @@ export default function AdminClientsPage() {
   }, [clientDetails, form]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+        {/* Floating particles */}
+        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button
               variant="ghost"
               size="icon"
               asChild
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
               data-testid="button-back-admin"
             >
               <Link href="/admin">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
-            <h1 className="text-xl font-semibold">
-              {language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
-            </h1>
-            <Badge variant="secondary" className="hidden md:flex">
-              {language === 'ar' ? user?.nameAr : user?.nameEn}
-            </Badge>
+            <img 
+              src="/logo.png" 
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
+            />
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -290,11 +309,28 @@ export default function AdminClientsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        {/* Welcome Section */}
+        <div className="mb-8 animate-slide-down">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+            {language === 'ar' ? 'لوحة إدارة العملاء' : 'Client Management Dashboard'}
+          </h2>
+          <p className="text-muted-foreground">
+            {language === 'ar' 
+              ? 'إدارة معلومات العملاء والمستخدمين' 
+              : 'Manage client information and users'}
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-1">
+          <Card className="md:col-span-1 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+            border-border/50 dark:border-[#d4af37]/20 
+            hover:border-primary dark:hover:border-[#d4af37] 
+            hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+            transition-all duration-500 animate-fade-in" 
+            style={{ animationDelay: '100ms' }}>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
-              <CardTitle>
+              <CardTitle className="text-foreground dark:text-white">
                 {language === 'ar' ? 'قائمة العملاء' : 'Client List'}
               </CardTitle>
               <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -454,9 +490,14 @@ export default function AdminClientsPage() {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+            border-border/50 dark:border-[#d4af37]/20 
+            hover:border-primary dark:hover:border-[#d4af37] 
+            hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+            transition-all duration-500 animate-fade-in" 
+            style={{ animationDelay: '200ms' }}>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
-              <CardTitle>
+              <CardTitle className="text-foreground dark:text-white">
                 {language === 'ar' ? 'تفاصيل العميل' : 'Client Details'}
               </CardTitle>
               {selectedClientId && clientDetails?.client && !clientDetails.client.isAdmin && (

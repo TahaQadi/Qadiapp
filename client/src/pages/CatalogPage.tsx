@@ -292,7 +292,25 @@ export default function CatalogPage() {
                       .replace(/^-+|-+$/g, '');
                     return (
                       <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
-                        <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden group" data-testid={`card-product-${product.id}`}>
+                        <Card className="h-full relative overflow-hidden cursor-pointer group
+                          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+                          border-border/50 dark:border-[#d4af37]/20 
+                          hover:border-primary dark:hover:border-[#d4af37] 
+                          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                          transition-all duration-500 ease-out
+                          hover:scale-105 hover:-translate-y-2
+                          animate-fade-in" 
+                          style={{ animationDelay: `${index * 50}ms` }}
+                          data-testid={`card-product-${product.id}`}>
+                          
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/10 
+                            group-hover:from-green-500/30 group-hover:to-emerald-500/20
+                            transition-all duration-500 opacity-0 group-hover:opacity-100" />
+
+                          {/* Shimmer Effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
                           <div className="relative aspect-square bg-muted overflow-hidden">
                             {product.imageUrl ? (
                               <img
@@ -308,18 +326,18 @@ export default function CatalogPage() {
                               </div>
                             )}
                             {product.subCategory && (
-                              <Badge className="absolute top-2 left-2 text-xs" variant="secondary">
+                              <Badge className="absolute top-2 left-2 text-xs bg-background/80 backdrop-blur-sm" variant="secondary">
                                 {product.subCategory}
                               </Badge>
                             )}
                             {product.hasPrice && product.contractPrice && (
-                              <Badge className="absolute top-2 right-2 text-xs bg-primary/90 hover:bg-primary">
+                              <Badge className="absolute top-2 right-2 text-xs bg-primary/90 hover:bg-primary backdrop-blur-sm">
                                 {product.contractPrice} {product.currency}
                               </Badge>
                             )}
                           </div>
-                          <CardContent className="p-3 space-y-1">
-                            <h3 className="font-medium text-sm line-clamp-2 leading-tight" data-testid={`text-product-name-${product.id}`}>
+                          <CardContent className="p-3 space-y-1 relative z-10">
+                            <h3 className="font-medium text-sm line-clamp-2 leading-tight text-foreground dark:text-white" data-testid={`text-product-name-${product.id}`}>
                               {name}
                             </h3>
                             <p className="text-xs text-muted-foreground font-mono">
@@ -336,6 +354,12 @@ export default function CatalogPage() {
                               </Badge>
                             )}
                           </CardContent>
+
+                          {/* Bottom accent line */}
+                          <div className="absolute bottom-0 left-0 right-0 h-1 
+                            bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
+                            transition-all duration-500
+                            opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
                         </Card>
                       </Link>
                     );
@@ -346,9 +370,13 @@ export default function CatalogPage() {
 
             {/* No Products Found */}
             {filteredProducts.length === 0 && (selectedSubCategory || searchQuery) && (
-              <Card className="p-12 text-center">
+              <Card className="p-12 text-center bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+                border-border/50 dark:border-[#d4af37]/20 
+                hover:border-primary dark:hover:border-[#d4af37] 
+                hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                transition-all duration-500 animate-fade-in">
                 <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-semibold mb-2 text-foreground dark:text-white">
                   {language === 'ar' ? 'لا توجد منتجات' : 'No Products Found'}
                 </h3>
                 <p className="text-muted-foreground">
