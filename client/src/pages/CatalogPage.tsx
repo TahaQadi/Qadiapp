@@ -87,7 +87,7 @@ export default function CatalogPage() {
   const pageDescription = `Browse our ${category || 'product'} catalog. Find products related to ${category || 'all categories'}.`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       <SEO 
         title={pageTitle}
         description={pageDescription}
@@ -99,28 +99,57 @@ export default function CatalogPage() {
         <meta name="description" content={pageDescription} />
       </Helmet>
 
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+        {/* Floating particles */}
+        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Logo" className="h-8 w-8" />
-            <span className="font-semibold">
-              {language === 'ar' ? 'الكتالوج' : 'Catalog'}
-            </span>
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300">
+              <Link href="/">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
+            <img 
+              src="/logo.png" 
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
+            />
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'الكتالوج' : 'Product Catalog'}
+              </h1>
+            </div>
           </div>
           <div className="w-10"></div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        {/* Welcome Section */}
+        <div className="mb-8 animate-slide-down">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+            {language === 'ar' ? 'كتالوج المنتجات' : 'Product Catalog'}
+          </h2>
+          <p className="text-muted-foreground">
+            {language === 'ar' 
+              ? 'تصفح منتجاتنا واختر ما تحتاجه' 
+              : 'Browse our products and find what you need'}
+          </p>
+        </div>
+
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -128,7 +157,7 @@ export default function CatalogPage() {
               placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-10"
+              className="ps-10 h-11 border-2 focus-visible:ring-2"
               data-testid="input-search-products"
             />
           </div>
@@ -186,27 +215,56 @@ export default function CatalogPage() {
           <>
             {/* Main Categories Grid */}
             {!selectedMainCategory && !searchQuery && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">
+              <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <h2 className="text-xl font-semibold mb-6">
                   {language === 'ar' ? 'الفئات الرئيسية' : 'Main Categories'}
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-                  {mainCategories.map((mainCat) => {
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                  {mainCategories.map((mainCat, index) => {
                     const IconComponent = getCategoryIcon(mainCat);
                     return (
                       <Card
                         key={mainCat}
-                        className="cursor-pointer hover:shadow-lg transition-shadow"
+                        className="relative overflow-hidden cursor-pointer group
+                          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+                          border-border/50 dark:border-[#d4af37]/20 
+                          hover:border-primary dark:hover:border-[#d4af37] 
+                          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                          transition-all duration-500 ease-out
+                          hover:scale-105 hover:-translate-y-2
+                          animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
                         onClick={() => setSelectedMainCategory(mainCat)}
                       >
-                        <CardContent className="p-6 flex flex-col items-center justify-center min-h-[140px]">
-                          <IconComponent className="h-12 w-12 mb-3 text-primary" />
-                          <h3 className="font-semibold text-lg">{mainCat}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
+                        {/* Gradient Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/10 
+                          group-hover:from-blue-500/30 group-hover:to-cyan-500/20
+                          transition-all duration-500 opacity-0 group-hover:opacity-100" />
+
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+                        <CardContent className="p-6 flex flex-col items-center justify-center min-h-[140px] relative z-10">
+                          <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/10
+                            group-hover:scale-110 group-hover:rotate-6
+                            transition-all duration-500 flex-shrink-0
+                            border border-white/10 mb-3">
+                            <IconComponent className="h-8 w-8 text-primary dark:text-[#d4af37]
+                              group-hover:text-primary dark:group-hover:text-[#f9c800]
+                              transition-colors duration-300" />
+                          </div>
+                          <h3 className="font-semibold text-lg text-foreground dark:text-white mb-1">{mainCat}</h3>
+                          <p className="text-sm text-muted-foreground dark:text-gray-400">
                             {products.filter(p => p.mainCategory === mainCat).length}{' '}
                             {language === 'ar' ? 'منتج' : 'products'}
                           </p>
                         </CardContent>
+
+                        {/* Bottom accent line */}
+                        <div className="absolute bottom-0 left-0 right-0 h-1 
+                          bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
+                          transition-all duration-500
+                          opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
                       </Card>
                     );
                   })}
