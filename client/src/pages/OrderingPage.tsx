@@ -22,6 +22,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Save, Eye, Loader2, DollarSign, AlertCircle, Clock, Settings, Search, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -772,6 +774,7 @@ export default function OrderingPage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Primary Actions - Always Visible */}
               <Button
                 variant="outline"
                 size="icon"
@@ -791,33 +794,6 @@ export default function OrderingPage() {
               </Button>
 
               <Button
-                variant="ghost"
-                size="icon"
-                asChild
-                className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-                data-testid="button-profile"
-              >
-                <Link href="/profile">
-                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Link>
-              </Button>
-              {user?.isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-                  data-testid="button-admin"
-                >
-                  <Link href="/admin">
-                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </Link>
-                </Button>
-              )}
-              <NotificationCenter />
-              <LanguageToggle />
-              <ThemeToggle />
-              <Button
                 variant="outline"
                 size="icon"
                 className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
@@ -834,15 +810,106 @@ export default function OrderingPage() {
                   </Badge>
                 )}
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => window.location.href = '/api/logout'}
-                className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-300"
-                data-testid="button-logout"
-              >
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+
+              <NotificationCenter />
+
+              {/* Sidebar Menu for Secondary Actions */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                  >
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center gap-3 pb-4 border-b">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">
+                          {language === 'ar' ? user?.nameAr : user?.nameEn}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <nav className="flex-1 py-4 space-y-1">
+                      <Link href="/profile">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-3 h-11"
+                          data-testid="sidebar-profile"
+                        >
+                          <User className="h-5 w-5" />
+                          <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                        </Button>
+                      </Link>
+
+                      {user?.isAdmin && (
+                        <Link href="/admin">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3 h-11"
+                            data-testid="sidebar-admin"
+                          >
+                            <Settings className="h-5 w-5" />
+                            <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</span>
+                          </Button>
+                        </Link>
+                      )}
+
+                      <div className="py-2">
+                        <Separator />
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                          {language === 'ar' ? 'الإعدادات' : 'Settings'}
+                        </p>
+                        
+                        <div className="flex items-center justify-between px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            <div className="h-5 w-5 flex items-center justify-center">
+                              🌐
+                            </div>
+                            <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
+                          </div>
+                          <LanguageToggle />
+                        </div>
+
+                        <div className="flex items-center justify-between px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            <div className="h-5 w-5 flex items-center justify-center">
+                              🎨
+                            </div>
+                            <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
+                          </div>
+                          <ThemeToggle />
+                        </div>
+                      </div>
+                    </nav>
+
+                    <div className="pt-4 border-t">
+                      <Button
+                        variant="destructive"
+                        className="w-full justify-start gap-3 h-11"
+                        onClick={() => window.location.href = '/api/logout'}
+                        data-testid="sidebar-logout"
+                      >
+                        <LogOut className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </header>
