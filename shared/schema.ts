@@ -56,6 +56,8 @@ export const clientLocations = pgTable("client_locations", {
   addressAr: text("address_ar").notNull(),
   city: text("city"),
   country: text("country"),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
   isHeadquarters: boolean("is_headquarters").default(false),
   phone: text("phone"),
 });
@@ -80,6 +82,7 @@ export const products = pgTable("products", {
   unitType: text("unit_type"),
   unit: text("unit"),
   unitPerBox: text("unit_per_box"),
+  boxFillingQty: text("box_filling_qty"),
   costPricePerBox: decimal("cost_price_per_box", { precision: 10, scale: 2 }),
   specificationsAr: text("specifications_ar"),
   vendorId: varchar("vendor_id").references(() => vendors.id, { onDelete: "set null" }),
@@ -89,6 +92,7 @@ export const products = pgTable("products", {
   sellingPricePack: decimal("selling_price_pack", { precision: 10, scale: 2 }),
   sellingPricePiece: decimal("selling_price_piece", { precision: 10, scale: 2 }),
   imageUrl: text("image_url"),
+  imageUrls: jsonb("image_urls"),
   descriptionEn: text("description_en"),
   descriptionAr: text("description_ar"),
 });
@@ -111,6 +115,9 @@ export const ltaProducts = pgTable("lta_products", {
   productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
   contractPrice: decimal("contract_price", { precision: 10, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("USD"),
+  alternateClientNameEn: text("alternate_client_name_en"),
+  alternateClientNameAr: text("alternate_client_name_ar"),
+  clientProductCode: text("client_product_code"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   uniqueLtaProduct: unique().on(table.ltaId, table.productId),
@@ -181,7 +188,11 @@ export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, created
   startDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
   endDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
 });
-export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id: true, createdAt: true });
+export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id: true, createdAt: true }).extend({
+  alternateClientNameEn: z.string().optional(),
+  alternateClientNameAr: z.string().optional(),
+  clientProductCode: z.string().optional(),
+});
 export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: true, createdAt: true });
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
@@ -244,6 +255,7 @@ export const createProductSchema = insertProductSchema.extend({
   unitType: z.string().optional(),
   unit: z.string().optional(),
   unitPerBox: z.string().optional(),
+  boxFillingQty: z.string().optional(),
   costPricePerBox: z.string().optional(),
   specificationsAr: z.string().optional(),
   vendor: z.string().optional(),
@@ -253,6 +265,7 @@ export const createProductSchema = insertProductSchema.extend({
   costPricePerPiece: z.string().optional(),
   sellingPricePack: z.string().optional(),
   sellingPricePiece: z.string().optional(),
+  imageUrls: z.array(z.string()).optional(),
 });
 export const updateProductSchema = createProductSchema.partial();
 
