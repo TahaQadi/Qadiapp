@@ -163,17 +163,24 @@ export const orders = pgTable("orders", {
 
 // Notifications table
 export const notifications = pgTable("notifications", {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  clientId: text('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(),
-  titleEn: text('title_en').notNull(),
-  titleAr: text('title_ar').notNull(),
-  messageEn: text('message_en').notNull(),
-  messageAr: text('message_ar').notNull(),
-  isRead: boolean('is_read').default(false).notNull(),
-  metadata: jsonb('metadata'),
-  pdfFileName: text('pdf_file_name'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  id: uuid("id").defaultRandom().primaryKey(),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  link: text("link"),
+  pdfFileName: text("pdf_file_name"),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Documents table
+export const documents = pgTable("documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "cascade" }),
+  documentType: text("document_type").notNull(),
+  pdfFileName: text("pdf_file_name").notNull(),
+  generatedAt: timestamp("generated_at").defaultNow(),
 });
 
 

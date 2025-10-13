@@ -87,6 +87,10 @@ export default function OrderingPage() {
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
+  const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
+  const [selectedProductForCart, setSelectedProductForCart] = useState<ProductWithLtaPrice | null>(null);
+  const [quantityPieces, setQuantityPieces] = useState(1);
+  const [quantityBoxes, setQuantityBoxes] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -231,7 +235,6 @@ export default function OrderingPage() {
 
     // Check if cart is empty or product is from same LTA
     if (activeLtaId && activeLtaId !== product.ltaId) {
-      // Show warning dialog asking user to clear cart or cancel
       toast({
         variant: 'destructive',
         title: language === 'en' ? 'Different Contract' : 'عقد مختلف',
@@ -242,37 +245,61 @@ export default function OrderingPage() {
       return;
     }
 
-    const existingItem = cart.find(item => item.productId === product.id);
+    // Show quantity dialog
+    setSelectedProductForCart(product);
+    setQuantityPieces(1);
+    setQuantityBoxes(0);
+    setQuantityDialogOpen(true);
+  };
+
+  const handleConfirmAddToCart = () => {
+    if (!selectedProductForCart) return;
+
+    const totalPieces = quantityPieces + (quantityBoxes * (parseInt(selectedProductForCart.boxFillingQty || '0') || 0));
+    
+    if (totalPieces <= 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'الكمية مطلوبة' : 'Quantity Required',
+        description: language === 'ar' ? 'يرجى إدخال كمية صحيحة' : 'Please enter a valid quantity',
+      });
+      return;
+    }
+
+    const existingItem = cart.find(item => item.productId === selectedProductForCart.id);
 
     if (existingItem) {
       setCart(cart.map(item =>
-        item.productId === product.id
-          ? { ...item, quantity: item.quantity + 1 }
+        item.productId === selectedProductForCart.id
+          ? { ...item, quantity: item.quantity + totalPieces }
           : item
       ));
     } else {
       setCart([...cart, {
-        productId: product.id,
-        productSku: product.sku,
-        productNameEn: product.nameEn,
-        productNameAr: product.nameAr,
-        quantity: 1,
-        price: product.contractPrice,
-        currency: product.currency,
-        ltaId: product.ltaId,
+        productId: selectedProductForCart.id,
+        productSku: selectedProductForCart.sku,
+        productNameEn: selectedProductForCart.nameEn,
+        productNameAr: selectedProductForCart.nameAr,
+        quantity: totalPieces,
+        price: selectedProductForCart.contractPrice,
+        currency: selectedProductForCart.currency,
+        ltaId: selectedProductForCart.ltaId,
       }]);
 
       // Set active LTA if cart was empty
       if (!activeLtaId) {
-        setActiveLtaId(product.ltaId);
+        setActiveLtaId(selectedProductForCart.ltaId);
       }
     }
 
     toast({
       description: language === 'ar'
-        ? `تمت إضافة ${product.nameAr} إلى السلة`
-        : `${product.nameEn} added to cart`
+        ? `تمت إضافة ${totalPieces} من ${selectedProductForCart.nameAr} إلى السلة`
+        : `${totalPieces} ${selectedProductForCart.nameEn} added to cart`
     });
+
+    setQuantityDialogOpen(false);
+    setSelectedProductForCart(null);
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
@@ -390,7 +417,12 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
-  const handleAddToPriceRequest = (product: ProductWithLtaPrice) => {
+  const handleAddToPriceRequest = (product: ProductWithLtaPrice, event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     const exists = priceRequestList.find(item => item.productId === product.id);
 
     if (exists) {
@@ -545,7 +577,8 @@ export default function OrderingPage() {
   }));
 
   function ProductCard({ product }: { product: ProductWithLtaPrice }) {
-    const name = language === 'ar' ? product.nameAr : product.nameEn;
+    const primaryName = language === 'ar' ? product.nameAr : product.nameEn;
+    const secondaryName = language === 'ar' ? product.nameEn : product.nameAr;
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
@@ -567,7 +600,7 @@ export default function OrderingPage() {
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
-                  alt={name}
+                  alt={primaryName}
                   className="w-full h-full object-cover"
                   data-testid={`img-product-${product.id}`}
                 />
@@ -614,11 +647,21 @@ export default function OrderingPage() {
         <CardContent className="flex-1 p-4 space-y-3">
           <div>
             <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
-              <h3 className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary cursor-pointer transition-colors min-h-[3rem]" data-testid={`text-product-name-${product.id}`}>
-                {name}
+              <h3 className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary cursor-pointer transition-colors" data-testid={`text-product-name-${product.id}`}>
+                {primaryName}
               </h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                {secondaryName}
+              </p>
             </Link>
-            <p className="text-xs text-muted-foreground mt-1 font-mono">SKU: {product.sku}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
+              {product.boxFillingQty && (
+                <Badge variant="outline" className="text-xs">
+                  📦 {product.boxFillingQty} {language === 'ar' ? 'قطع/صندوق' : 'pcs/box'}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {description && (
@@ -682,7 +725,7 @@ export default function OrderingPage() {
             </Button>
           ) : (
             <Button
-              onClick={() => handleAddToPriceRequest(product)}
+              onClick={(e) => handleAddToPriceRequest(product, e)}
               variant={inPriceRequest ? "secondary" : "outline"}
               className="w-full transition-all duration-300"
               size="lg"
@@ -1125,6 +1168,83 @@ export default function OrderingPage() {
           onOpenChange={setOrderDetailsDialogOpen}
           order={selectedOrder}
         />
+
+        {/* Quantity Selection Dialog */}
+        <Dialog open={quantityDialogOpen} onOpenChange={setQuantityDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {language === 'ar' ? 'اختر الكمية' : 'Select Quantity'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {selectedProductForCart && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    {selectedProductForCart.imageUrl && (
+                      <img 
+                        src={selectedProductForCart.imageUrl} 
+                        alt={language === 'ar' ? selectedProductForCart.nameAr : selectedProductForCart.nameEn}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <h4 className="font-medium">{language === 'ar' ? selectedProductForCart.nameAr : selectedProductForCart.nameEn}</h4>
+                      <p className="text-sm text-muted-foreground">SKU: {selectedProductForCart.sku}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="pieces">{language === 'ar' ? 'الكمية (قطع)' : 'Quantity (Pieces)'}</Label>
+                    <Input
+                      id="pieces"
+                      type="number"
+                      min="0"
+                      value={quantityPieces}
+                      onChange={(e) => setQuantityPieces(Math.max(0, parseInt(e.target.value) || 0))}
+                      data-testid="input-quantity-pieces"
+                    />
+                  </div>
+
+                  {selectedProductForCart.boxFillingQty && (
+                    <div className="space-y-2">
+                      <Label htmlFor="boxes">
+                        {language === 'ar' ? `الكمية (صناديق - ${selectedProductForCart.boxFillingQty} قطع/صندوق)` : `Quantity (Boxes - ${selectedProductForCart.boxFillingQty} pcs/box)`}
+                      </Label>
+                      <Input
+                        id="boxes"
+                        type="number"
+                        min="0"
+                        value={quantityBoxes}
+                        onChange={(e) => setQuantityBoxes(Math.max(0, parseInt(e.target.value) || 0))}
+                        data-testid="input-quantity-boxes"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-medium">
+                      {language === 'ar' ? 'الإجمالي: ' : 'Total: '}
+                      <span className="text-primary">
+                        {quantityPieces + (quantityBoxes * (parseInt(selectedProductForCart.boxFillingQty || '0') || 0))}
+                      </span>
+                      {language === 'ar' ? ' قطعة' : ' pieces'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setQuantityDialogOpen(false)}>
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button onClick={handleConfirmAddToCart} data-testid="button-confirm-add-to-cart">
+                <ShoppingCart className="w-4 h-4 me-2" />
+                {language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Price Request Dialog */}
         <Dialog open={priceRequestDialogOpen} onOpenChange={setPriceRequestDialogOpen}>
