@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
+import { safeJsonParse } from '@/lib/safeJson';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { Package, Calendar, CreditCard, FileText, TrendingUp } from 'lucide-react';
@@ -42,7 +43,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
 
   if (!order) return null;
 
-  const items: OrderItem[] = JSON.parse(order.items);
+  const items: OrderItem[] = safeJsonParse(order.items, []);
 
   const statusConfig = {
     pending: { variant: 'secondary' as const, color: 'text-yellow-600 dark:text-yellow-400' },

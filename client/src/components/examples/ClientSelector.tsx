@@ -20,7 +20,6 @@ export default function ClientSelectorExample() {
           selectedClientId={selectedClientId}
           onClientSelect={(id) => {
             setSelectedClientId(id);
-            console.log('Client selected:', id);
           }}
         />
       </div>

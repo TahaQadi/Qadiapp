@@ -2,12 +2,12 @@
 import { useQuery } from "@tanstack/react-query";
 
 export interface AuthUser {
-  id: number;
+  id: string;
   username: string;
   nameEn: string;
   nameAr: string;
-  email: string | null;
-  phone: string | null;
+  email?: string;
+  phone?: string;
   isAdmin: boolean;
   profileImageUrl?: string | null;
 }

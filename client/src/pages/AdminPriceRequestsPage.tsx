@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
+import { safeJsonParse } from '@/lib/safeJson';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { Button } from '@/components/ui/button';
@@ -106,17 +107,15 @@ export default function AdminPriceRequestsPage() {
       };
     }
     
-    try {
-      return typeof metadataStr === 'string' ? JSON.parse(metadataStr) : metadataStr;
-    } catch {
-      return { 
-        clientId: '', 
-        clientNameEn: '', 
-        clientNameAr: '', 
-        productIds: [], 
-        products: [] 
-      };
-    }
+    return typeof metadataStr === 'string' 
+      ? safeJsonParse(metadataStr, { 
+          clientId: '', 
+          clientNameEn: '', 
+          clientNameAr: '', 
+          productIds: [], 
+          products: [] 
+        })
+      : metadataStr;
   };
 
   // Check if all products in a request have been assigned

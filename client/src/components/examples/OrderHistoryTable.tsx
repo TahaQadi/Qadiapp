@@ -27,8 +27,8 @@ export default function OrderHistoryTableExample() {
       <div className="p-4">
         <OrderHistoryTableComponent
           orders={mockOrders}
-          onViewDetails={(id) => console.log('View order:', id)}
-          onReorder={(id) => console.log('Reorder:', id)}
+          onViewDetails={(id) => {}}
+          onReorder={(id) => {}}
         />
       </div>
     </LanguageProvider>

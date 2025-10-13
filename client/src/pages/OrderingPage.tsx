@@ -28,6 +28,7 @@ import { Link } from 'wouter';
 import type { Product, Lta } from '@shared/schema';
 import { cn } from '@/lib/utils';
 import { SEO } from "@/components/SEO";
+import { safeJsonParse } from '@/lib/safeJson';
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -349,11 +350,11 @@ export default function OrderingPage() {
   };
 
   const handleLoadTemplate = (templateData: { id: string; nameEn: string; nameAr: string; items: string; createdAt: Date }) => {
-    try {
-      const templateItems = JSON.parse(templateData.items);
-      const newCartItems: CartItem[] = [];
+    const templateItems = safeJsonParse(templateData.items, []);
+    const newCartItems: CartItem[] = [];
 
-      for (const item of templateItems) {
+    for (const item of templateItems) {
+      if (item && typeof item === 'object' && 'productId' in item && 'quantity' in item) {
         const product = products.find(p => p.id === item.productId);
         if (product) {
           newCartItems.push({
@@ -368,15 +369,18 @@ export default function OrderingPage() {
           });
         }
       }
+    }
 
+    if (newCartItems.length > 0) {
       setCart(newCartItems);
       toast({
         title: t('templateLoaded'),
         description: language === 'ar' ? templateData.nameAr : templateData.nameEn,
       });
-    } catch (error) {
+    } else {
       toast({
         title: language === 'ar' ? 'خطأ في تحميل القالب' : 'Error loading template',
+        description: language === 'ar' ? 'لم يتم العثور على منتجات صالحة في القالب' : 'No valid products found in template',
         variant: 'destructive',
       });
     }
@@ -461,11 +465,11 @@ export default function OrderingPage() {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
-    try {
-      const orderItems = JSON.parse(order.items);
-      const newCartItems: CartItem[] = [];
+    const orderItems = safeJsonParse(order.items, []);
+    const newCartItems: CartItem[] = [];
 
-      for (const item of orderItems) {
+    for (const item of orderItems) {
+      if (item && typeof item === 'object' && 'productId' in item && 'quantity' in item) {
         const product = products.find(p => p.id === item.productId);
         if (product) {
           newCartItems.push({
@@ -480,14 +484,17 @@ export default function OrderingPage() {
           });
         }
       }
+    }
 
+    if (newCartItems.length > 0) {
       setCart(newCartItems);
       toast({
         title: language === 'ar' ? 'تم تحميل الطلب إلى السلة' : 'Order loaded to cart',
       });
-    } catch (error) {
+    } else {
       toast({
         title: language === 'ar' ? 'خطأ في تحميل الطلب' : 'Error loading order',
+        description: language === 'ar' ? 'لم يتم العثور على منتجات صالحة في الطلب' : 'No valid products found in order',
         variant: 'destructive',
       });
     }
@@ -504,7 +511,7 @@ export default function OrderingPage() {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const formattedOrders = orders.map(order => {
-    const orderItems = JSON.parse(order.items);
+    const orderItems = safeJsonParse(order.items, []);
     return {
       id: order.id,
       createdAt: new Date(order.createdAt),
@@ -516,7 +523,7 @@ export default function OrderingPage() {
   });
 
   const formattedTemplates = templates.map(template => {
-    const templateItems = JSON.parse(template.items);
+    const templateItems = safeJsonParse(template.items, []);
     return {
       id: template.id,
       nameEn: template.nameEn,

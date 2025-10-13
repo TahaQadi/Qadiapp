@@ -596,10 +596,10 @@ export default function AdminLtaDetailPage() {
       }
 
       bulkImportMutation.mutate({ products });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         variant: 'destructive',
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
     }
   };

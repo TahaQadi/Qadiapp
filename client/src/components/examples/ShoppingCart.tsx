@@ -25,18 +25,15 @@ export default function ShoppingCartExample() {
             setItems(items.map(item => 
               item.productId === id ? { ...item, quantity: qty } : item
             ));
-            console.log('Updated quantity:', id, qty);
           }}
           onRemoveItem={(id) => {
             setItems(items.filter(item => item.productId !== id));
-            console.log('Removed item:', id);
           }}
           onClearCart={() => {
             setItems([]);
-            console.log('Cart cleared');
           }}
-          onSubmitOrder={() => console.log('Order submitted')}
-          onSaveTemplate={() => console.log('Template saved')}
+          onSubmitOrder={() => {}}
+          onSaveTemplate={() => {}}
           currency="USD"
         />
       </div>

@@ -1,10 +1,11 @@
 
 import { renderToString } from 'react-dom/server';
 
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import {
   loginSchema,
@@ -99,7 +100,7 @@ const uploadDocument = multer({
 });
 
 // Middleware to get client data from Replit Auth user
-async function getClientFromAuth(req: any, res: any, next: any) {
+async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const userId = req.user?.claims?.sub;
     if (!userId) {
@@ -136,23 +137,23 @@ async function getClientFromAuth(req: any, res: any, next: any) {
     // Attach client to request
     (req as any).client = client;
     next();
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in getClientFromAuth:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error instanceof Error ? error instanceof Error ? error.message : 'Unknown error' : 'Unknown error' });
   }
 }
 
 // Require auth middleware (uses Replit Auth + loads client)
-async function requireAuth(req: any, res: any, next: any) {
+async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   await isAuthenticated(req, res, async () => {
     await getClientFromAuth(req, res, next);
   });
 }
 
 // Require admin middleware
-async function requireAdmin(req: any, res: any, next: any) {
+async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction) {
   await requireAuth(req, res, () => {
-    if (!(req as any).client?.isAdmin) {
+    if (!req.client?.isAdmin) {
       return res.status(403).json({
         message: "Unauthorized - Admin access required",
         messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
@@ -166,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth endpoint - returns user with client data
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.user.claims.sub;
       const replitUser = await storage.getUser(userId);
@@ -212,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client Profile Routes
-  app.get("/api/client/profile", requireAuth, async (req: any, res) => {
+  app.get("/api/client/profile", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const client = req.client;
       if (!client) {
@@ -234,8 +235,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         departments,
         locations,
       });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -248,14 +249,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
       });
       res.status(201).json(department);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -270,14 +271,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(department);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -285,8 +286,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteClientDepartment(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -299,14 +300,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
       });
       res.status(201).json(location);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -321,14 +322,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(location);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -336,23 +337,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteClientLocation(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
   // Products Routes - Get all products with client's LTA prices (if any)
-  app.get("/api/products", requireAuth, async (req: any, res) => {
+  app.get("/api/products", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const products = await storage.getAllProductsWithClientPrices(req.client.id);
       res.json(products);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error instanceof Error ? error.message : 'Unknown error' : 'Unknown error' });
     }
   });
 
   // Request price offer for products
-  app.post("/api/client/price-request", requireAuth, async (req: any, res) => {
+  app.post("/api/client/price-request", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { productIds, message } = req.body;
 
@@ -409,16 +410,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Price request submitted successfully",
         messageAr: "تم إرسال طلب السعر بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error instanceof Error ? error.message : 'Unknown error' : 'Unknown error',
         messageAr: "حدث خطأ أثناء إرسال طلب السعر"
       });
     }
   });
 
   // Admin Client Management Routes
-  app.get("/api/admin/clients", requireAdmin, async (req: any, res) => {
+  app.get("/api/admin/clients", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
       const clients = await storage.getClients();
       const clientsBasicInfo = clients.map(client => ({
@@ -431,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAdmin: client.isAdmin,
       }));
       res.json(clientsBasicInfo);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error fetching clients",
         messageAr: "خطأ في جلب العملاء"
@@ -465,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         departments,
         locations,
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error fetching client details",
         messageAr: "خطأ في جلب تفاصيل العميل"
@@ -488,14 +489,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Client created successfully",
         messageAr: "تم إنشاء العميل بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+      if (error instanceof Error ? error.message : 'Unknown error'?.includes('duplicate') || error instanceof Error ? error.message : 'Unknown error'?.includes('unique')) {
         return res.status(409).json({
           message: "Username already exists",
           messageAr: "اسم المستخدم موجود بالفعل"
@@ -527,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: client.phone,
         isAdmin: client.isAdmin,
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -545,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteClient(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error deleting client",
         messageAr: "خطأ في حذف العميل"
@@ -603,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? "تمت ترقية العميل إلى مسؤول"
           : "تم تخفيض رتبة العميل من مسؤول"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error updating admin status",
         messageAr: "خطأ في تحديث حالة المسؤول"
@@ -620,7 +621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
       });
       res.status(201).json(department);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -645,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(department);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -663,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteClientDepartment(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error deleting department",
         messageAr: "خطأ في حذف القسم"
@@ -680,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
       });
       res.status(201).json(location);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -705,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(location);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -723,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteClientLocation(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error deleting location",
         messageAr: "خطأ في حذف الموقع"
@@ -736,7 +737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const vendors = await storage.getVendors();
       res.json(vendors);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error fetching vendors",
         messageAr: "خطأ في جلب الموردين"
@@ -754,7 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(vendor);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error fetching vendor",
         messageAr: "خطأ في جلب المورد"
@@ -777,7 +778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const vendor = await storage.createVendor(validatedData);
       res.status(201).json(vendor);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -814,7 +815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(vendor);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -832,7 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteVendor(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
         message: "Error deleting vendor",
         messageAr: "خطأ في حذف المورد"
@@ -859,7 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: client.email,
         phone: client.phone,
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -908,8 +909,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...product,
         hasPrice: false,
       });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -954,8 +955,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...product,
         hasPrice: false,
       });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -992,8 +993,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       res.json(productsWithoutPricing);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1008,8 +1009,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       res.json(productsWithoutPricing);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1018,8 +1019,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const allProducts = await storage.getProducts();
       res.json(allProducts);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1028,7 +1029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -1036,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إنشاء المنتج",
       });
     }
@@ -1053,7 +1054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(product);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -1061,7 +1062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحديث المنتج",
       });
     }
@@ -1071,9 +1072,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteProduct(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء حذف المنتج",
       });
     }
@@ -1133,9 +1134,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total: dataLines.length,
         errors: errors.length > 0 ? errors : undefined,
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء استيراد الأسعار",
       });
     }
@@ -1146,8 +1147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const templates = await storage.getOrderTemplates(req.client.id);
       res.json(templates);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1161,8 +1162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(template);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1176,14 +1177,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         items: JSON.stringify(validatedData.items),
       });
       res.status(201).json(template);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1191,8 +1192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteOrderTemplate(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1201,8 +1202,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getOrders(req.client.id);
       res.json(orders);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1362,7 +1363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(201).json(finalOrder);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -1370,7 +1371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إنشاء الطلب",
       });
     }
@@ -1381,8 +1382,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const notifications = await storage.getClientNotifications(req.client.id);
       res.json(notifications);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1390,8 +1391,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const count = await storage.getUnreadNotificationCount(req.client.id);
       res.json({ count });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1405,8 +1406,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(notification);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1417,8 +1418,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "All notifications marked as read",
         messageAr: "تم وضع علامة مقروء على جميع الإشعارات",
       });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1426,8 +1427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.deleteNotification(req.params.id);
       res.sendStatus(204);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -1441,7 +1442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "LTA created successfully",
         messageAr: "تم إنشاء الاتفاقية طويلة الأجل بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -1449,7 +1450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إنشاء الاتفاقية"
       });
     }
@@ -1459,9 +1460,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ltas = await storage.getAllLtas();
       res.json(ltas);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب الاتفاقيات"
       });
     }
@@ -1477,9 +1478,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(lta);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب الاتفاقية"
       });
     }
@@ -1500,7 +1501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "LTA updated successfully",
         messageAr: "تم تحديث الاتفاقية بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
@@ -1508,7 +1509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحديث الاتفاقية"
       });
     }
@@ -1538,9 +1539,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "LTA deleted successfully",
         messageAr: "تم حذف الاتفاقية بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء حذف الاتفاقية"
       });
     }
@@ -1591,21 +1592,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Product assigned to LTA successfully",
         messageAr: "تم تعيين المنتج للاتفاقية بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق"
         });
       }
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+      if (error instanceof Error ? error.message : 'Unknown error'?.includes('duplicate') || error instanceof Error ? error.message : 'Unknown error'?.includes('unique')) {
         return res.status(409).json({
           message: "Product already assigned to this LTA",
           messageAr: "المنتج مُعيّن بالفعل لهذه الاتفاقية"
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تعيين المنتج"
       });
     }
@@ -1624,9 +1625,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Product removed from LTA successfully",
         messageAr: "تم إزالة المنتج من الاتفاقية بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إزالة المنتج"
       });
     }
@@ -1636,9 +1637,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const products = await storage.getProductsForLta(req.params.ltaId);
       res.json(products);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب منتجات الاتفاقية"
       });
     }
@@ -1665,9 +1666,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Product pricing updated successfully",
         messageAr: "تم تحديث سعر المنتج بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحديث السعر"
       });
     }
@@ -1694,7 +1695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messageAr: `تم تعيين ${assignmentResult.success} منتجات بنجاح`,
         ...assignmentResult,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Bulk assign products error:', error);
       return res.status(500).json({
         message: 'Failed to assign products',
@@ -1716,21 +1717,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Client assigned to LTA successfully",
         messageAr: "تم تعيين العميل للاتفاقية بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق"
         });
       }
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+      if (error instanceof Error ? error.message : 'Unknown error'?.includes('duplicate') || error instanceof Error ? error.message : 'Unknown error'?.includes('unique')) {
         return res.status(409).json({
           message: "Client already assigned to this LTA",
           messageAr: "العميل مُعيّن بالفعل لهذه الاتفاقية"
         });
       }
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تعيين العميل"
       });
     }
@@ -1749,9 +1750,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Client removed from LTA successfully",
         messageAr: "تم إزالة العميل من الاتفاقية بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إزالة العميل"
       });
     }
@@ -1776,9 +1777,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(clients);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب عملاء الاتفاقية"
       });
     }
@@ -1810,9 +1811,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(assignments);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب تعيينات الاتفاقيات"
       });
     }
@@ -1853,9 +1854,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Document uploaded successfully",
         messageAr: "تم تحميل المستند بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحميل المستند"
       });
     }
@@ -1865,9 +1866,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const documents = await storage.getLtaDocuments(req.params.ltaId);
       res.json(documents);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب المستندات"
       });
     }
@@ -1901,9 +1902,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Document deleted successfully",
         messageAr: "تم حذف المستند بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء حذف المستند"
       });
     }
@@ -1945,10 +1946,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
       res.send(downloadResult.data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('PDF download error:', error);
       res.status(500).json({
-        message: error.message || "Failed to download PDF",
+        message: error instanceof Error ? error.message : 'Unknown error' || "Failed to download PDF",
         messageAr: "فشل تنزيل PDF"
       });
     }
@@ -2077,10 +2078,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientId: metadata.clientId
       });
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('PDF generation error:', error);
       res.status(500).json({
-        message: error.message || "Failed to generate PDF",
+        message: error instanceof Error ? error.message : 'Unknown error' || "Failed to generate PDF",
         messageAr: "فشل إنشاء ملف PDF"
       });
     }
@@ -2091,9 +2092,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ltas = await storage.getClientLtas(req.client.id);
       res.json(ltas);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب الاتفاقيات"
       });
     }
@@ -2124,9 +2125,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Product image uploaded successfully",
         messageAr: "تم تحميل صورة المنتج بنجاح"
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحميل الصورة"
       });
     }
@@ -2178,9 +2179,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="products_${Date.now()}.csv"`);
       res.send('\uFEFF' + csv); // Add BOM for Excel compatibility
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تصدير المنتجات"
       });
     }
@@ -2285,11 +2286,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               actionAr: 'تم الإنشاء'
             });
           }
-        } catch (error: any) {
+        } catch (error) {
           results.errors.push({
             row: i + 2,
             vendorNumber: values[0] || 'N/A',
-            message: error.message,
+            message: error instanceof Error ? error.message : 'Unknown error',
             messageAr: 'حدث خطأ أثناء معالجة الصف'
           });
         }
@@ -2300,9 +2301,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `Import completed: ${results.success.length} succeeded, ${results.errors.length} failed`,
         messageAr: `اكتمل الاستيراد: ${results.success.length} نجح، ${results.errors.length} فشل`
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء استيراد الموردين"
       });
     }
@@ -2433,11 +2434,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               actionAr: 'تم الإنشاء'
             });
           }
-        } catch (error: any) {
+        } catch (error) {
           results.errors.push({
             row: i + 2,
             sku: values[0] || 'N/A',
-            message: error.message,
+            message: error instanceof Error ? error.message : 'Unknown error',
             messageAr: 'حدث خطأ أثناء معالجة الصف'
           });
         }
@@ -2448,9 +2449,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `Import completed: ${results.success.length} succeeded, ${results.errors.length} failed`,
         messageAr: `اكتمل الاستيراد: ${results.success.length} نجح، ${results.errors.length} فشل`
       });
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء استيراد المنتجات"
       });
     }
@@ -2483,8 +2484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         url: `${baseUrl}/products/${slugifiedSubCategory}/${req.params.productName}`,
         keywords: `${product.sku}, ${product.nameEn}, ${product.nameAr}, ${product.category || 'products'}`,
       });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

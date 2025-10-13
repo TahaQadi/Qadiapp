@@ -15,7 +15,6 @@ export default function SaveTemplateDialogExample() {
           open={open}
           onOpenChange={setOpen}
           onSave={(nameEn, nameAr) => {
-            console.log('Template saved:', { nameEn, nameAr });
           }}
         />
       </div>

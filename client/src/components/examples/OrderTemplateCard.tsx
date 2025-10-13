@@ -12,8 +12,8 @@ export default function OrderTemplateCardExample() {
           nameAr="مستلزمات مكتبية أسبوعية"
           itemCount={8}
           createdAt={new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)}
-          onLoad={() => console.log('Template loaded')}
-          onDelete={() => console.log('Template deleted')}
+          onLoad={() => {}}
+          onDelete={() => {}}
         />
       </div>
     </LanguageProvider>

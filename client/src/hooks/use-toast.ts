@@ -71,6 +71,19 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+// Cleanup function to clear all timeouts
+const clearAllTimeouts = () => {
+  toastTimeouts.forEach((timeout) => {
+    clearTimeout(timeout)
+  })
+  toastTimeouts.clear()
+}
+
+// Clean up timeouts when component unmounts
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', clearAllTimeouts)
+}
+
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -90,11 +103,19 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // Clear existing timeout for this toast if it exists
+      if (toastId && toastTimeouts.has(toastId)) {
+        clearTimeout(toastTimeouts.get(toastId)!)
+        toastTimeouts.delete(toastId)
+      }
+
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
+        // Clear all timeouts when dismissing all toasts
+        clearAllTimeouts()
         state.toasts.forEach((toast) => {
           addToRemoveQueue(toast.id)
         })

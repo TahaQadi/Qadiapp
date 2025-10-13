@@ -238,9 +238,18 @@ export class MemStorage implements IStorage {
 
   async validateClientCredentials(username: string, password: string): Promise<AuthUser | null> {
     const client = await this.getClientByUsername(username);
-    if (!client || client.password !== password) {
+    if (!client) {
       return null;
     }
+    
+    // Import the password comparison function
+    const { comparePasswords } = await import('./auth');
+    const isValidPassword = await comparePasswords(password, client.password);
+    
+    if (!isValidPassword) {
+      return null;
+    }
+    
     return {
       id: client.id,
       username: client.username,
