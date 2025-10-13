@@ -82,7 +82,6 @@ export const products = pgTable("products", {
   unitType: text("unit_type"),
   unit: text("unit"),
   unitPerBox: text("unit_per_box"),
-  boxFillingQty: text("box_filling_qty"),
   costPricePerBox: decimal("cost_price_per_box", { precision: 10, scale: 2 }),
   specificationsAr: text("specifications_ar"),
   vendorId: varchar("vendor_id").references(() => vendors.id, { onDelete: "set null" }),
