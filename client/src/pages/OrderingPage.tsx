@@ -587,13 +587,13 @@ export default function OrderingPage() {
     return (
       <Card
         className={cn(
-          "group flex flex-col overflow-hidden transition-all duration-500 ease-out
-          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
-          border-border/50 dark:border-[#d4af37]/20 
-          hover:border-primary dark:hover:border-[#d4af37] 
-          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
-          hover:scale-105 hover:-translate-y-2
-          animate-fade-in",
+          "group flex flex-col overflow-hidden transition-all duration-500 ease-out " +
+          "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm " +
+          "border-border/50 dark:border-[#d4af37]/20 " +
+          "hover:border-primary dark:hover:border-[#d4af37] " +
+          "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 " +
+          "hover:scale-105 hover:-translate-y-2 " +
+          "animate-fade-in",
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
