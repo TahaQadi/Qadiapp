@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive, Download } from 'lucide-react';
 import { Link } from 'wouter';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -106,7 +106,7 @@ export default function AdminPriceRequestsPage() {
         products: [] 
       };
     }
-    
+
     return typeof metadataStr === 'string' 
       ? safeJsonParse(metadataStr, { 
           clientId: '', 
@@ -121,9 +121,9 @@ export default function AdminPriceRequestsPage() {
   // Check if all products in a request have been assigned
   const isRequestCompleted = (request: Notification) => {
     const metadata = parseMetadata(request.metadata);
-    
+
     if (!metadata.products || metadata.products.length === 0) return false;
-    
+
     return metadata.products.every(product => isProductAssignedToLta(product.id, metadata.clientId));
   };
 
@@ -239,7 +239,7 @@ export default function AdminPriceRequestsPage() {
     }
 
     const metadata = selectedRequest ? parseMetadata(selectedRequest.metadata) : null;
-    
+
     assignProductMutation.mutate({
       ltaId: selectedLtaId,
       productId: selectedProduct.id,
@@ -409,7 +409,7 @@ export default function AdminPriceRequestsPage() {
                                 }}
                                 className="gap-2"
                               >
-                                <Package className="h-4 w-4" />
+                                <Download className="h-4 w-4" />
                                 <span className="hidden sm:inline">
                                   {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
                                 </span>

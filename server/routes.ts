@@ -1,4 +1,3 @@
-
 import { renderToString } from 'react-dom/server';
 
 import type { Express, Request, Response, NextFunction } from "express";
@@ -919,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { productName } = req.params;
       const allProducts = await storage.getProducts();
-      
+
       // Find product by matching slugified name
       const product = allProducts.find(p => {
         const slugifiedName = p.nameEn.toLowerCase()
@@ -1911,53 +1910,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate PDF price offer for a price request
-  app.post('/api/admin/price-requests/:notificationId/generate-pdf', requireAdmin, async (req: any, res) => {
-    try {
-      const { PDFGenerator } = await import('./pdf-generator');
-      const { PDFStorage } = await import('./object-storage');
-
-
-  // Download PDF from Object Storage
-  app.get('/api/pdf/download/:fileName(*)', requireAuth, async (req: any, res) => {
-    try {
-      const { PDFStorage } = await import('./object-storage');
-      const fileName = req.params.fileName;
-
-      if (!fileName) {
-        return res.status(400).json({
-          message: "File name is required",
-          messageAr: "اسم الملف مطلوب"
-        });
-      }
-
-      const downloadResult = await PDFStorage.downloadPDF(fileName);
-
-      if (!downloadResult.ok || !downloadResult.data) {
-        return res.status(404).json({
-          message: "PDF not found",
-          messageAr: "لم يتم العثور على PDF",
-          error: downloadResult.error
-        });
-      }
-
-      // Extract just the filename for the download
-      const displayFileName = fileName.split('/').pop() || 'document.pdf';
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
-      res.send(downloadResult.data);
-    } catch (error) {
-      console.error('PDF download error:', error);
-      res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error' || "Failed to download PDF",
-        messageAr: "فشل تنزيل PDF"
-      });
+  app.post('/api/admin/price-requests/:notificationId/generate-pdf', async (req: any, res) => {
+    if (!req.isAuthenticated() || !req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
     }
-  });
 
-      const { language = 'en', ltaId, validityDays = 30, notes } = req.body;
+    try {
+      const { notificationId } = req.params;
+      const { language, ltaId, validityDays, notes } = req.body;
 
-      // Get the notification
       const notification = await storage.getNotification(req.params.notificationId);
       if (!notification || notification.type !== 'price_request') {
         return res.status(404).json({
@@ -2023,13 +1984,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Generate unique offer number
+      const offerCount = (await storage.getAllPriceOffers()).length;
+      const offerNumber = `PO-${new Date().getFullYear()}-${String(offerCount + 1).padStart(4, '0')}`;
+      
       // Generate PDF
       const offerDate = new Date();
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + validityDays);
 
       const pdfBuffer = await PDFGenerator.generatePriceOffer({
-        offerId: `PO-${Date.now()}`,
+        offerId: offerNumber,
         offerDate: offerDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
         clientNameEn: client.nameEn,
         clientNameAr: client.nameAr,
@@ -2044,7 +2009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Save PDF to Object Storage
-      const fileName = `price_offer_${client.nameEn.replace(/\s/g, '_')}_${Date.now()}.pdf`;
+      const fileName = `${offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
       const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName);
 
       if (!uploadResult.ok) {
@@ -2055,25 +2020,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Create price offer record
+      const priceOffer = await storage.createPriceOffer({
+        offerNumber,
+        clientId: metadata.clientId,
+        ltaId,
+        priceRequestNotificationId: notification.id,
+        status: 'sent',
+        language: language as 'en' | 'ar',
+        items: JSON.stringify(items),
+        validFrom: offerDate,
+        validUntil,
+        notes: notes || null,
+        pdfFileName: uploadResult.fileName,
+        sentAt: new Date(),
+        generatedBy: req.user.id,
+      });
+
       // Create notification for client about the price offer
       await storage.createNotification({
         clientId: metadata.clientId,
         type: 'price_offer_ready',
         titleEn: 'Price Offer Document Ready',
         titleAr: 'مستند عرض السعر جاهز',
-        messageEn: `Your official price offer document has been generated and is ready for review.`,
-        messageAr: `تم إنشاء مستند عرض السعر الرسمي الخاص بك وهو جاهز للمراجعة.`,
+        messageEn: `Your price offer ${offerNumber} has been generated and is ready for review.`,
+        messageAr: `تم إنشاء عرض السعر ${offerNumber} الخاص بك وهو جاهز للمراجعة.`,
         metadata: JSON.stringify({
-          notificationId: notification.id,
+          priceOfferId: priceOffer.id,
+          offerNumber,
           ltaId,
           productCount: items.length
         }),
-        pdfFileName: uploadResult.fileName,
       });
 
       // Return success with file information
       res.json({
-        message: language === 'ar' ? 'تم إنشاء وحفظ PDF بنجاح' : 'PDF generated and saved successfully',
+        message: language === 'ar' ? 'تم إنشاء وحفظ عرض السعر بنجاح' : 'Price offer generated and saved successfully',
+        offerNumber,
+        priceOfferId: priceOffer.id,
         fileName: uploadResult.fileName,
         clientId: metadata.clientId
       });
@@ -2086,6 +2070,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Get all price offers (admin only)
+  app.get('/api/admin/price-offers', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const offers = await storage.getAllPriceOffers();
+      res.json(offers);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء جلب عروض الأسعار"
+      });
+    }
+  });
+
+  // Get client's price offers
+  app.get('/api/client/price-offers', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const offers = await storage.getPriceOffersByClient(req.client.id);
+      res.json(offers);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء جلب عروض الأسعار"
+      });
+    }
+  });
+
+  // Get specific price offer
+  app.get('/api/price-offers/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const offer = await storage.getPriceOffer(req.params.id);
+      if (!offer) {
+        return res.status(404).json({
+          message: "Price offer not found",
+          messageAr: "عرض السعر غير موجود"
+        });
+      }
+
+      // Check access: admin or owner
+      if (req.client.role !== 'admin' && offer.clientId !== req.client.id) {
+        return res.status(403).json({
+          message: "Access denied",
+          messageAr: "الوصول مرفوض"
+        });
+      }
+
+      // Mark as viewed if client is viewing for first time
+      if (req.client.role !== 'admin' && !offer.viewedAt) {
+        await storage.updatePriceOfferStatus(offer.id, offer.status, { viewedAt: new Date() });
+      }
+
+      res.json(offer);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء جلب عرض السعر"
+      });
+    }
+  });
+
+  // Update price offer status (client)
+  app.patch('/api/client/price-offers/:id/status', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { status, responseNote } = req.body;
+      const offer = await storage.getPriceOffer(req.params.id);
+      
+      if (!offer) {
+        return res.status(404).json({
+          message: "Price offer not found",
+          messageAr: "عرض السعر غير موجود"
+        });
+      }
+
+      if (offer.clientId !== req.client.id) {
+        return res.status(403).json({
+          message: "Access denied",
+          messageAr: "الوصول مرفوض"
+        });
+      }
+
+      const updatedOffer = await storage.updatePriceOfferStatus(req.params.id, status, {
+        respondedAt: new Date(),
+        responseNote: responseNote || null
+      });
+
+      res.json(updatedOffer);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء تحديث حالة عرض السعر"
+      });
+    }
+  });
+
+  // Download PDF from Object Storage
+  app.get('/api/pdf/download/:fileName(*)', requireAuth, async (req: any, res) => {
+    try {
+      const { PDFStorage } = await import('./object-storage');
+      const fileName = req.params.fileName;
+
+      if (!fileName) {
+        return res.status(400).json({
+          message: "File name is required",
+          messageAr: "اسم الملف مطلوب"
+        });
+      }
+
+      const downloadResult = await PDFStorage.downloadPDF(fileName);
+
+      if (!downloadResult.ok || !downloadResult.data) {
+        return res.status(404).json({
+          message: "PDF not found",
+          messageAr: "لم يتم العثور على PDF",
+          error: downloadResult.error
+        });
+      }
+
+      // Extract just the filename for the download
+      const displayFileName = fileName.split('/').pop() || 'document.pdf';
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
+      res.send(downloadResult.data);
+    } catch (error) {
+      console.error('PDF download error:', error);
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error' || "Failed to download PDF",
+        messageAr: "فشل تنزيل PDF"
+      });
+    }
+  });
+
 
   // Client LTA Endpoints
   app.get('/api/client/ltas', requireAuth, async (req: any, res) => {
@@ -2467,7 +2583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/^-+|-+$/g, '');
         return slugifiedName === req.params.productName;
       });
-      
+
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });
       }
@@ -2476,7 +2592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
-      
+
       res.json({
         title: `${product.nameEn} - Al Qadi Portal`,
         description: product.descriptionEn || product.nameEn,

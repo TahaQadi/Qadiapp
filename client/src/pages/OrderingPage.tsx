@@ -20,11 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Save, Eye, Loader2, DollarSign, AlertCircle, Clock, Settings, Search, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import type { Product, Lta } from '@shared/schema';
 import { cn } from '@/lib/utils';
 import { SEO } from "@/components/SEO";
@@ -87,10 +88,7 @@ export default function OrderingPage() {
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
-  const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
-  const [selectedProductForCart, setSelectedProductForCart] = useState<ProductWithLtaPrice | null>(null);
-  const [quantityPieces, setQuantityPieces] = useState(1);
-  const [quantityBoxes, setQuantityBoxes] = useState(0);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -245,61 +243,35 @@ export default function OrderingPage() {
       return;
     }
 
-    // Show quantity dialog
-    setSelectedProductForCart(product);
-    setQuantityPieces(1);
-    setQuantityBoxes(0);
-    setQuantityDialogOpen(true);
-  };
+    // Directly add to cart with quantity 1
+    const existingItemIndex = cart.findIndex(item => item.productId === product.id);
 
-  const handleConfirmAddToCart = () => {
-    if (!selectedProductForCart) return;
-
-    const totalPieces = quantityPieces + (quantityBoxes * (parseInt(selectedProductForCart.boxFillingQty || '0') || 0));
-    
-    if (totalPieces <= 0) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'الكمية مطلوبة' : 'Quantity Required',
-        description: language === 'ar' ? 'يرجى إدخال كمية صحيحة' : 'Please enter a valid quantity',
-      });
-      return;
-    }
-
-    const existingItem = cart.find(item => item.productId === selectedProductForCart.id);
-
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.productId === selectedProductForCart.id
-          ? { ...item, quantity: item.quantity + totalPieces }
-          : item
-      ));
+    if (existingItemIndex > -1) {
+      const newCart = [...cart];
+      newCart[existingItemIndex].quantity += 1;
+      setCart(newCart);
     } else {
       setCart([...cart, {
-        productId: selectedProductForCart.id,
-        productSku: selectedProductForCart.sku,
-        productNameEn: selectedProductForCart.nameEn,
-        productNameAr: selectedProductForCart.nameAr,
-        quantity: totalPieces,
-        price: selectedProductForCart.contractPrice,
-        currency: selectedProductForCart.currency,
-        ltaId: selectedProductForCart.ltaId,
+        productId: product.id,
+        productSku: product.sku,
+        productNameEn: product.nameEn,
+        productNameAr: product.nameAr,
+        quantity: 1, // Default quantity is 1
+        price: product.contractPrice,
+        currency: product.currency,
+        ltaId: product.ltaId,
       }]);
-
       // Set active LTA if cart was empty
       if (!activeLtaId) {
-        setActiveLtaId(selectedProductForCart.ltaId);
+        setActiveLtaId(product.ltaId);
       }
     }
 
     toast({
       description: language === 'ar'
-        ? `تمت إضافة ${totalPieces} من ${selectedProductForCart.nameAr} إلى السلة`
-        : `${totalPieces} ${selectedProductForCart.nameEn} added to cart`
+        ? `تمت إضافة 1 من ${product.nameAr} إلى السلة`
+        : `1 ${product.nameEn} added to cart`
     });
-
-    setQuantityDialogOpen(false);
-    setSelectedProductForCart(null);
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
@@ -417,12 +389,7 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
-  const handleAddToPriceRequest = (product: ProductWithLtaPrice, event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
+  const handleAddToPriceRequest = (product: ProductWithLtaPrice) => {
     const exists = priceRequestList.find(item => item.productId === product.id);
 
     if (exists) {
@@ -583,6 +550,11 @@ export default function OrderingPage() {
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
     const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
+    const [, setLocation] = useLocation();
+
+    const productSlug = product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
+    const productUrl = `/products/${categorySlug}/${productSlug}`;
 
     return (
       <Card
@@ -592,24 +564,18 @@ export default function OrderingPage() {
           "border-border/50 dark:border-[#d4af37]/20 " +
           "hover:border-primary dark:hover:border-[#d4af37] " +
           "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 " +
-          "hover:scale-105 hover:-translate-y-2 " +
           "animate-fade-in",
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
       >
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-amber-500/10 
-          group-hover:from-orange-500/30 group-hover:to-amber-500/20
-          transition-all duration-500 opacity-0 group-hover:opacity-100" />
-
         {/* Shimmer Effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
 
         {/* Product Image */}
-        <div className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden">
-          <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
-            <div className="w-full h-full cursor-pointer group-hover:scale-105 transition-transform duration-300">
+        <Link href={productUrl}>
+          <div className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+            <div className="w-full h-full">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
@@ -623,8 +589,9 @@ export default function OrderingPage() {
                 </div>
               )}
             </div>
-          </Link>
-          
+          </div>
+        </Link>
+
           {/* Badges */}
           <div className="absolute top-2 end-2 flex flex-col gap-2">
             {cartItem && (
@@ -645,36 +612,28 @@ export default function OrderingPage() {
             )}
           </div>
 
-          {/* Quick Action Overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
-              <Button variant="secondary" size="sm" className="backdrop-blur-md">
-                <Eye className="w-4 h-4 me-2" />
-                {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
-              </Button>
-            </Link>
-          </div>
-        </div>
-
         {/* Product Info */}
         <CardContent className="flex-1 p-4 space-y-3 relative z-10">
           <div>
-            <Link href={`/products/${(product.subCategory || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/${product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}>
-              <h3 className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary cursor-pointer transition-colors" data-testid={`text-product-name-${product.id}`}>
+            <Link href={productUrl}>
+              <h3 
+                className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary transition-colors cursor-pointer" 
+                data-testid={`text-product-name-${product.id}`}
+              >
                 {primaryName}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {secondaryName}
-              </p>
             </Link>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
-              {product.boxFillingQty && (
-                <Badge variant="outline" className="text-xs">
-                  📦 {product.boxFillingQty} {language === 'ar' ? 'قطع/صندوق' : 'pcs/box'}
-                </Badge>
-              )}
-            </div>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+              {secondaryName}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
+            {product.unitPerBox && (
+              <Badge variant="outline" className="text-xs">
+                📦 {product.unitPerBox} {language === 'ar' ? 'قطع/صندوق' : 'pcs/box'}
+              </Badge>
+            )}
           </div>
 
           {description && (
@@ -717,9 +676,10 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2">
+        <CardFooter className="p-4 pt-0 gap-2 relative z-20">
           {product.hasPrice ? (
             <Button
+              type="button"
               onClick={() => handleAddToCart(product)}
               disabled={isDifferentLta}
               className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
@@ -738,16 +698,20 @@ export default function OrderingPage() {
             </Button>
           ) : (
             <Button
-              onClick={(e) => handleAddToPriceRequest(product, e)}
-              variant={inPriceRequest ? "secondary" : "outline"}
-              className="w-full transition-all duration-300"
+              type="button"
+              onClick={() => handleAddToPriceRequest(product)}
+              variant={inPriceRequest 
+                ? 'secondary' 
+                : 'outline'
+              }
+              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
               size="lg"
               data-testid={`button-add-to-price-request-${product.id}`}
             >
               <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
               <span>
                 {inPriceRequest
-                  ? (language === 'ar' ? 'في قائمة الطلبات' : 'In Request List')
+                  ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
                   : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
                 }
               </span>
@@ -755,12 +719,7 @@ export default function OrderingPage() {
           )}
         </CardFooter>
 
-        {/* Bottom accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 
-          bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
-          transition-all duration-500
-          opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
-      </Card>
+        </Card>
     );
   }
 
@@ -892,17 +851,27 @@ export default function OrderingPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="products" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
-              <TabsTrigger value="products" className="text-sm sm:text-base" data-testid="tab-products">
+          <Tabs defaultValue="lta-products" className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
+              <TabsTrigger value="lta-products" className="text-sm sm:text-base" data-testid="tab-lta-products">
                 <Package className="h-4 w-4 me-1 sm:me-2" />
-                <span className="hidden xs:inline">{language === 'ar' ? 'المنتجات' : 'Products'}</span>
-                <span className="xs:hidden">{language === 'ar' ? 'منتجات' : 'Items'}</span>
+                <span className="hidden xs:inline">{language === 'ar' ? 'اتفاقياتي' : 'My LTAs'}</span>
+                <span className="xs:hidden">{language === 'ar' ? 'اتفاقياتي' : 'LTAs'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="all-products" className="text-sm sm:text-base" data-testid="tab-all-products">
+                <Package className="h-4 w-4 me-1 sm:me-2" />
+                <span className="hidden xs:inline">{language === 'ar' ? 'كل المنتجات' : 'All Products'}</span>
+                <span className="xs:hidden">{language === 'ar' ? 'الكل' : 'All'}</span>
               </TabsTrigger>
               <TabsTrigger value="templates" className="text-sm sm:text-base" data-testid="tab-templates">
                 <FileText className="h-4 w-4 me-1 sm:me-2" />
                 <span className="hidden xs:inline">{t('templates')}</span>
                 <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="price-requests" className="text-sm sm:text-base" data-testid="tab-price-requests">
+                <Heart className="h-4 w-4 me-1 sm:me-2" />
+                <span className="hidden xs:inline">{language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}</span>
+                <span className="xs:hidden">{language === 'ar' ? 'أسعار' : 'Prices'}</span>
               </TabsTrigger>
               <TabsTrigger value="history" className="text-sm sm:text-base" data-testid="tab-history">
                 <History className="h-4 w-4 me-1 sm:me-2" />
@@ -911,22 +880,15 @@ export default function OrderingPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Products Tab */}
-            <TabsContent value="products" className="mt-0">
+            {/* LTA Products Tab - Shows only LTA-filtered products */}
+            <TabsContent value="lta-products" className="mt-0">
               <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
                 {/* LTA Tabs */}
-                {clientLtas.length > 0 && (
+                {clientLtas.length > 0 ? (
                   <div className="bg-card/50 rounded-lg p-3 sm:p-4 border border-border/50">
-                    <Tabs value={selectedLtaFilter} onValueChange={setSelectedLtaFilter} className="w-full">
+                    <Tabs value={selectedLtaFilter === 'all' ? (clientLtas[0]?.id || 'all') : selectedLtaFilter} onValueChange={setSelectedLtaFilter} className="w-full">
                       <div className="relative">
                         <TabsList className="w-full inline-flex items-center justify-start h-auto gap-2 p-1 bg-muted rounded-md overflow-x-auto flex-nowrap">
-                          <TabsTrigger
-                            value="all"
-                            className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-[120px]"
-                            data-testid="tab-lta-all"
-                          >
-                            {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
-                          </TabsTrigger>
                           {clientLtas.map(lta => (
                             <TabsTrigger
                               key={lta.id}
@@ -941,6 +903,22 @@ export default function OrderingPage() {
                       </div>
                     </Tabs>
                   </div>
+                ) : (
+                  <Card className="p-12 text-center border-2 border-dashed">
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
+                        <Package className="w-10 h-10 text-muted-foreground/50" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">
+                        {language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTA Agreements'}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {language === 'ar'
+                          ? 'لم يتم تعيين أي اتفاقيات طويلة الأجل لحسابك بعد.'
+                          : 'No Long-Term Agreements have been assigned to your account yet.'}
+                      </p>
+                    </div>
+                  </Card>
                 )}
 
                 <div className="flex flex-col gap-4 sm:gap-5">
@@ -1109,6 +1087,186 @@ export default function OrderingPage() {
               )}
             </TabsContent>
 
+            {/* All Products Tab - Shows all products */}
+            <TabsContent value="all-products" className="mt-0">
+              <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
+                <div className="flex flex-col gap-4 sm:gap-5">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                      {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
+                    </h2>
+                    <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
+                      {products.length}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Input
+                          type="search"
+                          placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full h-11 ps-10 border-2 focus-visible:ring-2"
+                          data-testid="input-search-products"
+                        />
+                        {searchQuery && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                            onClick={() => setSearchQuery('')}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="w-full sm:w-[220px] h-11 border-2" data-testid="select-category">
+                          <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            {language === 'ar' ? 'جميع الفئات' : 'All Categories'} ({products.length})
+                          </SelectItem>
+                          {categories.filter(c => c !== 'all').map((category) => {
+                            const count = products.filter(p => p.category === category).length;
+                            return (
+                              <SelectItem key={category} value={category || ''}>
+                                {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')} ({count})
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Active Filters */}
+                    {(searchQuery || selectedCategory !== 'all') && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-muted-foreground">
+                          {language === 'ar' ? 'الفلاتر النشطة:' : 'Active filters:'}
+                        </span>
+                        {searchQuery && (
+                          <Badge variant="secondary" className="gap-1">
+                            {language === 'ar' ? 'بحث:' : 'Search:'} "{searchQuery}"
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} />
+                          </Badge>
+                        )}
+                        {selectedCategory !== 'all' && (
+                          <Badge variant="secondary" className="gap-1">
+                            {selectedCategory}
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('all')} />
+                          </Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSearchQuery('');
+                            setSelectedCategory('all');
+                          }}
+                          className="h-6 text-xs"
+                        >
+                          {language === 'ar' ? 'مسح الكل' : 'Clear all'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {productsLoading ? (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>
+                      {language === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <Card key={i} className="flex flex-col">
+                        <Skeleton className="w-full aspect-square" />
+                        <CardContent className="p-4 space-y-3">
+                          <Skeleton className="h-6 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-8 w-1/3 mt-2" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {products.filter(p => {
+                    const matchesSearch = searchQuery === '' ||
+                      p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      p.nameAr.includes(searchQuery) ||
+                      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+                    return matchesSearch && matchesCategory;
+                  }).length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          {language === 'ar' ? 'عرض' : 'Showing'} <span className="font-semibold text-foreground">{products.filter(p => {
+                            const matchesSearch = searchQuery === '' ||
+                              p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              p.nameAr.includes(searchQuery) ||
+                              p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+                            const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+                            return matchesSearch && matchesCategory;
+                          }).length}</span> {language === 'ar' ? 'منتج' : 'products'}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                        {products.filter(p => {
+                          const matchesSearch = searchQuery === '' ||
+                            p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            p.nameAr.includes(searchQuery) ||
+                            p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+                          const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+                          return matchesSearch && matchesCategory;
+                        }).map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <Card className="p-12 text-center border-2 border-dashed">
+                      <div className="max-w-md mx-auto space-y-4">
+                        <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
+                          <Search className="w-10 h-10 text-muted-foreground/50" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-foreground">
+                          {language === 'ar' ? 'لا توجد منتجات' : 'No Products Found'}
+                        </h3>
+                        <p className="text-muted-foreground">
+                          {language === 'ar'
+                            ? 'لم نتمكن من العثور على أي منتجات تطابق معايير البحث الخاصة بك.'
+                            : 'We couldn\'t find any products matching your search criteria.'}
+                        </p>
+                        <Button
+                          onClick={() => {
+                            setSearchQuery('');
+                            setSelectedCategory('all');
+                          }}
+                          variant="outline"
+                        >
+                          {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
+                        </Button>
+                      </div>
+                    </Card>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
             {/* Templates Tab */}
             <TabsContent value="templates" className="mt-0">
               {templatesLoading ? (
@@ -1151,6 +1309,173 @@ export default function OrderingPage() {
                   <p className="text-sm text-muted-foreground mt-2">{t('createTemplate')}</p>
                 </div>
               )}
+            </TabsContent>
+
+            {/* Price Requests Tab */}
+            <TabsContent value="price-requests" className="mt-0">
+              <div className="space-y-6">
+                {/* Search and Filter Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <h2 className="text-xl sm:text-2xl font-bold">
+                      {language === 'ar' ? 'المنتجات بدون أسعار' : 'Products Without Prices'}
+                    </h2>
+                    {priceRequestList.length > 0 && (
+                      <Badge variant="secondary" className="text-sm">
+                        {priceRequestList.length} {language === 'ar' ? 'منتج' : 'items'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="search"
+                      placeholder={language === 'ar' ? 'ابحث عن المنتجات بدون أسعار...' : 'Search products without prices...'}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full h-11 ps-10 border-2 focus-visible:ring-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Products Without Prices Grid */}
+                {productsLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Card key={i} className="p-4">
+                        <Skeleton className="h-5 w-3/4 mb-3" />
+                        <Skeleton className="h-4 w-1/2 mb-2" />
+                        <Skeleton className="h-10 w-full mt-4" />
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {filteredProducts.filter(p => !p.hasPrice).length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredProducts.filter(p => !p.hasPrice).map((product) => {
+                          const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
+                          return (
+                            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                              <CardHeader className="p-4 bg-muted/30">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-base line-clamp-2">
+                                      {language === 'ar' ? product.nameAr : product.nameEn}
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      SKU: {product.sku}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline" className="flex-shrink-0">
+                                    {language === 'ar' ? 'بدون سعر' : 'No Price'}
+                                  </Badge>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="p-4">
+                                {product.descriptionEn && (
+                                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                                    {language === 'ar' ? product.descriptionAr : product.descriptionEn}
+                                  </p>
+                                )}
+                                {product.category && (
+                                  <Badge variant="secondary" className="text-xs mb-3">
+                                    {product.category}
+                                  </Badge>
+                                )}
+                              </CardContent>
+                              <CardFooter className="p-4 pt-0">
+                                <Button
+                                  onClick={() => handleAddToPriceRequest(product)}
+                                  disabled={inPriceRequest}
+                                  className="w-full"
+                                  variant={inPriceRequest ? "secondary" : "default"}
+                                >
+                                  <Heart className={`h-4 w-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
+                                  {inPriceRequest
+                                    ? (language === 'ar' ? 'في قائمة الطلبات' : 'In Request List')
+                                    : (language === 'ar' ? 'إضافة إلى طلبات الأسعار' : 'Add to Price Request')
+                                  }
+                                </Button>
+                              </CardFooter>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <Card className="p-12 text-center border-2 border-dashed">
+                        <div className="max-w-md mx-auto space-y-4">
+                          <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
+                            <Heart className="w-10 h-10 text-muted-foreground/50" />
+                          </div>
+                          <h3 className="text-xl font-semibold text-foreground">
+                            {language === 'ar' ? 'لا توجد منتجات بدون أسعار' : 'No Products Without Prices'}
+                          </h3>
+                          <p className="text-muted-foreground">
+                            {language === 'ar'
+                              ? 'جميع المنتجات لها أسعار محددة'
+                              : 'All products have assigned prices'}
+                          </p>
+                        </div>
+                      </Card>
+                    )}
+                  </>
+                )}
+
+                {/* Request List Summary */}
+                {priceRequestList.length > 0 && (
+                  <Card className="bg-primary/5 border-primary/20">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Heart className="h-5 w-5" />
+                          {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
+                        </h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPriceRequestList([])}
+                        >
+                          <Trash2 className="h-4 w-4 me-2" />
+                          {language === 'ar' ? 'مسح الكل' : 'Clear All'}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {priceRequestList.map((item) => (
+                        <div key={item.productId} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background border">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {language === 'ar' ? item.productNameAr : item.productNameEn}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              SKU: {item.productSku}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveFromPriceRequest(item.productId)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        onClick={() => setPriceRequestDialogOpen(true)} 
+                        className="w-full"
+                        size="lg"
+                      >
+                        <Send className="h-4 w-4 me-2" />
+                        {language === 'ar' ? 'إرسال طلب الأسعار' : 'Send Price Request'}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                )}
+              </div>
             </TabsContent>
 
             {/* History Tab */}
@@ -1209,83 +1534,6 @@ export default function OrderingPage() {
           onOpenChange={setOrderDetailsDialogOpen}
           order={selectedOrder}
         />
-
-        {/* Quantity Selection Dialog */}
-        <Dialog open={quantityDialogOpen} onOpenChange={setQuantityDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {language === 'ar' ? 'اختر الكمية' : 'Select Quantity'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              {selectedProductForCart && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    {selectedProductForCart.imageUrl && (
-                      <img 
-                        src={selectedProductForCart.imageUrl} 
-                        alt={language === 'ar' ? selectedProductForCart.nameAr : selectedProductForCart.nameEn}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <h4 className="font-medium">{language === 'ar' ? selectedProductForCart.nameAr : selectedProductForCart.nameEn}</h4>
-                      <p className="text-sm text-muted-foreground">SKU: {selectedProductForCart.sku}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="pieces">{language === 'ar' ? 'الكمية (قطع)' : 'Quantity (Pieces)'}</Label>
-                    <Input
-                      id="pieces"
-                      type="number"
-                      min="0"
-                      value={quantityPieces}
-                      onChange={(e) => setQuantityPieces(Math.max(0, parseInt(e.target.value) || 0))}
-                      data-testid="input-quantity-pieces"
-                    />
-                  </div>
-
-                  {selectedProductForCart.boxFillingQty && (
-                    <div className="space-y-2">
-                      <Label htmlFor="boxes">
-                        {language === 'ar' ? `الكمية (صناديق - ${selectedProductForCart.boxFillingQty} قطع/صندوق)` : `Quantity (Boxes - ${selectedProductForCart.boxFillingQty} pcs/box)`}
-                      </Label>
-                      <Input
-                        id="boxes"
-                        type="number"
-                        min="0"
-                        value={quantityBoxes}
-                        onChange={(e) => setQuantityBoxes(Math.max(0, parseInt(e.target.value) || 0))}
-                        data-testid="input-quantity-boxes"
-                      />
-                    </div>
-                  )}
-
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">
-                      {language === 'ar' ? 'الإجمالي: ' : 'Total: '}
-                      <span className="text-primary">
-                        {quantityPieces + (quantityBoxes * (parseInt(selectedProductForCart.boxFillingQty || '0') || 0))}
-                      </span>
-                      {language === 'ar' ? ' قطعة' : ' pieces'}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setQuantityDialogOpen(false)}>
-                {language === 'ar' ? 'إلغاء' : 'Cancel'}
-              </Button>
-              <Button onClick={handleConfirmAddToCart} data-testid="button-confirm-add-to-cart">
-                <ShoppingCart className="w-4 h-4 me-2" />
-                {language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* Price Request Dialog */}
         <Dialog open={priceRequestDialogOpen} onOpenChange={setPriceRequestDialogOpen}>

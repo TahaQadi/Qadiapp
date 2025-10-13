@@ -30,12 +30,19 @@ export default function ProductDetailPage() {
     queryKey: ['/api/products/public'],
   });
 
+  console.log('ProductDetailPage - URL params:', params);
+  console.log('ProductDetailPage - Looking for product:', productName);
+  console.log('ProductDetailPage - Products loaded:', products.length);
+
   const product = products.find(p => {
     const slugifiedName = p.nameEn.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+    console.log(`ProductDetailPage - Comparing: ${slugifiedName} === ${productName}`);
     return slugifiedName === productName;
   });
+
+  console.log('ProductDetailPage - Found product:', product ? product.nameEn : 'NOT FOUND');
 
   // Show loading only if products are still loading AND we haven't found the product yet
   const isLoading = productsLoading && !product;

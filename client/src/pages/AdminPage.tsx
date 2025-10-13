@@ -75,6 +75,18 @@ export default function AdminPage() {
       gradient: 'from-orange-500/20 to-amber-500/10',
       hoverGradient: 'from-orange-500/30 to-amber-500/20',
       testId: 'card-price-requests'
+    },
+    {
+      id: 'price-offers',
+      path: '/admin/price-offers',
+      icon: FileText,
+      titleEn: 'Price Offers',
+      titleAr: 'عروض الأسعار',
+      descEn: 'View and manage price offers',
+      descAr: 'عرض وإدارة عروض الأسعار',
+      gradient: 'from-purple-500/20 to-pink-500/10',
+      hoverGradient: 'from-purple-500/30 to-pink-500/20',
+      testId: 'card-price-offers'
     }
   ];
 
