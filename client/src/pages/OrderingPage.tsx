@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Save, Eye, Loader2, DollarSign, AlertCircle, Clock, Settings, Search, History, Menu } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Save, Eye, Loader2, DollarSign, AlertCircle, Clock, Settings, Search, History, Menu, Plus, Minus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -391,6 +391,30 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
+  const requestPriceMutation = useMutation({
+    mutationFn: async (data: { productIds: string[]; message: string }) => {
+      const res = await apiRequest('POST', '/api/client/price-request', data);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+      setPriceRequestList([]);
+      setPriceRequestMessage('');
+      setPriceRequestDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
   const handleAddToPriceRequest = (product: ProductWithLtaPrice) => {
     const exists = priceRequestList.find(item => item.productId === product.id);
 
@@ -573,7 +597,7 @@ export default function OrderingPage() {
     const handleAddToCartWithQuantity = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       // Calculate final quantity based on type
       const finalQuantity = quantityType === 'box' && product.unitPerBox 
         ? quantity * parseInt(product.unitPerBox) 
@@ -1028,7 +1052,7 @@ export default function OrderingPage() {
                         <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">
                           {language === 'ar' ? 'الإعدادات' : 'Settings'}
                         </p>
-                        
+
                         <div className="flex items-center justify-between px-3 py-2">
                           <div className="flex items-center gap-3">
                             <div className="h-5 w-5 flex items-center justify-center">
