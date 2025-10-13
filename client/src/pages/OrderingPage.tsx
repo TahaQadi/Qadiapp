@@ -553,6 +553,8 @@ export default function OrderingPage() {
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
     const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
     const [, setLocation] = useLocation();
+    const [quantity, setQuantity] = useState(1);
+    const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
 
     const productSlug = product.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
@@ -560,6 +562,78 @@ export default function OrderingPage() {
 
     const handleCardClick = () => {
       setLocation(productUrl);
+    };
+
+    const handleQuantityChange = (newQuantity: number) => {
+      if (newQuantity >= 1) {
+        setQuantity(newQuantity);
+      }
+    };
+
+    const handleAddToCartWithQuantity = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Calculate final quantity based on type
+      const finalQuantity = quantityType === 'box' && product.unitPerBox 
+        ? quantity * parseInt(product.unitPerBox) 
+        : quantity;
+
+      // Check if product has a price
+      if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
+        toast({
+          variant: 'destructive',
+          title: language === 'en' ? 'No Price Available' : 'لا يوجد سعر',
+          description: language === 'en'
+            ? 'Please request a price offer for this product first.'
+            : 'يرجى طلب عرض سعر لهذا المنتج أولاً.',
+        });
+        return;
+      }
+
+      // Check if cart is empty or product is from same LTA
+      if (activeLtaId && activeLtaId !== product.ltaId) {
+        toast({
+          variant: 'destructive',
+          title: language === 'en' ? 'Different Contract' : 'عقد مختلف',
+          description: language === 'en'
+            ? 'This product is from a different LTA contract. Please complete or clear your current order first.'
+            : 'هذا المنتج من عقد اتفاقية مختلف. يرجى إكمال أو مسح طلبك الحالي أولاً.',
+        });
+        return;
+      }
+
+      const existingItemIndex = cart.findIndex(item => item.productId === product.id);
+
+      if (existingItemIndex > -1) {
+        const newCart = [...cart];
+        newCart[existingItemIndex].quantity += finalQuantity;
+        setCart(newCart);
+      } else {
+        setCart([...cart, {
+          productId: product.id,
+          productSku: product.sku,
+          productNameEn: product.nameEn,
+          productNameAr: product.nameAr,
+          quantity: finalQuantity,
+          price: product.contractPrice,
+          currency: product.currency,
+          ltaId: product.ltaId,
+        }]);
+        // Set active LTA if cart was empty
+        if (!activeLtaId) {
+          setActiveLtaId(product.ltaId);
+        }
+      }
+
+      toast({
+        description: language === 'ar'
+          ? `تمت إضافة ${finalQuantity} من ${product.nameAr} إلى السلة`
+          : `${finalQuantity} ${product.nameEn} added to cart`
+      });
+
+      // Reset quantity after adding
+      setQuantity(1);
     };
 
     return (
@@ -682,29 +756,110 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2 relative z-20">
+        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
           {product.hasPrice ? (
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleAddToCart(product);
-              }}
-              disabled={isDifferentLta}
-              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
-              size="lg"
-              data-testid={`button-add-to-cart-${product.id}`}
-            >
-              <ShoppingCart className="w-4 h-4 me-2" />
-              <span>
-                {isDifferentLta
-                  ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-                  : cartItem
-                  ? (language === 'ar' ? 'أضف المزيد' : 'Add More')
-                  : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
-                }
-              </span>
-            </Button>
+            <>
+              {/* Quantity Controls */}
+              <div className="w-full flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-1 flex-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleQuantityChange(quantity - 1);
+                    }}
+                    disabled={quantity <= 1 || isDifferentLta}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-8 w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="1"
+                    disabled={isDifferentLta}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleQuantityChange(quantity + 1);
+                    }}
+                    disabled={isDifferentLta}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {/* Unit Type Selector - Only show if product has unitPerBox */}
+                {product.unitPerBox && (
+                  <div className="flex gap-1">
+                    <Button
+                      variant={quantityType === 'pcs' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setQuantityType('pcs');
+                      }}
+                      disabled={isDifferentLta}
+                    >
+                      {language === 'ar' ? 'قطع' : 'Pcs'}
+                    </Button>
+                    <Button
+                      variant={quantityType === 'box' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setQuantityType('box');
+                      }}
+                      disabled={isDifferentLta}
+                    >
+                      {language === 'ar' ? 'صندوق' : 'Box'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Add to Cart Button */}
+              <Button
+                onClick={handleAddToCartWithQuantity}
+                disabled={isDifferentLta}
+                className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
+                size="lg"
+                data-testid={`button-add-to-cart-${product.id}`}
+              >
+                <ShoppingCart className="w-4 h-4 me-2" />
+                <span>
+                  {isDifferentLta
+                    ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                    : cartItem
+                    ? (language === 'ar' ? 'أضف المزيد' : 'Add More')
+                    : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
+                  }
+                </span>
+              </Button>
+
+              {/* Show total pieces info when box is selected */}
+              {quantityType === 'box' && product.unitPerBox && (
+                <p className="text-xs text-muted-foreground text-center w-full">
+                  {language === 'ar' 
+                    ? `= ${quantity * parseInt(product.unitPerBox)} قطعة` 
+                    : `= ${quantity * parseInt(product.unitPerBox)} pieces`}
+                </p>
+              )}
+            </>
           ) : (
             <Button
               onClick={(e) => {
