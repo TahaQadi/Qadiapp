@@ -939,23 +939,23 @@ export default function OrderingPage() {
           {/* Catalog Link Banner */}
           <Card className="mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 hover:border-primary/40 transition-all duration-300 animate-fade-in">
             <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  <div className="p-3 rounded-xl bg-primary/10 flex-shrink-0">
-                    <Package className="h-6 w-6 text-primary" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                  <div className="p-2 sm:p-3 rounded-xl bg-primary/10 flex-shrink-0">
+                    <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-base sm:text-lg mb-1">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-1">
                       {language === 'ar' ? 'تصفح كتالوج المنتجات' : 'Browse Product Catalog'}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                       {language === 'ar' 
                         ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار' 
                         : 'Explore all available products and request price quotes'}
                     </p>
                   </div>
                 </div>
-                <Button asChild size="lg" className="flex-shrink-0">
+                <Button asChild size="default" className="w-full sm:w-auto sm:flex-shrink-0">
                   <Link href="/catalog">
                     <Boxes className="h-4 w-4 me-2" />
                     {language === 'ar' ? 'عرض الكتالوج' : 'View Catalog'}
