@@ -212,7 +212,7 @@ export default function OrderingPage() {
   });
 
   // Optimized add to cart handler - must be before conditional logic
-  const handleAddToCart = useCallback((product: ProductWithLtaPrice, quantity: number = 1) => {
+  const handleAddToCart = useCallback((product: ProductWithLtaPrice, quantityChange: number = 1) => {
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
         variant: 'destructive',
@@ -240,35 +240,45 @@ export default function OrderingPage() {
 
       if (existingItemIndex > -1) {
         const newCart = [...prevCart];
+        const newQuantity = newCart[existingItemIndex].quantity + quantityChange;
+
+        // Remove item if quantity becomes 0 or less
+        if (newQuantity <= 0) {
+          newCart.splice(existingItemIndex, 1);
+          if (newCart.length === 0) {
+            setActiveLtaId(null);
+          }
+          return newCart;
+        }
+
         newCart[existingItemIndex] = {
           ...newCart[existingItemIndex],
-          quantity: newCart[existingItemIndex].quantity + quantity
+          quantity: newQuantity
         };
         return newCart;
       }
 
-      return [...prevCart, {
-        productId: product.id,
-        productSku: product.sku,
-        productNameEn: product.nameEn,
-        productNameAr: product.nameAr,
-        quantity,
-        price: product.contractPrice,
-        currency: product.currency || 'ILS',
-        ltaId: product.ltaId,
-      }];
+      // Add new item only if quantity is positive
+      if (quantityChange > 0) {
+        return [...prevCart, {
+          productId: product.id,
+          productSku: product.sku,
+          productNameEn: product.nameEn,
+          productNameAr: product.nameAr,
+          quantity: quantityChange,
+          price: product.contractPrice,
+          currency: product.currency || 'ILS',
+          ltaId: product.ltaId,
+        }];
+      }
+
+      return prevCart;
     });
 
-    if (!activeLtaId) {
+    if (!activeLtaId && quantityChange > 0) {
       setActiveLtaId(product.ltaId);
     }
-
-    toast({
-      description: language === 'ar'
-        ? `تمت إضافة ${quantity} من ${product.nameAr} إلى السلة`
-        : `${quantity} ${product.nameEn} added to cart`
-    });
-  }, [activeLtaId, setCart, setActiveLtaId, toast, language]);
+  }, [cart, activeLtaId, toast, language, setCart, setActiveLtaId]);
 
   const handleSubmitOrder = useCallback(() => {
     // Validate all items from same LTA
@@ -556,6 +566,11 @@ export default function OrderingPage() {
       setLocation(productUrl);
     };
 
+    // Function to handle quantity changes directly from the card
+    const handleQuantityChange = (change: number) => {
+      handleAddToCart(product, change);
+    };
+
     return (
       <Card
         className={cn(
@@ -676,29 +691,63 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
+        <CardFooter className="p-4 pt-0 gap-2 relative z-20">
           {product.hasPrice ? (
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleAddToCart(product, 1);
-              }}
-              disabled={isDifferentLta}
-              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
-              size="lg"
-              data-testid={`button-add-to-cart-${product.id}`}
-            >
-              <ShoppingCart className="w-4 h-4 me-2" />
-              <span>
-                {isDifferentLta
-                  ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-                  : cartItem
-                  ? (language === 'ar' ? 'أضف المزيد' : 'Add More')
-                  : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
-                }
-              </span>
-            </Button>
+            <div className="flex items-center justify-between w-full">
+              {cartItem ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="rounded-full h-8 w-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleQuantityChange(-1);
+                    }}
+                    disabled={isDifferentLta}
+                    data-testid={`button-decrement-cart-${product.id}`}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="font-semibold w-6 text-center">{cartItem.quantity}</span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="rounded-full h-8 w-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleQuantityChange(1);
+                    }}
+                    disabled={isDifferentLta}
+                    data-testid={`button-increment-cart-${product.id}`}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddToCart(product, 1);
+                  }}
+                  disabled={isDifferentLta}
+                  className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md"
+                  size="lg"
+                  data-testid={`button-add-to-cart-${product.id}`}
+                >
+                  <ShoppingCart className="w-4 h-4 me-2" />
+                  <span>
+                    {isDifferentLta
+                      ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                      : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
+                    }
+                  </span>
+                </Button>
+              )}
+            </div>
           ) : (
             <Button
               onClick={(e) => {
@@ -724,8 +773,7 @@ export default function OrderingPage() {
             </Button>
           )}
         </CardFooter>
-
-        </Card>
+      </Card>
     );
   }
 
