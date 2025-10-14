@@ -10,7 +10,8 @@ export function useProductFilters(
 ) {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const matchesLta = selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter;
+      // Only show products from the selected LTA
+      const matchesLta = !selectedLtaFilter || p.ltaId === selectedLtaFilter;
       const matchesSearch = searchQuery === '' ||
         p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.nameAr.includes(searchQuery) ||

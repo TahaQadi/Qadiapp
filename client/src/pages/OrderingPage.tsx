@@ -93,7 +93,7 @@ export default function OrderingPage() {
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('all');
+  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [scrolled, setScrolled] = useState(false);
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
@@ -129,6 +129,13 @@ export default function OrderingPage() {
   const { data: clientLtas = [], isLoading: ltasLoading } = useQuery<Lta[]>({
     queryKey: ['/api/client/ltas'],
   });
+
+  // Set initial LTA filter to first LTA when loaded
+  useEffect(() => {
+    if (clientLtas.length > 0 && !selectedLtaFilter) {
+      setSelectedLtaFilter(clientLtas[0].id);
+    }
+  }, [clientLtas, selectedLtaFilter]);
 
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery<Template[]>({
@@ -995,7 +1002,7 @@ export default function OrderingPage() {
                 {/* LTA Tabs */}
                 {clientLtas.length > 0 ? (
                   <div className="bg-card/50 rounded-lg p-3 sm:p-4 border border-border/50">
-                    <Tabs value={selectedLtaFilter === 'all' ? (clientLtas[0]?.id || 'all') : selectedLtaFilter} onValueChange={setSelectedLtaFilter} className="w-full">
+                    <Tabs value={selectedLtaFilter || clientLtas[0]?.id || ''} onValueChange={setSelectedLtaFilter} className="w-full">
                       <div className="relative">
                         <TabsList className="w-full inline-flex items-center justify-start h-auto gap-2 p-1 bg-muted rounded-md overflow-x-auto flex-nowrap">
                           {clientLtas.map(lta => (
