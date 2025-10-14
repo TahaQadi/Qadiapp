@@ -2026,10 +2026,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('PDF generated, buffer size:', pdfBuffer.length);
 
+      // Ensure we have a proper Buffer
+      const bufferToUpload = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+      console.log('Buffer to upload size:', bufferToUpload.length);
+
       // Save PDF to Object Storage
       const fileName = `${offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
       console.log('Uploading PDF to Object Storage:', fileName);
-      const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName);
+      const uploadResult = await PDFStorage.uploadPDF(bufferToUpload, fileName);
 
       if (!uploadResult.ok) {
         return res.status(500).json({

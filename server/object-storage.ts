@@ -20,13 +20,18 @@ export class PDFStorage {
     try {
       const fullPath = `${this.PDF_FOLDER}${fileName}`;
       
-      const { ok, error } = await client.uploadFromBytes(fullPath, pdfBuffer);
+      // Convert Buffer to Uint8Array for Object Storage
+      const uint8Array = new Uint8Array(pdfBuffer);
+      console.log('Uploading PDF as Uint8Array, size:', uint8Array.length);
+      
+      const { ok, error } = await client.uploadFromBytes(fullPath, uint8Array);
       
       if (!ok) {
         console.error('Failed to upload PDF to Object Storage:', error);
         return { ok: false, error: error?.message || 'Upload failed' };
       }
 
+      console.log('PDF uploaded successfully to:', fullPath);
       return { ok: true, fileName: fullPath };
     } catch (error: any) {
       console.error('Error uploading PDF:', error);
@@ -39,14 +44,24 @@ export class PDFStorage {
       console.log('Attempting to download from Object Storage:', fileName);
       const { ok, value, error } = await client.downloadAsBytes(fileName);
       
-      if (!ok || !value) {
+      if (!ok) {
         console.error('Failed to download PDF from Object Storage:', error);
         return { ok: false, error: error?.message || 'Download failed' };
       }
 
-      // Ensure we have a proper Buffer
-      const buffer = value instanceof Uint8Array ? Buffer.from(value) : Buffer.from(value as any);
-      console.log('Downloaded PDF buffer size:', buffer.length);
+      if (!value || value.length === 0) {
+        console.error('Downloaded empty or null value');
+        return { ok: false, error: 'Downloaded file is empty' };
+      }
+
+      // Convert Uint8Array to Buffer
+      const buffer = Buffer.from(value);
+      console.log('Downloaded PDF buffer size:', buffer.length, 'bytes');
+      
+      if (buffer.length < 100) {
+        console.error('Downloaded buffer is suspiciously small:', buffer.length);
+        return { ok: false, error: 'Downloaded file appears corrupted (too small)' };
+      }
       
       return { ok: true, data: buffer };
     } catch (error: any) {
