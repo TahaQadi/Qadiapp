@@ -213,6 +213,9 @@ export default function OrderingPage() {
 
   // Optimized add to cart handler - must be before conditional logic
   const handleAddToCart = useCallback((product: ProductWithLtaPrice, quantityChange: number = 1) => {
+    // Preserve scroll position
+    const scrollPosition = window.scrollY;
+    
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
         variant: 'destructive',
@@ -278,6 +281,11 @@ export default function OrderingPage() {
     if (!activeLtaId && quantityChange > 0) {
       setActiveLtaId(product.ltaId);
     }
+
+    // Restore scroll position after state update
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPosition);
+    });
   }, [cart, activeLtaId, toast, language, setCart, setActiveLtaId]);
 
   const handleSubmitOrder = useCallback(() => {
@@ -557,6 +565,8 @@ export default function OrderingPage() {
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
     const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
     const [, setLocation] = useLocation();
+    const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
+    const [customQuantity, setCustomQuantity] = useState(1);
 
     const productSlug = product.nameEn?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
     const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
@@ -569,6 +579,20 @@ export default function OrderingPage() {
     // Function to handle quantity changes directly from the card
     const handleQuantityChange = (change: number) => {
       handleAddToCart(product, change);
+    };
+
+    // Calculate final quantity based on type
+    const getFinalQuantity = (qty: number) => {
+      if (quantityType === 'box' && product.unitPerBox) {
+        return qty * parseInt(product.unitPerBox);
+      }
+      return qty;
+    };
+
+    const handleAddWithQuantity = () => {
+      const finalQty = getFinalQuantity(customQuantity);
+      handleAddToCart(product, finalQty);
+      setCustomQuantity(1); // Reset after adding
     };
 
     return (
@@ -691,15 +715,15 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2 relative z-20">
+        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
           {product.hasPrice ? (
-            <div className="flex items-center justify-between w-full">
+            <>
               {cartItem ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full">
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-full h-8 w-8"
+                    className="rounded-full h-8 w-8 flex-shrink-0"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -710,11 +734,11 @@ export default function OrderingPage() {
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="font-semibold w-6 text-center">{cartItem.quantity}</span>
+                  <span className="font-semibold text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}</span>
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-full h-8 w-8"
+                    className="rounded-full h-8 w-8 flex-shrink-0"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -727,27 +751,114 @@ export default function OrderingPage() {
                   </Button>
                 </div>
               ) : (
-                <Button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleAddToCart(product, 1);
-                  }}
-                  disabled={isDifferentLta}
-                  className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md"
-                  size="lg"
-                  data-testid={`button-add-to-cart-${product.id}`}
-                >
-                  <ShoppingCart className="w-4 h-4 me-2" />
-                  <span>
-                    {isDifferentLta
-                      ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-                      : (language === 'ar' ? 'أضف إلى السلة' : 'Add to Cart')
-                    }
-                  </span>
-                </Button>
+                <div className="w-full space-y-2">
+                  {/* Quantity Type Selector (only if product has unitPerBox) */}
+                  {product.unitPerBox && (
+                    <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuantityType('pcs');
+                        }}
+                        className={cn(
+                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          quantityType === 'pcs'
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        data-testid={`button-select-pcs-${product.id}`}
+                      >
+                        {language === 'ar' ? 'قطع' : 'Pieces'}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuantityType('box');
+                        }}
+                        className={cn(
+                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          quantityType === 'box'
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        data-testid={`button-select-box-${product.id}`}
+                      >
+                        📦 {language === 'ar' ? 'صناديق' : 'Boxes'}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Quantity Selector and Add Button */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center border rounded-lg flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCustomQuantity(Math.max(1, customQuantity - 1));
+                        }}
+                        className="p-2 hover:bg-muted transition-colors"
+                        data-testid={`button-decrease-qty-${product.id}`}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={customQuantity}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const val = parseInt(e.target.value) || 1;
+                          setCustomQuantity(Math.max(1, val));
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-12 text-center border-x bg-transparent focus:outline-none font-semibold"
+                        data-testid={`input-quantity-${product.id}`}
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCustomQuantity(customQuantity + 1);
+                        }}
+                        className="p-2 hover:bg-muted transition-colors"
+                        data-testid={`button-increase-qty-${product.id}`}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                    
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddWithQuantity();
+                      }}
+                      disabled={isDifferentLta}
+                      className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md"
+                      data-testid={`button-add-to-cart-${product.id}`}
+                    >
+                      <ShoppingCart className="w-4 h-4 me-2" />
+                      <span className="truncate">
+                        {isDifferentLta
+                          ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                          : (language === 'ar' ? 'أضف' : 'Add')
+                        }
+                      </span>
+                    </Button>
+                  </div>
+                  
+                  {/* Show total pieces when box is selected */}
+                  {quantityType === 'box' && product.unitPerBox && customQuantity > 0 && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      = {getFinalQuantity(customQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
+                    </p>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           ) : (
             <Button
               onClick={(e) => {
