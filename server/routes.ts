@@ -364,8 +364,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const client = await storage.getClient(req.client.id);
-      const products = [];
+      if (!client) {
+        return res.status(404).json({
+          message: "Client not found",
+          messageAr: "العميل غير موجود"
+        });
+      }
 
+      const products = [];
       for (const productId of productIds) {
         const product = await storage.getProduct(productId);
         if (product) {
@@ -373,25 +379,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      if (products.length === 0) {
+        return res.status(400).json({
+          message: "No valid products found",
+          messageAr: "لم يتم العثور على منتجات صالحة"
+        });
+      }
+
       // Create notification for admins
       const admins = await storage.getAdminClients();
+      console.log(`Creating price request notifications for ${admins.length} admins`);
+      
       for (const admin of admins) {
-        await storage.createNotification({
+        const notification = await storage.createNotification({
           clientId: admin.id,
           type: 'price_request',
           titleEn: 'New Price Offer Request',
           titleAr: 'طلب عرض سعر جديد',
-          messageEn: `${client?.nameEn} has requested pricing for ${products.length} product(s)`,
-          messageAr: `طلب ${client?.nameAr} تسعير لـ ${products.length} منتج`,
+          messageEn: `${client.nameEn} has requested pricing for ${products.length} product(s)`,
+          messageAr: `طلب ${client.nameAr} تسعير لـ ${products.length} منتج`,
           metadata: JSON.stringify({
             clientId: req.client.id,
-            clientNameEn: client?.nameEn,
-            clientNameAr: client?.nameAr,
+            clientNameEn: client.nameEn,
+            clientNameAr: client.nameAr,
             productIds,
             products: products.map(p => ({ id: p.id, sku: p.sku, nameEn: p.nameEn, nameAr: p.nameAr })),
             message: message || null
           }),
         });
+        console.log(`Created notification ${notification.id} for admin ${admin.id}`);
       }
 
       // Create notification for client
@@ -410,8 +426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messageAr: "تم إرسال طلب السعر بنجاح"
       });
     } catch (error) {
+      console.error('Price request error:', error);
       res.status(500).json({
-        message: error instanceof Error ? error instanceof Error ? error.message : 'Unknown error' : 'Unknown error',
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إرسال طلب السعر"
       });
     }

@@ -230,7 +230,7 @@ export default function OrderingPage() {
 
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(item => item.productId === product.id);
-      
+
       if (existingItemIndex > -1) {
         const newCart = [...prevCart];
         newCart[existingItemIndex] = {
@@ -239,7 +239,7 @@ export default function OrderingPage() {
         };
         return newCart;
       }
-      
+
       return [...prevCart, {
         productId: product.id,
         productSku: product.sku,
@@ -384,36 +384,54 @@ export default function OrderingPage() {
     });
   }, [toast, language]);
 
-  const handleSubmitPriceRequest = useCallback(() => {
+  const handleSubmitPriceRequest = async () => {
     if (priceRequestList.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'قائمة فارغة' : 'Empty List',
-        description: language === 'ar' 
-          ? 'يرجى إضافة منتجات إلى القائمة أولاً' 
-          : 'Please add products to the list first'
-      });
-      return;
-    }
-
-    const productIds = priceRequestList.map(item => item.productId).filter(Boolean);
-
-    if (productIds.length === 0) {
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: language === 'ar' 
-          ? 'لا توجد منتجات صالحة للإرسال' 
-          : 'No valid products to send'
+          ? 'يرجى إضافة منتجات لطلب السعر' 
+          : 'Please add products to request price'
       });
       return;
     }
 
-    requestPriceMutation.mutate({
-      productIds,
-      message: priceRequestMessage.trim() || '',
-    });
-  }, [priceRequestList, priceRequestMessage, requestPriceMutation, toast, language]);
+    try {
+      const productIds = priceRequestList.map(item => item.productId);
+
+      const res = await apiRequest('POST', '/api/client/price-request', {
+        productIds,
+        message: priceRequestMessage || undefined
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to submit price request');
+      }
+
+      const data = await res.json();
+
+      toast({
+        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+
+      setPriceRequestList([]);
+      setPriceRequestMessage('');
+      setPriceRequestDialogOpen(false);
+
+      // Invalidate both notifications and products to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    } catch (error: any) {
+      console.error('Price request error:', error);
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل إرسال الطلب' : 'Failed to submit request'),
+      });
+    }
+  };
 
   const handleClearFilters = useCallback(() => {
     setSearchQuery('');
