@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -99,6 +99,21 @@ export default function OrderingPage() {
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
+
+  // Ref to store scroll position for restoration after cart updates
+  const scrollPositionRef = useRef<number | null>(null);
+
+  // Restore scroll position after cart updates
+  useEffect(() => {
+    if (scrollPositionRef.current !== null) {
+      // Use setTimeout to ensure DOM has fully updated
+      const timeoutId = setTimeout(() => {
+        window.scrollTo(0, scrollPositionRef.current!);
+        scrollPositionRef.current = null; // Reset after restoration
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [cart]);
 
   // Load price request list from sessionStorage on mount
   useEffect(() => {
@@ -213,9 +228,6 @@ export default function OrderingPage() {
 
   // Optimized add to cart handler - must be before conditional logic
   const handleAddToCart = useCallback((product: ProductWithLtaPrice, quantityChange: number = 1) => {
-    // Preserve scroll position
-    const scrollPosition = window.scrollY;
-    
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
         variant: 'destructive',
@@ -247,6 +259,8 @@ export default function OrderingPage() {
 
         // Remove item if quantity becomes 0 or less
         if (newQuantity <= 0) {
+          // Preserve scroll position before state change
+          scrollPositionRef.current = window.scrollY;
           newCart.splice(existingItemIndex, 1);
           if (newCart.length === 0) {
             setActiveLtaId(null);
@@ -254,6 +268,8 @@ export default function OrderingPage() {
           return newCart;
         }
 
+        // Preserve scroll position before state change
+        scrollPositionRef.current = window.scrollY;
         newCart[existingItemIndex] = {
           ...newCart[existingItemIndex],
           quantity: newQuantity
@@ -263,6 +279,8 @@ export default function OrderingPage() {
 
       // Add new item only if quantity is positive
       if (quantityChange > 0 && product.contractPrice && product.ltaId) {
+        // Preserve scroll position before state change
+        scrollPositionRef.current = window.scrollY;
         return [...prevCart, {
           productId: product.id,
           productSku: product.sku,
@@ -275,17 +293,13 @@ export default function OrderingPage() {
         }];
       }
 
+      // No change to cart, don't set scroll ref
       return prevCart;
     });
 
     if (!activeLtaId && quantityChange > 0) {
       setActiveLtaId(product.ltaId);
     }
-
-    // Restore scroll position after state update
-    requestAnimationFrame(() => {
-      window.scrollTo(0, scrollPosition);
-    });
   }, [cart, activeLtaId, toast, language, setCart, setActiveLtaId]);
 
   const handleSubmitOrder = useCallback(() => {
