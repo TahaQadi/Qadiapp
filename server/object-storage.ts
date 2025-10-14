@@ -36,6 +36,7 @@ export class PDFStorage {
 
   static async downloadPDF(fileName: string): Promise<{ ok: boolean; data?: Buffer; error?: string }> {
     try {
+      console.log('Attempting to download from Object Storage:', fileName);
       const { ok, value, error } = await client.downloadAsBytes(fileName);
       
       if (!ok || !value) {
@@ -43,7 +44,11 @@ export class PDFStorage {
         return { ok: false, error: error?.message || 'Download failed' };
       }
 
-      return { ok: true, data: Buffer.from(value) };
+      // Ensure we have a proper Buffer
+      const buffer = value instanceof Uint8Array ? Buffer.from(value) : Buffer.from(value as any);
+      console.log('Downloaded PDF buffer size:', buffer.length);
+      
+      return { ok: true, data: buffer };
     } catch (error: any) {
       console.error('Error downloading PDF:', error);
       return { ok: false, error: error.message };

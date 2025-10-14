@@ -2008,6 +2008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + validityDays);
 
+      console.log('Generating PDF for offer:', offerNumber);
       const pdfBuffer = await PDFGenerator.generatePriceOffer({
         offerId: offerNumber,
         offerDate: offerDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
@@ -2023,8 +2024,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         language: language as 'en' | 'ar'
       });
 
+      console.log('PDF generated, buffer size:', pdfBuffer.length);
+
       // Save PDF to Object Storage
       const fileName = `${offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
+      console.log('Uploading PDF to Object Storage:', fileName);
       const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName);
 
       if (!uploadResult.ok) {
@@ -2192,9 +2196,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      console.log('Downloading PDF:', fileName);
       const downloadResult = await PDFStorage.downloadPDF(fileName);
 
       if (!downloadResult.ok || !downloadResult.data) {
+        console.error('PDF not found:', fileName, downloadResult.error);
         return res.status(404).json({
           message: "PDF not found",
           messageAr: "لم يتم العثور على PDF",
@@ -2210,18 +2216,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? downloadResult.data 
         : Buffer.from(downloadResult.data);
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Length', pdfBuffer.length.toString());
-      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Accept-Ranges', 'bytes');
+      console.log('Sending PDF, size:', pdfBuffer.length);
+
+      // Set headers for PDF download
+      res.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Length': pdfBuffer.length,
+        'Content-Disposition': `attachment; filename="${displayFileName}"`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
       
-      // Send as binary buffer
-      res.end(pdfBuffer, 'binary');
+      // Send buffer and end response
+      res.end(pdfBuffer);
     } catch (error) {
       console.error('PDF download error:', error);
       res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error' || "Failed to download PDF",
+        message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "فشل تنزيل PDF"
       });
     }

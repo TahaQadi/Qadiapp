@@ -2,7 +2,6 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
-import { Readable } from 'stream';
 
 interface PriceOfferItem {
   sku: string;
@@ -29,8 +28,6 @@ interface PriceOfferData {
 }
 
 export class PDFGenerator {
-  private static readonly FONTS_DIR = path.join(process.cwd(), 'server', 'fonts');
-  private static readonly SIGNATURE_PATH = path.join(process.cwd(), 'server', 'assets', 'signature.png');
   private static readonly LOGO_PATH = path.join(process.cwd(), 'client', 'public', 'logo.png');
   
   // Company information constants
@@ -49,17 +46,29 @@ export class PDFGenerator {
           size: 'A4',
           margins: { top: 120, bottom: 80, left: 50, right: 50 },
           bufferPages: true,
-          autoFirstPage: true
+          autoFirstPage: true,
+          compress: true
         });
 
         const chunks: Buffer[] = [];
-        doc.on('data', (chunk) => chunks.push(chunk));
-        doc.on('end', () => {
-          const pdfBuffer = Buffer.concat(chunks);
-          resolve(pdfBuffer);
+        
+        doc.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
         });
-        doc.on('error', (err) => {
-          console.error('PDF generation error:', err);
+        
+        doc.on('end', () => {
+          try {
+            const pdfBuffer = Buffer.concat(chunks);
+            console.log('PDF generated successfully, size:', pdfBuffer.length);
+            resolve(pdfBuffer);
+          } catch (err) {
+            console.error('Error concatenating PDF chunks:', err);
+            reject(err);
+          }
+        });
+        
+        doc.on('error', (err: Error) => {
+          console.error('PDF document error:', err);
           reject(err);
         });
 
@@ -245,21 +254,19 @@ export class PDFGenerator {
         const signatureY = Math.max(doc.y, 650);
         doc.fillColor('#000000');
 
-        // Add signature image if exists
-        if (fs.existsSync(this.SIGNATURE_PATH)) {
-          doc.image(this.SIGNATURE_PATH, 80, signatureY, { width: 120 });
-        }
-
+        // Signature line and text (no image needed)
         doc.fontSize(10)
           .font('Helvetica-Bold')
-          .text('_____________________', 80, signatureY + 60)
-          .text(data.language === 'ar' ? 'التوقيع المعتمد' : 'Authorized Signature', 80, signatureY + 75, { align: 'center', width: 120 });
+          .text('_____________________', 80, signatureY)
+          .text(data.language === 'ar' ? 'التوقيع المعتمد' : 'Authorized Signature', 80, signatureY + 15, { align: 'center', width: 120 });
 
         // Draw footer on first/last page
         this.drawFooter(doc, data.language, doc.page.height);
 
+        // Finalize the PDF
         doc.end();
       } catch (error) {
+        console.error('PDF generation exception:', error);
         reject(error);
       }
     });
@@ -276,8 +283,13 @@ export class PDFGenerator {
       .fillAndStroke('#d4af37', '#d4af37');
 
     // Add logo if exists
-    if (fs.existsSync(this.LOGO_PATH)) {
-      doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
+    try {
+      if (fs.existsSync(this.LOGO_PATH)) {
+        doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
+      }
+    } catch (logoError) {
+      console.warn('Could not load logo:', logoError);
+      // Continue without logo
     }
 
     // Company name
