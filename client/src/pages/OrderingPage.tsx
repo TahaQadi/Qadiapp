@@ -23,15 +23,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import type { Product, Lta } from '@shared/schema';
 import { SEO } from "@/components/SEO";
 import { safeJsonParse } from '@/lib/safeJson';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
+import { cn } from '@/lib/utils';
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -198,30 +199,7 @@ export default function OrderingPage() {
     selectedLtaFilter
   );
 
-  // Check for empty state or loading states
-  if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
-    return (
-      <>
-        <SEO
-          title={isArabic ? "الطلبات" : "Orders"}
-          description={isArabic ? "إدارة طلباتك وسلة التسوق" : "Manage your orders and shopping cart"}
-          noIndex={true}
-        />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">
-              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-            </p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-
-
-
+  // Define all callbacks and memoized values before any early returns
   const handleAddToCart = useCallback((product: ProductWithLtaPrice) => {
     // Check if product has a price
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
@@ -435,7 +413,7 @@ export default function OrderingPage() {
   const handleReorder = (formattedOrder: { id: string; createdAt: Date; itemCount: number; totalAmount: string; status: string; currency: string }) => {
     const originalOrder = orders.find(o => o.id === formattedOrder.id);
     if (!originalOrder) return;
-    
+
     const orderItems = safeJsonParse(originalOrder.items, []) as any[];
     const newCartItems: CartItem[] = [];
 
@@ -865,6 +843,27 @@ export default function OrderingPage() {
         </CardFooter>
 
         </Card>
+    );
+  }
+
+  // Check for empty state or loading states
+  if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
+    return (
+      <>
+        <SEO
+          title={isArabic ? "الطلبات" : "Orders"}
+          description={isArabic ? "إدارة طلباتك وسلة التسوق" : "Manage your orders and shopping cart"}
+          noIndex={true}
+        />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">
+              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+            </p>
+          </div>
+        </div>
+      </>
     );
   }
 
