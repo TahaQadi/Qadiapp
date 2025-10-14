@@ -65,6 +65,7 @@ interface Order {
   totalAmount: string;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered';
   createdAt: string;
+  currency: string;
   pipefyCardId?: string;
 }
 
@@ -183,7 +184,7 @@ export default function OrderingPage() {
   });
 
   // Get unique categories from products
-  const categories = ['all', ...new Set((products || []).map(p => p.category).filter(Boolean))];
+  const categories = ['all', ...Array.from(new Set((products || []).map(p => p.category).filter(Boolean)))];
 
   // Check for empty state or loading states
   if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
@@ -260,7 +261,7 @@ export default function OrderingPage() {
         productNameAr: product.nameAr,
         quantity: 1, // Default quantity is 1
         price: product.contractPrice,
-        currency: product.currency,
+        currency: product.currency || 'ILS',
         ltaId: product.ltaId,
       }]);
       // Set active LTA if cart was empty
@@ -351,21 +352,21 @@ export default function OrderingPage() {
   };
 
   const handleLoadTemplate = (templateData: { id: string; nameEn: string; nameAr: string; items: string; createdAt: Date }) => {
-    const templateItems = safeJsonParse(templateData.items, []);
+    const templateItems = safeJsonParse(templateData.items, []) as any[];
     const newCartItems: CartItem[] = [];
 
     for (const item of templateItems) {
       if (item && typeof item === 'object' && 'productId' in item && 'quantity' in item) {
-        const product = products.find(p => p.id === item.productId);
-        if (product) {
+        const product = products.find(p => p.id === (item as any).productId);
+        if (product && product.contractPrice && product.ltaId) {
           newCartItems.push({
             productId: product.id,
             productNameEn: product.nameEn,
             productNameAr: product.nameAr,
             price: product.contractPrice,
-            quantity: item.quantity,
+            quantity: (item as any).quantity,
             productSku: product.sku,
-            currency: product.currency,
+            currency: product.currency || 'ILS',
             ltaId: product.ltaId,
           });
         }
@@ -462,25 +463,25 @@ export default function OrderingPage() {
     });
   };
 
-  const handleReorder = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    const orderItems = safeJsonParse(order.items, []);
+  const handleReorder = (formattedOrder: { id: string; createdAt: Date; itemCount: number; totalAmount: string; status: string; currency: string }) => {
+    const originalOrder = orders.find(o => o.id === formattedOrder.id);
+    if (!originalOrder) return;
+    
+    const orderItems = safeJsonParse(originalOrder.items, []) as any[];
     const newCartItems: CartItem[] = [];
 
     for (const item of orderItems) {
       if (item && typeof item === 'object' && 'productId' in item && 'quantity' in item) {
-        const product = products.find(p => p.id === item.productId);
-        if (product) {
+        const product = products.find(p => p.id === (item as any).productId);
+        if (product && product.contractPrice && product.ltaId) {
           newCartItems.push({
             productId: product.id,
             productNameEn: product.nameEn,
             productNameAr: product.nameAr,
             price: product.contractPrice,
-            quantity: item.quantity,
+            quantity: (item as any).quantity,
             productSku: product.sku,
-            currency: product.currency,
+            currency: product.currency || 'ILS',
             ltaId: product.ltaId,
           });
         }
@@ -501,10 +502,10 @@ export default function OrderingPage() {
     }
   };
 
-  const handleViewOrderDetails = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (order) {
-      setSelectedOrder(order);
+  const handleViewOrderDetails = (formattedOrder: { id: string; createdAt: Date; itemCount: number; totalAmount: string; status: string; currency: string }) => {
+    const originalOrder = orders.find(o => o.id === formattedOrder.id);
+    if (originalOrder) {
+      setSelectedOrder(originalOrder);
       setOrderDetailsDialogOpen(true);
     }
   };
@@ -512,14 +513,14 @@ export default function OrderingPage() {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const formattedOrders = orders.map(order => {
-    const orderItems = safeJsonParse(order.items, []);
+    const orderItems = safeJsonParse(order.items, []) as any[];
     return {
       id: order.id,
       createdAt: new Date(order.createdAt),
       itemCount: orderItems.length,
       totalAmount: order.totalAmount,
       status: order.status,
-      currency: orderItems[0]?.currency || 'USD',
+      currency: orderItems[0]?.currency || order.currency || 'ILS',
     };
   });
 
@@ -617,7 +618,7 @@ export default function OrderingPage() {
           productNameAr: product.nameAr,
           quantity: finalQuantity,
           price: product.contractPrice,
-          currency: product.currency,
+          currency: product.currency || 'ILS',
           ltaId: product.ltaId,
         }]);
         // Set active LTA if cart was empty
@@ -1764,7 +1765,10 @@ export default function OrderingPage() {
         <OrderDetailsDialog
           open={orderDetailsDialogOpen}
           onOpenChange={setOrderDetailsDialogOpen}
-          order={selectedOrder}
+          order={selectedOrder ? {
+            ...selectedOrder,
+            createdAt: new Date(selectedOrder.createdAt)
+          } : null}
         />
 
         {/* Price Request Dialog */}
