@@ -47,13 +47,21 @@ export class PDFGenerator {
       try {
         const doc = new PDFDocument({
           size: 'A4',
-          margins: { top: 120, bottom: 80, left: 50, right: 50 }
+          margins: { top: 120, bottom: 80, left: 50, right: 50 },
+          bufferPages: true,
+          autoFirstPage: true
         });
 
         const chunks: Buffer[] = [];
         doc.on('data', (chunk) => chunks.push(chunk));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
-        doc.on('error', reject);
+        doc.on('end', () => {
+          const pdfBuffer = Buffer.concat(chunks);
+          resolve(pdfBuffer);
+        });
+        doc.on('error', (err) => {
+          console.error('PDF generation error:', err);
+          reject(err);
+        });
 
         // Draw professional header with letterhead design
         this.drawHeader(doc, data.language);

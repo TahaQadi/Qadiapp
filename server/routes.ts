@@ -2205,12 +2205,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract just the filename for the download
       const displayFileName = fileName.split('/').pop() || 'document.pdf';
 
+      // Ensure we're sending a proper Buffer
+      const pdfBuffer = Buffer.isBuffer(downloadResult.data) 
+        ? downloadResult.data 
+        : Buffer.from(downloadResult.data);
+
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Length', downloadResult.data.length.toString());
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
       res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
       res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Accept-Ranges', 'bytes');
       
-      res.send(downloadResult.data);
+      // Send as binary buffer
+      res.end(pdfBuffer, 'binary');
     } catch (error) {
       console.error('PDF download error:', error);
       res.status(500).json({
