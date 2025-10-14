@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
+import { ProductGrid } from '@/components/ProductGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -20,27 +21,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Save, Eye, Loader2, DollarSign, AlertCircle, Clock, Settings, Search, History, Menu, Plus, Minus } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Link, useLocation } from 'wouter';
+import { Link } from 'wouter';
 import type { Product, Lta } from '@shared/schema';
-import { cn } from '@/lib/utils';
 import { SEO } from "@/components/SEO";
 import { safeJsonParse } from '@/lib/safeJson';
+import { useProductFilters } from '@/hooks/useProductFilters';
+import { useCartActions } from '@/hooks/useCartActions';
 
-interface ProductWithLtaPrice extends Product {
+export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
   currency?: string;
   ltaId?: string;
   hasPrice: boolean;
 }
 
-interface CartItem {
+export interface CartItem {
   productId: string;
   productSku: string;
   productNameEn: string;
@@ -78,10 +78,17 @@ export default function OrderingPage() {
   const isArabic = language === 'ar';
 
   const [cartOpen, setCartOpen] = useState(false);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const {
+    cart,
+    setCart,
+    activeLtaId,
+    setActiveLtaId,
+    handleUpdateQuantity,
+    handleRemoveItem,
+    handleClearCart
+  } = useCartActions();
   const [searchQuery, setSearchQuery] = useState('');
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
-  const [activeLtaId, setActiveLtaId] = useState<string | null>(null);
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -183,8 +190,13 @@ export default function OrderingPage() {
     },
   });
 
-  // Get unique categories from products
-  const categories = ['all', ...Array.from(new Set((products || []).map(p => p.category).filter(Boolean)))];
+  // Use memoized product filters
+  const { filteredProducts, categories } = useProductFilters(
+    products || [],
+    searchQuery,
+    selectedCategory,
+    selectedLtaFilter
+  );
 
   // Check for empty state or loading states
   if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
@@ -210,18 +222,7 @@ export default function OrderingPage() {
 
 
 
-  const filteredProducts = (products || []).filter(p => {
-    const matchesLta = selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter;
-    const matchesSearch = searchQuery === '' ||
-      p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.nameAr.includes(searchQuery) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    return matchesLta && matchesSearch && matchesCategory;
-  });
-
-
-  const handleAddToCart = (product: ProductWithLtaPrice) => {
+  const handleAddToCart = useCallback((product: ProductWithLtaPrice) => {
     // Check if product has a price
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
@@ -275,41 +276,9 @@ export default function OrderingPage() {
         ? `تمت إضافة 1 من ${product.nameAr} إلى السلة`
         : `1 ${product.nameEn} added to cart`
     });
-  };
+  }, [cart, activeLtaId, setCart, setActiveLtaId, toast, language]);
 
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setCart(cart.filter(item => item.productId !== productId));
-    } else {
-      setCart(cart.map(item =>
-        item.productId === productId ? { ...item, quantity } : item
-      ));
-    }
-  };
-
-  const handleRemoveItem = (productId: string) => {
-    const newCart = cart.filter(item => item.productId !== productId);
-    setCart(newCart);
-
-    // If cart is empty, reset active LTA
-    if (newCart.length === 0) {
-      setActiveLtaId(null);
-    }
-
-    toast({
-      description: language === 'ar' ? 'تمت إزالة العنصر من السلة' : 'Item removed from cart'
-    });
-  };
-
-  const handleClearCart = () => {
-    setCart([]);
-    setActiveLtaId(null);
-    toast({
-      description: language === 'ar' ? 'تم مسح السلة' : 'Cart cleared'
-    });
-  };
-
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = useCallback(() => {
     // Validate all items from same LTA
     const ltaIds = Array.from(new Set(cart.map(item => item.ltaId)));
     if (ltaIds.length > 1) {
@@ -335,7 +304,7 @@ export default function OrderingPage() {
       totalAmount: total.toFixed(2),
       currency: cart[0]?.currency || 'USD',
     });
-  };
+  }, [cart, toast, language, submitOrderMutation]);
 
   const handleSaveTemplate = (nameEn: string, nameAr: string) => {
     const items = cart.map(item => ({
@@ -510,9 +479,12 @@ export default function OrderingPage() {
     }
   };
 
-  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartItemCount = useMemo(() => 
+    cart.reduce((sum, item) => sum + item.quantity, 0), 
+    [cart]
+  );
 
-  const formattedOrders = orders.map(order => {
+  const formattedOrders = useMemo(() => orders.map(order => {
     const orderItems = safeJsonParse(order.items, []) as any[];
     return {
       id: order.id,
@@ -522,9 +494,9 @@ export default function OrderingPage() {
       status: order.status,
       currency: orderItems[0]?.currency || order.currency || 'ILS',
     };
-  });
+  }), [orders]);
 
-  const formattedTemplates = templates.map(template => {
+  const formattedTemplates = useMemo(() => templates.map(template => {
     const templateItems = safeJsonParse(template.items, []);
     return {
       id: template.id,
@@ -534,17 +506,22 @@ export default function OrderingPage() {
       itemCount: templateItems.length,
       createdAt: new Date(template.createdAt),
     };
-  });
+  }), [templates]);
 
   // Convert cart items to match ShoppingCart component interface
-  const shoppingCartItems = cart.map(item => ({
+  const shoppingCartItems = useMemo(() => cart.map(item => ({
     productId: item.productId,
     nameEn: item.productNameEn,
     nameAr: item.productNameAr,
     price: item.price,
     quantity: item.quantity,
     sku: item.productSku,
-  }));
+  })), [cart]);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+  }, []);
 
   function ProductCard({ product }: { product: ProductWithLtaPrice }) {
     const primaryName = language === 'ar' ? product.nameAr : product.nameEn;
@@ -1269,54 +1246,13 @@ export default function OrderingPage() {
                     ))}
                   </div>
                 </div>
-              ) : filteredProducts.length > 0 ? (
-                <div className="space-y-4">
-                  {/* Results count and sort */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'ar' ? 'عرض' : 'Showing'} <span className="font-semibold text-foreground">{filteredProducts.length}</span> {language === 'ar' ? 'منتج' : 'products'}
-                    </p>
-                  </div>
-
-                  {/* Product Grid */}
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
-                    {filteredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-                </div>
               ) : (
-                <Card className="p-12 text-center border-2 border-dashed">
-                  <div className="max-w-md mx-auto space-y-4">
-                    <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
-                      <Search className="w-10 h-10 text-muted-foreground/50" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-foreground">
-                      {language === 'ar' ? 'لا توجد منتجات' : 'No Products Found'}
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {searchQuery || selectedCategory !== 'all'
-                        ? (language === 'ar'
-                          ? 'لم نتمكن من العثور على أي منتجات تطابق معايير البحث الخاصة بك.'
-                          : 'We couldn\'t find any products matching your search criteria.')
-                        : (language === 'ar'
-                          ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية الخاص بك بعد.'
-                          : 'No products are assigned to your LTA contract yet.')
-                      }
-                    </p>
-                    {(searchQuery || selectedCategory !== 'all') && (
-                      <Button
-                        onClick={() => {
-                          setSearchQuery('');
-                          setSelectedCategory('all');
-                        }}
-                        variant="outline"
-                      >
-                        {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
-                      </Button>
-                    )}
-                  </div>
-                </Card>
+                <ProductGrid
+                  products={filteredProducts}
+                  searchQuery={searchQuery}
+                  selectedCategory={selectedCategory}
+                  onClearFilters={handleClearFilters}
+                />
               )}
             </TabsContent>
 
