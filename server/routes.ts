@@ -2206,7 +2206,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const displayFileName = fileName.split('/').pop() || 'document.pdf';
 
       res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', downloadResult.data.length.toString());
       res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
+      res.setHeader('Cache-Control', 'no-cache');
+      
       res.send(downloadResult.data);
     } catch (error) {
       console.error('PDF download error:', error);
