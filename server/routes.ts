@@ -2205,14 +2205,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract just the filename for the download
       const displayFileName = fileName.split('/').pop() || 'document.pdf';
 
-      // Set proper headers for PDF
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Length', downloadResult.data.length.toString());
-      res.setHeader('Content-Disposition', `inline; filename="${displayFileName}"`);
-      res.setHeader('Cache-Control', 'no-cache');
-      
-      // Send the buffer directly
-      res.end(downloadResult.data, 'binary');
+      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
+      res.send(downloadResult.data);
     } catch (error) {
       console.error('PDF download error:', error);
       res.status(500).json({
