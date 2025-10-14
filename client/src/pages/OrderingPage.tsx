@@ -321,6 +321,8 @@ export default function OrderingPage() {
       productId: item.productId,
       quantity: item.quantity,
       price: item.price,
+      ltaId: item.ltaId,
+      sku: item.productSku,
     }));
 
     submitOrderMutation.mutate({
