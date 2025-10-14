@@ -191,15 +191,7 @@ export default function OrderingPage() {
     },
   });
 
-  // Use memoized product filters
-  const { filteredProducts, categories } = useProductFilters(
-    products || [],
-    searchQuery,
-    selectedCategory,
-    selectedLtaFilter
-  );
-
-  // Optimized add to cart handler
+  // Optimized add to cart handler - must be before conditional logic
   const handleAddToCart = useCallback((product: ProductWithLtaPrice, quantity: number = 1) => {
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
@@ -410,6 +402,19 @@ export default function OrderingPage() {
     });
   }, [priceRequestList, priceRequestMessage, requestPriceMutation, toast, language]);
 
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+  }, []);
+
+  // Use memoized product filters - must be after all hooks
+  const { filteredProducts, categories } = useProductFilters(
+    products || [],
+    searchQuery,
+    selectedCategory,
+    selectedLtaFilter
+  );
+
   const handleReorder = (formattedOrder: { id: string; createdAt: Date; itemCount: number; totalAmount: string; status: string; currency: string }) => {
     const originalOrder = orders.find(o => o.id === formattedOrder.id);
     if (!originalOrder) return;
@@ -495,11 +500,6 @@ export default function OrderingPage() {
     quantity: item.quantity,
     sku: item.productSku,
   })), [cart]);
-
-  const handleClearFilters = useCallback(() => {
-    setSearchQuery('');
-    setSelectedCategory('all');
-  }, []);
 
   function ProductCard({ product }: { product: ProductWithLtaPrice }) {
     const primaryName = language === 'ar' ? product.nameAr : product.nameEn;
