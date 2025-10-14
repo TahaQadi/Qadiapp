@@ -100,6 +100,19 @@ export default function OrderingPage() {
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
 
+  // Load price request list from sessionStorage on mount
+  useEffect(() => {
+    const savedList = sessionStorage.getItem('priceRequestList');
+    if (savedList) {
+      try {
+        const parsedList = JSON.parse(savedList);
+        setPriceRequestList(parsedList);
+        sessionStorage.removeItem('priceRequestList'); // Clear after loading
+      } catch (error) {
+        console.error('Error loading price request list:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
