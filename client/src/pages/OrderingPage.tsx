@@ -199,9 +199,9 @@ export default function OrderingPage() {
     selectedLtaFilter
   );
 
-  // Define all callbacks and memoized values before any early returns
+  // Memoize cart actions for better performance
   const handleAddToCart = useCallback((product: ProductWithLtaPrice) => {
-    // Check if product has a price
+    // Validate product has price
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
         variant: 'destructive',
@@ -213,7 +213,7 @@ export default function OrderingPage() {
       return;
     }
 
-    // Check if cart is empty or product is from same LTA
+    // Validate LTA consistency
     if (activeLtaId && activeLtaId !== product.ltaId) {
       toast({
         variant: 'destructive',
@@ -225,28 +225,34 @@ export default function OrderingPage() {
       return;
     }
 
-    // Directly add to cart with quantity 1
-    const existingItemIndex = cart.findIndex(item => item.productId === product.id);
-
-    if (existingItemIndex > -1) {
-      const newCart = [...cart];
-      newCart[existingItemIndex].quantity += 1;
-      setCart(newCart);
-    } else {
-      setCart([...cart, {
+    // Optimized cart update
+    setCart(prevCart => {
+      const existingItemIndex = prevCart.findIndex(item => item.productId === product.id);
+      
+      if (existingItemIndex > -1) {
+        const newCart = [...prevCart];
+        newCart[existingItemIndex] = {
+          ...newCart[existingItemIndex],
+          quantity: newCart[existingItemIndex].quantity + 1
+        };
+        return newCart;
+      }
+      
+      return [...prevCart, {
         productId: product.id,
         productSku: product.sku,
         productNameEn: product.nameEn,
         productNameAr: product.nameAr,
-        quantity: 1, // Default quantity is 1
+        quantity: 1,
         price: product.contractPrice,
         currency: product.currency || 'ILS',
         ltaId: product.ltaId,
-      }]);
-      // Set active LTA if cart was empty
-      if (!activeLtaId) {
-        setActiveLtaId(product.ltaId);
-      }
+      }];
+    });
+
+    // Set active LTA if cart was empty
+    if (!activeLtaId) {
+      setActiveLtaId(product.ltaId);
     }
 
     toast({
@@ -254,7 +260,7 @@ export default function OrderingPage() {
         ? `تمت إضافة 1 من ${product.nameAr} إلى السلة`
         : `1 ${product.nameEn} added to cart`
     });
-  }, [cart, activeLtaId, setCart, setActiveLtaId, toast, language]);
+  }, [activeLtaId, setCart, setActiveLtaId, toast, language]);
 
   const handleSubmitOrder = useCallback(() => {
     // Validate all items from same LTA
@@ -339,46 +345,45 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
-  const handleAddToPriceRequest = (product: ProductWithLtaPrice) => {
-    const exists = priceRequestList.find(item => item.productId === product.id);
+  const handleAddToPriceRequest = useCallback((product: ProductWithLtaPrice) => {
+    setPriceRequestList(prev => {
+      // Check if already exists
+      if (prev.some(item => item.productId === product.id)) {
+        toast({
+          description: language === 'ar' 
+            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
+            : 'Product already in price request list'
+        });
+        return prev;
+      }
 
-    if (exists) {
       toast({
-        description: language === 'ar' 
-          ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
-          : 'Product already in price request list'
+        description: language === 'ar'
+          ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
+          : `${product.nameEn} added to price request list`
       });
-      return;
-    }
 
-    const newItem = {
-      productId: product.id,
-      productSku: product.sku,
-      productNameEn: product.nameEn,
-      productNameAr: product.nameAr,
-      quantity: 1,
-      price: '0',
-      currency: 'USD',
-      ltaId: '',
-    };
-
-    setPriceRequestList(prev => [...prev, newItem]);
-
-    toast({
-      description: language === 'ar'
-        ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
-        : `${product.nameEn} added to price request list`
+      return [...prev, {
+        productId: product.id,
+        productSku: product.sku,
+        productNameEn: product.nameEn,
+        productNameAr: product.nameAr,
+        quantity: 1,
+        price: '0',
+        currency: 'USD',
+        ltaId: '',
+      }];
     });
-  };
+  }, [toast, language]);
 
-  const handleRemoveFromPriceRequest = (productId: string) => {
-    setPriceRequestList(priceRequestList.filter(item => item.productId !== productId));
+  const handleRemoveFromPriceRequest = useCallback((productId: string) => {
+    setPriceRequestList(prev => prev.filter(item => item.productId !== productId));
     toast({
       description: language === 'ar' ? 'تمت إزالة المنتج' : 'Product removed'
     });
-  };
+  }, [toast, language]);
 
-  const handleSubmitPriceRequest = () => {
+  const handleSubmitPriceRequest = useCallback(() => {
     if (priceRequestList.length === 0) {
       toast({
         variant: 'destructive',
@@ -390,9 +395,8 @@ export default function OrderingPage() {
       return;
     }
 
-    const productIds = priceRequestList.map(item => item.productId);
+    const productIds = priceRequestList.map(item => item.productId).filter(Boolean);
 
-    // Validate we have product IDs
     if (productIds.length === 0) {
       toast({
         variant: 'destructive',
@@ -408,7 +412,7 @@ export default function OrderingPage() {
       productIds,
       message: priceRequestMessage.trim() || '',
     });
-  };
+  }, [priceRequestList, priceRequestMessage, requestPriceMutation, toast, language]);
 
   const handleReorder = (formattedOrder: { id: string; createdAt: Date; itemCount: number; totalAmount: string; status: string; currency: string }) => {
     const originalOrder = orders.find(o => o.id === formattedOrder.id);
