@@ -6,6 +6,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
+import { PDFGenerator } from "./pdf-generator";
+import { PDFStorage } from "./object-storage";
 import {
   loginSchema,
   priceImportRowSchema,
