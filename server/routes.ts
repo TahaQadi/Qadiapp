@@ -1927,11 +1927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate PDF price offer for a price request
-  app.post('/api/admin/price-requests/:notificationId/generate-pdf', async (req: any, res) => {
-    if (!req.isAuthenticated() || !req.user || req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
+  app.post('/api/admin/price-requests/:notificationId/generate-pdf', requireAdmin, async (req: AdminRequest, res) => {
     try {
       const { notificationId } = req.params;
       const { language, ltaId, validityDays, notes } = req.body;
@@ -2051,7 +2047,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: notes || null,
         pdfFileName: uploadResult.fileName,
         sentAt: new Date(),
-        generatedBy: req.user.id,
+        generatedBy: req.client.id,
       });
 
       // Create notification for client about the price offer
