@@ -259,7 +259,7 @@ export default function OrderingPage() {
       }
 
       // Add new item only if quantity is positive
-      if (quantityChange > 0) {
+      if (quantityChange > 0 && product.contractPrice && product.ltaId) {
         return [...prevCart, {
           productId: product.id,
           productSku: product.sku,
