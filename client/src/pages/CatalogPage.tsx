@@ -1,16 +1,18 @@
 import { useRoute, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, Search, ChevronRight, Laptop, Printer, Monitor, Keyboard, Mouse, Headphones, Cable, Speaker, Camera, Smartphone, Tablet, Watch, HardDrive, Cpu, MemoryStick, Wifi, Router, Boxes } from 'lucide-react';
+import { ArrowLeft, Package, Search, ChevronRight, Laptop, Printer, Monitor, Keyboard, Mouse, Headphones, Cable, Speaker, Camera, Smartphone, Tablet, Watch, HardDrive, Cpu, MemoryStick, Wifi, Router, Boxes, ShoppingCart, Heart } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@shared/schema';
 import { SEO } from "@/components/SEO";
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -22,14 +24,50 @@ interface ProductWithLtaPrice extends Product {
 export default function CatalogPage() {
   const [, params] = useRoute('/catalog/:category');
   const category = params?.category;
+  const { user } = useAuth();
   const { language } = useLanguage();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
   const { data: products = [], isLoading } = useQuery<ProductWithLtaPrice[]>({
-    queryKey: ['/api/products/public'],
+    queryKey: user ? ['/api/products'] : ['/api/products/public'],
   });
+
+  const handleAddToCart = (product: ProductWithLtaPrice) => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'تسجيل الدخول مطلوب' : 'Login Required',
+        description: language === 'ar' ? 'يرجى تسجيل الدخول لإضافة المنتجات' : 'Please login to add products',
+      });
+      return;
+    }
+
+    sessionStorage.setItem('addToCart', JSON.stringify({
+      productId: product.id,
+      sku: product.sku,
+    }));
+    window.location.href = '/ordering';
+  };
+
+  const handleRequestPrice = (product: ProductWithLtaPrice) => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'تسجيل الدخول مطلوب' : 'Login Required',
+        description: language === 'ar' ? 'يرجى تسجيل الدخول لطلب الأسعار' : 'Please login to request prices',
+      });
+      return;
+    }
+
+    sessionStorage.setItem('requestPrice', JSON.stringify({
+      productId: product.id,
+      sku: product.sku,
+    }));
+    window.location.href = '/ordering?tab=price-requests';
+  };
 
   // Extract unique main categories and subcategories
   const mainCategories = [...new Set(products.map(p => p.mainCategory).filter(Boolean))];
@@ -354,6 +392,39 @@ export default function CatalogPage() {
                               </Badge>
                             )}
                           </CardContent>
+                          
+                          {user && (
+                            <CardFooter className="p-3 pt-0">
+                              {product.hasPrice && product.contractPrice ? (
+                                <Button
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAddToCart(product);
+                                  }}
+                                >
+                                  <ShoppingCart className="h-3 w-3 me-2" />
+                                  {language === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRequestPrice(product);
+                                  }}
+                                >
+                                  <Heart className="h-3 w-3 me-2" />
+                                  {language === 'ar' ? 'طلب سعر' : 'Request Price'}
+                                </Button>
+                              )}
+                            </CardFooter>
+                          )}
 
                           {/* Bottom accent line */}
                           <div className="absolute bottom-0 left-0 right-0 h-1 

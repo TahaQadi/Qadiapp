@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -905,17 +905,41 @@ export default function OrderingPage() {
             </p>
           </div>
 
+          {/* Catalog Link Banner */}
+          <Card className="mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 hover:border-primary/40 transition-all duration-300 animate-fade-in">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="p-3 rounded-xl bg-primary/10 flex-shrink-0">
+                    <Package className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-base sm:text-lg mb-1">
+                      {language === 'ar' ? 'تصفح كتالوج المنتجات' : 'Browse Product Catalog'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار' 
+                        : 'Explore all available products and request price quotes'}
+                    </p>
+                  </div>
+                </div>
+                <Button asChild size="lg" className="flex-shrink-0">
+                  <Link href="/catalog">
+                    <Boxes className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'عرض الكتالوج' : 'View Catalog'}
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Tabs defaultValue="lta-products" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
+            <TabsList className="grid w-full grid-cols-4 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
               <TabsTrigger value="lta-products" className="text-sm sm:text-base" data-testid="tab-lta-products">
                 <Package className="h-4 w-4 me-1 sm:me-2" />
                 <span className="hidden xs:inline">{language === 'ar' ? 'اتفاقياتي' : 'My LTAs'}</span>
                 <span className="xs:hidden">{language === 'ar' ? 'اتفاقياتي' : 'LTAs'}</span>
-              </TabsTrigger>
-              <TabsTrigger value="all-products" className="text-sm sm:text-base" data-testid="tab-all-products">
-                <Package className="h-4 w-4 me-1 sm:me-2" />
-                <span className="hidden xs:inline">{language === 'ar' ? 'كل المنتجات' : 'All Products'}</span>
-                <span className="xs:hidden">{language === 'ar' ? 'الكل' : 'All'}</span>
               </TabsTrigger>
               <TabsTrigger value="templates" className="text-sm sm:text-base" data-testid="tab-templates">
                 <FileText className="h-4 w-4 me-1 sm:me-2" />
@@ -1097,186 +1121,6 @@ export default function OrderingPage() {
                   selectedCategory={selectedCategory}
                   onClearFilters={handleClearFilters}
                 />
-              )}
-            </TabsContent>
-
-            {/* All Products Tab - Shows all products */}
-            <TabsContent value="all-products" className="mt-0">
-              <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-                <div className="flex flex-col gap-4 sm:gap-5">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
-                      {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
-                    </h2>
-                    <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
-                      {products.length}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                        <Input
-                          type="search"
-                          placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full h-11 ps-10 border-2 focus-visible:ring-2"
-                          data-testid="input-search-products"
-                        />
-                        {searchQuery && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
-                            onClick={() => setSearchQuery('')}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="w-full sm:w-[220px] h-11 border-2" data-testid="select-category">
-                          <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">
-                            {language === 'ar' ? 'جميع الفئات' : 'All Categories'} ({products.length})
-                          </SelectItem>
-                          {categories.filter(c => c !== 'all').map((category) => {
-                            const count = products.filter(p => p.category === category).length;
-                            return (
-                              <SelectItem key={category} value={category || ''}>
-                                {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')} ({count})
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Active Filters */}
-                    {(searchQuery || selectedCategory !== 'all') && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-muted-foreground">
-                          {language === 'ar' ? 'الفلاتر النشطة:' : 'Active filters:'}
-                        </span>
-                        {searchQuery && (
-                          <Badge variant="secondary" className="gap-1">
-                            {language === 'ar' ? 'بحث:' : 'Search:'} "{searchQuery}"
-                            <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} />
-                          </Badge>
-                        )}
-                        {selectedCategory !== 'all' && (
-                          <Badge variant="secondary" className="gap-1">
-                            {selectedCategory}
-                            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('all')} />
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSearchQuery('');
-                            setSelectedCategory('all');
-                          }}
-                          className="h-6 text-xs"
-                        >
-                          {language === 'ar' ? 'مسح الكل' : 'Clear all'}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {productsLoading ? (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>
-                      {language === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <Card key={i} className="flex flex-col">
-                        <Skeleton className="w-full aspect-square" />
-                        <CardContent className="p-4 space-y-3">
-                          <Skeleton className="h-6 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-8 w-1/3 mt-2" />
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {products.filter(p => {
-                    const matchesSearch = searchQuery === '' ||
-                      p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      p.nameAr.includes(searchQuery) ||
-                      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-                    return matchesSearch && matchesCategory;
-                  }).length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                          {language === 'ar' ? 'عرض' : 'Showing'} <span className="font-semibold text-foreground">{products.filter(p => {
-                            const matchesSearch = searchQuery === '' ||
-                              p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              p.nameAr.includes(searchQuery) ||
-                              p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-                            const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-                            return matchesSearch && matchesCategory;
-                          }).length}</span> {language === 'ar' ? 'منتج' : 'products'}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
-                        {products.filter(p => {
-                          const matchesSearch = searchQuery === '' ||
-                            p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.nameAr.includes(searchQuery) ||
-                            p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-                          const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-                          return matchesSearch && matchesCategory;
-                        }).map((product) => (
-                          <ProductCard key={product.id} product={product} />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <Card className="p-12 text-center border-2 border-dashed">
-                      <div className="max-w-md mx-auto space-y-4">
-                        <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
-                          <Search className="w-10 h-10 text-muted-foreground/50" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-foreground">
-                          {language === 'ar' ? 'لا توجد منتجات' : 'No Products Found'}
-                        </h3>
-                        <p className="text-muted-foreground">
-                          {language === 'ar'
-                            ? 'لم نتمكن من العثور على أي منتجات تطابق معايير البحث الخاصة بك.'
-                            : 'We couldn\'t find any products matching your search criteria.'}
-                        </p>
-                        <Button
-                          onClick={() => {
-                            setSearchQuery('');
-                            setSelectedCategory('all');
-                          }}
-                          variant="outline"
-                        >
-                          {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
-                        </Button>
-                      </div>
-                    </Card>
-                  )}
-                </>
               )}
             </TabsContent>
 
