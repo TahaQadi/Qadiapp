@@ -103,17 +103,12 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
             variant="ghost"
             className="w-full justify-start gap-3 h-11 text-sm relative"
           >
-            <div className="relative">
-              <Bell className="h-4 w-4" />
-              {(unreadCount?.count || 0) > 0 && (
-                <span className="absolute -top-1 -end-1 h-2 w-2 bg-destructive rounded-full ring-2 ring-background animate-pulse" />
-              )}
-            </div>
+            <Bell className="h-4 w-4" />
             <span>{language === 'ar' ? 'الإشعارات' : 'Notifications'}</span>
             {(unreadCount?.count || 0) > 0 && (
               <Badge 
                 variant="destructive" 
-                className="ms-auto h-5 min-w-[1.25rem] px-1.5 flex items-center justify-center text-xs font-semibold"
+                className="ms-auto h-5 min-w-[1.25rem] px-1.5 flex items-center justify-center text-xs font-semibold animate-pulse"
               >
                 {unreadCount!.count > 99 ? '99+' : unreadCount!.count}
               </Badge>
