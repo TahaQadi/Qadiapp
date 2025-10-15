@@ -38,6 +38,8 @@ export default function AdminTemplatesPage() {
     secondaryColor: '#2d3748',
     accentColor: '#d4af37',
     fontSize: 10,
+    fontFamily: 'Helvetica',
+    isDefault: false,
   });
 
   const { data: templates, isLoading } = useQuery({
@@ -130,6 +132,8 @@ export default function AdminTemplatesPage() {
       secondaryColor: '#2d3748',
       accentColor: '#d4af37',
       fontSize: 10,
+      fontFamily: 'Helvetica',
+      isDefault: false,
     });
   };
 
@@ -260,6 +264,7 @@ export default function AdminTemplatesPage() {
                       variant="outline"
                       onClick={() => {
                         setEditingTemplate(template);
+                        const styles = JSON.parse(template.styles);
                         setFormData({
                           nameEn: template.nameEn,
                           nameAr: template.nameAr,
@@ -267,10 +272,12 @@ export default function AdminTemplatesPage() {
                           descriptionAr: template.descriptionAr || '',
                           category: template.category,
                           language: template.language,
-                          primaryColor: JSON.parse(template.styles).primaryColor,
-                          secondaryColor: JSON.parse(template.styles).secondaryColor,
-                          accentColor: JSON.parse(template.styles).accentColor,
-                          fontSize: JSON.parse(template.styles).fontSize,
+                          primaryColor: styles.primaryColor,
+                          secondaryColor: styles.secondaryColor,
+                          accentColor: styles.accentColor,
+                          fontSize: styles.fontSize,
+                          fontFamily: styles.fontFamily || 'Helvetica',
+                          isDefault: false,
                         });
                         setCreateDialogOpen(true);
                       }}
