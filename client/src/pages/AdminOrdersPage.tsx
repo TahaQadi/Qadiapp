@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Filter, Printer, Share2, Download } from 'lucide-react';
+import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package } from 'lucide-react';
 import { Link } from 'wouter';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
@@ -60,7 +60,7 @@ export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
-  const itemsPerPage = 20;
+  const itemsPerPage = 10;
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ['/api/admin/orders'],
@@ -117,7 +117,7 @@ export default function AdminOrdersPage() {
 
     const config = statusConfig[status] || { variant: 'outline' as const, label: status, labelAr: status };
     return (
-      <Badge variant={config.variant} data-testid={`badge-status-${status}`}>
+      <Badge variant={config.variant} data-testid={`badge-status-${status}`} className="text-xs">
         {language === 'ar' ? config.labelAr : config.label}
       </Badge>
     );
@@ -289,7 +289,6 @@ export default function AdminOrdersPage() {
           </div>
           
           <script>
-            // Auto-trigger print dialog after page loads
             if (document.readyState === 'complete') {
               window.print();
             } else {
@@ -430,7 +429,6 @@ export default function AdminOrdersPage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
@@ -457,21 +455,24 @@ export default function AdminOrdersPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="h-9 w-9 sm:h-10 sm:w-10"
+              className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
               data-testid="button-back-admin"
             >
               <Link href="/admin">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
-            <h1 className="text-xl font-semibold">
-              {language === 'ar' ? 'إدارة الطلبات' : 'Orders Management'}
-            </h1>
+            <div className="flex items-center gap-2 min-w-0">
+              <Package className="h-5 w-5 text-primary dark:text-[#d4af37] shrink-0" />
+              <h1 className="text-lg sm:text-xl font-semibold truncate">
+                {language === 'ar' ? 'إدارة الطلبات' : 'Orders Management'}
+              </h1>
+            </div>
             {orders.length > 0 && (
-              <Badge variant="secondary">{orders.length}</Badge>
+              <Badge variant="secondary" className="hidden sm:inline-flex">{orders.length}</Badge>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <LanguageToggle />
             <ThemeToggle />
           </div>
@@ -479,17 +480,20 @@ export default function AdminOrdersPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{language === 'ar' ? 'جميع الطلبات' : 'All Orders'}</CardTitle>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 relative z-10">
+        <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+              {language === 'ar' ? 'جميع الطلبات' : 'All Orders'}
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {/* Filters */}
-            <div className="space-y-4 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder={language === 'ar' ? 'البحث...' : 'Search...'}
                     value={searchQuery}
@@ -514,7 +518,7 @@ export default function AdminOrdersPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="text-sm text-muted-foreground">
                   {language === 'ar'
                     ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} من ${filteredOrders.length} طلب`
@@ -523,25 +527,27 @@ export default function AdminOrdersPage() {
                 </div>
                 
                 {selectedOrders.size > 0 && (
-                  <div className="flex gap-2">
-                    <Badge variant="secondary">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
                       {selectedOrders.size} {language === 'ar' ? 'محدد' : 'selected'}
                     </Badge>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleBulkPrint}
+                      className="text-xs h-8"
                     >
-                      <Printer className="h-4 w-4 me-1" />
-                      {language === 'ar' ? 'طباعة الكل' : 'Print All'}
+                      <Printer className="h-3 w-3 me-1" />
+                      <span className="hidden sm:inline">{language === 'ar' ? 'طباعة' : 'Print'}</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleBulkExportPDF}
+                      className="text-xs h-8"
                     >
-                      <Download className="h-4 w-4 me-1" />
-                      {language === 'ar' ? 'تصدير الكل' : 'Export All'}
+                      <Download className="h-3 w-3 me-1" />
+                      <span className="hidden sm:inline">{language === 'ar' ? 'تصدير' : 'Export'}</span>
                     </Button>
                   </div>
                 )}
@@ -549,18 +555,102 @@ export default function AdminOrdersPage() {
             </div>
 
             {isLoading ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
+              <div className="text-center py-12">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent dark:border-[#d4af37] dark:border-r-transparent"></div>
+                <p className="text-muted-foreground mt-3">
                   {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
                 </p>
               </div>
             ) : paginatedOrders.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {language === 'ar' ? 'لا توجد طلبات' : 'No orders found'}
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground">
+                  {language === 'ar' ? 'لا توجد طلبات' : 'No orders found'}
+                </p>
               </div>
             ) : (
               <>
-                <div className="border rounded-md">
+                {/* Mobile Card View */}
+                <div className="sm:hidden space-y-3">
+                  {paginatedOrders.map((order) => (
+                    <Card key={order.id} className="border-border/50 dark:border-[#d4af37]/20">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <input
+                                type="checkbox"
+                                checked={selectedOrders.has(order.id)}
+                                onChange={() => toggleOrderSelection(order.id)}
+                                className="rounded border-gray-300 shrink-0"
+                              />
+                              <p className="font-mono text-sm font-semibold truncate">
+                                #{order.id.slice(0, 8)}
+                              </p>
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {getClientName(order.clientId)}
+                            </p>
+                          </div>
+                          {getStatusBadge(order.status)}
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {language === 'ar' ? 'المبلغ' : 'Amount'}:
+                          </span>
+                          <span className="font-mono font-semibold">{order.totalAmount}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {language === 'ar' ? 'التاريخ' : 'Date'}:
+                          </span>
+                          <span className="text-xs">{format(new Date(order.createdAt), 'PP', { locale: language === 'ar' ? ar : enUS })}</span>
+                        </div>
+
+                        <div className="flex gap-1 pt-2 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(order)}
+                            className="flex-1 text-xs h-8"
+                          >
+                            <Eye className="h-3 w-3 me-1" />
+                            {language === 'ar' ? 'عرض' : 'View'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePrintOrder(order)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Printer className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleShareOrder(order)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Share2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleExportPDF(order)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Download className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden sm:block border rounded-lg overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -574,10 +664,10 @@ export default function AdminOrdersPage() {
                         </TableHead>
                         <TableHead>{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</TableHead>
                         <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'المبلغ الإجمالي' : 'Total Amount'}</TableHead>
+                        <TableHead className="hidden lg:table-cell">{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'المبلغ' : 'Amount'}</TableHead>
                         <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
+                        <TableHead className="hidden xl:table-cell">{language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
                         <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -592,16 +682,16 @@ export default function AdminOrdersPage() {
                               className="rounded border-gray-300"
                             />
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}</TableCell>
+                          <TableCell className="font-mono text-sm">#{order.id.slice(0, 8)}</TableCell>
                           <TableCell>{getClientName(order.clientId)}</TableCell>
-                          <TableCell>{getLtaName(order.ltaId)}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{getLtaName(order.ltaId)}</TableCell>
                           <TableCell className="font-mono">{order.totalAmount}</TableCell>
                           <TableCell>
                             <Select
                               value={order.status}
                               onValueChange={(value) => handleStatusChange(order.id, value)}
                             >
-                              <SelectTrigger className="w-32">
+                              <SelectTrigger className="w-32 h-8 text-xs">
                                 {getStatusBadge(order.status)}
                               </SelectTrigger>
                               <SelectContent>
@@ -613,17 +703,18 @@ export default function AdminOrdersPage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="text-sm">{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-sm hidden xl:table-cell">{format(new Date(order.createdAt), 'PP', { locale: language === 'ar' ? ar : enUS })}</TableCell>
                           <TableCell className="text-end">
                             <div className="flex gap-1 justify-end">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleViewDetails(order)}
+                                className="h-8"
                                 data-testid={`button-view-${order.id}`}
                               >
-                                <Eye className="h-4 w-4 me-1" />
-                                <span className="hidden sm:inline">
+                                <Eye className="h-3 w-3 me-1" />
+                                <span className="hidden lg:inline text-xs">
                                   {language === 'ar' ? 'عرض' : 'View'}
                                 </span>
                               </Button>
@@ -631,25 +722,28 @@ export default function AdminOrdersPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handlePrintOrder(order)}
+                                className="h-8 w-8 p-0"
                                 title={language === 'ar' ? 'طباعة' : 'Print'}
                               >
-                                <Printer className="h-4 w-4" />
+                                <Printer className="h-3 w-3" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleShareOrder(order)}
+                                className="h-8 w-8 p-0"
                                 title={language === 'ar' ? 'مشاركة' : 'Share'}
                               >
-                                <Share2 className="h-4 w-4" />
+                                <Share2 className="h-3 w-3" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleExportPDF(order)}
+                                className="h-8 w-8 p-0"
                                 title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                               >
-                                <Download className="h-4 w-4" />
+                                <Download className="h-3 w-3" />
                               </Button>
                             </div>
                           </TableCell>
@@ -661,7 +755,7 @@ export default function AdminOrdersPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                     <div className="text-sm text-muted-foreground">
                       {language === 'ar'
                         ? `صفحة ${currentPage} من ${totalPages}`
@@ -675,9 +769,10 @@ export default function AdminOrdersPage() {
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         data-testid="button-prev-page"
+                        className="h-8 text-xs"
                       >
-                        <ChevronLeft className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'السابق' : 'Previous'}
+                        <ChevronLeft className="h-3 w-3 me-1" />
+                        <span className="hidden sm:inline">{language === 'ar' ? 'السابق' : 'Previous'}</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -685,9 +780,10 @@ export default function AdminOrdersPage() {
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                         data-testid="button-next-page"
+                        className="h-8 text-xs"
                       >
-                        {language === 'ar' ? 'التالي' : 'Next'}
-                        <ChevronRight className="h-4 w-4 ms-1" />
+                        <span className="hidden sm:inline">{language === 'ar' ? 'التالي' : 'Next'}</span>
+                        <ChevronRight className="h-3 w-3 ms-1" />
                       </Button>
                     </div>
                   </div>
@@ -702,17 +798,20 @@ export default function AdminOrdersPage() {
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-order-details">
           <DialogHeader>
-            <DialogTitle>{language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+              {language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}
+            </DialogTitle>
             <DialogDescription>
               {language === 'ar' ? 'معلومات تفصيلية عن الطلب' : 'Detailed information about the order'}
             </DialogDescription>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</p>
-                  <p className="font-mono">{selectedOrder.id}</p>
+                  <p className="font-mono">#{selectedOrder.id.slice(0, 8)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}</p>
@@ -739,63 +838,69 @@ export default function AdminOrdersPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold mb-3">{language === 'ar' ? 'العناصر المطلوبة' : 'Order Items'}</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الكمية' : 'Quantity'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'السعر' : 'Price'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الإجمالي' : 'Total'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {safeJsonParse<OrderItem[]>(selectedOrder.items, []).map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-mono text-sm">{item.sku}</TableCell>
-                        <TableCell>{language === 'ar' ? item.nameAr : item.nameEn}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell className="font-mono">{item.price}</TableCell>
-                        <TableCell className="font-mono">
-                          {(parseFloat(item.price) * item.quantity).toFixed(2)}
-                        </TableCell>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  {language === 'ar' ? 'العناصر المطلوبة' : 'Order Items'}
+                </h3>
+                <div className="border rounded-lg overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
+                        <TableHead className="text-xs">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                        <TableHead className="text-xs">{language === 'ar' ? 'الكمية' : 'Qty'}</TableHead>
+                        <TableHead className="text-xs">{language === 'ar' ? 'السعر' : 'Price'}</TableHead>
+                        <TableHead className="text-xs">{language === 'ar' ? 'الإجمالي' : 'Total'}</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {safeJsonParse<OrderItem[]>(selectedOrder.items, []).map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono text-xs">{item.sku}</TableCell>
+                          <TableCell className="text-xs">{language === 'ar' ? item.nameAr : item.nameEn}</TableCell>
+                          <TableCell className="text-xs">{item.quantity}</TableCell>
+                          <TableCell className="font-mono text-xs">{item.price}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {(parseFloat(item.price) * item.quantity).toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
 
-              <div className="pt-4 border-t">
-                <div className="flex justify-between items-center mb-4">
+              <div className="pt-4 border-t space-y-3">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 dark:bg-[#d4af37]/5 border border-primary/20 dark:border-[#d4af37]/20">
                   <span className="font-semibold text-lg">
                     {language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}
                   </span>
                   <span className="font-bold text-2xl font-mono">{selectedOrder.totalAmount}</span>
                 </div>
-                <div className="flex gap-2">
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="w-full text-xs h-9"
                     onClick={() => handlePrintOrder(selectedOrder)}
                   >
-                    <Printer className="h-4 w-4 me-2" />
+                    <Printer className="h-3 w-3 me-2" />
                     {language === 'ar' ? 'طباعة' : 'Print'}
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="w-full text-xs h-9"
                     onClick={() => handleExportPDF(selectedOrder)}
                   >
-                    <Download className="h-4 w-4 me-2" />
+                    <Download className="h-3 w-3 me-2" />
                     {language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="w-full text-xs h-9"
                     onClick={() => handleShareOrder(selectedOrder)}
                   >
-                    <Share2 className="h-4 w-4 me-2" />
+                    <Share2 className="h-3 w-3 me-2" />
                     {language === 'ar' ? 'مشاركة' : 'Share'}
                   </Button>
                 </div>
