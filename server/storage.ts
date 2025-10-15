@@ -108,6 +108,8 @@ export interface IStorage {
 
   // Orders
   getOrders(clientId: string): Promise<Order[]>;
+  getOrders(): Promise<Order[]>; // Added for admin panel
+  updateOrderStatus(orderId: string, status: string): Promise<Order | undefined>; // Added for admin panel
   createOrder(order: InsertOrder): Promise<Order>;
 
   // Product Management
@@ -124,7 +126,7 @@ export interface IStorage {
   // LTA Products (assignment with pricing)
   assignProductToLta(ltaProduct: InsertLtaProduct): Promise<LtaProduct>;
   removeProductFromLta(ltaId: string, productId: string): Promise<boolean>;
-  getLtaProducts(ltaId: string): Promise<LtaProduct[]>;
+  getLtaProducts(ltaId: string | string[]): Promise<LtaProduct[]>;
   updateLtaProductPrice(id: string, contractPrice: string, currency?: string): Promise<LtaProduct | null>;
 
   // LTA Clients (assignment)
@@ -251,15 +253,15 @@ export class MemStorage implements IStorage {
     if (!client) {
       return null;
     }
-    
+
     // Import the password comparison function
     const { comparePasswords } = await import('./auth');
     const isValidPassword = await comparePasswords(password, client.password);
-    
+
     if (!isValidPassword) {
       return null;
     }
-    
+
     return {
       id: client.id,
       username: client.username,
@@ -564,6 +566,19 @@ export class MemStorage implements IStorage {
       .orderBy(desc(orders.createdAt));
   }
 
+  async getOrders() {
+    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async updateOrderStatus(orderId: string, status: string) {
+    const [order] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, orderId))
+      .returning();
+    return order;
+  }
+
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const inserted = await this.db
       .insert(orders)
@@ -723,15 +738,15 @@ export class MemStorage implements IStorage {
   async getAllProductsWithClientPrices(clientId: string): Promise<Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }>> {
     const allProducts = await this.getProducts();
     const clientLtas = await this.getClientLtas(clientId);
-    
+
     // Get all LTA IDs for this client
     const ltaIds = clientLtas.map(lta => lta.id);
-    
+
     // Load ALL lta products for client's LTAs in ONE query (instead of N queries)
-    const allLtaProducts = ltaIds.length > 0 
-      ? await this.getLtaProducts(ltaIds) 
+    const allLtaProducts = ltaIds.length > 0
+      ? await this.getLtaProducts(ltaIds)
       : [];
-    
+
     // Build a lookup map for fast access: productId -> ltaProduct
     const ltaProductMap = new Map<string, LtaProduct>();
     for (const ltaProduct of allLtaProducts) {
@@ -740,11 +755,11 @@ export class MemStorage implements IStorage {
         ltaProductMap.set(ltaProduct.productId, ltaProduct);
       }
     }
-    
+
     // Map products with pricing info
     const productsWithPricing: Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }> = allProducts.map(product => {
       const ltaProduct = ltaProductMap.get(product.id);
-      
+
       if (ltaProduct) {
         return {
           ...product,
@@ -754,7 +769,7 @@ export class MemStorage implements IStorage {
           hasPrice: true,
         };
       }
-      
+
       return {
         ...product,
         contractPrice: undefined,
@@ -968,10 +983,10 @@ export class MemStorage implements IStorage {
   async updatePriceOfferStatus(id: string, status: string, additionalData?: Partial<PriceOffer>): Promise<PriceOffer | null> {
     await this.db
       .update(priceOffers)
-      .set({ 
-        status, 
+      .set({
+        status,
         updatedAt: new Date(),
-        ...additionalData 
+        ...additionalData
       })
       .where(eq(priceOffers.id, id))
       .execute();
@@ -982,7 +997,7 @@ export class MemStorage implements IStorage {
   async updatePriceOffer(id: string, data: Partial<PriceOffer>): Promise<PriceOffer | null> {
     await this.db
       .update(priceOffers)
-      .set({ 
+      .set({
         ...data,
         updatedAt: new Date()
       })

@@ -89,6 +89,18 @@ export default function AdminPage() {
       gradient: 'from-purple-500/20 to-pink-500/10',
       hoverGradient: 'from-purple-500/30 to-pink-500/20',
       testId: 'card-price-offers'
+    },
+    {
+      id: 'orders',
+      path: '/admin/orders',
+      icon: ShoppingCart,
+      titleEn: 'Orders Management',
+      titleAr: 'إدارة الطلبات',
+      descEn: 'View and manage all orders',
+      descAr: 'عرض وإدارة جميع الطلبات',
+      gradient: 'from-indigo-500/20 to-blue-500/10',
+      hoverGradient: 'from-indigo-500/30 to-blue-500/20',
+      testId: 'card-orders'
     }
   ];
 

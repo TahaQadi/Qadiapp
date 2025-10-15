@@ -892,6 +892,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Orders Management
+  app.get("/api/admin/orders", requireAdmin, async (req: any, res) => {
+    try {
+      const orders = await storage.getOrders();
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({
+        message: "Error fetching orders",
+        messageAr: "خطأ في جلب الطلبات"
+      });
+    }
+  });
+
+  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      const order = await storage.updateOrderStatus(req.params.id, status);
+      
+      if (!order) {
+        return res.status(404).json({
+          message: "Order not found",
+          messageAr: "الطلب غير موجود"
+        });
+      }
+
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({
+        message: "Error updating order status",
+        messageAr: "خطأ في تحديث حالة الطلب"
+      });
+    }
+  });
+
   // Admin Product Management Routes
   // Get product by SKU (public for SEO)
   app.get("/api/products/sku/:sku", async (req, res) => {
