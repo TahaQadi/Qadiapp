@@ -79,33 +79,47 @@ export default function LandingPage() {
       icon: FileText,
       titleEn: "Custom Contracts & Pricing",
       titleAr: "عقود وأسعار مخصصة",
+      implemented: true
     },
     {
       icon: Package,
       titleEn: "Live Order Tracking",
       titleAr: "تتبع مباشر للطلبات",
+      implemented: true
     },
     {
       icon: ShoppingCart,
       titleEn: "Order & Invoice History",
       titleAr: "سجل الطلبات والفواتير",
+      implemented: true
     },
     {
       icon: BarChart3,
-      titleEn: "Analytics & Insights",
-      titleAr: "تحليلات ومؤشرات استهلاك",
+      titleEn: "Analytics Dashboard",
+      titleAr: "لوحة التحليلات",
+      implemented: true
     },
     {
       icon: MessageSquare,
-      titleEn: "Direct Communication",
-      titleAr: "تواصل مباشر مع فريق القاضي",
+      titleEn: "Price Request System",
+      titleAr: "نظام طلب الأسعار",
+      implemented: true
+    },
+    {
+      icon: TrendingUp,
+      titleEn: "Multi-Location Management",
+      titleAr: "إدارة مواقع متعددة",
+      implemented: true
     }
   ];
 
   const benefits = [
-    { en: "Save Time & Focus on Your Business", ar: "وفّر وقتك وركز على عملك" },
-    { en: "Precision & Accuracy in Every Order", ar: "دقة في كل طلب" },
-    { en: "24/7 Access Anytime, Anywhere", ar: "وصول على مدار الساعة" }
+    { en: "Automated Price Management", ar: "إدارة آلية للأسعار" },
+    { en: "Multi-Location Support", ar: "دعم المواقع المتعددة" },
+    { en: "Complete Order Templates", ar: "قوالب طلبات كاملة" },
+    { en: "24/7 Access Anytime, Anywhere", ar: "وصول على مدار الساعة" },
+    { en: "Contract-Based Pricing", ar: "أسعار حسب العقود" },
+    { en: "Detailed Order History", ar: "سجل طلبات مفصل" }
   ];
 
   return (
@@ -330,6 +344,12 @@ export default function LandingPage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   whileHover={{ y: -8 }}
                 >
+                  {feature.implemented && (
+                    <div className="absolute top-4 right-4">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    </div>
+                  )}
+                  
                   <div className="mb-4 inline-flex p-4 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#f9c800]/20 group-hover:from-[#d4af37]/30 group-hover:to-[#f9c800]/30 transition-all duration-300">
                     <Icon className="h-8 w-8 text-[#d4af37]" />
                   </div>
@@ -337,6 +357,81 @@ export default function LandingPage() {
                   <h3 className="font-bold text-xl text-white">
                     {isArabic ? feature.titleAr : feature.titleEn}
                   </h3>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Coming Soon Features */}
+      <section className="relative py-24">
+        <div className="container mx-auto px-4">
+          <motion.h2 
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-12 sm:mb-16 text-center px-4" 
+            dir={isArabic ? 'rtl' : 'ltr'}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
+              {isArabic ? 'قريباً' : 'Coming Soon'}
+            </span>
+          </motion.h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {[
+              {
+                icon: Sparkles,
+                titleEn: "Advanced Analytics & Reports",
+                titleAr: "تقارير وتحليلات متقدمة",
+                descEn: "Detailed consumption reports and predictive analytics",
+                descAr: "تقارير استهلاك مفصلة وتحليلات تنبؤية"
+              },
+              {
+                icon: MessageSquare,
+                titleEn: "Real-time Notifications",
+                titleAr: "إشعارات فورية",
+                descEn: "Instant updates on order status and important events",
+                descAr: "تحديثات فورية عن حالة الطلبات والأحداث المهمة"
+              },
+              {
+                icon: Phone,
+                titleEn: "WhatsApp Integration",
+                titleAr: "تكامل واتساب",
+                descEn: "Automated order confirmations and updates via WhatsApp",
+                descAr: "تأكيدات وتحديثات تلقائية عبر واتساب"
+              }
+            ].map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div 
+                  key={index}
+                  className="group relative p-8 rounded-2xl bg-[#222222]/50 border border-[#d4af37]/10 hover:border-[#d4af37]/30 transition-all duration-300"
+                  dir={isArabic ? 'rtl' : 'ltr'}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <div className="absolute top-4 right-4">
+                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/30">
+                      {isArabic ? 'قريباً' : 'Soon'}
+                    </span>
+                  </div>
+                  
+                  <div className="mb-4 inline-flex p-4 rounded-xl bg-gradient-to-br from-[#d4af37]/10 to-[#f9c800]/10 transition-all duration-300">
+                    <Icon className="h-8 w-8 text-[#d4af37]/70" />
+                  </div>
+
+                  <h3 className="font-bold text-xl text-white mb-2">
+                    {isArabic ? feature.titleAr : feature.titleEn}
+                  </h3>
+                  
+                  <p className="text-gray-400 text-sm">
+                    {isArabic ? feature.descAr : feature.descEn}
+                  </p>
                 </motion.div>
               );
             })}
@@ -360,7 +455,7 @@ export default function LandingPage() {
               </span>
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {benefits.map((benefit, index) => (
                 <motion.div 
                   key={index}
@@ -372,7 +467,7 @@ export default function LandingPage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <CheckCircle className="h-6 w-6 text-[#d4af37] flex-shrink-0" />
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-base font-semibold text-white">
                     {isArabic ? benefit.ar : benefit.en}
                   </p>
                 </motion.div>
