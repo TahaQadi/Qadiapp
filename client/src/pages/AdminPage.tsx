@@ -67,28 +67,16 @@ export default function AdminPage() {
       testId: 'card-manage-vendors'
     },
     {
-      id: 'price-requests',
-      path: '/admin/price-requests',
+      id: 'price-management',
+      path: '/admin/price-management',
       icon: FileText,
-      titleEn: 'Price Requests',
-      titleAr: 'طلبات الأسعار',
-      descEn: 'Manage client price quote requests',
-      descAr: 'إدارة طلبات عروض الأسعار من العملاء',
-      gradient: 'from-orange-500/20 to-amber-500/10',
-      hoverGradient: 'from-orange-500/30 to-amber-500/20',
-      testId: 'card-price-requests'
-    },
-    {
-      id: 'price-offers',
-      path: '/admin/price-offers',
-      icon: FileText,
-      titleEn: 'Price Offers',
-      titleAr: 'عروض الأسعار',
-      descEn: 'View and manage price offers',
-      descAr: 'عرض وإدارة عروض الأسعار',
-      gradient: 'from-purple-500/20 to-pink-500/10',
-      hoverGradient: 'from-purple-500/30 to-pink-500/20',
-      testId: 'card-price-offers'
+      titleEn: 'Price Management',
+      titleAr: 'إدارة الأسعار',
+      descEn: 'Manage price requests and offers',
+      descAr: 'إدارة طلبات وعروض الأسعار',
+      gradient: 'from-orange-500/20 to-purple-500/10',
+      hoverGradient: 'from-orange-500/30 to-purple-500/20',
+      testId: 'card-price-management'
     },
     {
       id: 'orders',

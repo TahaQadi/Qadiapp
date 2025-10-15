@@ -16,8 +16,9 @@ import AdminVendorsPage from "@/pages/AdminVendorsPage";
 import AdminClientsPage from "@/pages/AdminClientsPage";
 import AdminLtaListPage from "@/pages/AdminLtaListPage";
 import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
-import AdminPriceRequestsPage from '@/pages/AdminPriceRequestsPage';
-import AdminPriceOffersPage from '@/pages/AdminPriceOffersPage';
+import AdminPriceRequestsPage from './pages/AdminPriceRequestsPage';
+import AdminPriceOffersPage from './pages/AdminPriceOffersPage';
+import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import PriceRequestPage from '@/pages/PriceRequestPage';
 import ClientPriceOffersPage from '@/pages/ClientPriceOffersPage';
@@ -99,8 +100,9 @@ function Router() {
       <AdminRoute path="/admin/products" component={AdminProductsPage} />
       <AdminRoute path="/admin/vendors" component={AdminVendorsPage} />
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
-      <AdminRoute path="/admin/price-requests" component={AdminPriceRequestsPage} />
-      <AdminRoute path="/admin/price-offers" component={AdminPriceOffersPage} />
+      <Route path="/admin/price-management" component={AdminPriceManagementPage} />
+      <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
+      <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
