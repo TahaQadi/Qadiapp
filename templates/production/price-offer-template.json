@@ -1,0 +1,141 @@
+{
+  "nameEn": "Standard Price Offer Template",
+  "nameAr": "قالب عرض السعر القياسي",
+  "descriptionEn": "Professional price offer template for LTA products with bilingual support",
+  "descriptionAr": "قالب عرض سعر احترافي لمنتجات الاتفاقية طويلة الأجل مع دعم ثنائي اللغة",
+  "category": "price_offer",
+  "language": "both",
+  "sections": [
+    {
+      "type": "header",
+      "content": {
+        "companyName": "{{companyName}}",
+        "companyNameAr": "{{companyNameAr}}",
+        "address": "{{companyAddress}}",
+        "addressAr": "{{companyAddressAr}}",
+        "phone": "{{companyPhone}}",
+        "email": "{{companyEmail}}",
+        "logo": true
+      },
+      "order": 0
+    },
+    {
+      "type": "body",
+      "content": {
+        "title": "Price Offer",
+        "titleAr": "عرض السعر",
+        "date": "{{date}}",
+        "offerNumber": "{{offerNumber}}",
+        "clientName": "{{clientName}}",
+        "clientNameAr": "{{clientNameAr}}",
+        "ltaName": "{{ltaName}}",
+        "ltaNameAr": "{{ltaNameAr}}",
+        "validUntil": "{{validUntil}}"
+      },
+      "order": 1
+    },
+    {
+      "type": "table",
+      "content": {
+        "headers": ["#", "SKU", "Product Name", "Unit", "Qty", "Unit Price", "Total"],
+        "headersAr": ["#", "الرمز", "اسم المنتج", "الوحدة", "الكمية", "سعر الوحدة", "المجموع"],
+        "dataSource": "{{products}}",
+        "showBorders": true,
+        "alternateRowColors": true
+      },
+      "order": 2
+    },
+    {
+      "type": "spacer",
+      "content": {
+        "height": 20
+      },
+      "order": 3
+    },
+    {
+      "type": "body",
+      "content": {
+        "subtotal": "{{subtotal}}",
+        "tax": "{{tax}}",
+        "taxRate": "{{taxRate}}",
+        "discount": "{{discount}}",
+        "total": "{{total}}",
+        "currency": "{{currency}}"
+      },
+      "order": 4
+    },
+    {
+      "type": "terms",
+      "content": {
+        "title": "Terms & Conditions",
+        "titleAr": "الشروط والأحكام",
+        "items": [
+          "This offer is valid until {{validUntil}}",
+          "Prices are based on the LTA contract: {{ltaName}}",
+          "Payment terms: {{paymentTerms}}",
+          "Delivery time: {{deliveryTime}}",
+          "All prices are in {{currency}}"
+        ],
+        "itemsAr": [
+          "هذا العرض صالح حتى {{validUntil}}",
+          "الأسعار مبنية على الاتفاقية: {{ltaNameAr}}",
+          "شروط الدفع: {{paymentTermsAr}}",
+          "وقت التسليم: {{deliveryTimeAr}}",
+          "جميع الأسعار بـ {{currency}}"
+        ]
+      },
+      "order": 5
+    },
+    {
+      "type": "footer",
+      "content": {
+        "text": "Thank you for your business | شكراً لتعاملكم معنا",
+        "contact": "{{companyPhone}} | {{companyEmail}}",
+        "pageNumbers": true
+      },
+      "order": 6
+    }
+  ],
+  "variables": [
+    "companyName",
+    "companyNameAr",
+    "companyAddress",
+    "companyAddressAr",
+    "companyPhone",
+    "companyEmail",
+    "date",
+    "offerNumber",
+    "clientName",
+    "clientNameAr",
+    "ltaName",
+    "ltaNameAr",
+    "validUntil",
+    "products",
+    "subtotal",
+    "tax",
+    "taxRate",
+    "discount",
+    "total",
+    "currency",
+    "paymentTerms",
+    "paymentTermsAr",
+    "deliveryTime",
+    "deliveryTimeAr"
+  ],
+  "styles": {
+    "primaryColor": "#2563eb",
+    "secondaryColor": "#64748b",
+    "accentColor": "#10b981",
+    "fontSize": 10,
+    "fontFamily": "Helvetica",
+    "headerHeight": 120,
+    "footerHeight": 70,
+    "margins": {
+      "top": 140,
+      "bottom": 90,
+      "left": 50,
+      "right": 50
+    }
+  },
+  "isActive": true
+}
