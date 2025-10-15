@@ -805,7 +805,7 @@ export default function OrderingPage() {
                       </button>
                     </div>
                   )}
-                  
+
                   {/* Quantity Selector and Add Button */}
                   <div className="flex items-center gap-2">
                     <div className="flex items-center border rounded-lg flex-shrink-0">
@@ -845,7 +845,7 @@ export default function OrderingPage() {
                         <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                    
+
                     <Button
                       onClick={(e) => {
                         e.preventDefault();
@@ -865,7 +865,7 @@ export default function OrderingPage() {
                       </span>
                     </Button>
                   </div>
-                  
+
                   {/* Show total pieces when box is selected */}
                   {quantityType === 'box' && product.unitPerBox && customQuantity > 0 && (
                     <p className="text-xs text-muted-foreground text-center">
@@ -1213,11 +1213,11 @@ export default function OrderingPage() {
                 )}
 
                 <div className="flex flex-col gap-4 sm:gap-5">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg sm:text-xl font-semibold">
                       {t('ordering.title')}
                     </h2>
-                    <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
+                    <Badge variant="secondary" className="text-xs px-2 py-0.5">
                       {filteredProducts.length}
                     </Badge>
                   </div>

@@ -12,6 +12,9 @@ const resources = {
       "history": "History",
       "language": "Language",
 
+      // Ordering
+      "ordering.title": "Products",
+
       // Product
       "addToCart": "Add to Cart",
       "sku": "SKU",
@@ -86,6 +89,9 @@ const resources = {
       "templates": "القوالب",
       "history": "السجل",
       "language": "اللغة",
+
+      // Ordering
+      "ordering.title": "المنتجات",
 
       // Product
       "addToCart": "أضف للسلة",
