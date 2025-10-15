@@ -273,7 +273,19 @@ export const createDepartmentSchema = insertClientDepartmentSchema.omit({ client
 export const updateDepartmentSchema = createDepartmentSchema.partial();
 
 // Location validation schemas
-export const createLocationSchema = insertClientLocationSchema.omit({ clientId: true });
+export const createLocationSchema = z.object({
+  nameEn: z.string().min(1, 'English name is required'),
+  nameAr: z.string().min(1, 'Arabic name is required'),
+  addressEn: z.string().min(1, 'English address is required'),
+  addressAr: z.string().min(1, 'Arabic address is required'),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  isHeadquarters: z.boolean().default(false),
+  phone: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+});
+
 export const updateLocationSchema = createLocationSchema.partial();
 
 // Vendor validation schemas
@@ -359,7 +371,10 @@ export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 // Types
 export type Client = typeof clients.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;
-export type ClientLocation = typeof clientLocations.$inferSelect;
+export type ClientLocation = typeof clientLocations.$inferSelect & {
+  latitude?: string | null;
+  longitude?: string | null;
+};
 export type Vendor = typeof vendors.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Lta = typeof ltas.$inferSelect;

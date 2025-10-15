@@ -2,8 +2,8 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
-import { pgTable, uuid, text, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
-import { clients, ltas, notifications } from '@shared/schema';
+import { pgTable, uuid, text, timestamp, jsonb, boolean, numeric } from 'drizzle-orm/pg-core';
+import { clients, ltas, notifications, users } from '@shared/schema';
 
 
 neonConfig.webSocketConstructor = ws;
@@ -58,4 +58,21 @@ export const templates = pgTable('templates', {
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const clientLocations = pgTable("client_locations", {
+  id: text("id").primaryKey().notNull(),
+  clientId: text("client_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  nameEn: text("name_en").notNull(),
+  nameAr: text("name_ar").notNull(),
+  addressEn: text("address_en").notNull(),
+  addressAr: text("address_ar").notNull(),
+  city: text("city"),
+  country: text("country"),
+  isHeadquarters: boolean("is_headquarters").default(false).notNull(),
+  phone: text("phone"),
+  latitude: numeric("latitude"),
+  longitude: numeric("longitude"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

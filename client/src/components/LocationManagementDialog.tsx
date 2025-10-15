@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/components/LanguageProvider';
+import { MapLocationPicker } from '@/components/MapLocationPicker';
 import type { ClientLocation } from '@shared/schema';
 
 const locationSchema = z.object({
@@ -19,6 +21,8 @@ const locationSchema = z.object({
   country: z.string().optional(),
   isHeadquarters: z.boolean().default(false),
   phone: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 type LocationForm = z.infer<typeof locationSchema>;
@@ -51,6 +55,8 @@ export function LocationManagementDialog({
       country: '',
       isHeadquarters: false,
       phone: '',
+      latitude: undefined,
+      longitude: undefined,
     },
   });
 
@@ -66,6 +72,8 @@ export function LocationManagementDialog({
         country: location.country || '',
         isHeadquarters: location.isHeadquarters || false,
         phone: location.phone || '',
+        latitude: location.latitude ? Number(location.latitude) : undefined,
+        longitude: location.longitude ? Number(location.longitude) : undefined,
       } : {
         nameEn: '',
         nameAr: '',
@@ -75,6 +83,8 @@ export function LocationManagementDialog({
         country: '',
         isHeadquarters: false,
         phone: '',
+        latitude: undefined,
+        longitude: undefined,
       });
     }
   }, [open, location, form]);
@@ -96,6 +106,8 @@ export function LocationManagementDialog({
       country: location.country || '',
       isHeadquarters: location.isHeadquarters || false,
       phone: location.phone || '',
+      latitude: location.latitude ? Number(location.latitude) : undefined,
+      longitude: location.longitude ? Number(location.longitude) : undefined,
     } : {
       nameEn: '',
       nameAr: '',
@@ -105,6 +117,8 @@ export function LocationManagementDialog({
       country: '',
       isHeadquarters: false,
       phone: '',
+      latitude: undefined,
+      longitude: undefined,
     });
     onOpenChange(false);
   };
@@ -243,6 +257,22 @@ export function LocationManagementDialog({
             >
               {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
             </Label>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>
+              {language === 'ar' ? 'تحديد الموقع على الخريطة' : 'Pin Location on Map'}
+            </Label>
+            <MapLocationPicker
+              latitude={form.watch('latitude')}
+              longitude={form.watch('longitude')}
+              onLocationSelect={(lat, lng) => {
+                form.setValue('latitude', lat);
+                form.setValue('longitude', lng);
+              }}
+            />
           </div>
         </div>
 
