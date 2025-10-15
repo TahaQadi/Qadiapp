@@ -1,6 +1,6 @@
 
 import { db } from './db';
-import { templates } from './db';
+import { templates } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { CreateTemplateInput, UpdateTemplateInput } from '@shared/template-schema';
 
@@ -24,15 +24,10 @@ export class TemplateStorage {
 
   static async getTemplates(category?: string) {
     if (category) {
-      return await db.query.templates.findMany({
-        where: eq(templates.category, category),
-        orderBy: (templates, { desc }) => [desc(templates.createdAt)],
-      });
+      return await db.select().from(templates).where(eq(templates.category, category)).orderBy(templates.createdAt);
     }
     
-    return await db.query.templates.findMany({
-      orderBy: (templates, { desc }) => [desc(templates.createdAt)],
-    });
+    return await db.select().from(templates).orderBy(templates.createdAt);
   }
 
   static async getTemplate(id: string) {
