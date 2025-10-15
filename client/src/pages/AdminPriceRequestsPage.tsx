@@ -272,17 +272,22 @@ export default function AdminPriceRequestsPage() {
 
       <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300">
               <Link href="/admin">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
-            <h1 className="text-xl font-semibold">
-              {language === 'ar' ? 'طلبات عروض الأسعار' : 'Price Requests'}
-            </h1>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {language === 'ar' ? 'طلبات عروض الأسعار' : 'Price Requests'}
+              </p>
+            </div>
             {priceRequests.length > 0 && (
-              <Badge variant="secondary">{priceRequests.length}</Badge>
+              <Badge variant="secondary" className="ml-2">{priceRequests.length}</Badge>
             )}
           </div>
           <div className="flex items-center gap-2">

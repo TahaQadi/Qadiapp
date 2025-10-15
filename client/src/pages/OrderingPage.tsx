@@ -945,164 +945,164 @@ export default function OrderingPage() {
         </div>
 
         {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-          <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <img
-                src="/logo.png"
-                alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-                className="h-9 w-9 sm:h-11 sm:w-11 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
-              />
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl lg:text-2xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                  {language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}
-                </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
-                </p>
-              </div>
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-16 sm:h-18 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <img
+              src="/logo.png"
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
+              className="h-10 w-10 sm:h-12 sm:w-12 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
+            />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block truncate">
+                {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
+              </p>
             </div>
+          </div>
 
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {/* Primary Actions - Always Visible */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-                onClick={() => setPriceRequestDialogOpen(true)}
-                data-testid="button-price-request"
-              >
-                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {priceRequestList.length > 0 && (
-                  <Badge
-                    className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
-                    data-testid="badge-price-request-count"
-                  >
-                    {priceRequestList.length}
-                  </Badge>
-                )}
-              </Button>
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {/* Primary Actions - Always Visible */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="relative h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm"
+              onClick={() => setPriceRequestDialogOpen(true)}
+              data-testid="button-price-request"
+            >
+              <Heart className="h-5 w-5" />
+              {priceRequestList.length > 0 && (
+                <span
+                  className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-destructive text-destructive-foreground shadow-lg animate-pulse"
+                  data-testid="badge-price-request-count"
+                >
+                  {priceRequestList.length > 99 ? '99+' : priceRequestList.length}
+                </span>
+              )}
+            </Button>
 
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-                onClick={() => setCartOpen(true)}
-                data-testid="button-open-cart"
-              >
-                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {cartItemCount > 0 && (
-                  <Badge
-                    className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-0 shadow-md"
-                    data-testid="badge-cart-count"
-                  >
-                    {cartItemCount}
-                  </Badge>
-                )}
-              </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="relative h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm"
+              onClick={() => setCartOpen(true)}
+              data-testid="button-open-cart"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartItemCount > 0 && (
+                <span
+                  className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-lg animate-pulse"
+                  data-testid="badge-cart-count"
+                >
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
+            </Button>
 
-              <NotificationCenter />
-
-              {/* Sidebar Menu for Secondary Actions */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-                  >
-                    <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex items-center gap-3 pb-4 border-b">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">
-                          {language === 'ar' ? user?.nameAr : user?.nameEn}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user?.email}
-                        </p>
-                      </div>
+            <NotificationCenter />
+            
+            {/* Sidebar Menu for Secondary Actions */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-3 pb-4 border-b">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-6 w-6 text-primary" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">
+                        {language === 'ar' ? user?.nameAr : user?.nameEn}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
 
-                    <nav className="flex-1 py-4 space-y-1">
-                      <Link href="/profile">
+                  <nav className="flex-1 py-4 space-y-1">
+                    <Link href="/profile">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-11"
+                        data-testid="sidebar-profile"
+                      >
+                        <User className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                      </Button>
+                    </Link>
+
+                    {user?.isAdmin && (
+                      <Link href="/admin">
                         <Button
                           variant="ghost"
                           className="w-full justify-start gap-3 h-11"
-                          data-testid="sidebar-profile"
+                          data-testid="sidebar-admin"
                         >
-                          <User className="h-5 w-5" />
-                          <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                          <Settings className="h-5 w-5" />
+                          <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</span>
                         </Button>
                       </Link>
+                    )}
 
-                      {user?.isAdmin && (
-                        <Link href="/admin">
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-3 h-11"
-                            data-testid="sidebar-admin"
-                          >
-                            <Settings className="h-5 w-5" />
-                            <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</span>
-                          </Button>
-                        </Link>
-                      )}
-
-                      <div className="py-2">
-                        <Separator />
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">
-                          {language === 'ar' ? 'الإعدادات' : 'Settings'}
-                        </p>
-
-                        <div className="flex items-center justify-between px-3 py-2">
-                          <div className="flex items-center gap-3">
-                            <div className="h-5 w-5 flex items-center justify-center">
-                              🌐
-                            </div>
-                            <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
-                          </div>
-                          <LanguageToggle />
-                        </div>
-
-                        <div className="flex items-center justify-between px-3 py-2">
-                          <div className="flex items-center gap-3">
-                            <div className="h-5 w-5 flex items-center justify-center">
-                              🎨
-                            </div>
-                            <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
-                          </div>
-                          <ThemeToggle />
-                        </div>
-                      </div>
-                    </nav>
-
-                    <div className="pt-4 border-t">
-                      <Button
-                        variant="destructive"
-                        className="w-full justify-start gap-3 h-11"
-                        onClick={() => window.location.href = '/api/logout'}
-                        data-testid="sidebar-logout"
-                      >
-                        <LogOut className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
-                      </Button>
+                    <div className="py-2">
+                      <Separator />
                     </div>
+
+                    <div className="space-y-1">
+                      <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                        {language === 'ar' ? 'الإعدادات' : 'Settings'}
+                      </p>
+
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-5 w-5 flex items-center justify-center">
+                            🌐
+                          </div>
+                          <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
+                        </div>
+                        <LanguageToggle />
+                      </div>
+
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-5 w-5 flex items-center justify-center">
+                            🎨
+                          </div>
+                          <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
+                        </div>
+                        <ThemeToggle />
+                      </div>
+                    </div>
+                  </nav>
+
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="destructive"
+                      className="w-full justify-start gap-3 h-11"
+                      onClick={() => window.location.href = '/api/logout'}
+                      data-testid="sidebar-logout"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+                    </Button>
                   </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
-        </header>
+        </div>
+      </header>
 
         {/* Main Content */}
         <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 relative z-10">

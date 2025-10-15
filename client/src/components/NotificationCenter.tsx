@@ -94,15 +94,14 @@ export function NotificationCenter() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm">
           <Bell className="h-5 w-5" />
           {(unreadCount?.count || 0) > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            <span
+              className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-destructive text-destructive-foreground shadow-lg animate-pulse"
             >
-              {unreadCount!.count > 9 ? '9+' : unreadCount!.count}
-            </Badge>
+              {unreadCount!.count > 99 ? '99+' : unreadCount!.count}
+            </span>
           )}
         </Button>
       </PopoverTrigger>
