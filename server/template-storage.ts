@@ -24,7 +24,7 @@ export class TemplateStorage {
 
   static async getTemplates(category?: string) {
     if (category) {
-      return await db.select().from(templates).where(eq(templates.category, category)).orderBy(templates.createdAt);
+      return await db.select().from(templates).where(eq(templates.category, category as any)).orderBy(templates.createdAt);
     }
     
     return await db.select().from(templates).orderBy(templates.createdAt);
