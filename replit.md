@@ -4,11 +4,14 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
-**Templates Table Addition (October 15, 2025):**
-- Added `templates` table to database schema for PDF/document template management
-- Created table with 13 columns: id (UUID), bilingual names/descriptions, category enum, language enum, sections/variables/styles (JSONB), active flag, timestamps
-- Fixed template-storage.ts import to use shared schema instead of server/db.ts
-- Templates API endpoints ready for admin use (/api/admin/templates)
+**Document Templates System (October 15, 2025):**
+- Added `templates` table to database schema for PDF/document template management (13 columns: UUID, bilingual fields, JSONB sections/variables/styles)
+- Created 4 production-ready template JSONs: price offer, order, invoice, LTA contract
+- Enhanced PDF generator to support all section types: header, body, table, footer, signature, image, divider, spacer, terms
+- Implemented bilingual rendering (language: 'en' | 'ar' | 'both') with proper fallbacks
+- Added template import script for bulk loading via API
+- Fixed TypeScript interfaces to match production template structure
+- Admin templates page ready at /admin/templates (list, preview, edit, duplicate, delete, toggle active)
 
 **Database Schema Fix (October 13, 2025):**
 - Fixed TypeScript error in shared/schema.ts (notifications table: changed `isRead` to `read`)
