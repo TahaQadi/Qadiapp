@@ -289,12 +289,16 @@ export default function AdminOrdersPage() {
           </div>
           
           <script>
-            window.onload = function() {
-              // Auto-trigger print dialog after page loads
-              setTimeout(() => {
-                window.print();
-              }, 250);
-            };
+            // Auto-trigger print dialog after page loads
+            if (document.readyState === 'complete') {
+              window.print();
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(() => {
+                  window.print();
+                }, 100);
+              });
+            }
           </script>
         </body>
       </html>

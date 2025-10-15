@@ -910,8 +910,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { order, client, lta, items, language } = req.body;
 
-      const pdfGenerator = new PDFGenerator();
-      const pdfBuffer = await pdfGenerator.generateOrderPDF({
+      const pdfBuffer = await PDFGenerator.generateOrderPDF({
         order,
         client,
         lta,
