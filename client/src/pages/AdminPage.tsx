@@ -89,6 +89,18 @@ export default function AdminPage() {
       gradient: 'from-indigo-500/20 to-blue-500/10',
       hoverGradient: 'from-indigo-500/30 to-blue-500/20',
       testId: 'card-orders'
+    },
+    {
+      id: 'templates',
+      path: '/admin/templates',
+      icon: FileText,
+      titleEn: 'Document Templates',
+      titleAr: 'قوالب المستندات',
+      descEn: 'Manage document templates',
+      descAr: 'إدارة قوالب المستندات',
+      gradient: 'from-teal-500/20 to-cyan-500/10',
+      hoverGradient: 'from-teal-500/30 to-cyan-500/20',
+      testId: 'card-templates'
     }
   ];
 

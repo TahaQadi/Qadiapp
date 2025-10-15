@@ -20,6 +20,7 @@ import AdminPriceRequestsPage from './pages/AdminPriceRequestsPage';
 import AdminPriceOffersPage from './pages/AdminPriceOffersPage';
 import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
+import AdminTemplatesPage from './pages/AdminTemplatesPage';
 import PriceRequestPage from '@/pages/PriceRequestPage';
 import ClientPriceOffersPage from '@/pages/ClientPriceOffersPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
@@ -102,6 +103,7 @@ function Router() {
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
       <Route path="/admin/price-management" component={AdminPriceManagementPage} />
       <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
+      <AdminRoute path="/admin/templates" component={AdminTemplatesPage} />
       <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />

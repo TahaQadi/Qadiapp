@@ -2706,6 +2706,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Template Management Routes (Admin)
+  app.get('/api/admin/templates', requireAdmin, async (req: any, res) => {
+    try {
+      const { category } = req.query;
+      const { TemplateStorage } = await import('./template-storage');
+      const templates = await TemplateStorage.getTemplates(category);
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء جلب القوالب'
+      });
+    }
+  });
+
+  app.post('/api/admin/templates', requireAdmin, async (req: any, res) => {
+    try {
+      const { createTemplateSchema } = await import('@shared/template-schema');
+      const validatedData = createTemplateSchema.parse(req.body);
+      const { TemplateStorage } = await import('./template-storage');
+      const template = await TemplateStorage.createTemplate(validatedData);
+      res.status(201).json(template);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || 'Validation error',
+          messageAr: error.errors[0]?.message || 'خطأ في التحقق'
+        });
+      }
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء إنشاء القالب'
+      });
+    }
+  });
+
+  app.get('/api/admin/templates/:id', requireAdmin, async (req: any, res) => {
+    try {
+      const { TemplateStorage } = await import('./template-storage');
+      const template = await TemplateStorage.getTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({
+          message: 'Template not found',
+          messageAr: 'القالب غير موجود'
+        });
+      }
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء جلب القالب'
+      });
+    }
+  });
+
+  app.put('/api/admin/templates/:id', requireAdmin, async (req: any, res) => {
+    try {
+      const { updateTemplateSchema } = await import('@shared/template-schema');
+      const validatedData = updateTemplateSchema.parse(req.body);
+      const { TemplateStorage } = await import('./template-storage');
+      const template = await TemplateStorage.updateTemplate(req.params.id, validatedData);
+      res.json(template);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || 'Validation error',
+          messageAr: error.errors[0]?.message || 'خطأ في التحقق'
+        });
+      }
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء تحديث القالب'
+      });
+    }
+  });
+
+  app.delete('/api/admin/templates/:id', requireAdmin, async (req: any, res) => {
+    try {
+      const { TemplateStorage } = await import('./template-storage');
+      await TemplateStorage.deleteTemplate(req.params.id);
+      res.json({
+        message: 'Template deleted successfully',
+        messageAr: 'تم حذف القالب بنجاح'
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء حذف القالب'
+      });
+    }
+  });
+
+  app.post('/api/admin/templates/:id/duplicate', requireAdmin, async (req: any, res) => {
+    try {
+      const { name } = req.body;
+      const { TemplateStorage } = await import('./template-storage');
+      const template = await TemplateStorage.duplicateTemplate(req.params.id, name);
+      res.status(201).json(template);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء نسخ القالب'
+      });
+    }
+  });
+
   // SEO Routes
   app.get('/sitemap.xml', async (_req, res) => {
     try {
