@@ -1041,7 +1041,7 @@ export default function OrderingPage() {
                   <nav className="flex-1 py-4 space-y-1">
                     {/* Notifications (Mobile Only) */}
                     <div className="xs:hidden mb-2">
-                      <NotificationCenter />
+                      <NotificationCenter variant="sidebar" />
                     </div>
 
                     <Link href="/profile">

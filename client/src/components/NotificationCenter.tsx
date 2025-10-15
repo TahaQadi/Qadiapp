@@ -28,7 +28,11 @@ interface Notification {
   createdAt: string;
 }
 
-export function NotificationCenter() {
+interface NotificationCenterProps {
+  variant?: 'default' | 'sidebar';
+}
+
+export function NotificationCenter({ variant = 'default' }: NotificationCenterProps = {}) {
   const { language } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -90,6 +94,138 @@ export function NotificationCenter() {
       locale: language === 'ar' ? ar : enUS,
     });
   };
+
+  if (variant === 'sidebar') {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 h-11 text-sm relative"
+          >
+            <Bell className="h-4 w-4" />
+            <span>{language === 'ar' ? 'الإشعارات' : 'Notifications'}</span>
+            {(unreadCount?.count || 0) > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="ms-auto h-5 min-w-[1.25rem] px-1.5 flex items-center justify-center text-xs font-semibold animate-pulse"
+              >
+                {unreadCount!.count > 99 ? '99+' : unreadCount!.count}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-0" align="end">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="font-semibold">
+              {language === 'ar' ? 'الإشعارات' : 'Notifications'}
+            </h3>
+            <div className="flex items-center gap-2">
+              {notifications.some(n => !n.isRead) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => markAllAsReadMutation.mutate()}
+                  disabled={markAllAsReadMutation.isPending}
+                >
+                  <CheckCheck className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <ScrollArea className="h-[400px]">
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-8 text-center">
+                <Bell className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'لا توجد إشعارات' : 'No notifications'}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      'p-4 hover:bg-muted/50 transition-colors',
+                      !notification.isRead && 'bg-muted/30'
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl flex-shrink-0">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-medium text-sm">
+                            {language === 'ar' ? notification.titleAr : notification.titleEn}
+                          </h4>
+                          {!notification.isRead && (
+                            <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {language === 'ar' ? notification.messageAr : notification.messageEn}
+                        </p>
+                        {notification.pdfFileName && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`/api/pdf/download/${notification.pdfFileName}`, '_blank');
+                            }}
+                          >
+                            <Package className="h-4 w-4 me-2" />
+                            {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {!notification.isRead && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsReadMutation.mutate(notification.id);
+                            }}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                          disabled={deleteNotificationMutation.isPending}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
