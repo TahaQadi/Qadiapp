@@ -946,82 +946,89 @@ export default function OrderingPage() {
 
         {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-16 sm:h-18 flex items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="container mx-auto px-2 sm:px-4 lg:px-6 h-14 sm:h-16 lg:h-18 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left Section - Logo & Title */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <img
               src="/logo.png"
               alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-10 w-10 sm:h-12 sm:w-12 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
+              className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
             />
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+            <div className="min-w-0 hidden xs:block">
+              <h1 className="text-sm sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                 {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
               </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block truncate">
+              <p className="text-[10px] sm:text-xs text-muted-foreground hidden md:block truncate">
                 {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Primary Actions - Always Visible */}
+          {/* Right Section - Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 flex-shrink-0">
+            {/* Price Request Button */}
             <Button
               variant="outline"
               size="icon"
-              className="relative h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm"
+              className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
               onClick={() => setPriceRequestDialogOpen(true)}
               data-testid="button-price-request"
             >
-              <Heart className="h-5 w-5" />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
               {priceRequestList.length > 0 && (
                 <span
-                  className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-destructive text-destructive-foreground shadow-lg animate-pulse"
+                  className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-destructive text-destructive-foreground shadow-lg animate-pulse ring-2 ring-background"
                   data-testid="badge-price-request-count"
                 >
-                  {priceRequestList.length > 99 ? '99+' : priceRequestList.length}
+                  {priceRequestList.length > 9 ? '9+' : priceRequestList.length}
                 </span>
               )}
             </Button>
 
+            {/* Cart Button */}
             <Button
               variant="outline"
               size="icon"
-              className="relative h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm"
+              className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
               onClick={() => setCartOpen(true)}
               data-testid="button-open-cart"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
               {cartItemCount > 0 && (
                 <span
-                  className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-lg animate-pulse"
+                  className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-primary text-primary-foreground shadow-lg animate-pulse ring-2 ring-background"
                   data-testid="badge-cart-count"
                 >
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                  {cartItemCount > 9 ? '9+' : cartItemCount}
                 </span>
               )}
             </Button>
 
-            <NotificationCenter />
+            {/* Notifications */}
+            <div className="hidden xs:block">
+              <NotificationCenter />
+            </div>
             
-            {/* Sidebar Menu for Secondary Actions */}
+            {/* Menu Button */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
                 <div className="flex flex-col h-full">
+                  {/* User Info Header */}
                   <div className="flex items-center gap-3 pb-4 border-b">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <User className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">
+                      <p className="font-semibold truncate text-sm">
                         {language === 'ar' ? user?.nameAr : user?.nameEn}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
@@ -1030,14 +1037,20 @@ export default function OrderingPage() {
                     </div>
                   </div>
 
+                  {/* Navigation */}
                   <nav className="flex-1 py-4 space-y-1">
+                    {/* Notifications (Mobile Only) */}
+                    <div className="xs:hidden mb-2">
+                      <NotificationCenter />
+                    </div>
+
                     <Link href="/profile">
                       <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 h-11"
+                        className="w-full justify-start gap-3 h-11 text-sm"
                         data-testid="sidebar-profile"
                       >
-                        <User className="h-5 w-5" />
+                        <User className="h-4 w-4" />
                         <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
                       </Button>
                     </Link>
@@ -1046,10 +1059,10 @@ export default function OrderingPage() {
                       <Link href="/admin">
                         <Button
                           variant="ghost"
-                          className="w-full justify-start gap-3 h-11"
+                          className="w-full justify-start gap-3 h-11 text-sm"
                           data-testid="sidebar-admin"
                         >
-                          <Settings className="h-5 w-5" />
+                          <Settings className="h-4 w-4" />
                           <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</span>
                         </Button>
                       </Link>
@@ -1059,14 +1072,15 @@ export default function OrderingPage() {
                       <Separator />
                     </div>
 
+                    {/* Settings Section */}
                     <div className="space-y-1">
-                      <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                      <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         {language === 'ar' ? 'الإعدادات' : 'Settings'}
                       </p>
 
-                      <div className="flex items-center justify-between px-3 py-2">
+                      <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="h-5 w-5 flex items-center justify-center">
+                          <div className="h-4 w-4 flex items-center justify-center text-base">
                             🌐
                           </div>
                           <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
@@ -1074,9 +1088,9 @@ export default function OrderingPage() {
                         <LanguageToggle />
                       </div>
 
-                      <div className="flex items-center justify-between px-3 py-2">
+                      <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="h-5 w-5 flex items-center justify-center">
+                          <div className="h-4 w-4 flex items-center justify-center text-base">
                             🎨
                           </div>
                           <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
@@ -1086,14 +1100,15 @@ export default function OrderingPage() {
                     </div>
                   </nav>
 
+                  {/* Logout Button */}
                   <div className="pt-4 border-t">
                     <Button
                       variant="destructive"
-                      className="w-full justify-start gap-3 h-11"
+                      className="w-full justify-start gap-3 h-11 text-sm touch-manipulation active:scale-95"
                       onClick={() => window.location.href = '/api/logout'}
                       data-testid="sidebar-logout"
                     >
-                      <LogOut className="h-5 w-5" />
+                      <LogOut className="h-4 w-4" />
                       <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
                     </Button>
                   </div>

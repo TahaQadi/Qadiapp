@@ -441,3 +441,16 @@
 .dark .bg-gradient-gold {
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
 }
+
+/* Extra small screen utilities */
+@media (min-width: 475px) {
+  .xs\:block {
+    display: block;
+  }
+  .xs\:hidden {
+    display: none;
+  }
+  .xs\:inline {
+    display: inline;
+  }
+}
