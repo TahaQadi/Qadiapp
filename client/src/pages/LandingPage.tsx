@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { SEO } from "@/components/SEO";
+import { DemoRequestDialog } from "@/components/DemoRequestDialog";
 
 export default function LandingPage() {
   const { language } = useLanguage();
   const isArabic = language === 'ar';
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -251,6 +253,7 @@ export default function LandingPage() {
                 <Button 
                   size="lg" 
                   variant="outline"
+                  onClick={() => setDemoDialogOpen(true)}
                   className="w-full sm:w-auto gap-2 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-5 lg:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
                 >
                   {isArabic ? 'طلب عرض توضيحي' : 'Request Demo'}
@@ -517,6 +520,7 @@ export default function LandingPage() {
                 <Button 
                   size="lg" 
                   variant="outline"
+                  onClick={() => setDemoDialogOpen(true)}
                   className="w-full sm:w-auto gap-2 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2 border-[#d4af37] text-[#d4af37] hover:bg-[#d4af37]/10 transition-all duration-300"
                 >
                   {isArabic ? 'طلب عرض توضيحي' : 'Request Demo'}
@@ -527,6 +531,9 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Demo Request Dialog */}
+      <DemoRequestDialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen} />
 
       {/* Footer */}
       <footer className="relative border-t border-[#d4af37]/30 bg-black backdrop-blur-xl">

@@ -2770,7 +2770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  
+
 
   // SEO Routes
   app.get('/sitemap.xml', async (_req, res) => {
@@ -2815,6 +2815,53 @@ Sitemap: ${baseUrl}/sitemap.xml`;
       console.error('Error generating RSS feed:', error);
       res.status(500).send('Error generating RSS feed');
     }
+  });
+
+  // Demo request endpoint
+  app.post('/api/demo-request', async (req: Request, res: Response) => {
+    try {
+      const { name, email, phone, company, message } = req.body;
+
+      // Store in database (you can create a demo_requests table later)
+      // For now, we'll just send an email notification
+
+      const emailBody = `
+New Demo Request:
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone}
+Company: ${company}
+Message: ${message || 'N/A'}
+
+Please contact them to schedule a demo.
+      `;
+
+      try {
+        await emailService.sendEmail({
+          to: 'taha@qadi.ps',
+          subject: `New Demo Request from ${company}`,
+          text: emailBody,
+          html: emailBody.replace(/\n/g, '<br>'),
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+
+      res.json({
+        message: 'Demo request submitted successfully',
+        success: true
+      });
+    } catch (error) {
+      console.error('Demo request error:', error);
+      res.status(500).json({ error: 'Failed to submit demo request' });
+    }
+  });
+
+  // Public catalog endpoint
+  app.get('/api/catalog', async (c) => {
+    // Placeholder for catalog logic
+    return c.json({ message: 'Catalog endpoint' });
   });
 
   const httpServer = createServer(app);
