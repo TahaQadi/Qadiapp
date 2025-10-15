@@ -1220,7 +1220,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Order Templates Routes
+  // Document Template Management (Admin)
+  app.get("/api/admin/templates", requireAdmin, async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      const templates = await TemplateStorage.getTemplates(category);
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.get("/api/admin/templates/:id", requireAdmin, async (req, res) => {
+    try {
+      const template = await TemplateStorage.getTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.post("/api/admin/templates", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = createTemplateSchema.parse(req.body);
+      const template = await TemplateStorage.createTemplate(validatedData);
+      res.json(template);
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : 'Invalid data' });
+    }
+  });
+
+  app.put("/api/admin/templates/:id", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = updateTemplateSchema.parse(req.body);
+      const template = await TemplateStorage.updateTemplate(req.params.id, validatedData);
+      res.json(template);
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : 'Invalid data' });
+    }
+  });
+
+  app.delete("/api/admin/templates/:id", requireAdmin, async (req, res) => {
+    try {
+      await TemplateStorage.deleteTemplate(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.post("/api/admin/templates/:id/duplicate", requireAdmin, async (req, res) => {
+    try {
+      const { name } = req.body;
+      const duplicate = await TemplateStorage.duplicateTemplate(req.params.id, name);
+      res.json(duplicate);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Order Templates Routes (User cart templates)
   app.get("/api/client/templates", requireAuth, async (req: any, res) => {
     try {
       const templates = await storage.getOrderTemplates(req.client.id);

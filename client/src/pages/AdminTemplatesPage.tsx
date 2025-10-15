@@ -387,7 +387,8 @@ export default function AdminTemplatesPage() {
               </div>
 
               <div className="space-y-3 pt-4 border-t">
-                <Label className="text-base">{language === 'ar' ? 'ألوان القالب' : 'Template Colors'}</Label>
+                <Label className="text-base">{language === 'ar' ? 'تصميم القالب' : 'Template Design'}</Label>
+                
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label>{language === 'ar' ? 'اللون الأساسي' : 'Primary Color'}</Label>
@@ -435,17 +436,48 @@ export default function AdminTemplatesPage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>{language === 'ar' ? 'حجم الخط' : 'Font Size'}</Label>
+                    <Input
+                      type="number"
+                      value={formData.fontSize}
+                      onChange={(e) => setFormData({ ...formData, fontSize: parseInt(e.target.value) })}
+                      min={8}
+                      max={16}
+                    />
+                  </div>
+                  <div>
+                    <Label>{language === 'ar' ? 'نوع الخط' : 'Font Family'}</Label>
+                    <Select value={formData.fontFamily || 'Helvetica'} onValueChange={(v) => setFormData({ ...formData, fontFamily: v })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Helvetica">Helvetica</SelectItem>
+                        <SelectItem value="Times-Roman">Times New Roman</SelectItem>
+                        <SelectItem value="Courier">Courier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <Label>{language === 'ar' ? 'حجم الخط' : 'Font Size'}</Label>
-                <Input
-                  type="number"
-                  value={formData.fontSize}
-                  onChange={(e) => setFormData({ ...formData, fontSize: parseInt(e.target.value) })}
-                  min={8}
-                  max={16}
-                />
+              <div className="space-y-2 pt-4 border-t">
+                <Label className="text-base">{language === 'ar' ? 'خيارات متقدمة' : 'Advanced Options'}</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isDefault"
+                    checked={formData.isDefault}
+                    onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+                    className="rounded"
+                  />
+                  <Label htmlFor="isDefault" className="cursor-pointer">
+                    {language === 'ar' ? 'تعيين كافتراضي للفئة' : 'Set as default for category'}
+                  </Label>
+                </div>
               </div>
             </div>
 

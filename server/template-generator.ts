@@ -110,7 +110,81 @@ export class TemplateGenerator {
       case 'signature':
         this.renderSignature(doc, section.content, styles, language);
         break;
+      case 'image':
+        this.renderImage(doc, section.content);
+        break;
+      case 'divider':
+        this.renderDivider(doc, styles);
+        break;
+      case 'spacer':
+        this.renderSpacer(doc, section.content);
+        break;
+      case 'terms':
+        this.renderTerms(doc, section.content, styles, language);
+        break;
     }
+  }
+
+  private static renderImage(
+    doc: PDFKit.PDFDocument,
+    content: { url: string; width?: number; height?: number; align?: string }
+  ) {
+    const width = content.width || 200;
+    const height = content.height || 150;
+    const x = content.align === 'center' ? (595 - width) / 2 : 50;
+    
+    if (content.url) {
+      doc.image(content.url, x, doc.y, { width, height });
+      doc.moveDown(height / 20);
+    }
+  }
+
+  private static renderDivider(
+    doc: PDFKit.PDFDocument,
+    styles: DocumentTemplate['styles']
+  ) {
+    doc.moveTo(50, doc.y)
+      .lineTo(545, doc.y)
+      .strokeColor(styles.accentColor)
+      .lineWidth(1)
+      .stroke();
+    doc.moveDown(0.5);
+  }
+
+  private static renderSpacer(
+    doc: PDFKit.PDFDocument,
+    content: { height: number }
+  ) {
+    doc.moveDown(content.height / 20 || 1);
+  }
+
+  private static renderTerms(
+    doc: PDFKit.PDFDocument,
+    content: { terms: string[]; title?: string },
+    styles: DocumentTemplate['styles'],
+    language: 'en' | 'ar'
+  ) {
+    if (content.title) {
+      doc.fontSize(12)
+        .fillColor('#000000')
+        .font('Helvetica-Bold')
+        .text(content.title, 50, doc.y);
+      doc.moveDown(0.5);
+    }
+
+    doc.fontSize(styles.fontSize)
+      .fillColor('#444444')
+      .font('Helvetica');
+
+    content.terms.forEach((term, index) => {
+      doc.text(`${index + 1}. ${term}`, 60, doc.y, { 
+        width: 485,
+        lineGap: 3 
+      });
+      doc.moveDown(0.3);
+    });
+
+    doc.moveDown(1);
   }
 
   private static renderHeader(
