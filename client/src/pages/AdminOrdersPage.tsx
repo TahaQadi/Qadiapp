@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
+import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Filter, Printer, Share2, Download } from 'lucide-react';
 import { Link } from 'wouter';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
@@ -133,6 +133,182 @@ export default function AdminOrdersPage() {
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
     updateStatusMutation.mutate({ orderId, status: newStatus });
+  };
+
+  const handlePrintOrder = (order: Order) => {
+    const items = safeJsonParse<OrderItem[]>(order.items, []);
+    const client = clients.find(c => c.id === order.clientId);
+    const lta = ltas.find(l => l.id === order.ltaId);
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${language === 'ar' ? 'طلب' : 'Order'} #${order.id.slice(0, 8)}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 3px solid #d4af37;
+              padding-bottom: 20px;
+            }
+            .company-name {
+              font-size: 24px;
+              font-weight: bold;
+              color: #1a365d;
+              margin-bottom: 10px;
+            }
+            .order-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .info-block {
+              border: 1px solid #e5e7eb;
+              padding: 15px;
+              border-radius: 8px;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #6b7280;
+              font-size: 12px;
+              margin-bottom: 5px;
+            }
+            .info-value {
+              color: #111827;
+              font-size: 14px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th {
+              background: #1a365d;
+              color: white;
+              padding: 12px;
+              text-align: left;
+            }
+            td {
+              border-bottom: 1px solid #e5e7eb;
+              padding: 12px;
+            }
+            .total {
+              text-align: right;
+              font-size: 18px;
+              font-weight: bold;
+              margin-top: 20px;
+              padding-top: 20px;
+              border-top: 2px solid #d4af37;
+            }
+            @media print {
+              body { padding: 20px; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">
+              ${language === 'ar' ? 'شركة القاضي التجارية' : 'Al Qadi Trading Company'}
+            </div>
+            <div style="color: #6b7280;">${language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}</div>
+          </div>
+
+          <div class="order-info">
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'رقم الطلب' : 'Order ID'}</div>
+              <div class="info-value">${order.id}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'التاريخ' : 'Date'}</div>
+              <div class="info-value">${formatDate(order.createdAt)}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'العميل' : 'Client'}</div>
+              <div class="info-value">${client ? (language === 'ar' ? client.nameAr : client.nameEn) : '-'}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'الاتفاقية' : 'LTA'}</div>
+              <div class="info-value">${lta ? (language === 'ar' ? lta.nameAr : lta.nameEn) : '-'}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>${language === 'ar' ? '#' : 'No.'}</th>
+                <th>${language === 'ar' ? 'رمز المنتج' : 'SKU'}</th>
+                <th>${language === 'ar' ? 'المنتج' : 'Product'}</th>
+                <th>${language === 'ar' ? 'الكمية' : 'Qty'}</th>
+                <th>${language === 'ar' ? 'السعر' : 'Price'}</th>
+                <th>${language === 'ar' ? 'الإجمالي' : 'Total'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((item, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${item.sku}</td>
+                  <td>${language === 'ar' ? item.nameAr : item.nameEn}</td>
+                  <td>${item.quantity}</td>
+                  <td>${item.price}</td>
+                  <td>${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total">
+            ${language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}: ${order.totalAmount}
+          </div>
+
+          <div style="text-align: center; margin-top: 40px;">
+            <button onclick="window.print()" style="padding: 12px 24px; background: #1a365d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
+              ${language === 'ar' ? 'طباعة' : 'Print'}
+            </button>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const handleShareOrder = (order: Order) => {
+    const shareUrl = `${window.location.origin}/admin/orders?orderId=${order.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `${language === 'ar' ? 'طلب' : 'Order'} #${order.id.slice(0, 8)}`,
+        text: `${language === 'ar' ? 'تفاصيل الطلب' : 'Order details'}: ${order.totalAmount}`,
+        url: shareUrl,
+      }).catch(() => {
+        copyToClipboard(shareUrl);
+      });
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: language === 'ar' ? 'تم النسخ' : 'Copied',
+        description: language === 'ar' ? 'تم نسخ الرابط إلى الحافظة' : 'Link copied to clipboard',
+      });
+    });
   };
 
   // Filter and search orders
@@ -295,15 +471,35 @@ export default function AdminOrdersPage() {
                           </TableCell>
                           <TableCell className="text-sm">{formatDate(order.createdAt)}</TableCell>
                           <TableCell className="text-end">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetails(order)}
-                              data-testid={`button-view-${order.id}`}
-                            >
-                              <Eye className="h-4 w-4 me-1" />
-                              {language === 'ar' ? 'عرض' : 'View'}
-                            </Button>
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewDetails(order)}
+                                data-testid={`button-view-${order.id}`}
+                              >
+                                <Eye className="h-4 w-4 me-1" />
+                                <span className="hidden sm:inline">
+                                  {language === 'ar' ? 'عرض' : 'View'}
+                                </span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handlePrintOrder(order)}
+                                title={language === 'ar' ? 'طباعة' : 'Print'}
+                              >
+                                <Printer className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleShareOrder(order)}
+                                title={language === 'ar' ? 'مشاركة' : 'Share'}
+                              >
+                                <Share2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -419,11 +615,29 @@ export default function AdminOrdersPage() {
               </div>
 
               <div className="pt-4 border-t">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-4">
                   <span className="font-semibold text-lg">
                     {language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}
                   </span>
                   <span className="font-bold text-2xl font-mono">{selectedOrder.totalAmount}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handlePrintOrder(selectedOrder)}
+                  >
+                    <Printer className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'طباعة' : 'Print'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleShareOrder(selectedOrder)}
+                  >
+                    <Share2 className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'مشاركة' : 'Share'}
+                  </Button>
                 </div>
               </div>
             </div>
