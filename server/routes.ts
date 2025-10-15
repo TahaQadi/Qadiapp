@@ -391,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create notification for admins
       const admins = await storage.getAdminClients();
       console.log(`Creating price request notifications for ${admins.length} admins`);
-      
+
       for (const admin of admins) {
         const notification = await storage.createNotification({
           clientId: admin.id,
@@ -905,11 +905,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export order to PDF (admin only)
+  app.post('/api/admin/orders/export-pdf', requireAdmin, async (req: any, res) => {
+    try {
+      const { order, client, lta, items, language } = req.body;
+
+      const pdfGenerator = new PDFGenerator();
+      const pdfBuffer = await pdfGenerator.generateOrderPDF({
+        order,
+        client,
+        lta,
+        items,
+        language: language || 'en',
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="order-${order.id.slice(0, 8)}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      res.status(500).json({
+        message: 'Failed to export PDF',
+        messageAr: 'فشل تصدير PDF'
+      });
+    }
+  });
+
   app.patch("/api/admin/orders/:id/status", requireAdmin, async (req: any, res) => {
     try {
       const { status } = req.body;
       const order = await storage.updateOrderStatus(req.params.id, status);
-      
+
       if (!order) {
         return res.status(404).json({
           message: "Order not found",
@@ -1963,7 +1990,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate PDF price offer for a price request
-  app.post('/api/admin/price-requests/:notificationId/generate-pdf', requireAdmin, async (req: AdminRequest, res) => {
+  app.post('/api/admin/price-requests/:notificationId/generate-pdf', requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
       const { notificationId } = req.params;
       const { language, ltaId, validityDays, notes } = req.body;
@@ -2036,7 +2063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate unique offer number
       const offerCount = (await storage.getAllPriceOffers()).length;
       const offerNumber = `PO-${new Date().getFullYear()}-${String(offerCount + 1).padStart(4, '0')}`;
-      
+
       // Generate PDF
       const offerDate = new Date();
       const validUntil = new Date();
@@ -2192,7 +2219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status, responseNote } = req.body;
       const offer = await storage.getPriceOffer(req.params.id);
-      
+
       if (!offer) {
         return res.status(404).json({
           message: "Price offer not found",
@@ -2250,8 +2277,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const displayFileName = fileName.split('/').pop() || 'document.pdf';
 
       // Ensure we're sending a proper Buffer
-      const pdfBuffer = Buffer.isBuffer(downloadResult.data) 
-        ? downloadResult.data 
+      const pdfBuffer = Buffer.isBuffer(downloadResult.data)
+        ? downloadResult.data
         : Buffer.from(downloadResult.data);
 
       console.log('Sending PDF, size:', pdfBuffer.length);
@@ -2265,7 +2292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Pragma': 'no-cache',
         'Expires': '0'
       });
-      
+
       // Send buffer and end response
       res.end(pdfBuffer);
     } catch (error) {

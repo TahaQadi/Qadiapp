@@ -59,6 +59,7 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const itemsPerPage = 20;
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
@@ -286,6 +287,54 @@ export default function AdminOrdersPage() {
     printWindow.document.close();
   };
 
+  const handleExportPDF = async (order: Order) => {
+    try {
+      const items = safeJsonParse<OrderItem[]>(order.items, []);
+      const client = clients.find(c => c.id === order.clientId);
+      const lta = ltas.find(l => l.id === order.ltaId);
+
+      const response = await apiRequest('POST', '/api/admin/orders/export-pdf', {
+        order: {
+          id: order.id,
+          createdAt: order.createdAt,
+          status: order.status,
+          totalAmount: order.totalAmount,
+        },
+        client: client ? {
+          nameEn: client.nameEn,
+          nameAr: client.nameAr,
+        } : null,
+        lta: lta ? {
+          nameEn: lta.nameEn,
+          nameAr: lta.nameAr,
+        } : null,
+        items: items,
+        language: language,
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `order-${order.id.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: language === 'ar' ? 'تم التصدير' : 'Exported',
+        description: language === 'ar' ? 'تم تصدير الطلب إلى PDF بنجاح' : 'Order exported to PDF successfully',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    }
+  };
+
   const handleShareOrder = (order: Order) => {
     const shareUrl = `${window.location.origin}/admin/orders?orderId=${order.id}`;
     
@@ -309,6 +358,38 @@ export default function AdminOrdersPage() {
         description: language === 'ar' ? 'تم نسخ الرابط إلى الحافظة' : 'Link copied to clipboard',
       });
     });
+  };
+
+  const toggleOrderSelection = (orderId: string) => {
+    const newSelection = new Set(selectedOrders);
+    if (newSelection.has(orderId)) {
+      newSelection.delete(orderId);
+    } else {
+      newSelection.add(orderId);
+    }
+    setSelectedOrders(newSelection);
+  };
+
+  const toggleAllOrders = () => {
+    if (selectedOrders.size === paginatedOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(paginatedOrders.map(o => o.id)));
+    }
+  };
+
+  const handleBulkPrint = () => {
+    selectedOrders.forEach(orderId => {
+      const order = orders.find(o => o.id === orderId);
+      if (order) handlePrintOrder(order);
+    });
+  };
+
+  const handleBulkExportPDF = async () => {
+    for (const orderId of Array.from(selectedOrders)) {
+      const order = orders.find(o => o.id === orderId);
+      if (order) await handleExportPDF(order);
+    }
   };
 
   // Filter and search orders
@@ -412,11 +493,37 @@ export default function AdminOrdersPage() {
                 </Select>
               </div>
 
-              <div className="text-sm text-muted-foreground">
-                {language === 'ar'
-                  ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} من ${filteredOrders.length} طلب`
-                  : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} of ${filteredOrders.length} orders`
-                }
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} من ${filteredOrders.length} طلب`
+                    : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} of ${filteredOrders.length} orders`
+                  }
+                </div>
+                
+                {selectedOrders.size > 0 && (
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">
+                      {selectedOrders.size} {language === 'ar' ? 'محدد' : 'selected'}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkPrint}
+                    >
+                      <Printer className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'طباعة الكل' : 'Print All'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkExportPDF}
+                    >
+                      <Download className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'تصدير الكل' : 'Export All'}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -436,6 +543,14 @@ export default function AdminOrdersPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrders.size === paginatedOrders.length && paginatedOrders.length > 0}
+                            onChange={toggleAllOrders}
+                            className="rounded border-gray-300"
+                          />
+                        </TableHead>
                         <TableHead>{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</TableHead>
                         <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
                         <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
@@ -448,6 +563,14 @@ export default function AdminOrdersPage() {
                     <TableBody>
                       {paginatedOrders.map((order) => (
                         <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedOrders.has(order.id)}
+                              onChange={() => toggleOrderSelection(order.id)}
+                              className="rounded border-gray-300"
+                            />
+                          </TableCell>
                           <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}</TableCell>
                           <TableCell>{getClientName(order.clientId)}</TableCell>
                           <TableCell>{getLtaName(order.ltaId)}</TableCell>
@@ -498,6 +621,14 @@ export default function AdminOrdersPage() {
                                 title={language === 'ar' ? 'مشاركة' : 'Share'}
                               >
                                 <Share2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleExportPDF(order)}
+                                title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
+                              >
+                                <Download className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -629,6 +760,14 @@ export default function AdminOrdersPage() {
                   >
                     <Printer className="h-4 w-4 me-2" />
                     {language === 'ar' ? 'طباعة' : 'Print'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleExportPDF(selectedOrder)}
+                  >
+                    <Download className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                   </Button>
                   <Button
                     variant="outline"
