@@ -1005,9 +1005,7 @@ export default function OrderingPage() {
             </Button>
 
             {/* Notifications */}
-            <div className="hidden xs:block">
-              <NotificationCenter />
-            </div>
+            <NotificationCenter />
             
             {/* Menu Button */}
             <Sheet>
@@ -1039,11 +1037,6 @@ export default function OrderingPage() {
 
                   {/* Navigation */}
                   <nav className="flex-1 py-4 space-y-1">
-                    {/* Notifications (Mobile Only) */}
-                    <div className="xs:hidden mb-2">
-                      <NotificationCenter variant="sidebar" />
-                    </div>
-
                     <Link href="/profile">
                       <Button
                         variant="ghost"
