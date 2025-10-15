@@ -142,13 +142,21 @@ export default function AdminOrdersPage() {
     const lta = ltas.find(l => l.id === order.ltaId);
 
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'فشل فتح نافذة الطباعة' : 'Failed to open print window',
+      });
+      return;
+    }
 
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
           <title>${language === 'ar' ? 'طلب' : 'Order'} #${order.id.slice(0, 8)}</title>
+          <meta charset="UTF-8">
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -214,7 +222,7 @@ export default function AdminOrdersPage() {
             }
             @media print {
               body { padding: 20px; }
-              button { display: none; }
+              .no-print { display: none; }
             }
           </style>
         </head>
@@ -274,11 +282,20 @@ export default function AdminOrdersPage() {
             ${language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}: ${order.totalAmount}
           </div>
 
-          <div style="text-align: center; margin-top: 40px;">
-            <button onclick="window.print()" style="padding: 12px 24px; background: #1a365d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
+          <div class="no-print" style="text-align: center; margin-top: 40px;">
+            <button onclick="window.print(); setTimeout(() => window.close(), 100);" style="padding: 12px 24px; background: #1a365d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
               ${language === 'ar' ? 'طباعة' : 'Print'}
             </button>
           </div>
+          
+          <script>
+            window.onload = function() {
+              // Auto-trigger print dialog after page loads
+              setTimeout(() => {
+                window.print();
+              }, 250);
+            };
+          </script>
         </body>
       </html>
     `;

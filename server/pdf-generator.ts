@@ -356,4 +356,172 @@ export class PDFGenerator {
         { align: 'center', width: 495 }
       );
   }
+
+  static async generateOrderPDF(data: {
+    order: any;
+    client: any;
+    lta: any;
+    items: any[];
+    language: 'en' | 'ar';
+  }): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({
+          size: 'A4',
+          margins: { top: 120, bottom: 80, left: 50, right: 50 },
+          bufferPages: true,
+          autoFirstPage: true,
+          compress: true
+        });
+
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+        
+        doc.on('end', () => {
+          try {
+            const pdfBuffer = Buffer.concat(chunks);
+            resolve(pdfBuffer);
+          } catch (err) {
+            reject(err);
+          }
+        });
+        
+        doc.on('error', (err: Error) => {
+          reject(err);
+        });
+
+        // Draw header
+        this.drawHeader(doc, data.language);
+        
+        doc.y = 140;
+
+        // Title
+        doc.fontSize(22)
+          .font('Helvetica-Bold')
+          .fillColor('#1a365d')
+          .text(
+            data.language === 'ar' ? 'تفاصيل الطلب' : 'ORDER DETAILS', 
+            50, 
+            doc.y,
+            { align: 'center' }
+          );
+        
+        doc.moveDown(2);
+        doc.fillColor('#000000');
+
+        // Order info box
+        const detailsY = doc.y;
+        doc.roundedRect(50, detailsY, 495, 80, 5)
+          .fillAndStroke('#f8f9fa', '#e0e0e0');
+        
+        doc.fontSize(10)
+          .fillColor('#000000')
+          .font('Helvetica-Bold')
+          .text(`${data.language === 'ar' ? 'رقم الطلب:' : 'Order ID:'} `, 60, detailsY + 15, { continued: true })
+          .font('Helvetica')
+          .text(data.order.id);
+        
+        doc.font('Helvetica-Bold')
+          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 35, { continued: true })
+          .font('Helvetica')
+          .text(data.order.createdAt);
+        
+        doc.font('Helvetica-Bold')
+          .text(`${data.language === 'ar' ? 'الحالة:' : 'Status:'} `, 60, detailsY + 55, { continued: true })
+          .font('Helvetica')
+          .text(data.order.status);
+
+        doc.font('Helvetica-Bold')
+          .text(`${data.language === 'ar' ? 'العميل:' : 'Client:'} `, 300, detailsY + 15, { continued: true })
+          .font('Helvetica')
+          .text(data.language === 'ar' ? data.client?.nameAr : data.client?.nameEn);
+        
+        if (data.lta) {
+          doc.font('Helvetica-Bold')
+            .text(`${data.language === 'ar' ? 'الاتفاقية:' : 'LTA:'} `, 300, detailsY + 35, { continued: true })
+            .font('Helvetica')
+            .text(data.language === 'ar' ? data.lta.nameAr : data.lta.nameEn);
+        }
+        
+        doc.y = detailsY + 90;
+        doc.moveDown();
+
+        // Items table
+        const tableTop = doc.y;
+        
+        doc.rect(50, tableTop, 495, 25)
+          .fillAndStroke('#1a365d', '#1a365d');
+        
+        doc.fontSize(10)
+          .fillColor('#ffffff')
+          .font('Helvetica-Bold')
+          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
+          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
+          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product', 190, tableTop + 8, { width: 150 })
+          .text(data.language === 'ar' ? 'الكمية' : 'Qty', 350, tableTop + 8, { width: 50 })
+          .text(data.language === 'ar' ? 'السعر' : 'Price', 410, tableTop + 8, { width: 60, align: 'right' })
+          .text(data.language === 'ar' ? 'المجموع' : 'Total', 480, tableTop + 8, { width: 55, align: 'right' });
+
+        let yPosition = tableTop + 25;
+        doc.fillColor('#000000');
+        doc.font('Helvetica');
+        let itemNumber = 1;
+
+        for (const item of data.items) {
+          if (yPosition > 680) {
+            this.drawFooter(doc, data.language, doc.page.height);
+            doc.addPage();
+            this.drawHeader(doc, data.language);
+            yPosition = 140;
+          }
+
+          if (itemNumber % 2 === 0) {
+            doc.rect(50, yPosition, 495, 22)
+              .fillAndStroke('#f8f9fa', '#f8f9fa');
+          }
+
+          const total = (parseFloat(item.price) * item.quantity).toFixed(2);
+
+          doc.fillColor('#000000')
+            .fontSize(9)
+            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
+            .text(item.sku, 100, yPosition + 6, { width: 80 })
+            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 150 })
+            .text(item.quantity.toString(), 350, yPosition + 6, { width: 50 })
+            .text(item.price, 410, yPosition + 6, { width: 60, align: 'right' })
+            .text(total, 480, yPosition + 6, { width: 55, align: 'right' });
+
+          yPosition += 22;
+          itemNumber++;
+        }
+        
+        doc.moveTo(50, yPosition)
+          .lineTo(545, yPosition)
+          .strokeColor('#1a365d')
+          .lineWidth(2)
+          .stroke();
+        
+        doc.y = yPosition + 15;
+        doc.moveDown();
+
+        // Total
+        doc.fontSize(14)
+          .font('Helvetica-Bold')
+          .text(
+            `${data.language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'} ${data.order.totalAmount}`,
+            50,
+            doc.y,
+            { align: 'right' }
+          );
+
+        this.drawFooter(doc, data.language, doc.page.height);
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
 }
