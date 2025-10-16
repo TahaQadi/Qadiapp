@@ -2,38 +2,52 @@
 import { Router } from 'express';
 import { storage } from './storage';
 import { isAuthenticated } from './replitAuth';
+import { z } from 'zod';
 
 const router = Router();
 
-interface OnboardingData {
-  company: {
-    nameEn: string;
-    nameAr: string;
-    email: string;
-    phone: string;
-  };
-  headquarters: {
-    nameEn: string;
-    nameAr: string;
-    addressEn: string;
-    addressAr: string;
-    city: string;
-    country: string;
-    phone: string;
-    latitude?: number;
-    longitude?: number;
-  };
-  departments: Array<{
-    type: string;
-    contactName: string;
-    contactEmail: string;
-    contactPhone: string;
-  }>;
-}
+// Zod schema for onboarding validation
+const onboardingSchema = z.object({
+  company: z.object({
+    nameEn: z.string().optional(),
+    nameAr: z.string().min(1, 'Company name in Arabic is required / اسم الشركة بالعربية مطلوب'),
+    email: z.string().email().optional().or(z.literal('')),
+    phone: z.string().optional(),
+  }),
+  headquarters: z.object({
+    nameEn: z.string().optional(),
+    nameAr: z.string().min(1, 'HQ name in Arabic is required / اسم المقر بالعربية مطلوب'),
+    addressEn: z.string().optional(),
+    addressAr: z.string().min(1, 'HQ address in Arabic is required / عنوان المقر بالعربية مطلوب'),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    phone: z.string().optional(),
+    latitude: z.number({ required_error: 'Map location is required / الموقع على الخريطة مطلوب' }),
+    longitude: z.number({ required_error: 'Map location is required / الموقع على الخريطة مطلوب' }),
+  }),
+  departments: z.array(z.object({
+    type: z.string().min(1),
+    contactName: z.string().optional(),
+    contactEmail: z.string().optional(),
+    contactPhone: z.string().optional(),
+  })).min(1, 'At least one department is required / قسم واحد على الأقل مطلوب'),
+});
+
+type OnboardingData = z.infer<typeof onboardingSchema>;
 
 router.post('/onboarding/complete', isAuthenticated, async (req, res) => {
   try {
-    const data: OnboardingData = req.body;
+    // Validate request body with Zod
+    const validationResult = onboardingSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(e => e.message).join(', ');
+      return res.status(400).json({ 
+        message: errors,
+        messageAr: errors
+      });
+    }
+
+    const data = validationResult.data;
     const user = req.user as any;
     const userId = user?.claims?.sub;
 

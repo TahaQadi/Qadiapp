@@ -158,13 +158,14 @@ export default function OnboardingPage() {
         }
         break;
       case 3:
-        // Require at least one department
-        if (onboardingData.departments.length === 0) {
+        // Require at least one department with a valid type
+        const validDepartments = onboardingData.departments.filter(dept => dept.type);
+        if (validDepartments.length === 0) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى إضافة قسم واحد على الأقل' 
-              : 'Please add at least one department',
+              ? 'يرجى إضافة قسم واحد على الأقل مع تحديد النوع' 
+              : 'Please add at least one department with a type selected',
             variant: 'destructive',
           });
           return false;
