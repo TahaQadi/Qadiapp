@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -372,17 +372,19 @@ export default function AdminPriceManagementPage() {
 
       <main className="container mx-auto px-4 py-6 relative z-10">
         <Tabs defaultValue="requests" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="requests" className="gap-2">
+          <TabsList className="grid w-full max-w-md grid-cols-2 h-auto p-1">
+            <TabsTrigger value="requests" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Package className="h-4 w-4" />
-              {language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}
+              <span className="hidden sm:inline">{language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}</span>
+              <span className="sm:hidden">{language === 'ar' ? 'طلبات' : 'Requests'}</span>
               {priceRequests.length > 0 && (
                 <Badge variant="secondary" className="ml-1">{priceRequests.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2">
+            <TabsTrigger value="offers" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="h-4 w-4" />
-              {language === 'ar' ? 'عروض الأسعار' : 'Price Offers'}
+              <span className="hidden sm:inline">{language === 'ar' ? 'عروض الأسعار' : 'Price Offers'}</span>
+              <span className="sm:hidden">{language === 'ar' ? 'عروض' : 'Offers'}</span>
               {offers.length > 0 && (
                 <Badge variant="secondary" className="ml-1">{offers.length}</Badge>
               )}
@@ -393,11 +395,12 @@ export default function AdminPriceManagementPage() {
           <TabsContent value="requests" className="space-y-4">
             {/* Filter Tabs */}
             {priceRequests.length > 0 && (
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
                 <Button
                   variant={requestStatusFilter === 'all' ? 'default' : 'outline'}
                   onClick={() => setRequestStatusFilter('all')}
-                  className="gap-2"
+                  className="gap-2 shrink-0"
+                  size="sm"
                 >
                   {language === 'ar' ? 'الكل' : 'All'}
                   <Badge variant={requestStatusFilter === 'all' ? 'secondary' : 'outline'}>
@@ -407,7 +410,8 @@ export default function AdminPriceManagementPage() {
                 <Button
                   variant={requestStatusFilter === 'pending' ? 'default' : 'outline'}
                   onClick={() => setRequestStatusFilter('pending')}
-                  className="gap-2"
+                  className="gap-2 shrink-0"
+                  size="sm"
                 >
                   {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
                   <Badge variant={requestStatusFilter === 'pending' ? 'secondary' : 'outline'}>
@@ -417,7 +421,8 @@ export default function AdminPriceManagementPage() {
                 <Button
                   variant={requestStatusFilter === 'completed' ? 'default' : 'outline'}
                   onClick={() => setRequestStatusFilter('completed')}
-                  className="gap-2"
+                  className="gap-2 shrink-0"
+                  size="sm"
                 >
                   {language === 'ar' ? 'مكتمل' : 'Completed'}
                   <Badge variant={requestStatusFilter === 'completed' ? 'secondary' : 'outline'}>
@@ -434,24 +439,26 @@ export default function AdminPriceManagementPage() {
                 </p>
               </div>
             ) : filteredRequests.length === 0 ? (
-              <Card className="p-16 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Package className="h-20 w-20 text-muted-foreground opacity-50" />
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold">
-                      {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground max-w-md">
-                      {requestStatusFilter === 'all' 
-                        ? (language === 'ar' 
-                          ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
-                          : 'No price requests have been received yet')
-                        : (language === 'ar'
-                          ? `لا توجد طلبات ${requestStatusFilter === 'pending' ? 'قيد الانتظار' : 'مكتملة'}`
-                          : `No ${requestStatusFilter} requests`)}
-                    </p>
+              <Card className="border-2 border-dashed">
+                <CardContent className="p-16 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Package className="h-20 w-20 text-muted-foreground opacity-50" />
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold">
+                        {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        {requestStatusFilter === 'all' 
+                          ? (language === 'ar' 
+                            ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
+                            : 'No price requests have been received yet')
+                          : (language === 'ar'
+                            ? `لا توجد طلبات ${requestStatusFilter === 'pending' ? 'قيد الانتظار' : 'مكتملة'}`
+                            : `No ${requestStatusFilter} requests`)}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
@@ -460,11 +467,11 @@ export default function AdminPriceManagementPage() {
                   const completed = isRequestCompleted(request);
 
                   return (
-                    <Card key={request.id} className={!request.isRead && !completed ? 'border-primary' : completed ? 'border-green-500/30' : ''}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <CardTitle className="flex items-center gap-2">
+                    <Card key={request.id} className={!request.isRead && !completed ? 'border-primary shadow-lg' : completed ? 'border-green-500/30 shadow-md' : 'shadow-sm'}>
+                      <CardHeader className="pb-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1 flex-1">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                               {!request.isRead && !completed && (
                                 <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
                               )}
@@ -476,12 +483,12 @@ export default function AdminPriceManagementPage() {
                                 </Badge>
                               )}
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                              <Clock className="inline h-3 w-3 mr-1" />
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
                               {formatDate(request.createdAt)}
                             </p>
                           </div>
-                          <div className="flex gap-2 flex-wrap">
+                          <div className="flex gap-2 flex-wrap justify-end">
                             {completed && (
                               <>
                                 <Button
@@ -541,18 +548,19 @@ export default function AdminPriceManagementPage() {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {metadata.message && (
-                            <div className="p-3 bg-muted rounded-lg">
-                              <p className="text-sm">{metadata.message}</p>
-                            </div>
-                          )}
+                      <CardContent className="space-y-4">
+                        {metadata.message && (
+                          <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
+                            <p className="text-sm">{metadata.message}</p>
+                          </div>
+                        )}
 
-                          <div>
-                            <h4 className="font-semibold mb-3">
-                              {language === 'ar' ? 'المنتجات المطلوبة:' : 'Requested Products:'}
-                            </h4>
+                        <div>
+                          <h4 className="font-semibold mb-3 flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            {language === 'ar' ? 'المنتجات المطلوبة:' : 'Requested Products:'}
+                          </h4>
+                          <div className="border rounded-lg overflow-hidden">
                             <Table>
                               <TableHeader>
                                 <TableRow>
@@ -566,8 +574,8 @@ export default function AdminPriceManagementPage() {
                                   const hasPrice = isProductAssignedToLta(product.id, metadata.clientId);
                                   return (
                                     <TableRow key={product.id}>
-                                      <TableCell className="font-mono">{product.sku}</TableCell>
-                                      <TableCell>
+                                      <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                                      <TableCell className="font-medium">
                                         {language === 'ar' ? product.nameAr : product.nameEn}
                                       </TableCell>
                                       <TableCell className="text-end">
@@ -624,65 +632,69 @@ export default function AdminPriceManagementPage() {
                 </p>
               </div>
             ) : filteredOffers.length === 0 ? (
-              <Card className="p-16 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <FileText className="h-20 w-20 text-muted-foreground opacity-50" />
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold">
-                      {language === 'ar' ? 'لا توجد عروض أسعار' : 'No Price Offers'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'ar' ? 'لم يتم إنشاء أي عروض أسعار بعد' : 'No price offers have been created yet'}
-                    </p>
+              <Card className="border-2 border-dashed">
+                <CardContent className="p-16 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <FileText className="h-20 w-20 text-muted-foreground opacity-50" />
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold">
+                        {language === 'ar' ? 'لا توجد عروض أسعار' : 'No Price Offers'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'لم يتم إنشاء أي عروض أسعار بعد' : 'No price offers have been created yet'}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="shadow-md">
                 <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{language === 'ar' ? 'رقم العرض' : 'Offer #'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</TableHead>
-                        <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredOffers.map((offer) => (
-                        <TableRow key={offer.id}>
-                          <TableCell className="font-medium">{offer.offerNumber}</TableCell>
-                          <TableCell>{getClientName(offer.clientId)}</TableCell>
-                          <TableCell>{getLtaName(offer.ltaId)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getOfferStatusIcon(offer.status)}
-                              {getOfferStatusBadge(offer)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(offer.pdfFileName)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{language === 'ar' ? 'رقم العرض' : 'Offer #'}</TableHead>
+                          <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
+                          <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
+                          <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                          <TableHead>{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</TableHead>
+                          <TableHead>{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</TableHead>
+                          <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredOffers.map((offer) => (
+                          <TableRow key={offer.id}>
+                            <TableCell className="font-medium font-mono">{offer.offerNumber}</TableCell>
+                            <TableCell>{getClientName(offer.clientId)}</TableCell>
+                            <TableCell>{getLtaName(offer.ltaId)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getOfferStatusIcon(offer.status)}
+                                {getOfferStatusBadge(offer)}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownload(offer.pdfFileName)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -712,7 +724,7 @@ export default function AdminPriceManagementPage() {
               <p className="text-sm font-medium text-muted-foreground">
                 {language === 'ar' ? 'المنتج' : 'Product'}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1 p-3 bg-muted/50 rounded-lg">
                 <p className="font-medium text-base">
                   {selectedProduct && (language === 'ar' ? selectedProduct.nameAr : selectedProduct?.nameEn)}
                 </p>
