@@ -378,15 +378,24 @@ export class MemStorage implements IStorage {
   }
 
   async updateClient(id: string, data: Partial<InsertClient>): Promise<Client | undefined> {
+    // Build update object with only provided fields
+    const updateData: any = {};
+    
+    if (data.nameEn !== undefined) updateData.nameEn = data.nameEn;
+    if (data.nameAr !== undefined) updateData.nameAr = data.nameAr;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.isAdmin !== undefined) updateData.isAdmin = data.isAdmin;
+    if (data.password !== undefined) updateData.password = data.password;
+
+    // If no fields to update, return the existing client
+    if (Object.keys(updateData).length === 0) {
+      return await this.getClient(id);
+    }
+
     const updated = await this.db
       .update(clients)
-      .set({
-        nameEn: data.nameEn,
-        nameAr: data.nameAr,
-        email: data.email,
-        phone: data.phone,
-        isAdmin: data.isAdmin,
-      })
+      .set(updateData)
       .where(eq(clients.id, id))
       .returning();
     return updated[0];
