@@ -230,20 +230,26 @@ export default function AdminLtaListPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#d4af37]/60 bg-clip-text text-transparent">
             {language === 'ar' ? 'إدارة الاتفاقيات' : 'LTA Management'}
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle>
-              {language === 'ar' ? 'الاتفاقيات طويلة الأجل' : 'Long-Term Agreements'}
-            </CardTitle>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 relative z-10">
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4">
+            <div>
+              <CardTitle className="text-xl sm:text-2xl font-bold">
+                {language === 'ar' ? 'الاتفاقيات طويلة الأجل' : 'Long-Term Agreements'}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {language === 'ar' ? 'إدارة جميع الاتفاقيات والعقود' : 'Manage all agreements and contracts'}
+              </p>
+            </div>
             <Button 
               onClick={() => setCreateDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black font-medium shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               data-testid="button-create-lta"
             >
               <Plus className="h-4 w-4 me-2" />
@@ -254,73 +260,94 @@ export default function AdminLtaListPage() {
             {isLoading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                  <div key={i} className="h-16 bg-muted/50 dark:bg-white/5 rounded-lg animate-pulse" />
                 ))}
               </div>
+            ) : ltas.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-primary/10 dark:bg-[#d4af37]/10 flex items-center justify-center">
+                  <Plus className="h-8 w-8 text-primary dark:text-[#d4af37]" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTAs Yet'}</h3>
+                <p className="text-muted-foreground mb-4">
+                  {language === 'ar' ? 'ابدأ بإنشاء اتفاقية جديدة' : 'Get started by creating a new LTA'}
+                </p>
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)}
+                  variant="outline"
+                  className="border-primary dark:border-[#d4af37]"
+                >
+                  <Plus className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'إنشاء اتفاقية' : 'Create LTA'}
+                </Button>
+              </div>
             ) : (
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'تاريخ البداية' : 'Start Date'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'تاريخ الانتهاء' : 'End Date'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                      <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ltas.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                          {language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTAs'}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      ltas.map((lta) => (
-                        <TableRow key={lta.id} data-testid={`row-lta-${lta.id}`}>
-                          <TableCell className="font-medium">
+              <div className="grid grid-cols-1 gap-4">
+                {ltas.map((lta) => (
+                  <div 
+                    key={lta.id}
+                    className="group relative overflow-hidden rounded-lg border border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-white/5 p-4 sm:p-6 hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300"
+                    data-testid={`row-lta-${lta.id}`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold truncate">
                             {language === 'ar' ? lta.nameAr : lta.nameEn}
-                          </TableCell>
-                          <TableCell>{formatDate(lta.startDate)}</TableCell>
-                          <TableCell>{formatDate(lta.endDate)}</TableCell>
-                          <TableCell>{getStatusBadge(lta.status)}</TableCell>
-                          <TableCell className="text-end">
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setLocation(`/admin/ltas/${lta.id}`)}
-                                data-testid={`button-view-${lta.id}`}
-                              >
-                                <Eye className="h-4 w-4 me-1" />
-                                {language === 'ar' ? 'عرض' : 'View'}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditLta(lta)}
-                                data-testid={`button-edit-${lta.id}`}
-                              >
-                                <Pencil className="h-4 w-4 me-1" />
-                                {language === 'ar' ? 'تعديل' : 'Edit'}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteLta(lta)}
-                                data-testid={`button-delete-${lta.id}`}
-                              >
-                                <Trash2 className="h-4 w-4 me-1" />
-                                {language === 'ar' ? 'حذف' : 'Delete'}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                          </h3>
+                          {getStatusBadge(lta.status)}
+                        </div>
+                        {(lta.descriptionEn || lta.descriptionAr) && (
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {language === 'ar' ? lta.descriptionAr : lta.descriptionEn}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4" />
+                            <span>{formatDate(lta.startDate)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4" />
+                            <span>{formatDate(lta.endDate)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/ltas/${lta.id}`)}
+                          className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
+                          data-testid={`button-view-${lta.id}`}
+                        >
+                          <Eye className="h-4 w-4 me-1" />
+                          {language === 'ar' ? 'عرض' : 'View'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditLta(lta)}
+                          className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
+                          data-testid={`button-edit-${lta.id}`}
+                        >
+                          <Pencil className="h-4 w-4 me-1" />
+                          {language === 'ar' ? 'تعديل' : 'Edit'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteLta(lta)}
+                          className="hover:bg-destructive/10 text-destructive"
+                          data-testid={`button-delete-${lta.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 me-1" />
+                          {language === 'ar' ? 'حذف' : 'Delete'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

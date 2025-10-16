@@ -656,36 +656,47 @@ KB-001,89.99,SAR`;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background">
-        <div className="container mx-auto px-4 h-16 flex items-center gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center gap-2 sm:gap-3 min-w-0">
           <Button
             variant="ghost"
             size="icon"
             asChild
+            className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
             data-testid="button-back-ltas"
           >
             <Link href="/admin/ltas">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#d4af37]/60 bg-clip-text text-transparent truncate">
             {language === 'ar' ? lta.nameAr : lta.nameEn}
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 relative z-10">
         {/* Section 1: LTA Information */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <div>
-              <CardTitle>{language === 'ar' ? 'معلومات الاتفاقية' : 'LTA Information'}</CardTitle>
-              <CardDescription className="mt-1">
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex-1">
+              <CardTitle className="text-xl sm:text-2xl font-bold">{language === 'ar' ? 'معلومات الاتفاقية' : 'LTA Information'}</CardTitle>
+              <CardDescription className="mt-1 text-sm">
                 {language === 'ar' ? lta.descriptionAr : lta.descriptionEn}
               </CardDescription>
             </div>
-            <Button onClick={handleEditLta} data-testid="button-edit-lta">
+            <Button 
+              onClick={handleEditLta} 
+              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
+              data-testid="button-edit-lta"
+            >
               <Pencil className="h-4 w-4 me-2" />
               {language === 'ar' ? 'تعديل' : 'Edit'}
             </Button>
@@ -717,13 +728,19 @@ KB-001,89.99,SAR`;
         </Card>
 
         {/* Section 2: Assigned Products */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle>{language === 'ar' ? 'المنتجات في هذه الاتفاقية' : 'Products in this LTA'}</CardTitle>
-            <div className="flex gap-2">
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <CardTitle className="text-xl font-bold">{language === 'ar' ? 'المنتجات في هذه الاتفاقية' : 'Products in this LTA'}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {language === 'ar' ? 'إدارة المنتجات والأسعار' : 'Manage products and pricing'}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
                 variant="outline"
                 onClick={() => setBulkImportDialogOpen(true)}
+                className="border-primary/50 dark:border-[#d4af37]/50 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
                 data-testid="button-bulk-import"
               >
                 <Upload className="h-4 w-4 me-2" />
@@ -731,6 +748,7 @@ KB-001,89.99,SAR`;
               </Button>
               <Button 
                 onClick={() => setAddProductDialogOpen(true)}
+                className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-lg hover:shadow-xl transition-all duration-300"
                 data-testid="button-add-product"
               >
                 <Plus className="h-4 w-4 me-2" />
@@ -806,11 +824,17 @@ KB-001,89.99,SAR`;
         </Card>
 
         {/* Section 3: Assigned Clients */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle>{language === 'ar' ? 'العملاء في هذه الاتفاقية' : 'Clients in this LTA'}</CardTitle>
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <CardTitle className="text-xl font-bold">{language === 'ar' ? 'العملاء في هذه الاتفاقية' : 'Clients in this LTA'}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {language === 'ar' ? 'إدارة العملاء المعينين' : 'Manage assigned clients'}
+              </p>
+            </div>
             <Button 
               onClick={() => setAddClientDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               data-testid="button-add-client"
             >
               <Plus className="h-4 w-4 me-2" />
@@ -870,11 +894,17 @@ KB-001,89.99,SAR`;
         </Card>
 
         {/* Section 4: LTA Documents */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <CardTitle>{language === 'ar' ? 'مستندات الاتفاقية' : 'LTA Documents'}</CardTitle>
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <CardTitle className="text-xl font-bold">{language === 'ar' ? 'مستندات الاتفاقية' : 'LTA Documents'}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {language === 'ar' ? 'إدارة المستندات المرفقة' : 'Manage attached documents'}
+              </p>
+            </div>
             <Button 
               onClick={() => setUploadDocumentDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               data-testid="button-upload-document"
             >
               <Plus className="h-4 w-4 me-2" />
