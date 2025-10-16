@@ -1,5 +1,6 @@
 import {
   type Client,
+  type CompanyUser,
   type ClientDepartment,
   type ClientLocation,
   type Vendor,
@@ -12,6 +13,7 @@ import {
   type LtaClient,
   type PriceOffer,
   type InsertClient,
+  type InsertCompanyUser,
   type InsertClientDepartment,
   type InsertClientLocation,
   type InsertVendor,
@@ -29,6 +31,7 @@ import {
   Notification,
   notifications,
   clients,
+  companyUsers,
   clientDepartments,
   clientLocations,
   vendors,
@@ -68,6 +71,13 @@ export interface IStorage {
   getClient(id: string): Promise<Client | undefined>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined>;
   deleteClient(id: string): Promise<void>;
+
+  // Company Users
+  getCompanyUsers(companyId: string): Promise<CompanyUser[]>;
+  getCompanyUser(id: string): Promise<CompanyUser | undefined>;
+  createCompanyUser(user: InsertCompanyUser): Promise<CompanyUser>;
+  updateCompanyUser(id: string, user: Partial<InsertCompanyUser>): Promise<CompanyUser | undefined>;
+  deleteCompanyUser(id: string): Promise<void>;
 
   // Client Departments
   getClientDepartments(clientId: string): Promise<ClientDepartment[]>;
@@ -248,28 +258,46 @@ export class MemStorage implements IStorage {
     return result[0];
   }
 
+  async getCompanyUserByUsername(username: string): Promise<CompanyUser | undefined> {
+    const result = await this.db.select().from(companyUsers).where(eq(companyUsers.username, username)).limit(1);
+    return result[0];
+  }
+
   async validateClientCredentials(username: string, password: string): Promise<AuthUser | null> {
-    const client = await this.getClientByUsername(username);
-    if (!client) {
+    const companyUser = await this.getCompanyUserByUsername(username);
+    if (!companyUser) {
+      return null;
+    }
+
+    if (!companyUser.isActive) {
       return null;
     }
 
     // Import the password comparison function
     const { comparePasswords } = await import('./auth');
-    const isValidPassword = await comparePasswords(password, client.password);
+    const isValidPassword = await comparePasswords(password, companyUser.password);
 
     if (!isValidPassword) {
       return null;
     }
 
+    const company = await this.getClient(companyUser.companyId);
+    if (!company) {
+      return null;
+    }
+
     return {
-      id: client.id,
-      username: client.username,
-      nameEn: client.nameEn,
-      nameAr: client.nameAr,
-      email: client.email ?? undefined,
-      phone: client.phone ?? undefined,
-      isAdmin: client.isAdmin,
+      id: company.id, // Company ID for backwards compatibility with existing routes
+      userId: companyUser.id, // Company user ID for multi-user system
+      username: companyUser.username,
+      nameEn: companyUser.nameEn,
+      nameAr: companyUser.nameAr,
+      email: companyUser.email ?? undefined,
+      phone: companyUser.phone ?? undefined,
+      isAdmin: company.isAdmin,
+      companyId: company.id,
+      companyNameEn: company.nameEn,
+      companyNameAr: company.nameAr,
     };
   }
 
@@ -316,6 +344,54 @@ export class MemStorage implements IStorage {
 
   async deleteClient(id: string): Promise<void> {
     await this.db.delete(clients).where(eq(clients.id, id));
+  }
+
+  // Company Users
+  async getCompanyUsers(companyId: string): Promise<CompanyUser[]> {
+    return await this.db
+      .select()
+      .from(companyUsers)
+      .where(eq(companyUsers.companyId, companyId));
+  }
+
+  async getCompanyUser(id: string): Promise<CompanyUser | undefined> {
+    const result = await this.db
+      .select()
+      .from(companyUsers)
+      .where(eq(companyUsers.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async createCompanyUser(insertUser: InsertCompanyUser): Promise<CompanyUser> {
+    const inserted = await this.db
+      .insert(companyUsers)
+      .values({
+        companyId: insertUser.companyId,
+        username: insertUser.username,
+        password: insertUser.password,
+        nameEn: insertUser.nameEn,
+        nameAr: insertUser.nameAr,
+        email: insertUser.email ?? null,
+        phone: insertUser.phone ?? null,
+        departmentType: insertUser.departmentType ?? null,
+        isActive: insertUser.isActive ?? true,
+      })
+      .returning();
+    return inserted[0];
+  }
+
+  async updateCompanyUser(id: string, updates: Partial<InsertCompanyUser>): Promise<CompanyUser | undefined> {
+    const updated = await this.db
+      .update(companyUsers)
+      .set(updates)
+      .where(eq(companyUsers.id, id))
+      .returning();
+    return updated[0];
+  }
+
+  async deleteCompanyUser(id: string): Promise<void> {
+    await this.db.delete(companyUsers).where(eq(companyUsers.id, id));
   }
 
   // Client Departments

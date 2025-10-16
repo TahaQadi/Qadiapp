@@ -25,7 +25,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Business logic: Clients table (linked to Replit Auth users)
+// Business logic: Clients table (companies/organizations)
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").unique(), // Link to Replit Auth user
@@ -36,6 +36,21 @@ export const clients = pgTable("clients", {
   email: text("email"),
   phone: text("phone"),
   isAdmin: boolean("is_admin").notNull().default(false),
+});
+
+// Company Users: Multiple users can access the same company
+export const companyUsers = pgTable("company_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  nameEn: text("name_en").notNull(),
+  nameAr: text("name_ar").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  departmentType: text("department_type"), // 'finance', 'purchase', 'warehouse', null
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const clientDepartments = pgTable("client_departments", {
@@ -228,6 +243,7 @@ export const priceOffers = pgTable("price_offers", {
 // Insert schemas
 // Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
+export const insertCompanyUserSchema = createInsertSchema(companyUsers).omit({ id: true, createdAt: true });
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true });
@@ -356,6 +372,17 @@ export const updateOwnProfileSchema = z.object({
   phone: z.string().optional(),
 });
 
+// Company user validation schemas
+export const createCompanyUserSchema = insertCompanyUserSchema.omit({ companyId: true });
+export const updateCompanyUserSchema = z.object({
+  nameEn: z.string().min(1, 'English name is required').optional(),
+  nameAr: z.string().min(1, 'Arabic name is required').optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional(),
+  departmentType: z.string().optional(),
+  isActive: z.boolean().optional(),
+}).partial();
+
 // Schema for bulk product assignment to LTA
 export const bulkAssignProductsSchema = z.object({
   ltaId: z.string().uuid(),
@@ -370,6 +397,7 @@ export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 
 // Types
 export type Client = typeof clients.$inferSelect;
+export type CompanyUser = typeof companyUsers.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;
 export type ClientLocation = typeof clientLocations.$inferSelect & {
   latitude?: string | null;
@@ -387,6 +415,7 @@ export type Notification = typeof notifications.$inferSelect;
 export type PriceOffer = typeof priceOffers.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
+export type InsertCompanyUser = z.infer<typeof insertCompanyUserSchema>;
 export type InsertClientDepartment = z.infer<typeof insertClientDepartmentSchema>;
 export type InsertClientLocation = z.infer<typeof insertClientLocationSchema>;
 export type InsertVendor = z.infer<typeof insertVendorSchema>;
@@ -419,11 +448,15 @@ export interface CartItem {
 }
 
 export interface AuthUser {
-  id: string;
+  id: string; // Company/Client ID (for backwards compatibility with existing routes)
+  userId?: string; // Company User ID (for multi-user system)
   username: string;
   nameEn: string;
   nameAr: string;
   email?: string;
   phone?: string;
   isAdmin: boolean;
+  companyId?: string; // Same as id, kept for clarity
+  companyNameEn?: string;
+  companyNameAr?: string;
 }
