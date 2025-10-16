@@ -86,9 +86,18 @@ export default function AdminClientsPage() {
     queryKey: ['/api/admin/clients'],
   });
 
-  const { data: clientDetails, isLoading: detailsLoading } = useQuery<ClientDetails>({
+  const { data: clientDetails, isLoading: detailsLoading, error: detailsError } = useQuery<ClientDetails>({
     queryKey: ['/api/admin/clients', selectedClientId],
+    queryFn: async () => {
+      if (!selectedClientId) throw new Error('No client selected');
+      const res = await apiRequest('GET', `/api/admin/clients/${selectedClientId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch client details');
+      }
+      return await res.json();
+    },
     enabled: !!selectedClientId,
+    retry: 1,
   });
 
   const form = useForm<ClientFormValues>({
@@ -531,60 +540,11 @@ export default function AdminClientsPage() {
                     {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
                   </div>
                 </div>
-              ) : clientDetails?.client ? (
-                <div className="space-y-6">
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      {language === 'ar' ? 'اسم المستخدم' : 'Username'}
-                    </div>
-                    <div className="font-medium" data-testid="text-username">
-                      {clientDetails.client.username}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
-                    <div className="flex items-center gap-3">
-                      <ShieldCheck className={`h-5 w-5 ${clientDetails.client.isAdmin ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <div>
-                        <div className="font-medium">
-                          {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {(() => {
-                            const adminCount = clients.filter(c => c.isAdmin).length;
-                            const isLastAdmin = clientDetails.client.isAdmin && adminCount === 1;
-                            
-                            if (isLastAdmin) {
-                              return language === 'ar' 
-                                ? 'المسؤول الأخير - لا يمكن تخفيض الرتبة'
-                                : 'Last admin - cannot demote';
-                            }
-                            
-                            return language === 'ar' 
-                              ? (clientDetails.client.isAdmin ? 'لدى هذا المستخدم صلاحيات المسؤول' : 'مستخدم عادي')
-                              : (clientDetails.client.isAdmin ? 'This user has admin privileges' : 'Regular user');
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={clientDetails.client.isAdmin}
-                      onCheckedChange={(checked) => {
-                        toggleAdminMutation.mutate({ 
-                          id: clientDetails.client.id, 
-                          isAdmin: checked 
-                        });
-                      }}
-                      disabled={
-                        toggleAdminMutation.isPending || 
-                        (clientDetails.client.isAdmin && clients.filter(c => c.isAdmin).length === 1)
-                      }
-                      data-testid="switch-admin-status"
-                    />
-                  </div>
-
-                  <Separator />
-
+              ) : detailsError ? (
+                <div className="text-center py-8 text-destructive">
+                  {language === 'ar' ? 'خطأ في تحميل تفاصيل العميل' : 'Error loading client details'}
+                </div>
+              ) : clientDetails?.client && (
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">

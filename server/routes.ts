@@ -477,18 +477,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         client: {
           id: client.id,
           username: client.username,
-          nameEn: client.nameEn,
-          nameAr: client.nameAr,
-          email: client.email,
-          phone: client.phone,
-          isAdmin: client.isAdmin,
+          nameEn: client.nameEn || '',
+          nameAr: client.nameAr || '',
+          email: client.email || null,
+          phone: client.phone || null,
+          isAdmin: client.isAdmin || false,
         },
-        departments,
-        locations,
+        departments: departments || [],
+        locations: locations || [],
       });
     } catch (error) {
+      console.error('Error fetching client details:', error);
       res.status(500).json({
-        message: "Error fetching client details",
+        message: error instanceof Error ? error.message : "Error fetching client details",
         messageAr: "خطأ في جلب تفاصيل العميل"
       });
     }
