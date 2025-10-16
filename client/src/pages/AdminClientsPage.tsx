@@ -605,6 +605,33 @@ export default function AdminClientsPage() {
                         )}
                       />
 
+                      <div className="flex items-center justify-between p-4 border rounded-md bg-muted/30">
+                        <div className="flex items-center gap-3">
+                          <ShieldCheck className="h-5 w-5 text-primary" />
+                          <div>
+                            <div className="font-medium">
+                              {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {language === 'ar' 
+                                ? 'منح صلاحيات المسؤول لهذا العميل' 
+                                : 'Grant admin access to this client'}
+                            </div>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={clientDetails.client.isAdmin}
+                          onCheckedChange={(checked) => {
+                            toggleAdminMutation.mutate({
+                              id: selectedClientId,
+                              isAdmin: checked
+                            });
+                          }}
+                          disabled={toggleAdminMutation.isPending}
+                          data-testid="switch-admin-status"
+                        />
+                      </div>
+
                       <Button
                         type="submit"
                         disabled={updateClientMutation.isPending}
