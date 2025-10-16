@@ -47,7 +47,7 @@ router.post('/onboarding/complete', async (req, res) => {
 
     // Create client/company
     const client = await storage.createClient({
-      nameEn: data.company.nameEn,
+      nameEn: data.company.nameEn || data.company.nameAr, // Default to Arabic if English not provided
       nameAr: data.company.nameAr,
       username: data.users[0]?.username || `company_${Date.now()}`,
       password: await hashPassword(data.users[0]?.password || 'temp123'),
@@ -59,9 +59,9 @@ router.post('/onboarding/complete', async (req, res) => {
     // Create headquarters location
     await storage.createClientLocation({
       clientId: client.id,
-      nameEn: data.headquarters.nameEn,
+      nameEn: data.headquarters.nameEn || data.headquarters.nameAr, // Default to Arabic if English not provided
       nameAr: data.headquarters.nameAr,
-      addressEn: data.headquarters.addressEn,
+      addressEn: data.headquarters.addressEn || data.headquarters.addressAr, // Default to Arabic if English not provided
       addressAr: data.headquarters.addressAr,
       city: data.headquarters.city || null,
       country: data.headquarters.country || null,
@@ -91,7 +91,7 @@ router.post('/onboarding/complete', async (req, res) => {
           companyId: client.id,
           username: user.username,
           password: await hashPassword(user.password),
-          nameEn: user.nameEn,
+          nameEn: user.nameEn || user.nameAr, // Default to Arabic if English not provided
           nameAr: user.nameAr,
           email: user.email || null,
           phone: user.phone || null,

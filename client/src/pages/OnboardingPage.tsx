@@ -122,24 +122,24 @@ export default function OnboardingPage() {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        if (!onboardingData.company.nameEn || !onboardingData.company.nameAr) {
+        if (!onboardingData.company.nameAr) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى ملء جميع الحقول المطلوبة' 
-              : 'Please fill all required fields',
+              ? 'يرجى إدخال اسم الشركة بالعربية' 
+              : 'Please enter company name in Arabic',
             variant: 'destructive',
           });
           return false;
         }
         break;
       case 2:
-        if (!onboardingData.headquarters.nameEn || !onboardingData.headquarters.addressEn) {
+        if (!onboardingData.headquarters.nameAr || !onboardingData.headquarters.addressAr) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى ملء معلومات الموقع' 
-              : 'Please fill location details',
+              ? 'يرجى ملء معلومات الموقع بالعربية' 
+              : 'Please fill location details in Arabic',
             variant: 'destructive',
           });
           return false;
@@ -260,18 +260,7 @@ export default function OnboardingPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="nameEn">{language === 'ar' ? 'اسم الشركة (إنجليزي)' : 'Company Name (English)'} *</Label>
-                      <Input
-                        id="nameEn"
-                        value={onboardingData.company.nameEn}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          company: { ...prev.company, nameEn: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="nameAr">{language === 'ar' ? 'اسم الشركة (عربي)' : 'Company Name (Arabic)'} *</Label>
+                      <Label htmlFor="nameAr">{language === 'ar' ? 'اسم الشركة' : 'Company Name (Arabic)'} *</Label>
                       <Input
                         id="nameAr"
                         value={onboardingData.company.nameAr}
@@ -279,6 +268,19 @@ export default function OnboardingPage() {
                           ...prev,
                           company: { ...prev.company, nameAr: e.target.value }
                         }))}
+                        placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Name in Arabic'}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="nameEn">{language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}</Label>
+                      <Input
+                        id="nameEn"
+                        value={onboardingData.company.nameEn}
+                        onChange={(e) => setOnboardingData(prev => ({
+                          ...prev,
+                          company: { ...prev.company, nameEn: e.target.value }
+                        }))}
+                        placeholder={language === 'ar' ? 'الاسم بالإنجليزية (اختياري)' : 'Name in English (Optional)'}
                       />
                     </div>
                   </div>
@@ -315,46 +317,49 @@ export default function OnboardingPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>{language === 'ar' ? 'اسم الموقع (إنجليزي)' : 'Location Name (English)'} *</Label>
-                      <Input
-                        value={onboardingData.headquarters.nameEn}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          headquarters: { ...prev.headquarters, nameEn: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
-                      />
-                    </div>
-                    <div>
-                      <Label>{language === 'ar' ? 'اسم الموقع (عربي)' : 'Location Name (Arabic)'} *</Label>
+                      <Label>{language === 'ar' ? 'اسم الموقع' : 'Location Name (Arabic)'} *</Label>
                       <Input
                         value={onboardingData.headquarters.nameAr}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
                           headquarters: { ...prev.headquarters, nameAr: e.target.value }
                         }))}
+                        placeholder={language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                      />
+                    </div>
+                    <div>
+                      <Label>{language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}</Label>
+                      <Input
+                        value={onboardingData.headquarters.nameEn}
+                        onChange={(e) => setOnboardingData(prev => ({
+                          ...prev,
+                          headquarters: { ...prev.headquarters, nameEn: e.target.value }
+                        }))}
+                        placeholder={language === 'ar' ? 'الاسم بالإنجليزية (اختياري)' : 'Name in English (Optional)'}
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>{language === 'ar' ? 'العنوان (إنجليزي)' : 'Address (English)'} *</Label>
-                      <Input
-                        value={onboardingData.headquarters.addressEn}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          headquarters: { ...prev.headquarters, addressEn: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>{language === 'ar' ? 'العنوان (عربي)' : 'Address (Arabic)'} *</Label>
+                      <Label>{language === 'ar' ? 'العنوان' : 'Address (Arabic)'} *</Label>
                       <Input
                         value={onboardingData.headquarters.addressAr}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
                           headquarters: { ...prev.headquarters, addressAr: e.target.value }
                         }))}
+                        placeholder={language === 'ar' ? 'العنوان بالعربية' : 'Address in Arabic'}
+                      />
+                    </div>
+                    <div>
+                      <Label>{language === 'ar' ? 'العنوان الإنجليزي (اختياري)' : 'English Address (Optional)'}</Label>
+                      <Input
+                        value={onboardingData.headquarters.addressEn}
+                        onChange={(e) => setOnboardingData(prev => ({
+                          ...prev,
+                          headquarters: { ...prev.headquarters, addressEn: e.target.value }
+                        }))}
+                        placeholder={language === 'ar' ? 'العنوان بالإنجليزية (اختياري)' : 'Address in English (Optional)'}
                       />
                     </div>
                   </div>
@@ -508,18 +513,7 @@ export default function OnboardingPage() {
                             />
                           </div>
                           <div>
-                            <Label>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'} *</Label>
-                            <Input
-                              value={user.nameEn}
-                              onChange={(e) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].nameEn = e.target.value;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'} *</Label>
+                            <Label>{language === 'ar' ? 'الاسم' : 'Name (Arabic)'} *</Label>
                             <Input
                               value={user.nameAr}
                               onChange={(e) => {
@@ -527,6 +521,19 @@ export default function OnboardingPage() {
                                 newUsers[index].nameAr = e.target.value;
                                 setOnboardingData(prev => ({ ...prev, users: newUsers }));
                               }}
+                              placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Name in Arabic'}
+                            />
+                          </div>
+                          <div>
+                            <Label>{language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}</Label>
+                            <Input
+                              value={user.nameEn}
+                              onChange={(e) => {
+                                const newUsers = [...onboardingData.users];
+                                newUsers[index].nameEn = e.target.value;
+                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
+                              }}
+                              placeholder={language === 'ar' ? 'الاسم بالإنجليزية (اختياري)' : 'Name in English (Optional)'}
                             />
                           </div>
                           <div>
@@ -580,7 +587,7 @@ export default function OnboardingPage() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'معلومات الشركة' : 'Company Information'}</h3>
-                    <p>{onboardingData.company.nameEn} / {onboardingData.company.nameAr}</p>
+                    <p>{onboardingData.company.nameAr}{onboardingData.company.nameEn ? ` / ${onboardingData.company.nameEn}` : ''}</p>
                     <p className="text-sm text-muted-foreground">{onboardingData.company.email}</p>
                   </div>
                   
@@ -588,8 +595,8 @@ export default function OnboardingPage() {
                   
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'الموقع' : 'Location'}</h3>
-                    <p>{onboardingData.headquarters.nameEn}</p>
-                    <p className="text-sm text-muted-foreground">{onboardingData.headquarters.addressEn}</p>
+                    <p>{onboardingData.headquarters.nameAr}</p>
+                    <p className="text-sm text-muted-foreground">{onboardingData.headquarters.addressAr}</p>
                   </div>
                   
                   <Separator />
