@@ -274,6 +274,11 @@ export class MemStorage implements IStorage {
         return null;
       }
 
+      // Check if password exists (old OAuth accounts won't have passwords)
+      if (!companyUser.password) {
+        return null;
+      }
+
       const isValidPassword = await comparePasswords(password, companyUser.password);
       if (!isValidPassword) {
         return null;
@@ -302,6 +307,11 @@ export class MemStorage implements IStorage {
     // Fallback to clients table (backwards compatibility for legacy accounts)
     const client = await this.getClientByUsername(username);
     if (!client) {
+      return null;
+    }
+
+    // Check if password exists (old OAuth accounts won't have passwords)
+    if (!client.password) {
       return null;
     }
 
@@ -656,20 +666,19 @@ export class MemStorage implements IStorage {
   }
 
   // Orders
-  async getOrders(clientId: string): Promise<Order[]> {
-    return await this.db
-      .select()
-      .from(orders)
-      .where(eq(orders.clientId, clientId))
-      .orderBy(desc(orders.createdAt));
-  }
-
-  async getOrders() {
-    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  async getOrders(clientId?: string): Promise<Order[]> {
+    if (clientId) {
+      return await this.db
+        .select()
+        .from(orders)
+        .where(eq(orders.clientId, clientId))
+        .orderBy(desc(orders.createdAt));
+    }
+    return await this.db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
   async updateOrderStatus(orderId: string, status: string) {
-    const [order] = await db
+    const [order] = await this.db
       .update(orders)
       .set({ status })
       .where(eq(orders.id, orderId))
