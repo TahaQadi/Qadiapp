@@ -23,6 +23,8 @@ import AdminPriceOffersPage from './pages/AdminPriceOffersPage';
 import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
+import OrderModificationsPage from './pages/admin/OrderModificationsPage';
+import OrdersPage from './pages/OrdersPage';
 import PriceRequestPage from '@/pages/PriceRequestPage';
 import ClientPriceOffersPage from '@/pages/ClientPriceOffersPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
@@ -108,6 +110,7 @@ function Router() {
             {(user as any)?.isAdmin ? <Redirect to="/admin" /> : <OrderingPage />}
           </Route>
           <ProtectedRoute path="/ordering" component={OrderingPage} />
+          <ProtectedRoute path="/orders" component={OrdersPage} />
           <Route path="/profile" component={ClientProfilePage} />
         </>
       )}
@@ -122,6 +125,7 @@ function Router() {
       <AdminRoute path="/admin/templates" component={AdminTemplatesPage} />
       <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
+      <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
 

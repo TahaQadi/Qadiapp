@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -89,6 +89,18 @@ export default function AdminPage() {
       gradient: 'from-indigo-500/20 to-blue-500/10',
       hoverGradient: 'from-indigo-500/30 to-blue-500/20',
       testId: 'card-orders'
+    },
+    {
+      id: 'order-modifications',
+      path: '/admin/order-modifications',
+      icon: Edit,
+      titleEn: 'Order Modifications',
+      titleAr: 'تعديلات الطلبات',
+      descEn: 'Review and approve modification requests',
+      descAr: 'مراجعة والموافقة على طلبات التعديل',
+      gradient: 'from-red-500/20 to-pink-500/10',
+      hoverGradient: 'from-red-500/30 to-pink-500/20',
+      testId: 'card-order-modifications'
     },
     {
       id: 'templates',
