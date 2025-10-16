@@ -85,6 +85,7 @@ export default function OnboardingPage() {
         user: {
           email: data.user.email,
           password: data.user.password,
+          confirmPassword: data.user.confirmPassword,
         },
         company: data.company,
         headquarters: data.headquarters,
