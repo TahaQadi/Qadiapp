@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, ArrowLeft, Plus, Pencil, Trash2, X, ImageIcon, Download, Upload, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LogOut, ArrowLeft, Plus, Pencil, Trash2, X, ImageIcon, Download, Upload, Search, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
@@ -292,10 +294,9 @@ export default function AdminProductsPage() {
       const formData = new FormData();
       formData.append('file', file);
       
-      // Read file to get total count
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
-      const totalRows = Math.max(0, lines.length - 1); // Exclude header
+      const totalRows = Math.max(0, lines.length - 1);
       
       setImportProgress({ current: 0, total: totalRows, processing: true });
       
@@ -505,16 +506,11 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
       </div>
 
       {/* Header */}
@@ -551,51 +547,64 @@ export default function AdminProductsPage() {
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
+              className="h-9 w-9 sm:h-10 sm:w-10"
               data-testid="button-logout"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-            <CardTitle>
-              {language === 'ar' ? 'إدارة المنتجات' : 'Product Management'}
-            </CardTitle>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => exportProductsMutation.mutate()}
-                disabled={exportProductsMutation.isPending}
-                data-testid="button-export-products"
-              >
-                <Download className="h-4 w-4 me-2" />
-                {language === 'ar' ? 'تصدير' : 'Export'}
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setImportDialogOpen(true)}
-                data-testid="button-import-products"
-              >
-                <Upload className="h-4 w-4 me-2" />
-                {language === 'ar' ? 'استيراد' : 'Import'}
-              </Button>
-              <Button 
-                onClick={() => setCreateDialogOpen(true)}
-                data-testid="button-create-product"
-              >
-                <Plus className="h-4 w-4 me-2" />
-                {language === 'ar' ? 'منتج جديد' : 'New Product'}
-              </Button>
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
+          <CardHeader className="border-b border-border/50 dark:border-[#d4af37]/20">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div>
+                <CardTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
+                  {language === 'ar' ? 'إدارة المنتجات' : 'Product Management'}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {language === 'ar' ? 'إدارة منتجات الكتالوج' : 'Manage catalog products'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportProductsMutation.mutate()}
+                  disabled={exportProductsMutation.isPending}
+                  className="border-primary/50 dark:border-[#d4af37]/50"
+                  data-testid="button-export-products"
+                >
+                  <Download className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'تصدير' : 'Export'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImportDialogOpen(true)}
+                  className="border-primary/50 dark:border-[#d4af37]/50"
+                  data-testid="button-import-products"
+                >
+                  <Upload className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'استيراد' : 'Import'}
+                </Button>
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
+                  data-testid="button-create-product"
+                >
+                  <Plus className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'منتج جديد' : 'New Product'}
+                </Button>
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
+          
+          <CardContent className="p-6">
             {/* Filters */}
             <div className="space-y-4 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -606,14 +615,14 @@ export default function AdminProductsPage() {
                     placeholder={language === 'ar' ? 'البحث...' : 'Search...'}
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 border-border/50 dark:border-[#d4af37]/20"
                     data-testid="input-search-products"
                   />
                 </div>
 
                 {/* Category Filter */}
                 <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-                  <SelectTrigger data-testid="select-filter-category">
+                  <SelectTrigger className="border-border/50 dark:border-[#d4af37]/20" data-testid="select-filter-category">
                     <SelectValue placeholder={language === 'ar' ? 'جميع الفئات' : 'All Categories'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -628,7 +637,7 @@ export default function AdminProductsPage() {
 
                 {/* Vendor Filter */}
                 <Select value={vendorFilter} onValueChange={handleVendorChange}>
-                  <SelectTrigger data-testid="select-filter-vendor">
+                  <SelectTrigger className="border-border/50 dark:border-[#d4af37]/20" data-testid="select-filter-vendor">
                     <SelectValue placeholder={language === 'ar' ? 'جميع الموردين' : 'All Vendors'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -646,129 +655,147 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Results count */}
-              <div className="text-sm text-muted-foreground">
-                {language === 'ar' 
-                  ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} من ${filteredProducts.length} منتج`
-                  : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} products`
-                }
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {language === 'ar' 
+                    ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} من ${filteredProducts.length} منتج`
+                    : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} products`
+                  }
+                </span>
+                <Badge variant="outline" className="border-primary/50 dark:border-[#d4af37]/50">
+                  {language === 'ar' ? `المجموع: ${products.length}` : `Total: ${products.length}`}
+                </Badge>
               </div>
             </div>
 
             {productsLoading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                  <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
                 ))}
               </div>
             ) : (
               <>
-                <div className="border rounded-md">
+                <div className="border border-border/50 dark:border-[#d4af37]/20 rounded-lg overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>{language === 'ar' ? 'الصورة' : 'Image'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
-                        <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                      <TableRow className="bg-muted/50 dark:bg-black/20 hover:bg-muted/50 dark:hover:bg-black/20">
+                        <TableHead className="font-semibold">{language === 'ar' ? 'الصورة' : 'Image'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'الوصف' : 'Description'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'الفئة' : 'Category'}</TableHead>
+                        <TableHead className="text-end font-semibold">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedProducts.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            {language === 'ar' ? 'لا توجد منتجات' : 'No products'}
+                          <TableCell colSpan={6} className="text-center py-12">
+                            <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                            <p className="text-muted-foreground">
+                              {language === 'ar' ? 'لا توجد منتجات' : 'No products'}
+                            </p>
                           </TableCell>
                         </TableRow>
                       ) : (
                         paginatedProducts.map((product) => (
-                          <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
-                          <TableCell>
-                            {product.imageUrl ? (
-                              <img 
-                                src={product.imageUrl} 
-                                alt={language === 'ar' ? product.nameAr : product.nameEn}
-                                className="w-12 h-12 object-cover rounded"
-                                data-testid={`img-product-${product.id}`}
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-muted rounded flex items-center justify-center" data-testid={`placeholder-product-${product.id}`}>
-                                <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                          <TableRow key={product.id} className="hover:bg-muted/30 dark:hover:bg-black/20 transition-colors" data-testid={`row-product-${product.id}`}>
+                            <TableCell>
+                              {product.imageUrl ? (
+                                <img 
+                                  src={product.imageUrl} 
+                                  alt={language === 'ar' ? product.nameAr : product.nameEn}
+                                  className="w-12 h-12 object-cover rounded-lg border border-border/50 dark:border-[#d4af37]/20"
+                                  data-testid={`img-product-${product.id}`}
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-muted/50 dark:bg-black/40 rounded-lg flex items-center justify-center border border-border/50 dark:border-[#d4af37]/20" data-testid={`placeholder-product-${product.id}`}>
+                                  <ImageIcon className="w-6 h-6 text-muted-foreground/50" />
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                            <TableCell className="font-medium">
+                              {language === 'ar' ? product.nameAr : product.nameEn}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                              {language === 'ar' ? product.descriptionAr : product.descriptionEn}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {product.category ? (
+                                <Badge variant="outline" className="border-primary/50 dark:border-[#d4af37]/50">
+                                  {product.category}
+                                </Badge>
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell className="text-end">
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditProduct(product)}
+                                  className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
+                                  data-testid={`button-edit-${product.id}`}
+                                >
+                                  <Pencil className="h-4 w-4 me-1" />
+                                  {language === 'ar' ? 'تعديل' : 'Edit'}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteProduct(product)}
+                                  className="hover:bg-destructive/10 text-destructive"
+                                  data-testid={`button-delete-${product.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 me-1" />
+                                  {language === 'ar' ? 'حذف' : 'Delete'}
+                                </Button>
                               </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                          <TableCell className="font-medium">
-                            {language === 'ar' ? product.nameAr : product.nameEn}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                            {language === 'ar' ? product.descriptionAr : product.descriptionEn}
-                          </TableCell>
-                          <TableCell className="text-sm">{product.category || '-'}</TableCell>
-                          <TableCell className="text-end">
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditProduct(product)}
-                                data-testid={`button-edit-${product.id}`}
-                              >
-                                <Pencil className="h-4 w-4 me-1" />
-                                {language === 'ar' ? 'تعديل' : 'Edit'}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteProduct(product)}
-                                data-testid={`button-delete-${product.id}`}
-                              >
-                                <Trash2 className="h-4 w-4 me-1" />
-                                {language === 'ar' ? 'حذف' : 'Delete'}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    {language === 'ar' 
-                      ? `صفحة ${currentPage} من ${totalPages}`
-                      : `Page ${currentPage} of ${totalPages}`
-                    }
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      data-testid="button-prev-page"
-                    >
-                      <ChevronLeft className="h-4 w-4 me-1" />
-                      {language === 'ar' ? 'السابق' : 'Previous'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      data-testid="button-next-page"
-                    >
-                      {language === 'ar' ? 'التالي' : 'Next'}
-                      <ChevronRight className="h-4 w-4 ms-1" />
-                    </Button>
-                  </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-              )}
-            </>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6">
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? `صفحة ${currentPage} من ${totalPages}`
+                        : `Page ${currentPage} of ${totalPages}`
+                      }
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="border-primary/50 dark:border-[#d4af37]/50"
+                        data-testid="button-prev-page"
+                      >
+                        <ChevronLeft className="h-4 w-4 me-1" />
+                        {language === 'ar' ? 'السابق' : 'Previous'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="border-primary/50 dark:border-[#d4af37]/50"
+                        data-testid="button-next-page"
+                      >
+                        {language === 'ar' ? 'التالي' : 'Next'}
+                        <ChevronRight className="h-4 w-4 ms-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -782,7 +809,7 @@ export default function AdminProductsPage() {
           </DialogHeader>
           <Form {...createForm}>
             <form onSubmit={createForm.handleSubmit(handleCreateProduct)} className="space-y-6">
-              {/* Image Upload Section - Prominent at top */}
+              {/* Image Upload Section */}
               <div className="border-2 border-dashed rounded-lg p-6 bg-muted/50">
                 <FormLabel className="text-base mb-3 block">{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
                 <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -1108,6 +1135,7 @@ export default function AdminProductsPage() {
                 <Button 
                   type="submit" 
                   disabled={createProductMutation.isPending}
+                  className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
                   data-testid="button-submit-create"
                 >
                   {createProductMutation.isPending ? (language === 'ar' ? 'جاري الإنشاء...' : 'Creating...') : (language === 'ar' ? 'إنشاء' : 'Create')}
@@ -1118,7 +1146,7 @@ export default function AdminProductsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Product Dialog */}
+      {/* Edit Product Dialog - Similar structure to Create */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="dialog-edit-product">
           <DialogHeader>
@@ -1126,7 +1154,7 @@ export default function AdminProductsPage() {
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(handleUpdateProduct)} className="space-y-6">
-              {/* Image Upload Section - Prominent at top */}
+              {/* Image Upload Section */}
               <div className="border-2 border-dashed rounded-lg p-6 bg-muted/50">
                 <FormLabel className="text-base mb-3 block">{language === 'ar' ? 'صورة المنتج' : 'Product Image'}</FormLabel>
                 <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -1452,6 +1480,7 @@ export default function AdminProductsPage() {
                 <Button 
                   type="submit" 
                   disabled={updateProductMutation.isPending}
+                  className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
                   data-testid="button-submit-edit"
                 >
                   {updateProductMutation.isPending ? (language === 'ar' ? 'جاري التحديث...' : 'Updating...') : (language === 'ar' ? 'حفظ' : 'Save')}
@@ -1481,6 +1510,7 @@ export default function AdminProductsPage() {
             <AlertDialogAction 
               onClick={confirmDelete}
               disabled={deleteProductMutation.isPending}
+              className="bg-destructive hover:bg-destructive/90"
               data-testid="button-confirm-delete"
             >
               {deleteProductMutation.isPending ? (language === 'ar' ? 'جاري الحذف...' : 'Deleting...') : (language === 'ar' ? 'حذف' : 'Delete')}
@@ -1510,7 +1540,7 @@ export default function AdminProductsPage() {
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50 dark:border-[#d4af37]/20">
               <div className="space-y-1">
                 <p className="text-sm font-medium">
                   {language === 'ar' ? 'قالب CSV' : 'CSV Template'}
@@ -1526,6 +1556,7 @@ export default function AdminProductsPage() {
                 variant="outline"
                 size="sm"
                 onClick={downloadTemplate}
+                className="border-primary/50 dark:border-[#d4af37]/50"
                 data-testid="button-download-template"
               >
                 <Download className="h-4 w-4 me-2" />
@@ -1541,7 +1572,7 @@ export default function AdminProductsPage() {
                 type="file"
                 accept=".csv"
                 onChange={handleImportFileChange}
-                className="mt-2"
+                className="mt-2 border-border/50 dark:border-[#d4af37]/20"
                 data-testid="input-import-file"
               />
               {importFile && (
@@ -1566,7 +1597,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    className="bg-primary dark:bg-[#d4af37] h-2 rounded-full transition-all duration-300"
                     style={{ width: `${importProgress.total > 0 ? (importProgress.current / importProgress.total) * 100 : 0}%` }}
                   />
                 </div>
@@ -1575,7 +1606,7 @@ export default function AdminProductsPage() {
 
             {importResults && (
               <div className="space-y-2">
-                <div className="p-3 bg-muted rounded-md">
+                <div className="p-3 bg-muted/50 rounded-lg border border-border/50 dark:border-[#d4af37]/20">
                   <p className="text-sm font-medium mb-2">
                     {language === 'ar' ? 'نتائج الاستيراد' : 'Import Results'}
                   </p>
@@ -1642,6 +1673,7 @@ export default function AdminProductsPage() {
             <Button
               onClick={handleImport}
               disabled={!importFile || importProductsMutation.isPending || importProgress?.processing}
+              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
               data-testid="button-submit-import"
             >
               {importProductsMutation.isPending || importProgress?.processing
