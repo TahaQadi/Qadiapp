@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
+import LoginPage from "@/pages/LoginPage";
 import OrderingPage from "@/pages/OrderingPage";
 import ClientProfilePage from "@/pages/ClientProfilePage";
 import AdminPage from "@/pages/AdminPage";
@@ -87,8 +88,20 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes */}
+      <Route path="/login" component={LoginPage} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      
+      {/* Public product pages for SEO */}
+      <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
+      <Route path="/catalog/:category" component={CatalogPage} />
+      <Route path="/catalog" component={CatalogPage} />
+
+      {/* Authenticated routes */}
       {!isAuthenticated ? (
-        <Route path="/" component={LandingPage} />
+        <Route path="/">
+          <Redirect to="/login" />
+        </Route>
       ) : (
         <>
           <Route path="/">
@@ -98,6 +111,8 @@ function Router() {
           <Route path="/profile" component={ClientProfilePage} />
         </>
       )}
+      
+      {/* Admin routes */}
       <AdminRoute path="/admin" component={AdminPage} />
       <AdminRoute path="/admin/products" component={AdminProductsPage} />
       <AdminRoute path="/admin/vendors" component={AdminVendorsPage} />
@@ -112,14 +127,6 @@ function Router() {
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />
-
-      {/* Public product pages for SEO */}
-      <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
-      <Route path="/catalog/:category" component={CatalogPage} />
-      <Route path="/catalog" component={CatalogPage} />
-
-      {/* Onboarding (public) */}
-      <Route path="/onboarding" component={OnboardingPage} />
 
       <Route component={NotFound} />
     </Switch>

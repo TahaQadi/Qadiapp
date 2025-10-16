@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,13 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { CheckCircle, Building2, MapPin, Users, UserPlus, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { CheckCircle, Building2, MapPin, Users, UserPlus, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { MapLocationPicker } from '@/components/MapLocationPicker';
 
 interface OnboardingData {
+  user: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+  };
   company: {
     nameEn: string;
     nameAr: string;
@@ -41,24 +45,15 @@ interface OnboardingData {
     contactEmail: string;
     contactPhone: string;
   }>;
-  users: Array<{
-    username: string;
-    password: string;
-    nameEn: string;
-    nameAr: string;
-    email: string;
-    phone: string;
-    departmentType: string;
-    isAdmin: boolean;
-  }>;
   termsAccepted: boolean;
 }
 
 const STEPS = [
-  { id: 1, nameEn: 'Company Info', nameAr: 'معلومات الشركة', icon: Building2 },
-  { id: 2, nameEn: 'Location', nameAr: 'الموقع', icon: MapPin },
-  { id: 3, nameEn: 'Departments', nameAr: 'الأقسام', icon: Users },
-  { id: 4, nameEn: 'Review', nameAr: 'المراجعة', icon: CheckCircle },
+  { id: 1, nameEn: 'User Account', nameAr: 'حساب المستخدم', icon: UserPlus },
+  { id: 2, nameEn: 'Company Info', nameAr: 'معلومات الشركة', icon: Building2 },
+  { id: 3, nameEn: 'Location', nameAr: 'الموقع', icon: MapPin },
+  { id: 4, nameEn: 'Departments', nameAr: 'الأقسام', icon: Users },
+  { id: 5, nameEn: 'Review', nameAr: 'المراجعة', icon: CheckCircle },
 ];
 
 const DEPARTMENT_TYPES = [
@@ -71,23 +66,31 @@ export default function OnboardingPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { user, isLoading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
+    user: { email: '', password: '', confirmPassword: '' },
     company: { nameEn: '', nameAr: '', email: '', phone: '' },
     headquarters: { 
       nameEn: '', nameAr: '', addressEn: '', addressAr: '', 
       city: '', country: '', phone: '' 
     },
     departments: [],
-    users: [],
     termsAccepted: false,
   });
 
   const onboardingMutation = useMutation({
     mutationFn: async (data: OnboardingData) => {
-      const res = await apiRequest('POST', '/api/onboarding/complete', data);
+      const payload = {
+        user: {
+          email: data.user.email,
+          password: data.user.password,
+        },
+        company: data.company,
+        headquarters: data.headquarters,
+        departments: data.departments,
+      };
+      const res = await apiRequest('POST', '/api/onboarding/complete', payload);
       return await res.json();
     },
     onSuccess: () => {
@@ -97,7 +100,6 @@ export default function OnboardingPage() {
           ? 'تم إنشاء حسابك بنجاح. مرحباً بك في نظام الطلبات!' 
           : 'Your account has been created successfully. Welcome to the ordering system!',
       });
-      // Reload to get fresh auth data
       window.location.href = '/';
     },
     onError: (error: any) => {
@@ -124,6 +126,59 @@ export default function OnboardingPage() {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!onboardingData.user.email) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'يرجى إدخال البريد الإلكتروني' 
+              : 'Please enter your email',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        if (!emailRegex.test(onboardingData.user.email)) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'يرجى إدخال بريد إلكتروني صحيح' 
+              : 'Please enter a valid email address',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        if (!onboardingData.user.password) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'يرجى إدخال كلمة المرور' 
+              : 'Please enter a password',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        if (onboardingData.user.password.length < 6) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' 
+              : 'Password must be at least 6 characters',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        if (onboardingData.user.password !== onboardingData.user.confirmPassword) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'كلمات المرور غير متطابقة' 
+              : 'Passwords do not match',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        break;
+      case 2:
         if (!onboardingData.company.nameAr) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
@@ -135,7 +190,7 @@ export default function OnboardingPage() {
           return false;
         }
         break;
-      case 2:
+      case 3:
         if (!onboardingData.headquarters.nameAr || !onboardingData.headquarters.addressAr) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
@@ -146,7 +201,6 @@ export default function OnboardingPage() {
           });
           return false;
         }
-        // Require map pin location
         if (!onboardingData.headquarters.latitude || !onboardingData.headquarters.longitude) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
@@ -158,8 +212,7 @@ export default function OnboardingPage() {
           return false;
         }
         break;
-      case 3:
-        // Require at least one department with a valid type
+      case 4:
         const validDepartments = onboardingData.departments.filter(dept => dept.type);
         if (validDepartments.length === 0) {
           toast({
@@ -200,89 +253,9 @@ export default function OnboardingPage() {
     }));
   };
 
-  const addUser = () => {
-    setOnboardingData(prev => ({
-      ...prev,
-      users: [
-        ...prev.users,
-        { 
-          username: '', password: '', nameEn: '', nameAr: '', 
-          email: '', phone: '', departmentType: '', isAdmin: false 
-        }
-      ]
-    }));
-  };
-
-  // Show loading state while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
-      </div>
-    );
-  }
-
-  // Show sign-up screen if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-2xl mx-auto">
-            <Card className="border-2">
-              <CardHeader className="text-center space-y-4">
-                <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Building2 className="w-10 h-10 text-primary" />
-                </div>
-                <CardTitle className="text-3xl">
-                  {language === 'ar' ? 'مرحباً بك!' : 'Welcome!'}
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  {language === 'ar' 
-                    ? 'ابدأ بالتسجيل باستخدام حساب Replit الخاص بك لإنشاء ملف شركتك' 
-                    : 'Sign up with your Replit account to create your company profile'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <Button
-                    onClick={() => window.location.href = '/api/login'}
-                    className="w-full h-12 text-lg"
-                    size="lg"
-                    data-testid="button-signup-replit"
-                  >
-                    <UserPlus className="mr-2 h-5 w-5" />
-                    {language === 'ar' ? 'التسجيل عبر Replit' : 'Sign Up with Replit'}
-                  </Button>
-                  <p className="text-center text-sm text-muted-foreground">
-                    {language === 'ar' 
-                      ? 'يمكنك استخدام Google أو GitHub أو البريد الإلكتروني' 
-                      : 'Use Google, GitHub, or Email to sign up'}
-                  </p>
-                </div>
-                <Separator />
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">
-                    {language === 'ar' ? 'بعد التسجيل، ستتمكن من:' : 'After signing up, you can:'}
-                  </p>
-                  <ul className="space-y-2 list-disc list-inside">
-                    <li>{language === 'ar' ? 'إضافة معلومات شركتك' : 'Add your company information'}</li>
-                    <li>{language === 'ar' ? 'تحديد مواقع الفروع' : 'Set branch locations'}</li>
-                    <li>{language === 'ar' ? 'إدارة الأقسام والمستخدمين' : 'Manage departments and users'}</li>
-                    <li>{language === 'ar' ? 'البدء بتقديم الطلبات' : 'Start placing orders'}</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       <div className="container mx-auto px-4 py-8">
-        {/* Progress Header */}
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold">
@@ -294,7 +267,6 @@ export default function OnboardingPage() {
           </div>
           <Progress value={progress} className="h-2" />
           
-          {/* Steps Indicator */}
           <div className="flex justify-between mt-6">
             {STEPS.map((step) => {
               const Icon = step.icon;
@@ -320,7 +292,6 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Step Content */}
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>
@@ -328,21 +299,77 @@ export default function OnboardingPage() {
                 {language === 'ar' ? STEPS[currentStep - 1].nameAr : STEPS[currentStep - 1].nameEn}
               </CardTitle>
               <CardDescription>
-                {currentStep === 1 && (language === 'ar' ? 'أدخل معلومات شركتك الأساسية' : 'Enter your company basic information')}
-                {currentStep === 2 && (language === 'ar' ? 'حدد موقع المقر الرئيسي على الخريطة' : 'Pin your headquarters location on the map')}
-                {currentStep === 3 && (language === 'ar' ? 'أضف الأقسام وجهات الاتصال (مطلوب قسم واحد على الأقل)' : 'Add departments and contacts (at least one required)')}
-                {currentStep === 4 && (language === 'ar' ? 'راجع وأكد المعلومات' : 'Review and confirm information')}
+                {currentStep === 1 && (language === 'ar' ? 'أنشئ حساب المستخدم الخاص بك' : 'Create your user account')}
+                {currentStep === 2 && (language === 'ar' ? 'أدخل معلومات شركتك الأساسية' : 'Enter your company basic information')}
+                {currentStep === 3 && (language === 'ar' ? 'حدد موقع المقر الرئيسي على الخريطة' : 'Pin your headquarters location on the map')}
+                {currentStep === 4 && (language === 'ar' ? 'أضف الأقسام وجهات الاتصال (مطلوب قسم واحد على الأقل)' : 'Add departments and contacts (at least one required)')}
+                {currentStep === 5 && (language === 'ar' ? 'راجع وأكد المعلومات' : 'Review and confirm information')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Step 1: Company Info */}
               {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="user-email" data-testid="label-user-email">
+                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email'} *
+                    </Label>
+                    <Input
+                      id="user-email"
+                      type="email"
+                      data-testid="input-user-email"
+                      value={onboardingData.user.email}
+                      onChange={(e) => setOnboardingData(prev => ({
+                        ...prev,
+                        user: { ...prev.user, email: e.target.value }
+                      }))}
+                      placeholder={language === 'ar' ? 'user@example.com' : 'user@example.com'}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="user-password" data-testid="label-user-password">
+                      {language === 'ar' ? 'كلمة المرور' : 'Password'} *
+                    </Label>
+                    <Input
+                      id="user-password"
+                      type="password"
+                      data-testid="input-user-password"
+                      value={onboardingData.user.password}
+                      onChange={(e) => setOnboardingData(prev => ({
+                        ...prev,
+                        user: { ...prev.user, password: e.target.value }
+                      }))}
+                      placeholder={language === 'ar' ? '6 أحرف على الأقل' : 'At least 6 characters'}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="user-confirm-password" data-testid="label-user-confirm-password">
+                      {language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'} *
+                    </Label>
+                    <Input
+                      id="user-confirm-password"
+                      type="password"
+                      data-testid="input-user-confirm-password"
+                      value={onboardingData.user.confirmPassword}
+                      onChange={(e) => setOnboardingData(prev => ({
+                        ...prev,
+                        user: { ...prev.user, confirmPassword: e.target.value }
+                      }))}
+                      placeholder={language === 'ar' ? 'أعد إدخال كلمة المرور' : 'Re-enter password'}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="nameAr">{language === 'ar' ? 'اسم الشركة' : 'Company Name (Arabic)'} *</Label>
+                      <Label htmlFor="nameAr" data-testid="label-company-name-ar">
+                        {language === 'ar' ? 'اسم الشركة' : 'Company Name (Arabic)'} *
+                      </Label>
                       <Input
                         id="nameAr"
+                        data-testid="input-company-name-ar"
                         value={onboardingData.company.nameAr}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -352,9 +379,12 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="nameEn">{language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}</Label>
+                      <Label htmlFor="nameEn" data-testid="label-company-name-en">
+                        {language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}
+                      </Label>
                       <Input
                         id="nameEn"
+                        data-testid="input-company-name-en"
                         value={onboardingData.company.nameEn}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -366,10 +396,13 @@ export default function OnboardingPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="email">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</Label>
+                      <Label htmlFor="email" data-testid="label-company-email">
+                        {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                      </Label>
                       <Input
                         id="email"
                         type="email"
+                        data-testid="input-company-email"
                         value={onboardingData.company.email}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -378,9 +411,12 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone">{language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</Label>
+                      <Label htmlFor="phone" data-testid="label-company-phone">
+                        {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                      </Label>
                       <Input
                         id="phone"
+                        data-testid="input-company-phone"
                         value={onboardingData.company.phone}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -392,13 +428,15 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Step 2: Location */}
-              {currentStep === 2 && (
+              {currentStep === 3 && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>{language === 'ar' ? 'اسم الموقع' : 'Location Name (Arabic)'} *</Label>
+                      <Label data-testid="label-location-name-ar">
+                        {language === 'ar' ? 'اسم الموقع' : 'Location Name (Arabic)'} *
+                      </Label>
                       <Input
+                        data-testid="input-location-name-ar"
                         value={onboardingData.headquarters.nameAr}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -408,8 +446,11 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <Label>{language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}</Label>
+                      <Label data-testid="label-location-name-en">
+                        {language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}
+                      </Label>
                       <Input
+                        data-testid="input-location-name-en"
                         value={onboardingData.headquarters.nameEn}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -421,8 +462,11 @@ export default function OnboardingPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>{language === 'ar' ? 'العنوان' : 'Address (Arabic)'} *</Label>
+                      <Label data-testid="label-location-address-ar">
+                        {language === 'ar' ? 'العنوان' : 'Address (Arabic)'} *
+                      </Label>
                       <Input
+                        data-testid="input-location-address-ar"
                         value={onboardingData.headquarters.addressAr}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -432,8 +476,11 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <Label>{language === 'ar' ? 'العنوان الإنجليزي (اختياري)' : 'English Address (Optional)'}</Label>
+                      <Label data-testid="label-location-address-en">
+                        {language === 'ar' ? 'العنوان الإنجليزي (اختياري)' : 'English Address (Optional)'}
+                      </Label>
                       <Input
+                        data-testid="input-location-address-en"
                         value={onboardingData.headquarters.addressEn}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -445,8 +492,11 @@ export default function OnboardingPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label>{language === 'ar' ? 'المدينة' : 'City'}</Label>
+                      <Label data-testid="label-location-city">
+                        {language === 'ar' ? 'المدينة' : 'City'}
+                      </Label>
                       <Input
+                        data-testid="input-location-city"
                         value={onboardingData.headquarters.city}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -455,8 +505,11 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <Label>{language === 'ar' ? 'الدولة' : 'Country'}</Label>
+                      <Label data-testid="label-location-country">
+                        {language === 'ar' ? 'الدولة' : 'Country'}
+                      </Label>
                       <Input
+                        data-testid="input-location-country"
                         value={onboardingData.headquarters.country}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -465,8 +518,11 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <Label>{language === 'ar' ? 'الهاتف' : 'Phone'}</Label>
+                      <Label data-testid="label-location-phone">
+                        {language === 'ar' ? 'الهاتف' : 'Phone'}
+                      </Label>
                       <Input
+                        data-testid="input-location-phone"
                         value={onboardingData.headquarters.phone}
                         onChange={(e) => setOnboardingData(prev => ({
                           ...prev,
@@ -476,7 +532,9 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <div>
-                    <Label>{language === 'ar' ? 'الموقع على الخريطة *' : 'Map Location *'}</Label>
+                    <Label data-testid="label-location-map">
+                      {language === 'ar' ? 'الموقع على الخريطة *' : 'Map Location *'}
+                    </Label>
                     <MapLocationPicker
                       latitude={onboardingData.headquarters.latitude}
                       longitude={onboardingData.headquarters.longitude}
@@ -491,15 +549,16 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Step 3: Departments */}
-              {currentStep === 3 && (
+              {currentStep === 4 && (
                 <div className="space-y-4">
                   {onboardingData.departments.map((dept, index) => (
                     <Card key={index}>
                       <CardContent className="pt-6">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label>{language === 'ar' ? 'نوع القسم' : 'Department Type'}</Label>
+                            <Label data-testid={`label-department-type-${index}`}>
+                              {language === 'ar' ? 'نوع القسم' : 'Department Type'}
+                            </Label>
                             <Select
                               value={dept.type}
                               onValueChange={(value) => {
@@ -508,7 +567,7 @@ export default function OnboardingPage() {
                                 setOnboardingData(prev => ({ ...prev, departments: newDepts }));
                               }}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger data-testid={`select-department-type-${index}`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -521,8 +580,11 @@ export default function OnboardingPage() {
                             </Select>
                           </div>
                           <div>
-                            <Label>{language === 'ar' ? 'اسم جهة الاتصال' : 'Contact Name'}</Label>
+                            <Label data-testid={`label-department-contact-name-${index}`}>
+                              {language === 'ar' ? 'اسم جهة الاتصال' : 'Contact Name'}
+                            </Label>
                             <Input
+                              data-testid={`input-department-contact-name-${index}`}
                               value={dept.contactName}
                               onChange={(e) => {
                                 const newDepts = [...onboardingData.departments];
@@ -532,9 +594,12 @@ export default function OnboardingPage() {
                             />
                           </div>
                           <div>
-                            <Label>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</Label>
+                            <Label data-testid={`label-department-contact-email-${index}`}>
+                              {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                            </Label>
                             <Input
                               type="email"
+                              data-testid={`input-department-contact-email-${index}`}
                               value={dept.contactEmail}
                               onChange={(e) => {
                                 const newDepts = [...onboardingData.departments];
@@ -544,8 +609,11 @@ export default function OnboardingPage() {
                             />
                           </div>
                           <div>
-                            <Label>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</Label>
+                            <Label data-testid={`label-department-contact-phone-${index}`}>
+                              {language === 'ar' ? 'رقم الهاتف' : 'Phone'}
+                            </Label>
                             <Input
+                              data-testid={`input-department-contact-phone-${index}`}
                               value={dept.contactPhone}
                               onChange={(e) => {
                                 const newDepts = [...onboardingData.departments];
@@ -558,34 +626,40 @@ export default function OnboardingPage() {
                       </CardContent>
                     </Card>
                   ))}
-                  <Button onClick={addDepartment} variant="outline" className="w-full">
+                  <Button onClick={addDepartment} variant="outline" className="w-full" data-testid="button-add-department">
                     {language === 'ar' ? '+ إضافة قسم' : '+ Add Department'}
                   </Button>
                 </div>
               )}
 
-              {/* Step 4: Review */}
-              {currentStep === 4 && (
+              {currentStep === 5 && (
                 <div className="space-y-6">
                   <div>
+                    <h3 className="font-semibold mb-2">{language === 'ar' ? 'حساب المستخدم' : 'User Account'}</h3>
+                    <p className="text-sm text-muted-foreground" data-testid="text-review-user-email">{onboardingData.user.email}</p>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'معلومات الشركة' : 'Company Information'}</h3>
-                    <p>{onboardingData.company.nameAr}{onboardingData.company.nameEn ? ` / ${onboardingData.company.nameEn}` : ''}</p>
-                    <p className="text-sm text-muted-foreground">{onboardingData.company.email}</p>
+                    <p data-testid="text-review-company-name">{onboardingData.company.nameAr}{onboardingData.company.nameEn ? ` / ${onboardingData.company.nameEn}` : ''}</p>
+                    <p className="text-sm text-muted-foreground" data-testid="text-review-company-email">{onboardingData.company.email}</p>
                   </div>
                   
                   <Separator />
                   
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'الموقع' : 'Location'}</h3>
-                    <p>{onboardingData.headquarters.nameAr}</p>
-                    <p className="text-sm text-muted-foreground">{onboardingData.headquarters.addressAr}</p>
+                    <p data-testid="text-review-location-name">{onboardingData.headquarters.nameAr}</p>
+                    <p className="text-sm text-muted-foreground" data-testid="text-review-location-address">{onboardingData.headquarters.addressAr}</p>
                   </div>
                   
                   <Separator />
                   
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'الأقسام' : 'Departments'}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground" data-testid="text-review-departments-count">
                       {onboardingData.departments.length} {language === 'ar' ? 'قسم' : 'department(s)'}
                     </p>
                   </div>
@@ -595,12 +669,13 @@ export default function OnboardingPage() {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="terms"
+                      data-testid="checkbox-terms"
                       checked={onboardingData.termsAccepted}
                       onCheckedChange={(checked) => {
                         setOnboardingData(prev => ({ ...prev, termsAccepted: checked as boolean }));
                       }}
                     />
-                    <Label htmlFor="terms">
+                    <Label htmlFor="terms" data-testid="label-terms">
                       {language === 'ar' 
                         ? 'أوافق على الشروط والأحكام' 
                         : 'I accept the terms and conditions'}
@@ -609,19 +684,19 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Navigation Buttons */}
               <div className="flex justify-between pt-6">
                 <Button
                   variant="outline"
                   onClick={handleBack}
                   disabled={currentStep === 1}
+                  data-testid="button-back"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   {language === 'ar' ? 'السابق' : 'Previous'}
                 </Button>
                 
                 {currentStep < STEPS.length ? (
-                  <Button onClick={handleNext}>
+                  <Button onClick={handleNext} data-testid="button-next">
                     {language === 'ar' ? 'التالي' : 'Next'}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -629,6 +704,7 @@ export default function OnboardingPage() {
                   <Button 
                     onClick={handleSubmit}
                     disabled={onboardingMutation.isPending}
+                    data-testid="button-submit"
                   >
                     {onboardingMutation.isPending 
                       ? (language === 'ar' ? 'جاري التسجيل...' : 'Submitting...') 

@@ -1,13 +1,21 @@
 
 import { Router } from 'express';
 import { storage } from './storage';
-import { isAuthenticated } from './replitAuth';
+import { hashPassword } from './auth';
 import { z } from 'zod';
 
 const router = Router();
 
 // Zod schema for onboarding validation
 const onboardingSchema = z.object({
+  user: z.object({
+    email: z.string().email('Valid email is required / البريد الإلكتروني صالح مطلوب'),
+    password: z.string().min(8, 'Password must be at least 8 characters / كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match / كلمات المرور غير متطابقة",
+    path: ["confirmPassword"],
+  }),
   company: z.object({
     nameEn: z.string().optional(),
     nameAr: z.string().min(1, 'Company name in Arabic is required / اسم الشركة بالعربية مطلوب'),
@@ -35,7 +43,7 @@ const onboardingSchema = z.object({
 
 type OnboardingData = z.infer<typeof onboardingSchema>;
 
-router.post('/onboarding/complete', isAuthenticated, async (req, res) => {
+router.post('/onboarding/complete', async (req, res) => {
   try {
     // Validate request body with Zod
     const validationResult = onboardingSchema.safeParse(req.body);
@@ -48,46 +56,30 @@ router.post('/onboarding/complete', isAuthenticated, async (req, res) => {
     }
 
     const data = validationResult.data;
-    const user = req.user as any;
-    const userId = user?.claims?.sub;
 
-    if (!userId) {
-      return res.status(401).json({ 
-        message: 'Unauthorized - User not authenticated',
-        messageAr: 'غير مصرح - المستخدم غير مسجل الدخول'
-      });
-    }
-
-    // Get Replit user details
-    const replitUser = await storage.getUser(userId);
-    if (!replitUser) {
-      return res.status(404).json({ 
-        message: 'User not found',
-        messageAr: 'المستخدم غير موجود'
-      });
-    }
-
-    // Check if user already has a company (prevent duplicate onboarding)
+    // Check if email already exists
     const existingClients = await storage.getClients();
-    const existingClient = existingClients.find(c => c.userId === userId);
+    const existingClient = existingClients.find(c => c.email === data.user.email);
     if (existingClient) {
       return res.status(400).json({ 
-        message: 'You have already completed onboarding',
-        messageAr: 'لقد أكملت التسجيل بالفعل'
+        message: 'Email already registered / البريد الإلكتروني مسجل بالفعل',
+        messageAr: 'البريد الإلكتروني مسجل بالفعل'
       });
     }
 
     // Determine if this is the first user (becomes admin)
     const isFirstUser = existingClients.length === 0;
 
-    // Create client/company linked to Replit user
+    // Hash password
+    const hashedPassword = await hashPassword(data.user.password);
+
+    // Create client/company account
     const client = await storage.createClient({
-      userId: userId,
       nameEn: data.company.nameEn || data.company.nameAr,
       nameAr: data.company.nameAr,
-      username: replitUser.email || `user_${userId.substring(0, 8)}`,
-      password: '', // Not used with Replit Auth
-      email: data.company.email || replitUser.email || null,
+      username: data.user.email,
+      password: hashedPassword,
+      email: data.user.email,
       phone: data.company.phone || null,
       isAdmin: isFirstUser,
     });
