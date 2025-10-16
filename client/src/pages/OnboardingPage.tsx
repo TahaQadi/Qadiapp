@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { CheckCircle, Building2, MapPin, Users, UserPlus, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Building2, MapPin, Users, UserPlus, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -57,8 +58,7 @@ const STEPS = [
   { id: 1, nameEn: 'Company Info', nameAr: 'معلومات الشركة', icon: Building2 },
   { id: 2, nameEn: 'Location', nameAr: 'الموقع', icon: MapPin },
   { id: 3, nameEn: 'Departments', nameAr: 'الأقسام', icon: Users },
-  { id: 4, nameEn: 'User Accounts', nameAr: 'حسابات المستخدمين', icon: UserPlus },
-  { id: 5, nameEn: 'Review', nameAr: 'المراجعة', icon: CheckCircle },
+  { id: 4, nameEn: 'Review', nameAr: 'المراجعة', icon: CheckCircle },
 ];
 
 const DEPARTMENT_TYPES = [
@@ -71,6 +71,7 @@ export default function OnboardingPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -144,14 +145,26 @@ export default function OnboardingPage() {
           });
           return false;
         }
-        break;
-      case 4:
-        if (onboardingData.users.length === 0) {
+        // Require map pin location
+        if (!onboardingData.headquarters.latitude || !onboardingData.headquarters.longitude) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى إضافة مستخدم واحد على الأقل' 
-              : 'Please add at least one user',
+              ? 'يرجى تحديد الموقع على الخريطة' 
+              : 'Please pin the location on the map',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        break;
+      case 3:
+        // Require at least one department
+        if (onboardingData.departments.length === 0) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'يرجى إضافة قسم واحد على الأقل' 
+              : 'Please add at least one department',
             variant: 'destructive',
           });
           return false;
@@ -197,6 +210,72 @@ export default function OnboardingPage() {
       ]
     }));
   };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  // Show sign-up screen if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-2">
+              <CardHeader className="text-center space-y-4">
+                <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Building2 className="w-10 h-10 text-primary" />
+                </div>
+                <CardTitle className="text-3xl">
+                  {language === 'ar' ? 'مرحباً بك!' : 'Welcome!'}
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  {language === 'ar' 
+                    ? 'ابدأ بالتسجيل باستخدام حساب Replit الخاص بك لإنشاء ملف شركتك' 
+                    : 'Sign up with your Replit account to create your company profile'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <Button
+                    onClick={() => window.location.href = '/api/login'}
+                    className="w-full h-12 text-lg"
+                    size="lg"
+                    data-testid="button-signup-replit"
+                  >
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    {language === 'ar' ? 'التسجيل عبر Replit' : 'Sign Up with Replit'}
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    {language === 'ar' 
+                      ? 'يمكنك استخدام Google أو GitHub أو البريد الإلكتروني' 
+                      : 'Use Google, GitHub, or Email to sign up'}
+                  </p>
+                </div>
+                <Separator />
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">
+                    {language === 'ar' ? 'بعد التسجيل، ستتمكن من:' : 'After signing up, you can:'}
+                  </p>
+                  <ul className="space-y-2 list-disc list-inside">
+                    <li>{language === 'ar' ? 'إضافة معلومات شركتك' : 'Add your company information'}</li>
+                    <li>{language === 'ar' ? 'تحديد مواقع الفروع' : 'Set branch locations'}</li>
+                    <li>{language === 'ar' ? 'إدارة الأقسام والمستخدمين' : 'Manage departments and users'}</li>
+                    <li>{language === 'ar' ? 'البدء بتقديم الطلبات' : 'Start placing orders'}</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
@@ -248,10 +327,9 @@ export default function OnboardingPage() {
               </CardTitle>
               <CardDescription>
                 {currentStep === 1 && (language === 'ar' ? 'أدخل معلومات شركتك الأساسية' : 'Enter your company basic information')}
-                {currentStep === 2 && (language === 'ar' ? 'حدد موقع المقر الرئيسي' : 'Set your headquarters location')}
-                {currentStep === 3 && (language === 'ar' ? 'أضف الأقسام وجهات الاتصال' : 'Add departments and contacts')}
-                {currentStep === 4 && (language === 'ar' ? 'أنشئ حسابات المستخدمين' : 'Create user accounts')}
-                {currentStep === 5 && (language === 'ar' ? 'راجع وأكد المعلومات' : 'Review and confirm information')}
+                {currentStep === 2 && (language === 'ar' ? 'حدد موقع المقر الرئيسي على الخريطة' : 'Pin your headquarters location on the map')}
+                {currentStep === 3 && (language === 'ar' ? 'أضف الأقسام وجهات الاتصال (مطلوب قسم واحد على الأقل)' : 'Add departments and contacts (at least one required)')}
+                {currentStep === 4 && (language === 'ar' ? 'راجع وأكد المعلومات' : 'Review and confirm information')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -396,8 +474,10 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <div>
-                    <Label>{language === 'ar' ? 'الموقع على الخريطة (اختياري)' : 'Map Location (Optional)'}</Label>
+                    <Label>{language === 'ar' ? 'الموقع على الخريطة *' : 'Map Location *'}</Label>
                     <MapLocationPicker
+                      latitude={onboardingData.headquarters.latitude}
+                      longitude={onboardingData.headquarters.longitude}
                       onLocationSelect={(lat, lng) => {
                         setOnboardingData(prev => ({
                           ...prev,
@@ -482,108 +562,8 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              {/* Step 4: Users */}
+              {/* Step 4: Review */}
               {currentStep === 4 && (
-                <div className="space-y-4">
-                  {onboardingData.users.map((user, index) => (
-                    <Card key={index}>
-                      <CardContent className="pt-6">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>{language === 'ar' ? 'اسم المستخدم' : 'Username'} *</Label>
-                            <Input
-                              value={user.username}
-                              onChange={(e) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].username = e.target.value;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label>{language === 'ar' ? 'كلمة المرور' : 'Password'} *</Label>
-                            <Input
-                              type="password"
-                              value={user.password}
-                              onChange={(e) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].password = e.target.value;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label>{language === 'ar' ? 'الاسم' : 'Name (Arabic)'} *</Label>
-                            <Input
-                              value={user.nameAr}
-                              onChange={(e) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].nameAr = e.target.value;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                              placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Name in Arabic'}
-                            />
-                          </div>
-                          <div>
-                            <Label>{language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}</Label>
-                            <Input
-                              value={user.nameEn}
-                              onChange={(e) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].nameEn = e.target.value;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                              placeholder={language === 'ar' ? 'الاسم بالإنجليزية (اختياري)' : 'Name in English (Optional)'}
-                            />
-                          </div>
-                          <div>
-                            <Label>{language === 'ar' ? 'القسم' : 'Department'}</Label>
-                            <Select
-                              value={user.departmentType}
-                              onValueChange={(value) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].departmentType = value;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {DEPARTMENT_TYPES.map(dt => (
-                                  <SelectItem key={dt.value} value={dt.value}>
-                                    {language === 'ar' ? dt.labelAr : dt.labelEn}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex items-center space-x-2 pt-8">
-                            <Checkbox
-                              id={`admin-${index}`}
-                              checked={user.isAdmin}
-                              onCheckedChange={(checked) => {
-                                const newUsers = [...onboardingData.users];
-                                newUsers[index].isAdmin = checked as boolean;
-                                setOnboardingData(prev => ({ ...prev, users: newUsers }));
-                              }}
-                            />
-                            <Label htmlFor={`admin-${index}`}>
-                              {language === 'ar' ? 'مسؤول النظام' : 'System Admin'}
-                            </Label>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  <Button onClick={addUser} variant="outline" className="w-full">
-                    {language === 'ar' ? '+ إضافة مستخدم' : '+ Add User'}
-                  </Button>
-                </div>
-              )}
-
-              {/* Step 5: Review */}
-              {currentStep === 5 && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'معلومات الشركة' : 'Company Information'}</h3>
@@ -605,15 +585,6 @@ export default function OnboardingPage() {
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'الأقسام' : 'Departments'}</h3>
                     <p className="text-sm text-muted-foreground">
                       {onboardingData.departments.length} {language === 'ar' ? 'قسم' : 'department(s)'}
-                    </p>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="font-semibold mb-2">{language === 'ar' ? 'المستخدمون' : 'Users'}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {onboardingData.users.length} {language === 'ar' ? 'مستخدم' : 'user(s)'}
                     </p>
                   </div>
                   
