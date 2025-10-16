@@ -125,15 +125,15 @@ export function LocationManagementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto" data-testid="dialog-location">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="w-[95vw] sm:max-w-[625px] max-h-[90vh] overflow-y-auto p-4 sm:p-6" data-testid="dialog-location">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="text-lg sm:text-xl">
             {location 
               ? (language === 'ar' ? 'تعديل الموقع' : 'Edit Location')
               : (language === 'ar' ? 'إضافة موقع' : 'Add Location')
             }
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {language === 'ar' 
               ? 'أدخل معلومات الموقع بالعربية والإنجليزية'
               : 'Enter location information in both Arabic and English'
@@ -141,104 +141,133 @@ export function LocationManagementDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nameAr">
-                {language === 'ar' ? 'اسم الموقع (عربي)' : 'Location Name (Arabic)'}
-              </Label>
-              <Input
-                id="nameAr"
-                {...form.register('nameAr')}
-                data-testid="input-name-ar"
-              />
-              {form.formState.errors.nameAr && (
-                <p className="text-sm text-destructive">{form.formState.errors.nameAr.message}</p>
-              )}
+        <div className="grid gap-3 sm:gap-4 py-3 sm:py-4">
+          {/* Location Names Section */}
+          <div className="space-y-3">
+            <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              {language === 'ar' ? 'اسم الموقع' : 'Location Name'}
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="nameAr" className="text-sm">
+                  {language === 'ar' ? 'عربي' : 'Arabic'}
+                </Label>
+                <Input
+                  id="nameAr"
+                  {...form.register('nameAr')}
+                  className="h-10"
+                  data-testid="input-name-ar"
+                />
+                {form.formState.errors.nameAr && (
+                  <p className="text-xs text-destructive">{form.formState.errors.nameAr.message}</p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="nameEn">
-                {language === 'ar' ? 'اسم الموقع (إنجليزي)' : 'Location Name (English)'}
-              </Label>
-              <Input
-                id="nameEn"
-                {...form.register('nameEn')}
-                data-testid="input-name-en"
-              />
-              {form.formState.errors.nameEn && (
-                <p className="text-sm text-destructive">{form.formState.errors.nameEn.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="addressAr">
-                {language === 'ar' ? 'العنوان (عربي)' : 'Address (Arabic)'}
-              </Label>
-              <Input
-                id="addressAr"
-                {...form.register('addressAr')}
-                data-testid="input-address-ar"
-              />
-              {form.formState.errors.addressAr && (
-                <p className="text-sm text-destructive">{form.formState.errors.addressAr.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="addressEn">
-                {language === 'ar' ? 'العنوان (إنجليزي)' : 'Address (English)'}
-              </Label>
-              <Input
-                id="addressEn"
-                {...form.register('addressEn')}
-                data-testid="input-address-en"
-              />
-              {form.formState.errors.addressEn && (
-                <p className="text-sm text-destructive">{form.formState.errors.addressEn.message}</p>
-              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="nameEn" className="text-sm">
+                  {language === 'ar' ? 'إنجليزي' : 'English'}
+                </Label>
+                <Input
+                  id="nameEn"
+                  {...form.register('nameEn')}
+                  className="h-10"
+                  data-testid="input-name-en"
+                />
+                {form.formState.errors.nameEn && (
+                  <p className="text-xs text-destructive">{form.formState.errors.nameEn.message}</p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">
+          <Separator />
+
+          {/* Address Section */}
+          <div className="space-y-3">
+            <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              {language === 'ar' ? 'العنوان' : 'Address'}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="addressAr" className="text-sm">
+                  {language === 'ar' ? 'عربي' : 'Arabic'}
+                </Label>
+                <Input
+                  id="addressAr"
+                  {...form.register('addressAr')}
+                  className="h-10"
+                  data-testid="input-address-ar"
+                />
+                {form.formState.errors.addressAr && (
+                  <p className="text-xs text-destructive">{form.formState.errors.addressAr.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="addressEn" className="text-sm">
+                  {language === 'ar' ? 'إنجليزي' : 'English'}
+                </Label>
+                <Input
+                  id="addressEn"
+                  {...form.register('addressEn')}
+                  className="h-10"
+                  data-testid="input-address-en"
+                />
+                {form.formState.errors.addressEn && (
+                  <p className="text-xs text-destructive">{form.formState.errors.addressEn.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* City & Country */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="city" className="text-sm">
                 {language === 'ar' ? 'المدينة' : 'City'}
               </Label>
               <Input
                 id="city"
                 {...form.register('city')}
+                className="h-10"
+                placeholder={language === 'ar' ? 'اختياري' : 'Optional'}
                 data-testid="input-city"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="country">
+            <div className="space-y-1.5">
+              <Label htmlFor="country" className="text-sm">
                 {language === 'ar' ? 'الدولة' : 'Country'}
               </Label>
               <Input
                 id="country"
                 {...form.register('country')}
+                className="h-10"
+                placeholder={language === 'ar' ? 'اختياري' : 'Optional'}
                 data-testid="input-country"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">
+          {/* Phone */}
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-sm">
               {language === 'ar' ? 'رقم الهاتف' : 'Phone'}
             </Label>
             <Input
               id="phone"
               type="tel"
               {...form.register('phone')}
+              className="h-10"
+              placeholder={language === 'ar' ? 'اختياري' : 'Optional'}
               data-testid="input-phone"
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          {/* Headquarters Checkbox */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
             <Controller
               name="isHeadquarters"
               control={form.control}
@@ -253,33 +282,42 @@ export function LocationManagementDialog({
             />
             <Label 
               htmlFor="isHeadquarters" 
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
               {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
             </Label>
           </div>
 
-          <Separator className="my-4" />
+          <Separator />
 
+          {/* Map Section */}
           <div className="space-y-2">
-            <Label>
+            <Label className="text-sm font-semibold">
               {language === 'ar' ? 'تحديد الموقع على الخريطة' : 'Pin Location on Map'}
             </Label>
-            <MapLocationPicker
-              latitude={form.watch('latitude')}
-              longitude={form.watch('longitude')}
-              onLocationSelect={(lat, lng) => {
-                form.setValue('latitude', lat);
-                form.setValue('longitude', lng);
-              }}
-            />
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' 
+                ? 'انقر على الخريطة لتحديد الموقع (اختياري)' 
+                : 'Click on the map to pin location (optional)'}
+            </p>
+            <div className="rounded-lg overflow-hidden border">
+              <MapLocationPicker
+                latitude={form.watch('latitude')}
+                longitude={form.watch('longitude')}
+                onLocationSelect={(lat, lng) => {
+                  form.setValue('latitude', lat);
+                  form.setValue('longitude', lng);
+                }}
+              />
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
           <Button
             variant="outline"
             onClick={handleCancel}
+            className="w-full sm:w-auto"
             data-testid="button-cancel"
           >
             {language === 'ar' ? 'إلغاء' : 'Cancel'}
@@ -287,6 +325,7 @@ export function LocationManagementDialog({
           <Button
             onClick={handleSubmit}
             disabled={isSaving}
+            className="w-full sm:w-auto"
             data-testid="button-save-location"
           >
             {isSaving 
