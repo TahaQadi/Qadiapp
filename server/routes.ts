@@ -3,7 +3,7 @@ import { renderToString } from 'react-dom/server';
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
@@ -105,53 +105,26 @@ const uploadDocument = multer({
   }
 });
 
-// Middleware to get client data from Replit Auth user
+// Middleware to attach client data from authenticated user
 async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const userId = req.user?.claims?.sub;
-    if (!userId) {
+    if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Find client linked to this Replit Auth user
-    const clients = await storage.getClients();
-    let client = clients.find(c => c.userId === userId);
-
-    // If no client exists, this is first login - create a client record
-    if (!client) {
-      const replitUser = await storage.getUser(userId);
-      if (!replitUser) {
-        return res.status(401).json({ message: "User not found" });
-      }
-
-      // First user to log in becomes admin
-      const isFirstUser = clients.length === 0;
-
-      // Create a client record linked to this Replit Auth user
-      client = await storage.createClient({
-        userId: userId,
-        nameEn: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'User',
-        nameAr: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'مستخدم',
-        username: replitUser.email || `user_${userId.substring(0, 8)}`,
-        password: '', // Not used with Replit Auth
-        email: replitUser.email || null,
-        phone: null,
-        isAdmin: isFirstUser,
-      });
-    }
-
-    // Attach client to request
-    (req as any).client = client;
+    // req.user is already an AuthUser from Passport Local Strategy
+    // Attach it to req.client for backwards compatibility
+    (req as any).client = req.user;
     next();
   } catch (error) {
     console.error("Error in getClientFromAuth:", error);
-    res.status(500).json({ message: error instanceof Error ? error instanceof Error ? error.message : 'Unknown error' : 'Unknown error' });
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
   }
 }
 
-// Require auth middleware (uses Replit Auth + loads client)
+// Require auth middleware
 async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  await isAuthenticated(req, res, async () => {
+  isAuthenticated(req, res, async () => {
     await getClientFromAuth(req, res, next);
   });
 }
@@ -175,46 +148,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
 
-  // Auth endpoint - returns user with client data
+  // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
-      const replitUser = await storage.getUser(userId);
-
-      // Find or create client linked to this user
-      const clients = await storage.getClients();
-      let client = clients.find(c => c.userId === userId);
-
-      if (!client && replitUser) {
-        // First user to log in becomes admin
-        const isFirstUser = clients.length === 0;
-
-        client = await storage.createClient({
-          userId: userId,
-          nameEn: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'User',
-          nameAr: `${replitUser.firstName || ''} ${replitUser.lastName || ''}`.trim() || replitUser.email || 'مستخدم',
-          username: replitUser.email || `user_${userId.substring(0, 8)}`,
-          password: '', // Not used with Replit Auth
-          email: replitUser.email || null,
-          phone: null,
-          isAdmin: isFirstUser,
-        });
-      }
-
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
-
-      res.json({
-        id: client.id,
-        username: client.username,
-        nameEn: client.nameEn,
-        nameAr: client.nameAr,
-        email: client.email,
-        phone: client.phone,
-        isAdmin: client.isAdmin,
-        profileImageUrl: replitUser?.profileImageUrl,
-      });
+      // req.user is already populated by Passport Local Strategy
+      res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
