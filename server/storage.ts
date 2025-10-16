@@ -25,6 +25,7 @@ import {
   type InsertLtaProduct,
   type InsertLtaClient,
   type InsertPriceOffer,
+  type InsertPasswordResetToken,
   type AuthUser,
   type User,
   type UpsertUser,
@@ -44,6 +45,7 @@ import {
   ltaClients,
   users,
   priceOffers,
+  passwordResetTokens,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -180,6 +182,11 @@ export interface IStorage {
   getAllPriceOffers(): Promise<PriceOffer[]>;
   updatePriceOfferStatus(id: string, status: string, additionalData?: Partial<PriceOffer>): Promise<PriceOffer | null>;
   updatePriceOffer(id: string, data: Partial<PriceOffer>): Promise<PriceOffer | null>;
+
+  // Password Reset Tokens
+  createPasswordResetToken(token: InsertPasswordResetToken): Promise<any>;
+  getPasswordResetToken(token: string): Promise<any>;
+  deletePasswordResetToken(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1112,6 +1119,33 @@ export class MemStorage implements IStorage {
       .execute();
 
     return this.getPriceOffer(id);
+  }
+
+  // Password Reset Tokens
+  async createPasswordResetToken(token: InsertPasswordResetToken): Promise<any> {
+    const result = await this.db
+      .insert(passwordResetTokens)
+      .values(token)
+      .returning()
+      .execute();
+    return result[0];
+  }
+
+  async getPasswordResetToken(token: string): Promise<any> {
+    const result = await this.db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token))
+      .limit(1)
+      .execute();
+    return result[0] || null;
+  }
+
+  async deletePasswordResetToken(id: string): Promise<void> {
+    await this.db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.id, id))
+      .execute();
   }
 }
 

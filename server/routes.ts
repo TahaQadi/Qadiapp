@@ -5,6 +5,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
+import passwordResetRoutes from "./password-reset-routes";
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -147,6 +148,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
+
+  // Password reset routes (mixed access)
+  app.use('/api', passwordResetRoutes);
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {

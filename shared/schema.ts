@@ -53,6 +53,14 @@ export const companyUsers = pgTable("company_users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const clientDepartments = pgTable("client_departments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
@@ -244,6 +252,7 @@ export const priceOffers = pgTable("price_offers", {
 // Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
 export const insertCompanyUserSchema = createInsertSchema(companyUsers).omit({ id: true, createdAt: true });
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({ id: true, createdAt: true });
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
 export const insertClientLocationSchema = createInsertSchema(clientLocations).omit({ id: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true });
@@ -417,6 +426,7 @@ export type PriceOffer = typeof priceOffers.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertCompanyUser = z.infer<typeof insertCompanyUserSchema>;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type InsertClientDepartment = z.infer<typeof insertClientDepartmentSchema>;
 export type InsertClientLocation = z.infer<typeof insertClientLocationSchema>;
 export type InsertVendor = z.infer<typeof insertVendorSchema>;
