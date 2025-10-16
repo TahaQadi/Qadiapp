@@ -2,13 +2,17 @@
 import { useQuery } from "@tanstack/react-query";
 
 export interface AuthUser {
-  id: string;
+  id: string; // Company/Client ID (for backwards compatibility with existing routes)
+  userId?: string; // Company User ID (for multi-user system)
   username: string;
   nameEn: string;
   nameAr: string;
   email?: string;
   phone?: string;
   isAdmin: boolean;
+  companyId?: string; // Same as id, kept for clarity
+  companyNameEn?: string;
+  companyNameAr?: string;
   profileImageUrl?: string | null;
 }
 
