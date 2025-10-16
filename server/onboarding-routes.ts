@@ -26,7 +26,7 @@ const onboardingSchema = z.object({
     longitude: z.number({ required_error: 'Map location is required / الموقع على الخريطة مطلوب' }),
   }),
   departments: z.array(z.object({
-    type: z.string().min(1),
+    type: z.string().min(1, 'Department type is required / نوع القسم مطلوب'),
     contactName: z.string().optional(),
     contactEmail: z.string().optional(),
     contactPhone: z.string().optional(),
