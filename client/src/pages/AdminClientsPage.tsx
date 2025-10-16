@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck } from 'lucide-react';
+import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck, KeyRound, Edit } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -20,6 +20,18 @@ import { Link } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const clientFormSchema = z.object({
   nameEn: z.string().min(1, 'English name is required'),
@@ -37,8 +49,13 @@ const createClientSchema = z.object({
   phone: z.string().optional(),
 });
 
+const passwordResetSchema = z.object({
+  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 type CreateClientFormValues = z.infer<typeof createClientSchema>;
+type PasswordResetFormValues = z.infer<typeof passwordResetSchema>;
 
 interface ClientBasic {
   id: string;
@@ -80,8 +97,13 @@ export default function AdminClientsPage() {
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [passwordResetDialogOpen, setPasswordResetDialogOpen] = useState(false);
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery<ClientBasic[]>({
     queryKey: ['/api/admin/clients'],
@@ -120,6 +142,13 @@ export default function AdminClientsPage() {
       nameAr: '',
       email: '',
       phone: '',
+    },
+  });
+
+  const passwordResetForm = useForm<PasswordResetFormValues>({
+    resolver: zodResolver(passwordResetSchema),
+    defaultValues: {
+      newPassword: '',
     },
   });
 
@@ -175,6 +204,8 @@ export default function AdminClientsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
       setSelectedClientId(null);
+      setDeleteDialogOpen(false);
+      if (isMobile) setDetailsSheetOpen(false);
       toast({
         title: language === 'ar' ? 'تم حذف العميل بنجاح' : 'Client deleted successfully',
       });
@@ -182,6 +213,30 @@ export default function AdminClientsPage() {
     onError: (error: any) => {
       toast({
         title: language === 'ar' ? 'خطأ في حذف العميل' : 'Error deleting client',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ clientId, newPassword }: { clientId: string; newPassword: string }) => {
+      const res = await apiRequest('POST', '/api/password/admin-reset', {
+        clientId,
+        newPassword,
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setPasswordResetDialogOpen(false);
+      passwordResetForm.reset();
+      toast({
+        title: language === 'ar' ? data.messageAr : data.message,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في إعادة تعيين كلمة المرور' : 'Error resetting password',
         description: error.message,
         variant: 'destructive',
       });
@@ -245,11 +300,28 @@ export default function AdminClientsPage() {
 
   const handleClientSelect = (client: ClientBasic) => {
     setSelectedClientId(client.id);
+    if (isMobile) {
+      setDetailsSheetOpen(true);
+    }
   };
 
   const handleSubmit = (data: ClientFormValues) => {
     if (selectedClientId) {
-      updateClientMutation.mutate({ id: selectedClientId, data });
+      updateClientMutation.mutate({ id: selectedClientId, data }, {
+        onSuccess: () => {
+          setEditDialogOpen(false);
+          if (isMobile) setDetailsSheetOpen(false);
+        }
+      });
+    }
+  };
+
+  const handlePasswordReset = (data: PasswordResetFormValues) => {
+    if (selectedClientId) {
+      resetPasswordMutation.mutate({
+        clientId: selectedClientId,
+        newPassword: data.newPassword,
+      });
     }
   };
 
@@ -364,13 +436,13 @@ export default function AdminClientsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-1 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+        {/* Mobile: Client List Only */}
+        {isMobile ? (
+          <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
             border-border/50 dark:border-[#d4af37]/20 
             hover:border-primary dark:hover:border-[#d4af37] 
             hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
-            transition-all duration-500 animate-fade-in" 
-            style={{ animationDelay: '100ms' }}>
+            transition-all duration-500 animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-foreground dark:text-white">
                 {language === 'ar' ? 'قائمة العملاء' : 'Client List'}
@@ -381,16 +453,11 @@ export default function AdminClientsPage() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-[95vw]">
                   <DialogHeader>
                     <DialogTitle>
                       {language === 'ar' ? 'إنشاء عميل جديد' : 'Create New Client'}
                     </DialogTitle>
-                    <DialogDescription>
-                      {language === 'ar' 
-                        ? 'أدخل معلومات العميل الجديد' 
-                        : 'Enter the new client information'}
-                    </DialogDescription>
                   </DialogHeader>
                   <Form {...createForm}>
                     <form onSubmit={createForm.handleSubmit((data) => createClientMutation.mutate(data))} className="space-y-4">
@@ -401,7 +468,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'اسم المستخدم' : 'Username'}</FormLabel>
                             <FormControl>
-                              <Input {...field} data-testid="input-create-username" />
+                              <Input {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -414,40 +481,38 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'كلمة المرور' : 'Password'}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="password" data-testid="input-create-password" />
+                              <Input {...field} type="password" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={createForm.control}
-                          name="nameEn"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
-                              <FormControl>
-                                <Input {...field} data-testid="input-create-name-en" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={createForm.control}
-                          name="nameAr"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                              <FormControl>
-                                <Input {...field} data-testid="input-create-name-ar" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FormField
+                        control={createForm.control}
+                        name="nameEn"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={createForm.control}
+                        name="nameAr"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={createForm.control}
                         name="email"
@@ -455,7 +520,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" data-testid="input-create-email" />
+                              <Input {...field} type="email" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -468,18 +533,14 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
                             <FormControl>
-                              <Input {...field} data-testid="input-create-phone" />
+                              <Input {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       <DialogFooter>
-                        <Button
-                          type="submit"
-                          disabled={createClientMutation.isPending}
-                          data-testid="button-submit-create-client"
-                        >
+                        <Button type="submit" disabled={createClientMutation.isPending} className="w-full">
                           {createClientMutation.isPending
                             ? (language === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
                             : (language === 'ar' ? 'إنشاء عميل' : 'Create Client')}
@@ -507,12 +568,7 @@ export default function AdminClientsPage() {
                     <button
                       key={client.id}
                       onClick={() => handleClientSelect(client)}
-                      className={`w-full text-start p-3 rounded-md border transition-colors hover-elevate ${
-                        selectedClientId === client.id
-                          ? 'bg-accent border-accent-border'
-                          : 'bg-card border-border'
-                      }`}
-                      data-testid={`button-select-client-${client.id}`}
+                      className="w-full text-start p-3 rounded-md border transition-colors hover-elevate bg-card border-border"
                     >
                       <div className="font-medium">
                         {language === 'ar' ? client.nameAr : client.nameEn}
@@ -531,242 +587,676 @@ export default function AdminClientsPage() {
               )}
             </CardContent>
           </Card>
-
-          <Card className="md:col-span-2 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
-            border-border/50 dark:border-[#d4af37]/20 
-            hover:border-primary dark:hover:border-[#d4af37] 
-            hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
-            transition-all duration-500 animate-fade-in" 
-            style={{ animationDelay: '200ms' }}>
-            <CardHeader className="flex flex-row items-center justify-between gap-2">
-              <CardTitle className="text-foreground dark:text-white">
-                {language === 'ar' ? 'تفاصيل العميل' : 'Client Details'}
-              </CardTitle>
-              {selectedClientId && clientDetails?.client && !clientDetails.client.isAdmin && (
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => {
-                    if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا العميل؟' : 'Are you sure you want to delete this client?')) {
-                      deleteClientMutation.mutate(selectedClientId);
-                    }
-                  }}
-                  disabled={deleteClientMutation.isPending}
-                  data-testid="button-delete-client"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {!selectedClientId ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  {language === 'ar' ? 'اختر عميلاً لعرض التفاصيل' : 'Select a client to view details'}
-                </div>
-              ) : detailsLoading ? (
-                <div className="space-y-4">
-                  <div className="h-10 bg-muted rounded animate-pulse" />
-                  <div className="h-10 bg-muted rounded animate-pulse" />
-                  <div className="h-10 bg-muted rounded animate-pulse" />
-                  <div className="h-10 bg-muted rounded animate-pulse" />
-                  <div className="text-center py-4 text-sm text-muted-foreground" data-testid="text-loading">
-                    {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                  </div>
-                </div>
-              ) : detailsError ? (
-                <div className="text-center py-8 text-destructive">
-                  {language === 'ar' ? 'خطأ في تحميل تفاصيل العميل' : 'Error loading client details'}
-                </div>
-              ) : clientDetails?.client && (
-                <>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+        ) : (
+          /* Desktop: Side-by-side Layout */
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-1 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+              border-border/50 dark:border-[#d4af37]/20 
+              hover:border-primary dark:hover:border-[#d4af37] 
+              hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+              transition-all duration-500 animate-fade-in" 
+              style={{ animationDelay: '100ms' }}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
+                <CardTitle className="text-foreground dark:text-white">
+                  {language === 'ar' ? 'قائمة العملاء' : 'Client List'}
+                </CardTitle>
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="icon" variant="outline" data-testid="button-create-client">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        {language === 'ar' ? 'إنشاء عميل جديد' : 'Create New Client'}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {language === 'ar' 
+                          ? 'أدخل معلومات العميل الجديد' 
+                          : 'Enter the new client information'}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Form {...createForm}>
+                      <form onSubmit={createForm.handleSubmit((data) => createClientMutation.mutate(data))} className="space-y-4">
                         <FormField
-                          control={form.control}
-                          name="nameEn"
+                          control={createForm.control}
+                          name="username"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                              <FormLabel>{language === 'ar' ? 'اسم المستخدم' : 'Username'}</FormLabel>
                               <FormControl>
-                                <Input {...field} data-testid="input-name-en" />
+                                <Input {...field} data-testid="input-create-username" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         <FormField
-                          control={form.control}
-                          name="nameAr"
+                          control={createForm.control}
+                          name="password"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                              <FormLabel>{language === 'ar' ? 'كلمة المرور' : 'Password'}</FormLabel>
                               <FormControl>
-                                <Input {...field} data-testid="input-name-ar" />
+                                <Input {...field} type="password" data-testid="input-create-password" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="email" data-testid="input-email" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} data-testid="input-phone" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="flex items-center justify-between p-4 border rounded-md bg-muted/30">
-                        <div className="flex items-center gap-3 flex-1">
-                          <ShieldCheck className="h-5 w-5 text-primary" />
-                          <label htmlFor="admin-toggle" className="flex-1 cursor-pointer">
-                            <div className="font-medium">
-                              {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {language === 'ar' 
-                                ? 'منح صلاحيات المسؤول لهذا العميل' 
-                                : 'Grant admin access to this client'}
-                            </div>
-                          </label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={createForm.control}
+                            name="nameEn"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                                <FormControl>
+                                  <Input {...field} data-testid="input-create-name-en" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={createForm.control}
+                            name="nameAr"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                                <FormControl>
+                                  <Input {...field} data-testid="input-create-name-ar" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
-                        <Switch
-                          id="admin-toggle"
-                          checked={clientDetails.client.isAdmin}
-                          onCheckedChange={(checked) => {
-                            toggleAdminMutation.mutate({
-                              id: selectedClientId,
-                              isAdmin: checked
-                            });
-                          }}
-                          disabled={toggleAdminMutation.isPending}
-                          data-testid="switch-admin-status"
-                          aria-label={language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
+                        <FormField
+                          control={createForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="email" data-testid="input-create-email" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={updateClientMutation.isPending}
-                        data-testid="button-save-client"
+                        <FormField
+                          control={createForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} data-testid="input-create-phone" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <DialogFooter>
+                          <Button
+                            type="submit"
+                            disabled={createClientMutation.isPending}
+                            data-testid="button-submit-create-client"
+                          >
+                            {createClientMutation.isPending
+                              ? (language === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
+                              : (language === 'ar' ? 'إنشاء عميل' : 'Create Client')}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {clientsLoading ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-16 bg-muted rounded animate-pulse" />
+                    ))}
+                  </div>
+                ) : clients.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {language === 'ar' ? 'لا يوجد عملاء' : 'No clients'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {clients.map((client) => (
+                      <button
+                        key={client.id}
+                        onClick={() => handleClientSelect(client)}
+                        className={`w-full text-start p-3 rounded-md border transition-colors hover-elevate ${
+                          selectedClientId === client.id
+                            ? 'bg-accent border-accent-border'
+                            : 'bg-card border-border'
+                        }`}
+                        data-testid={`button-select-client-${client.id}`}
                       >
-                        {updateClientMutation.isPending
-                          ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...')
-                          : (language === 'ar' ? 'حفظ التغييرات' : 'Save Changes')}
-                      </Button>
-                    </form>
-                  </Form>
-
-                  <Separator />
-
-                  <div>
-                    <h3 className="font-semibold mb-3">
-                      {language === 'ar' ? 'الأقسام' : 'Departments'}
-                    </h3>
-                    {clientDetails.departments.length === 0 ? (
-                      <div className="text-sm text-muted-foreground" data-testid="text-no-departments">
-                        {language === 'ar' ? 'لا توجد أقسام' : 'No departments'}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {clientDetails.departments.map((dept) => (
-                          <div
-                            key={dept.id}
-                            className="p-3 border rounded-md"
-                            data-testid={`card-department-${dept.id}`}
-                          >
-                            <div className="font-medium">
-                              {getDepartmentTypeLabel(dept.departmentType)}
-                            </div>
-                            {dept.contactName && (
-                              <div className="text-sm text-muted-foreground">
-                                {dept.contactName}
-                              </div>
-                            )}
-                            {dept.contactEmail && (
-                              <div className="text-sm text-muted-foreground">
-                                {dept.contactEmail}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                        <div className="font-medium">
+                          {language === 'ar' ? client.nameAr : client.nameEn}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {client.email || client.username}
+                        </div>
+                        {client.isAdmin && (
+                          <Badge variant="secondary" className="mt-1">
+                            {language === 'ar' ? 'مسؤول' : 'Admin'}
+                          </Badge>
+                        )}
+                      </button>
+                    ))}
                   </div>
+                )}
+              </CardContent>
+            </Card>
 
-                  <Separator />
+            <ClientDetailsCard
+              selectedClientId={selectedClientId}
+              clientDetails={clientDetails}
+              detailsLoading={detailsLoading}
+              detailsError={detailsError}
+              form={form}
+              language={language}
+              toggleAdminMutation={toggleAdminMutation}
+              getDepartmentTypeLabel={getDepartmentTypeLabel}
+              setEditDialogOpen={setEditDialogOpen}
+              setDeleteDialogOpen={setDeleteDialogOpen}
+              setPasswordResetDialogOpen={setPasswordResetDialogOpen}
+            />
+          </div>
+        )}
 
+        {/* Mobile Sheet for Client Details */}
+        <Sheet open={detailsSheetOpen} onOpenChange={setDetailsSheetOpen}>
+          <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>
+                {clientDetails?.client 
+                  ? (language === 'ar' ? clientDetails.client.nameAr : clientDetails.client.nameEn)
+                  : (language === 'ar' ? 'تفاصيل العميل' : 'Client Details')}
+              </SheetTitle>
+            </SheetHeader>
+            {selectedClientId && clientDetails?.client && (
+              <div className="mt-6 space-y-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setEditDialogOpen(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    {language === 'ar' ? 'تعديل' : 'Edit'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setPasswordResetDialogOpen(true)}
+                  >
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    {language === 'ar' ? 'إعادة تعيين' : 'Reset'}
+                  </Button>
+                  {!clientDetails.client.isAdmin && (
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => setDeleteDialogOpen(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {language === 'ar' ? 'حذف' : 'Delete'}
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
                   <div>
-                    <h3 className="font-semibold mb-3">
-                      {language === 'ar' ? 'المواقع' : 'Locations'}
-                    </h3>
-                    {clientDetails.locations.length === 0 ? (
-                      <div className="text-sm text-muted-foreground" data-testid="text-no-locations">
-                        {language === 'ar' ? 'لا توجد مواقع' : 'No locations'}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {clientDetails.locations.map((loc) => (
-                          <div
-                            key={loc.id}
-                            className="p-3 border rounded-md"
-                            data-testid={`card-location-${loc.id}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="font-medium">
-                                {language === 'ar' ? loc.nameAr : loc.nameEn}
-                              </div>
-                              {loc.isHeadquarters && (
-                                <Badge variant="secondary" data-testid={`badge-hq-${loc.id}`}>
-                                  {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {language === 'ar' ? loc.addressAr : loc.addressEn}
-                            </div>
-                            {(loc.city || loc.country) && (
-                              <div className="text-sm text-muted-foreground">
-                                {[loc.city, loc.country].filter(Boolean).join(', ')}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                    </div>
+                    <div>{clientDetails.client.email || '-'}</div>
                   </div>
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {language === 'ar' ? 'رقم الهاتف' : 'Phone'}
+                    </div>
+                    <div>{clientDetails.client.phone || '-'}</div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'منح صلاحيات المسؤول' : 'Grant admin access'}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={clientDetails.client.isAdmin}
+                      onCheckedChange={(checked) => {
+                        toggleAdminMutation.mutate({
+                          id: selectedClientId,
+                          isAdmin: checked
+                        });
+                      }}
+                      disabled={toggleAdminMutation.isPending}
+                    />
+                  </div>
+                </div>
 
-                  <Separator />
+                <Separator />
 
-                  <CompanyUsersSection companyId={selectedClientId} />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                <div>
+                  <h3 className="font-semibold mb-3">
+                    {language === 'ar' ? 'الأقسام' : 'Departments'}
+                  </h3>
+                  {clientDetails.departments.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'لا توجد أقسام' : 'No departments'}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {clientDetails.departments.map((dept) => (
+                        <div key={dept.id} className="p-3 border rounded-md">
+                          <div className="font-medium">{getDepartmentTypeLabel(dept.departmentType)}</div>
+                          {dept.contactName && <div className="text-sm text-muted-foreground">{dept.contactName}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-3">
+                    {language === 'ar' ? 'المواقع' : 'Locations'}
+                  </h3>
+                  {clientDetails.locations.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'لا توجد مواقع' : 'No locations'}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {clientDetails.locations.map((loc) => (
+                        <div key={loc.id} className="p-3 border rounded-md">
+                          <div className="font-medium">{language === 'ar' ? loc.nameAr : loc.nameEn}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {language === 'ar' ? loc.addressAr : loc.addressEn}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <CompanyUsersSection companyId={selectedClientId} />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        {/* Edit Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className={isMobile ? "max-w-[95vw]" : ""}>
+            <DialogHeader>
+              <DialogTitle>{language === 'ar' ? 'تعديل العميل' : 'Edit Client'}</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
+                  <FormField
+                    control={form.control}
+                    name="nameEn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="nameAr"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={updateClientMutation.isPending} className={isMobile ? "w-full" : ""}>
+                    {updateClientMutation.isPending
+                      ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...')
+                      : (language === 'ar' ? 'حفظ' : 'Save')}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Password Reset Dialog */}
+        <Dialog open={passwordResetDialogOpen} onOpenChange={setPasswordResetDialogOpen}>
+          <DialogContent className={isMobile ? "max-w-[95vw]" : ""}>
+            <DialogHeader>
+              <DialogTitle>{language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}</DialogTitle>
+              <DialogDescription>
+                {language === 'ar' 
+                  ? 'أدخل كلمة مرور جديدة للعميل' 
+                  : 'Enter a new password for the client'}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...passwordResetForm}>
+              <form onSubmit={passwordResetForm.handleSubmit(handlePasswordReset)} className="space-y-4">
+                <FormField
+                  control={passwordResetForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'كلمة المرور الجديدة' : 'New Password'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" placeholder="********" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={resetPasswordMutation.isPending} className={isMobile ? "w-full" : ""}>
+                    {resetPasswordMutation.isPending
+                      ? (language === 'ar' ? 'جاري إعادة التعيين...' : 'Resetting...')
+                      : (language === 'ar' ? 'إعادة تعيين' : 'Reset Password')}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === 'ar' 
+                  ? 'سيتم حذف هذا العميل وجميع بياناته بشكل دائم. لا يمكن التراجع عن هذا الإجراء.' 
+                  : 'This client and all their data will be permanently deleted. This action cannot be undone.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (selectedClientId) {
+                    deleteClientMutation.mutate(selectedClientId);
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {language === 'ar' ? 'حذف' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
+  );
+}
+
+// Desktop Client Details Card Component
+function ClientDetailsCard({
+  selectedClientId,
+  clientDetails,
+  detailsLoading,
+  detailsError,
+  form,
+  language,
+  toggleAdminMutation,
+  getDepartmentTypeLabel,
+  setEditDialogOpen,
+  setDeleteDialogOpen,
+  setPasswordResetDialogOpen,
+}: any) {
+  return (
+    <Card className="md:col-span-2 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+      border-border/50 dark:border-[#d4af37]/20 
+      hover:border-primary dark:hover:border-[#d4af37] 
+      hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+      transition-all duration-500 animate-fade-in" 
+      style={{ animationDelay: '200ms' }}>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardTitle className="text-foreground dark:text-white">
+          {language === 'ar' ? 'تفاصيل العميل' : 'Client Details'}
+        </CardTitle>
+        {selectedClientId && clientDetails?.client && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setEditDialogOpen(true)}
+              title={language === 'ar' ? 'تعديل' : 'Edit'}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPasswordResetDialogOpen(true)}
+              title={language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+            >
+              <KeyRound className="h-4 w-4" />
+            </Button>
+            {!clientDetails.client.isAdmin && (
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => setDeleteDialogOpen(true)}
+                title={language === 'ar' ? 'حذف' : 'Delete'}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+      </CardHeader>
+      <CardContent>
+        {!selectedClientId ? (
+          <div className="text-center py-12 text-muted-foreground">
+            {language === 'ar' ? 'اختر عميلاً لعرض التفاصيل' : 'Select a client to view details'}
+          </div>
+        ) : detailsLoading ? (
+          <div className="space-y-4">
+            <div className="h-10 bg-muted rounded animate-pulse" />
+            <div className="h-10 bg-muted rounded animate-pulse" />
+            <div className="h-10 bg-muted rounded animate-pulse" />
+            <div className="h-10 bg-muted rounded animate-pulse" />
+          </div>
+        ) : detailsError ? (
+          <div className="text-center py-8 text-destructive">
+            {language === 'ar' ? 'خطأ في تحميل تفاصيل العميل' : 'Error loading client details'}
+          </div>
+        ) : clientDetails?.client && (
+          <>
+            <div className="space-y-4 mb-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}
+                  </div>
+                  <div className="font-medium">{clientDetails.client.nameEn}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}
+                  </div>
+                  <div className="font-medium">{clientDetails.client.nameAr}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">
+                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                </div>
+                <div>{clientDetails.client.email || '-'}</div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">
+                  {language === 'ar' ? 'رقم الهاتف' : 'Phone'}
+                </div>
+                <div>{clientDetails.client.phone || '-'}</div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-md bg-muted/30">
+                <div className="flex items-center gap-3 flex-1">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <label htmlFor="admin-toggle" className="flex-1 cursor-pointer">
+                    <div className="font-medium">
+                      {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? 'منح صلاحيات المسؤول لهذا العميل' 
+                        : 'Grant admin access to this client'}
+                    </div>
+                  </label>
+                </div>
+                <Switch
+                  id="admin-toggle"
+                  checked={clientDetails.client.isAdmin}
+                  onCheckedChange={(checked) => {
+                    toggleAdminMutation.mutate({
+                      id: selectedClientId,
+                      isAdmin: checked
+                    });
+                  }}
+                  disabled={toggleAdminMutation.isPending}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="mt-6">
+              <h3 className="font-semibold mb-3">
+                {language === 'ar' ? 'الأقسام' : 'Departments'}
+              </h3>
+              {clientDetails.departments.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'لا توجد أقسام' : 'No departments'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {clientDetails.departments.map((dept: any) => (
+                    <div key={dept.id} className="p-3 border rounded-md">
+                      <div className="font-medium">
+                        {getDepartmentTypeLabel(dept.departmentType)}
+                      </div>
+                      {dept.contactName && (
+                        <div className="text-sm text-muted-foreground">
+                          {dept.contactName}
+                        </div>
+                      )}
+                      {dept.contactEmail && (
+                        <div className="text-sm text-muted-foreground">
+                          {dept.contactEmail}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Separator className="my-6" />
+
+            <div>
+              <h3 className="font-semibold mb-3">
+                {language === 'ar' ? 'المواقع' : 'Locations'}
+              </h3>
+              {clientDetails.locations.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'لا توجد مواقع' : 'No locations'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {clientDetails.locations.map((loc: any) => (
+                    <div key={loc.id} className="p-3 border rounded-md">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium">
+                          {language === 'ar' ? loc.nameAr : loc.nameEn}
+                        </div>
+                        {loc.isHeadquarters && (
+                          <Badge variant="secondary">
+                            {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {language === 'ar' ? loc.addressAr : loc.addressEn}
+                      </div>
+                      {(loc.city || loc.country) && (
+                        <div className="text-sm text-muted-foreground">
+                          {[loc.city, loc.country].filter(Boolean).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Separator className="my-6" />
+
+            <CompanyUsersSection companyId={selectedClientId} />
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
