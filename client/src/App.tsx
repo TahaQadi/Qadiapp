@@ -86,7 +86,7 @@ function AdminRoute({
 }
 
 function Router() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
@@ -99,8 +99,14 @@ function Router() {
       <Route path="/catalog/:category" component={CatalogPage} />
       <Route path="/catalog" component={CatalogPage} />
 
-      {/* Authenticated routes */}
-      {!isAuthenticated ? (
+      {/* Show loading state while checking authentication */}
+      {isLoading ? (
+        <Route path="/">
+          <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
+          </div>
+        </Route>
+      ) : !isAuthenticated ? (
         <Route path="/">
           <Redirect to="/login" />
         </Route>
