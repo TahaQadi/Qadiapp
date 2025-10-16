@@ -4,6 +4,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import onboardingRoutes from "./onboarding-routes";
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -170,6 +171,9 @@ async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
+
+  // Onboarding routes (public)
+  app.use('/api', onboardingRoutes);
 
   // Auth endpoint - returns user with client data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {

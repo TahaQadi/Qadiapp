@@ -25,6 +25,7 @@ import PriceRequestPage from '@/pages/PriceRequestPage';
 import ClientPriceOffersPage from '@/pages/ClientPriceOffersPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CatalogPage from '@/pages/CatalogPage';
+import OnboardingPage from '@/pages/OnboardingPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 import "./lib/i18n";
 import { HelmetProvider } from 'react-helmet-async';
@@ -116,6 +117,9 @@ function Router() {
       <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
       <Route path="/catalog/:category" component={CatalogPage} />
       <Route path="/catalog" component={CatalogPage} />
+      
+      {/* Onboarding (public) */}
+      <Route path="/onboarding" component={OnboardingPage} />
 
       <Route component={NotFound} />
     </Switch>
