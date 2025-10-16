@@ -4,6 +4,16 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
+**Order Modification and Cancellation System (October 16, 2025):**
+- Added `order_modifications` table to track client modification/cancellation requests
+- Extended orders table with cancellation tracking fields (cancellationReason, cancelledAt, cancelledBy, updatedAt)
+- Implemented backend API routes for order modification workflow (`/api/orders/:id/modify`, `/api/orders/:id/cancel`)
+- Created admin review UI at `/admin/order-modifications` with approve/reject capability
+- Built client-facing order management page at `/orders` with modification request dialog
+- Status workflow: pending → modification_requested → (approved/rejected) → cancelled/updated
+- Full bilingual support for modification requests and admin responses
+- Note: Currently supports order cancellation; item modification UI to be added in future
+
 **Document Templates System (October 15, 2025):**
 - Added `templates` table to database schema for PDF/document template management (13 columns: UUID, bilingual fields, JSONB sections/variables/styles)
 - Created 4 production-ready template JSONs: price offer, order, invoice, LTA contract
@@ -51,7 +61,8 @@ Preferred communication style: Simple, everyday language.
 -   **Client Departments:** Organizational units (finance, purchase, warehouse).
 -   **Client Locations:** Physical addresses, bilingual names.
 -   **Order Templates:** Reusable order configurations (JSON-serialized cart items).
--   **Orders:** Transaction records (JSON-serialized items, status workflow, total, LTA reference, Pipefy card ID).
+-   **Orders:** Transaction records (JSON-serialized items, status workflow, total, LTA reference, Pipefy card ID, cancellation tracking).
+-   **Order Modifications:** Client modification/cancellation requests with admin review workflow (modification type, reason, new items, status, admin response).
 -   **Relationships:** One-to-many (Client to Departments, Locations, Orders, Templates); Many-to-many (LTAs to Products via LtaProducts, LTAs to Clients via LtaClients). UUID primary keys.
 
 ## Business Logic
@@ -61,9 +72,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Key Features
 
-**Admin Features:** LTA management (CRUD, document upload/download), product assignment to LTAs (individual/bulk CSV), client assignment, product management (CRUD, image upload, custom metadata), client management, user management (admin toggles).
-**Client Features:** Responsive product grid from assigned LTA(s), product display (images, names, SKU, descriptions, pricing), single-LTA cart, active contract badge, order templates, order history with reorder, multi-language (EN/AR) with RTL.
-**System Features:** Full bilingual support, responsive design, dark/light themes, Pipefy webhook integration.
+**Admin Features:** LTA management (CRUD, document upload/download), product assignment to LTAs (individual/bulk CSV), client assignment, product management (CRUD, image upload, custom metadata), client management, user management (admin toggles), order modification review and approval.
+**Client Features:** Responsive product grid from assigned LTA(s), product display (images, names, SKU, descriptions, pricing), single-LTA cart, active contract badge, order templates, order history with reorder, order modification/cancellation requests, multi-language (EN/AR) with RTL.
+**System Features:** Full bilingual support, responsive design, dark/light themes, Pipefy webhook integration, order modification workflow.
 
 # External Dependencies
 
