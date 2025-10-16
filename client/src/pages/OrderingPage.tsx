@@ -1156,7 +1156,7 @@ export default function OrderingPage() {
           </Card>
 
           <Tabs defaultValue="lta-products" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
+            <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
               <TabsTrigger value="lta-products" className="text-sm sm:text-base" data-testid="tab-lta-products">
                 <Package className="h-4 w-4 me-1 sm:me-2" />
                 <span className="hidden xs:inline">{language === 'ar' ? 'اتفاقياتي' : 'My LTAs'}</span>
@@ -1166,11 +1166,6 @@ export default function OrderingPage() {
                 <FileText className="h-4 w-4 me-1 sm:me-2" />
                 <span className="hidden xs:inline">{t('templates')}</span>
                 <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
-              </TabsTrigger>
-              <TabsTrigger value="price-requests" className="text-sm sm:text-base" data-testid="tab-price-requests">
-                <Heart className="h-4 w-4 me-1 sm:me-2" />
-                <span className="hidden xs:inline">{language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}</span>
-                <span className="xs:hidden">{language === 'ar' ? 'أسعار' : 'Prices'}</span>
               </TabsTrigger>
               <TabsTrigger value="history" className="text-sm sm:text-base" data-testid="tab-history">
                 <History className="h-4 w-4 me-1 sm:me-2" />
@@ -1422,97 +1417,6 @@ export default function OrderingPage() {
                   <p className="text-sm text-muted-foreground mt-2">{t('createTemplate')}</p>
                 </div>
               )}
-            </TabsContent>
-
-            {/* Price Requests Tab - Now only shows items that are in the priceRequestList */}
-            <TabsContent value="price-requests" className="mt-0">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between gap-4">
-                  <h2 className="text-xl sm:text-2xl font-bold">
-                    {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
-                  </h2>
-                  {priceRequestList.length > 0 && (
-                    <Badge variant="secondary" className="text-sm">
-                      {priceRequestList.length} {language === 'ar' ? 'منتج' : 'items'}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Display products currently in the priceRequestList */}
-                {priceRequestList.length > 0 ? (
-                  <Card className="bg-primary/5 border-primary/20">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Heart className="h-5 w-5" />
-                          {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
-                        </h3>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPriceRequestList([])}
-                        >
-                          <Trash2 className="h-4 w-4 me-2" />
-                          {language === 'ar' ? 'مسح الكل' : 'Clear All'}
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {priceRequestList.map((item) => (
-                        <div key={item.productId} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background border">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {language === 'ar' ? item.productNameAr : item.productNameEn}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              SKU: {item.productSku}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveFromPriceRequest(item.productId)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        onClick={() => setPriceRequestDialogOpen(true)} 
-                        className="w-full"
-                        size="lg"
-                      >
-                        <Send className="h-4 w-4 me-2" />
-                        {language === 'ar' ? 'إرسال طلب الأسعار' : 'Send Price Request'}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ) : (
-                  <Card className="p-12 text-center border-2 border-dashed">
-                    <div className="max-w-md mx-auto space-y-4">
-                      <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
-                        <Heart className="w-10 h-10 text-muted-foreground/50" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-foreground">
-                        {language === 'ar' ? 'لا توجد منتجات في القائمة' : 'No Items in List'}
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {language === 'ar' 
-                          ? 'لا توجد منتجات حاليًا في قائمة طلبات الأسعار الخاصة بك.' 
-                          : 'Your price request list is currently empty.'}
-                      </p>
-                      <Button asChild>
-                        <Link href="/catalog">
-                          <Package className="h-4 w-4 me-2" />
-                          {language === 'ar' ? 'استكشاف المنتجات' : 'Explore Products'}
-                        </Link>
-                      </Button>
-                    </div>
-                  </Card>
-                )}
-              </div>
             </TabsContent>
 
             {/* History Tab */}
