@@ -117,7 +117,7 @@ function Router() {
       <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
       <Route path="/catalog/:category" component={CatalogPage} />
       <Route path="/catalog" component={CatalogPage} />
-      
+
       {/* Onboarding (public) */}
       <Route path="/onboarding" component={OnboardingPage} />
 
@@ -127,6 +127,16 @@ function Router() {
 }
 
 function App() {
+  const { user, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  // Redirect to onboarding if user needs it
+  useEffect(() => {
+    if (!isLoading && user && (user as any).needsOnboarding && location !== '/onboarding') {
+      setLocation('/onboarding');
+    }
+  }, [user, isLoading, location, setLocation]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>

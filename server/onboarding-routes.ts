@@ -123,8 +123,13 @@ router.post('/onboarding/complete', isAuthenticated, async (req, res) => {
     res.json({
       success: true,
       clientId: client.id,
-      message: 'Onboarding completed successfully',
-      messageAr: 'تم التسجيل بنجاح',
+      isFirstUser: isFirstUser,
+      message: isFirstUser 
+        ? 'Welcome! You are the first user and have been granted admin privileges.'
+        : 'Onboarding completed successfully',
+      messageAr: isFirstUser
+        ? 'مرحباً! أنت أول مستخدم وتم منحك صلاحيات المسؤول.'
+        : 'تم التسجيل بنجاح',
     });
   } catch (error) {
     console.error('Onboarding error:', error);

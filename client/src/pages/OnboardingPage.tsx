@@ -92,12 +92,13 @@ export default function OnboardingPage() {
     },
     onSuccess: () => {
       toast({
-        title: language === 'ar' ? 'تم التسجيل بنجاح!' : 'Onboarding Complete!',
+        title: language === 'ar' ? '🎉 مرحباً بك!' : '🎉 Welcome!',
         description: language === 'ar' 
-          ? 'تم إنشاء حسابك. يرجى تسجيل الدخول.' 
-          : 'Your account has been created. Please login.',
+          ? 'تم إنشاء حسابك بنجاح. مرحباً بك في نظام الطلبات!' 
+          : 'Your account has been created successfully. Welcome to the ordering system!',
       });
-      setLocation('/');
+      // Reload to get fresh auth data
+      window.location.href = '/';
     },
     onError: (error: any) => {
       toast({

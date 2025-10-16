@@ -59,7 +59,7 @@ export function setupAuth(app: Express) {
     const sessionData = user.userId ? `${user.id}:${user.userId}` : user.id;
     done(null, sessionData);
   });
-  
+
   passport.deserializeUser(async (sessionData: string, done) => {
     try {
       // Parse session data (could be "companyId:userId" or just "companyId")
@@ -71,7 +71,7 @@ export function setupAuth(app: Express) {
         // New multi-user system: load company user
         const companyUser = await storage.getCompanyUser(userId);
         const company = companyUser ? await storage.getClient(companyUser.companyId) : null;
-        
+
         if (!companyUser || !company) {
           return done(null, false);
         }
