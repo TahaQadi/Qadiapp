@@ -264,40 +264,60 @@ export class MemStorage implements IStorage {
   }
 
   async validateClientCredentials(username: string, password: string): Promise<AuthUser | null> {
-    const companyUser = await this.getCompanyUserByUsername(username);
-    if (!companyUser) {
-      return null;
-    }
-
-    if (!companyUser.isActive) {
-      return null;
-    }
-
     // Import the password comparison function
     const { comparePasswords } = await import('./auth');
-    const isValidPassword = await comparePasswords(password, companyUser.password);
 
+    // Try company_users first (new multi-user system)
+    const companyUser = await this.getCompanyUserByUsername(username);
+    if (companyUser) {
+      if (!companyUser.isActive) {
+        return null;
+      }
+
+      const isValidPassword = await comparePasswords(password, companyUser.password);
+      if (!isValidPassword) {
+        return null;
+      }
+
+      const company = await this.getClient(companyUser.companyId);
+      if (!company) {
+        return null;
+      }
+
+      return {
+        id: company.id, // Company ID for backwards compatibility with existing routes
+        userId: companyUser.id, // Company user ID for multi-user system
+        username: companyUser.username,
+        nameEn: companyUser.nameEn,
+        nameAr: companyUser.nameAr,
+        email: companyUser.email ?? undefined,
+        phone: companyUser.phone ?? undefined,
+        isAdmin: company.isAdmin,
+        companyId: company.id,
+        companyNameEn: company.nameEn,
+        companyNameAr: company.nameAr,
+      };
+    }
+
+    // Fallback to clients table (backwards compatibility for legacy accounts)
+    const client = await this.getClientByUsername(username);
+    if (!client) {
+      return null;
+    }
+
+    const isValidPassword = await comparePasswords(password, client.password);
     if (!isValidPassword) {
       return null;
     }
 
-    const company = await this.getClient(companyUser.companyId);
-    if (!company) {
-      return null;
-    }
-
     return {
-      id: company.id, // Company ID for backwards compatibility with existing routes
-      userId: companyUser.id, // Company user ID for multi-user system
-      username: companyUser.username,
-      nameEn: companyUser.nameEn,
-      nameAr: companyUser.nameAr,
-      email: companyUser.email ?? undefined,
-      phone: companyUser.phone ?? undefined,
-      isAdmin: company.isAdmin,
-      companyId: company.id,
-      companyNameEn: company.nameEn,
-      companyNameAr: company.nameAr,
+      id: client.id,
+      username: client.username,
+      nameEn: client.nameEn,
+      nameAr: client.nameAr,
+      email: client.email ?? undefined,
+      phone: client.phone ?? undefined,
+      isAdmin: client.isAdmin,
     };
   }
 

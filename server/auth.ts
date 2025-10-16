@@ -46,10 +46,57 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const client = await storage.getClientByUsername(username);
-      if (!client || !(await comparePasswords(password, client.password))) {
+      const authUser = await storage.validateClientCredentials(username, password);
+      if (!authUser) {
         return done(null, false);
+      }
+      return done(null, authUser);
+    }),
+  );
+
+  passport.serializeUser((user, done) => {
+    // Store both company ID and user ID (if exists) for proper deserialization
+    const sessionData = user.userId ? `${user.id}:${user.userId}` : user.id;
+    done(null, sessionData);
+  });
+  
+  passport.deserializeUser(async (sessionData: string, done) => {
+    try {
+      // Parse session data (could be "companyId:userId" or just "companyId")
+      const parts = sessionData.split(':');
+      const companyId = parts[0];
+      const userId = parts[1];
+
+      if (userId) {
+        // New multi-user system: load company user
+        const companyUser = await storage.getCompanyUser(userId);
+        const company = companyUser ? await storage.getClient(companyUser.companyId) : null;
+        
+        if (!companyUser || !company) {
+          return done(null, false);
+        }
+
+        const authUser: AuthUser = {
+          id: company.id,
+          userId: companyUser.id,
+          username: companyUser.username,
+          nameEn: companyUser.nameEn,
+          nameAr: companyUser.nameAr,
+          email: companyUser.email ?? undefined,
+          phone: companyUser.phone ?? undefined,
+          isAdmin: company.isAdmin,
+          companyId: company.id,
+          companyNameEn: company.nameEn,
+          companyNameAr: company.nameAr,
+        };
+        done(null, authUser);
       } else {
+        // Old system: load client directly (backwards compatibility)
+        const client = await storage.getClient(companyId);
+        if (!client) {
+          return done(null, false);
+        }
+
         const authUser: AuthUser = {
           id: client.id,
           username: client.username,
@@ -59,28 +106,11 @@ export function setupAuth(app: Express) {
           phone: client.phone ?? undefined,
           isAdmin: client.isAdmin,
         };
-        return done(null, authUser);
+        done(null, authUser);
       }
-    }),
-  );
-
-  passport.serializeUser((user, done) => done(null, user.id));
-  
-  passport.deserializeUser(async (id: string, done) => {
-    const client = await storage.getClient(id);
-    if (!client) {
-      return done(null, false);
+    } catch (error) {
+      done(error);
     }
-    const authUser: AuthUser = {
-      id: client.id,
-      username: client.username,
-      nameEn: client.nameEn,
-      nameAr: client.nameAr,
-      email: client.email ?? undefined,
-      phone: client.phone ?? undefined,
-      isAdmin: client.isAdmin,
-    };
-    done(null, authUser);
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
