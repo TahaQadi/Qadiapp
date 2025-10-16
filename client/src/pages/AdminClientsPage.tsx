@@ -545,6 +545,7 @@ export default function AdminClientsPage() {
                   {language === 'ar' ? 'خطأ في تحميل تفاصيل العميل' : 'Error loading client details'}
                 </div>
               ) : clientDetails?.client && (
+                <>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
@@ -694,11 +695,7 @@ export default function AdminClientsPage() {
                       </div>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-12 text-destructive" data-testid="text-error">
-                  {language === 'ar' ? 'خطأ في تحميل التفاصيل' : 'Error loading details'}
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
