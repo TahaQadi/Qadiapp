@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
@@ -32,7 +33,6 @@ import "./lib/i18n";
 import { HelmetProvider } from 'react-helmet-async';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 function AdminRoute({
   path,
@@ -133,7 +133,7 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
@@ -145,13 +145,21 @@ function App() {
   }, [user, isLoading, location, setLocation]);
 
   return (
+    <>
+      <Router />
+      <Toaster />
+    </>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
         <TooltipProvider>
           <ThemeProvider>
             <LanguageProvider>
-              <Router />
-              <Toaster />
+              <AppContent />
             </LanguageProvider>
           </ThemeProvider>
         </TooltipProvider>
