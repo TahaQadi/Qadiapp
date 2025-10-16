@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { CompanyUsersSection } from '@/components/CompanyUsersSection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -756,6 +757,10 @@ export default function AdminClientsPage() {
                       </div>
                     )}
                   </div>
+
+                  <Separator />
+
+                  <CompanyUsersSection companyId={selectedClientId} />
                 </>
               )}
             </CardContent>
