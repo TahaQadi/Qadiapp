@@ -20,7 +20,7 @@ interface OrderModificationDialogProps {
 export function OrderModificationDialog({ order, open, onOpenChange }: OrderModificationDialogProps) {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const [modificationType, setModificationType] = useState<'cancel'>('cancel');
+  const [modificationType, setModificationType] = useState<'cancel' | 'items'>('cancel');
   const [reason, setReason] = useState("");
 
   const requestModificationMutation = useMutation({
@@ -108,7 +108,9 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
                 </div>
               </RadioGroup>
               <p className="text-xs text-muted-foreground mt-1" data-testid="text-note">
-                {i18n.language === 'ar' ? 'ملاحظة: تعديل الأصناف متاح قريباً' : 'Note: Item modification coming soon'}
+                {i18n.language === 'ar' 
+                  ? 'ملاحظة: الإلغاء فقط متاح حالياً. لتعديل الأصناف، يرجى التواصل مع الإدارة.' 
+                  : 'Note: Only cancellation is currently available. For item modifications, please contact administration.'}
               </p>
             </div>
 
