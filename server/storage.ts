@@ -372,6 +372,8 @@ export class MemStorage implements IStorage {
         addressAr: insertLoc.addressAr,
         city: insertLoc.city ?? null,
         country: insertLoc.country ?? null,
+        latitude: insertLoc.latitude ?? null,
+        longitude: insertLoc.longitude ?? null,
         isHeadquarters: insertLoc.isHeadquarters ?? false,
         phone: insertLoc.phone ?? null,
       })
