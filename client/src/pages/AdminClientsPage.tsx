@@ -192,21 +192,53 @@ export default function AdminClientsPage() {
       const res = await apiRequest('PATCH', `/api/admin/clients/${id}/admin-status`, { isAdmin });
       return await res.json();
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
-      if (selectedClientId) {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
-      }
-      toast({
-        title: language === 'ar' ? data.messageAr : data.message,
+    onMutate: async ({ id, isAdmin }) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/admin/clients', id] });
+      await queryClient.cancelQueries({ queryKey: ['/api/admin/clients'] });
+
+      const previousClientDetails = queryClient.getQueryData(['/api/admin/clients', id]);
+      const previousClients = queryClient.getQueryData(['/api/admin/clients']);
+
+      queryClient.setQueryData(['/api/admin/clients', id], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          client: { ...old.client, isAdmin }
+        };
       });
+
+      queryClient.setQueryData(['/api/admin/clients'], (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.map(client => 
+          client.id === id ? { ...client, isAdmin } : client
+        );
+      });
+
+      return { previousClientDetails, previousClients };
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      if (context?.previousClientDetails) {
+        queryClient.setQueryData(['/api/admin/clients', variables.id], context.previousClientDetails);
+      }
+      if (context?.previousClients) {
+        queryClient.setQueryData(['/api/admin/clients'], context.previousClients);
+      }
       toast({
         title: language === 'ar' ? 'خطأ في تحديث حالة المسؤول' : 'Error updating admin status',
         description: error.message,
         variant: 'destructive',
       });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? data.messageAr : data.message,
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+      if (selectedClientId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      }
     },
   });
 
@@ -606,9 +638,9 @@ export default function AdminClientsPage() {
                       />
 
                       <div className="flex items-center justify-between p-4 border rounded-md bg-muted/30">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
                           <ShieldCheck className="h-5 w-5 text-primary" />
-                          <div>
+                          <label htmlFor="admin-toggle" className="flex-1 cursor-pointer">
                             <div className="font-medium">
                               {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
                             </div>
@@ -617,9 +649,10 @@ export default function AdminClientsPage() {
                                 ? 'منح صلاحيات المسؤول لهذا العميل' 
                                 : 'Grant admin access to this client'}
                             </div>
-                          </div>
+                          </label>
                         </div>
                         <Switch
+                          id="admin-toggle"
                           checked={clientDetails.client.isAdmin}
                           onCheckedChange={(checked) => {
                             toggleAdminMutation.mutate({
@@ -629,6 +662,7 @@ export default function AdminClientsPage() {
                           }}
                           disabled={toggleAdminMutation.isPending}
                           data-testid="switch-admin-status"
+                          aria-label={language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
                         />
                       </div>
 
