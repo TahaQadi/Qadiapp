@@ -194,8 +194,28 @@ export const orders = pgTable("orders", {
   ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "restrict" }),
   items: text("items").notNull(), // JSON string
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("pending"),
+  status: text("status").notNull().default("pending"), // pending, confirmed, processing, shipped, delivered, cancelled, modification_requested
   pipefyCardId: text("pipefy_card_id"),
+  cancellationReason: text("cancellation_reason"),
+  cancelledAt: timestamp("cancelled_at"),
+  cancelledBy: varchar("cancelled_by"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Order modification requests table
+export const orderModifications = pgTable("order_modifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  requestedBy: varchar("requested_by").notNull(), // Client ID
+  modificationType: text("modification_type").notNull(), // 'items', 'cancel', 'both'
+  newItems: text("new_items"), // JSON string of new items (if modifying items)
+  newTotalAmount: decimal("new_total_amount", { precision: 10, scale: 2 }),
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  adminResponse: text("admin_response"),
+  reviewedBy: varchar("reviewed_by"), // Admin ID
+  reviewedAt: timestamp("reviewed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -265,7 +285,8 @@ export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id:
 export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: true, createdAt: true });
 export const insertClientPricingSchema = createInsertSchema(clientPricing).omit({ id: true, importedAt: true });
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
-export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOrderModificationSchema = createInsertSchema(orderModifications).omit({ id: true, createdAt: true });
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, isRead: true, metadata: true });
 export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id: true, createdAt: true, updatedAt: true });
 
@@ -421,6 +442,7 @@ export type LtaClient = typeof ltaClients.$inferSelect;
 export type ClientPricing = typeof clientPricing.$inferSelect;
 export type OrderTemplate = typeof orderTemplates.$inferSelect;
 export type Order = typeof orders.$inferSelect;
+export type OrderModification = typeof orderModifications.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type PriceOffer = typeof priceOffers.$inferSelect;
 
@@ -437,6 +459,7 @@ export type InsertLtaClient = z.infer<typeof insertLtaClientSchema>;
 export type InsertClientPricing = z.infer<typeof insertClientPricingSchema>;
 export type InsertOrderTemplate = z.infer<typeof insertOrderTemplateSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrderModification = z.infer<typeof insertOrderModificationSchema>;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertPriceOffer = z.infer<typeof insertPriceOfferSchema>;
 

@@ -8,6 +8,7 @@ import {
   type ClientPricing,
   type OrderTemplate,
   type Order,
+  type OrderModification,
   type Lta,
   type LtaProduct,
   type LtaClient,
@@ -21,6 +22,7 @@ import {
   type InsertClientPricing,
   type InsertOrderTemplate,
   type InsertOrder,
+  type InsertOrderModification,
   type InsertLta,
   type InsertLtaProduct,
   type InsertLtaClient,
@@ -40,6 +42,7 @@ import {
   clientPricing,
   orderTemplates,
   orders,
+  orderModifications,
   ltas,
   ltaProducts,
   ltaClients,
@@ -121,8 +124,18 @@ export interface IStorage {
   // Orders
   getOrders(clientId: string): Promise<Order[]>;
   getOrders(): Promise<Order[]>; // Added for admin panel
+  getOrder(orderId: string): Promise<Order | undefined>;
   updateOrderStatus(orderId: string, status: string): Promise<Order | undefined>; // Added for admin panel
+  updateOrder(orderId: string, updates: Partial<InsertOrder>): Promise<Order | undefined>;
+  cancelOrder(orderId: string, updates: { cancellationReason: string; cancelledAt: Date; cancelledBy: string; status: string }): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
+  
+  // Order Modifications
+  createOrderModification(modification: InsertOrderModification): Promise<OrderModification>;
+  getOrderModification(id: string): Promise<OrderModification | undefined>;
+  getOrderModifications(orderId: string): Promise<OrderModification[]>;
+  getAllOrderModifications(): Promise<OrderModification[]>;
+  updateOrderModificationStatus(id: string, updates: { status: string; adminResponse: string | null; reviewedBy: string; reviewedAt: Date }): Promise<OrderModification | undefined>;
 
   // Product Management
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
@@ -693,6 +706,33 @@ export class MemStorage implements IStorage {
     return order;
   }
 
+  async getOrder(orderId: string): Promise<Order | undefined> {
+    const result = await this.db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateOrder(orderId: string, updates: Partial<InsertOrder>): Promise<Order | undefined> {
+    const result = await this.db
+      .update(orders)
+      .set(updates)
+      .where(eq(orders.id, orderId))
+      .returning();
+    return result[0];
+  }
+
+  async cancelOrder(orderId: string, updates: { cancellationReason: string; cancelledAt: Date; cancelledBy: string; status: string }): Promise<Order | undefined> {
+    const result = await this.db
+      .update(orders)
+      .set(updates)
+      .where(eq(orders.id, orderId))
+      .returning();
+    return result[0];
+  }
+
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const inserted = await this.db
       .insert(orders)
@@ -706,6 +746,51 @@ export class MemStorage implements IStorage {
       })
       .returning();
     return inserted[0];
+  }
+
+  // Order Modifications
+  async createOrderModification(modification: InsertOrderModification): Promise<OrderModification> {
+    const inserted = await this.db
+      .insert(orderModifications)
+      .values(modification)
+      .returning();
+    return inserted[0];
+  }
+
+  async getOrderModification(id: string): Promise<OrderModification | undefined> {
+    const result = await this.db
+      .select()
+      .from(orderModifications)
+      .where(eq(orderModifications.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getOrderModifications(orderId: string): Promise<OrderModification[]> {
+    return await this.db
+      .select()
+      .from(orderModifications)
+      .where(eq(orderModifications.orderId, orderId))
+      .orderBy(desc(orderModifications.createdAt));
+  }
+
+  async getAllOrderModifications(): Promise<OrderModification[]> {
+    return await this.db
+      .select()
+      .from(orderModifications)
+      .orderBy(desc(orderModifications.createdAt));
+  }
+
+  async updateOrderModificationStatus(
+    id: string,
+    updates: { status: string; adminResponse: string | null; reviewedBy: string; reviewedAt: Date }
+  ): Promise<OrderModification | undefined> {
+    const result = await this.db
+      .update(orderModifications)
+      .set(updates)
+      .where(eq(orderModifications.id, id))
+      .returning();
+    return result[0];
   }
 
   // LTA Management
