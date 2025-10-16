@@ -381,6 +381,7 @@ export const updateCompanyUserSchema = z.object({
   phone: z.string().optional(),
   departmentType: z.string().optional(),
   isActive: z.boolean().optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
 }).partial();
 
 // Schema for bulk product assignment to LTA

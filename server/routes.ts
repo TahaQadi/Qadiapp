@@ -26,6 +26,8 @@ import {
   createClientSchema,
   updateClientSchema,
   updateOwnProfileSchema,
+  createCompanyUserSchema,
+  updateCompanyUserSchema,
   insertLtaSchema,
   insertLtaProductSchema,
   insertLtaClientSchema,
@@ -629,6 +631,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: "Error updating admin status",
         messageAr: "خطأ في تحديث حالة المسؤول"
+      });
+    }
+  });
+
+  // Company User Management (Admin)
+  app.get("/api/admin/company-users/:companyId", requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getCompanyUsers(req.params.companyId);
+      res.json(users.map(user => ({
+        id: user.id,
+        username: user.username,
+        nameEn: user.nameEn,
+        nameAr: user.nameAr,
+        email: user.email,
+        phone: user.phone,
+        departmentType: user.departmentType,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      })));
+    } catch (error) {
+      res.status(500).json({
+        message: "Error fetching company users",
+        messageAr: "خطأ في جلب مستخدمي الشركة"
+      });
+    }
+  });
+
+  app.post("/api/admin/company-users/:companyId", requireAdmin, async (req: any, res) => {
+    try {
+      const validatedData = createCompanyUserSchema.parse(req.body);
+      
+      // Hash the password before storing
+      const { hashPassword } = await import('./auth');
+      const hashedPassword = await hashPassword(validatedData.password);
+      
+      const user = await storage.createCompanyUser({
+        ...validatedData,
+        companyId: req.params.companyId,
+        password: hashedPassword,
+      });
+      
+      res.status(201).json({
+        id: user.id,
+        username: user.username,
+        nameEn: user.nameEn,
+        nameAr: user.nameAr,
+        email: user.email,
+        phone: user.phone,
+        departmentType: user.departmentType,
+        isActive: user.isActive,
+        message: "User created successfully",
+        messageAr: "تم إنشاء المستخدم بنجاح"
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({
+        message: "Error creating user",
+        messageAr: "خطأ في إنشاء المستخدم"
+      });
+    }
+  });
+
+  app.patch("/api/admin/company-users/:id", requireAdmin, async (req: any, res) => {
+    try {
+      const validatedData = updateCompanyUserSchema.parse(req.body);
+      
+      // If password is being updated, hash it
+      let updateData = validatedData;
+      if (validatedData.password) {
+        const { hashPassword } = await import('./auth');
+        const hashedPassword = await hashPassword(validatedData.password);
+        updateData = { ...validatedData, password: hashedPassword };
+      }
+      
+      const user = await storage.updateCompanyUser(req.params.id, updateData);
+      
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          messageAr: "المستخدم غير موجود"
+        });
+      }
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        nameEn: user.nameEn,
+        nameAr: user.nameAr,
+        email: user.email,
+        phone: user.phone,
+        departmentType: user.departmentType,
+        isActive: user.isActive,
+        message: "User updated successfully",
+        messageAr: "تم تحديث المستخدم بنجاح"
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.errors[0]?.message || "Validation error",
+          messageAr: error.errors[0]?.message || "خطأ في التحقق",
+        });
+      }
+      res.status(500).json({
+        message: "Error updating user",
+        messageAr: "خطأ في تحديث المستخدم"
+      });
+    }
+  });
+
+  app.delete("/api/admin/company-users/:id", requireAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteCompanyUser(req.params.id);
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({
+        message: "Error deleting user",
+        messageAr: "خطأ في حذف المستخدم"
       });
     }
   });
