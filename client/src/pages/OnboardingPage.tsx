@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ const DEPARTMENT_TYPES = [
 export default function OnboardingPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -96,7 +96,7 @@ export default function OnboardingPage() {
           ? 'تم إنشاء حسابك. يرجى تسجيل الدخول.' 
           : 'Your account has been created. Please login.',
       });
-      navigate('/');
+      setLocation('/');
     },
     onError: (error: any) => {
       toast({
