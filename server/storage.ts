@@ -56,7 +56,7 @@ import {
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { eq, desc, and, inArray, gte, lte } from "drizzle-orm"; // Added gte, lte for searchDocuments
+import { eq, desc, and, inArray, gte, lte, sql } from "drizzle-orm"; // Added gte, lte for searchDocuments
 import crypto from "crypto";
 import { db } from "./db";
 
@@ -244,6 +244,17 @@ export interface IStorage {
     metadata?: any;
   }): Promise<any | undefined>;
   deleteDocument(id: string): Promise<boolean>;
+
+  // Document Access Log Methods
+  createDocumentAccessLog(data: {
+    documentId: string;
+    clientId: string;
+    action: 'view' | 'download' | 'generate';
+    ipAddress: string | null;
+    userAgent: string | null;
+    accessedAt: Date;
+  }): Promise<void>;
+  getDocumentAccessLogs(documentId: string): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -1428,6 +1439,38 @@ export class MemStorage implements IStorage {
   async deleteDocument(id: string): Promise<boolean> {
     const result = await db.delete(documents).where(eq(documents.id, id));
     return result.rowCount > 0;
+  }
+
+  // Document Access Log Methods
+  async createDocumentAccessLog(data: {
+    documentId: string;
+    clientId: string;
+    action: 'view' | 'download' | 'generate';
+    ipAddress: string | null;
+    userAgent: string | null;
+    accessedAt: Date;
+  }): Promise<void> {
+    await this.db.execute(sql`
+      INSERT INTO document_access_logs (
+        id, document_id, client_id, action, ip_address, user_agent, accessed_at
+      ) VALUES (
+        gen_random_uuid(), ${data.documentId}, ${data.clientId}, ${data.action},
+        ${data.ipAddress}, ${data.userAgent}, ${data.accessedAt}
+      )
+    `);
+  }
+
+  async getDocumentAccessLogs(documentId: string): Promise<any[]> {
+    const result = await this.db.execute(sql`
+      SELECT dal.*, c.name_en as client_name_en, c.name_ar as client_name_ar
+      FROM document_access_logs dal
+      LEFT JOIN clients c ON dal.client_id = c.id
+      WHERE dal.document_id = ${documentId}
+      ORDER BY dal.accessed_at DESC
+      LIMIT 100
+    `);
+
+    return result.rows;
   }
 }
 

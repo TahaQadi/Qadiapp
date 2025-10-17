@@ -2468,15 +2468,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Download PDF from Object Storage
-  app.get('/api/pdf/download/:fileName(*)', requireAuth, async (req: any, res) => {
+  // Generate secure download token for PDF
+  app.post('/api/pdf/generate-token/:documentId', requireAuth, async (req: any, res) => {
     try {
+      const { PDFAccessControl } = await import('./pdf-access-control');
+      const documentId = req.params.documentId;
+
+      // Check access permission
+      const { allowed, reason } = await PDFAccessControl.canAccessDocument(
+        documentId,
+        req.client.id,
+        req.client.isAdmin
+      );
+
+      if (!allowed) {
+        return res.status(403).json({
+          message: reason || "Access denied",
+          messageAr: "الوصول مرفوض"
+        });
+      }
+
+      const token = PDFAccessControl.generateDownloadToken(documentId, req.client.id);
+
+      // Log token generation
+      await PDFAccessControl.logDocumentAccess({
+        documentId,
+        clientId: req.client.id,
+        action: 'view',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent')
+      });
+
+      res.json({ token, expiresIn: '2 hours' });
+    } catch (error) {
+      console.error('Token generation error:', error);
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "فشل إنشاء رمز التنزيل"
+      });
+    }
+  });
+
+  // Download PDF from Object Storage with token verification
+  app.get('/api/pdf/download/:fileName(*)', async (req: any, res) => {
+    try {
+      const { PDFAccessControl } = await import('./pdf-access-control');
       const fileName = req.params.fileName;
+      const token = req.query.token as string;
 
       if (!fileName) {
         return res.status(400).json({
           message: "File name is required",
           messageAr: "اسم الملف مطلوب"
+        });
+      }
+
+      if (!token) {
+        return res.status(401).json({
+          message: "Download token required",
+          messageAr: "رمز التنزيل مطلوب"
+        });
+      }
+
+      // Verify token
+      const verification = PDFAccessControl.verifyDownloadToken(token);
+      if (!verification.valid) {
+        return res.status(401).json({
+          message: verification.error || "Invalid or expired token",
+          messageAr: "رمز غير صالح أو منتهي الصلاحية"
         });
       }
 
@@ -2509,6 +2568,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({
           message: "Downloaded file is not a valid PDF",
           messageAr: "الملف المحمل ليس PDF صالح"
+        });
+      }
+
+      // Log download
+      if (verification.documentId && verification.clientId) {
+        await PDFAccessControl.logDocumentAccess({
+          documentId: verification.documentId,
+          clientId: verification.clientId,
+          action: 'download',
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent')
         });
       }
 
