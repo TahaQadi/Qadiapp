@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -357,7 +357,7 @@ export default function AdminTemplatesPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="hover:bg-destructive hover:text-destructive-foreground shrink-0"
+                        className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground"
                         onClick={() => deleteMutation.mutate(template.id)}
                       >
                         <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -384,17 +384,24 @@ export default function AdminTemplatesPage() {
             <DialogTitle>
               {editingTemplate
                 ? (language === 'ar' ? 'تعديل القالب' : 'Edit Template')
-                : (language === 'ar' ? 'قالب جديد' : 'New Template')}
+                : (language === 'ar' ? 'قالب جديد' : 'New Template')
+              }
             </DialogTitle>
+            <DialogDescription>
+              {editingTemplate
+                ? (language === 'ar' ? 'تعديل تفاصيل ومحتوى القالب' : 'Edit template details and content')
+                : (language === 'ar' ? 'إنشاء قالب مستند جديد' : 'Create a new document template')
+              }
+            </DialogDescription>
           </DialogHeader>
 
           <TemplateEditor
             initialTemplate={editingTemplate ? {
-              ...editingTemplate,
-              styles: typeof editingTemplate.styles === 'string' 
-                ? JSON.parse(editingTemplate.styles) 
-                : editingTemplate.styles
-            } : null}
+                ...editingTemplate,
+                styles: typeof editingTemplate.styles === 'string' 
+                  ? JSON.parse(editingTemplate.styles) 
+                  : editingTemplate.styles
+              } : null}
             onSave={(templateData) => {
               if (editingTemplate) {
                 updateMutation.mutate({ id: editingTemplate.id, data: templateData });

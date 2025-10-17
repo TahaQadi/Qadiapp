@@ -75,7 +75,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6 container mx-auto px-4 py-8">
+    <div className="space-y-6 container mx-auto px-3 sm:px-4 py-6 sm:py-8">
       <div>
         <h1 className="text-3xl font-bold" data-testid="heading-orders">
           {i18n.language === 'ar' ? 'طلباتي' : 'My Orders'}
