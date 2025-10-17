@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart } from 'lucide-react';
+import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@shared/schema';
 import { SEO } from "@/components/SEO";
@@ -98,13 +98,13 @@ export default function CatalogPage() {
   };
 
   // Extract unique main categories and subcategories
-  const mainCategories = [...new Set(products.map(p => p.mainCategory).filter(Boolean))];
+  const mainCategories = Array.from(new Set(products.map(p => p.mainCategory).filter(Boolean)));
 
   const getSubCategories = (mainCat: string) => {
-    return [...new Set(products
+    return Array.from(new Set(products
       .filter(p => p.mainCategory === mainCat)
       .map(p => p.subCategory)
-      .filter(Boolean))];
+      .filter(Boolean)));
   };
 
 
@@ -136,7 +136,6 @@ export default function CatalogPage() {
         title={pageTitle}
         description={pageDescription}
         keywords={`${category || 'products'}, catalog, shop, ${language === 'ar' ? 'منتجات، كتالوج، تسوق' : 'products, catalog, shop'}`}
-        pathname={`/catalog/${category || ''}`}
       />
       <Helmet>
         <title>{pageTitle}</title>

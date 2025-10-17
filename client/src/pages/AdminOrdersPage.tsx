@@ -17,6 +17,8 @@ import { formatDateLocalized } from '@/lib/dateUtils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { safeJsonParse } from '@/lib/safeJson';
 import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
+import { ar, enUS } from 'date-fns/locale';
 
 interface Order {
   id: string;

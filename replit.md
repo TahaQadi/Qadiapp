@@ -4,6 +4,16 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
+**Code Cleanup and Refactoring (October 17, 2025):**
+- Removed duplicate `/examples` folder containing outdated component duplicates
+- Removed all debug `console.log` statements from server files (pdf-generator.ts, object-storage.ts)
+- Removed debug `console.log` statements from client files (ProductDetailPage.tsx)
+- Consolidated `AuthUser` interface - moved from useAuth.ts to shared/schema.ts for single source of truth
+- Created centralized date formatting utilities (`formatDateLocalized`, `formatRelativeTime`) in `lib/dateUtils.ts`
+- Refactored `getCategoryIcon` to use data-driven lookup pattern in `lib/categoryIcons.ts` (removed if/else chain)
+- Improved code maintainability and reduced duplication across the codebase
+- All changes are non-breaking and improve developer experience
+
 **Order Modification and Cancellation System (October 16, 2025):**
 - Added `order_modifications` table to track client modification/cancellation requests
 - Extended orders table with cancellation tracking fields (cancellationReason, cancelledAt, cancelledBy, updatedAt)
