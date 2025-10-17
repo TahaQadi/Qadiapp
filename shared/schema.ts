@@ -233,13 +233,35 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Documents table
+// Documents table - Comprehensive document management
 export const documents = pgTable("documents", {
   id: uuid("id").defaultRandom().primaryKey(),
-  ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "cascade" }),
-  documentType: text("document_type").notNull(),
-  pdfFileName: text("pdf_file_name").notNull(),
-  generatedAt: timestamp("generated_at").defaultNow(),
+  fileName: text("file_name").notNull(),
+  fileUrl: text("file_url").notNull(),
+  documentType: text("document_type").notNull(), // 'price_offer', 'order', 'invoice', 'contract', 'lta_document', 'other'
+  clientId: varchar("client_id").references(() => clients.id, { onDelete: "set null" }),
+  ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "set null" }),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "set null" }),
+  priceOfferId: varchar("price_offer_id").references(() => priceOffers.id, { onDelete: "set null" }),
+  fileSize: integer("file_size"), // in bytes
+  viewCount: integer("view_count").notNull().default(0),
+  checksum: text("checksum"), // SHA-256 or MD5 hash for integrity verification
+  metadata: jsonb("metadata"), // Additional flexible metadata
+  parentDocumentId: uuid("parent_document_id"), // Self-reference added after table creation
+  versionNumber: integer("version_number").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastViewedAt: timestamp("last_viewed_at"),
+});
+
+// Document Access Logs table - Audit trail
+export const documentAccessLogs = pgTable("document_access_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id").references(() => clients.id, { onDelete: "set null" }),
+  action: text("action").notNull(), // 'view', 'download', 'generate'
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  accessedAt: timestamp("accessed_at").defaultNow().notNull(),
 });
 
 // Price Offers table
@@ -302,6 +324,8 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, lastViewedAt: true, viewCount: true, versionNumber: true });
+export const insertDocumentAccessLogSchema = createInsertSchema(documentAccessLogs).omit({ id: true, accessedAt: true });
 
 // Login schema
 export const loginSchema = z.object({
@@ -458,6 +482,8 @@ export type OrderModification = typeof orderModifications.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type PriceOffer = typeof priceOffers.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type Document = typeof documents.$inferSelect;
+export type DocumentAccessLog = typeof documentAccessLogs.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertCompanyUser = z.infer<typeof insertCompanyUserSchema>;
@@ -476,6 +502,8 @@ export type InsertOrderModification = z.infer<typeof insertOrderModificationSche
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertPriceOffer = z.infer<typeof insertPriceOfferSchema>;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type InsertDocumentAccessLog = z.infer<typeof insertDocumentAccessLogSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;
