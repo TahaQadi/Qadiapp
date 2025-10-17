@@ -103,15 +103,15 @@ export function ShoppingCart({
                       <Button
                         variant="outline"
                         size="icon"
-                        className={isMobile ? "h-11 w-11" : "h-8 w-8"}
+                        className={isMobile ? "h-11 w-11 active-elevate-2" : "h-8 w-8 active-elevate-2"}
                         onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
                         disabled={item.quantity <= 1}
                         data-testid={`button-decrease-${item.sku}`}
                       >
                         <Minus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
                       </Button>
-                      <div className={isMobile ? "w-12 text-center font-medium text-base" : "w-10 text-center font-medium"} data-testid={`text-quantity-${item.sku}`}>
-                        {item.quantity}
+                      <div className={isMobile ? "w-12 text-center font-medium text-base transition-all" : "w-10 text-center font-medium transition-all"} data-testid={`text-quantity-${item.sku}`}>
+                        <span className="inline-block animate-scale-in">{item.quantity}</span>
                       </div>
                       <Button
                         variant="outline"

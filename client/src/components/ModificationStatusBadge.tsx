@@ -47,10 +47,11 @@ export function ModificationStatusBadge({ status, className, animated = true }: 
         "transition-all duration-300",
         config.bgClass,
         animated && "animate-fade-in",
+        status === 'pending' && animated && "animate-pulse-glow",
         className
       )}
     >
-      <Icon className={cn("w-3 h-3 mr-1", config.iconClass)} />
+      <Icon className={cn("w-3 h-3 mr-1 rtl:mr-0 rtl:ml-1", config.iconClass)} />
       {config.label}
     </Badge>
   );

@@ -4,12 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Calendar, DollarSign, Edit } from "lucide-react";
+import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
-import { ModificationSheet } from "@/components/ModificationSheet"; // Assuming ModificationSheet is in this path
-import { useToast } from "@/components/ui/use-toast"; // Assuming useToast is in this path
-import { useIsMobile } from "@/hooks/useIsMobile"; // Assuming useIsMobile is in this path
+import { ModificationSheet } from "@/components/ModificationSheet";
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function OrdersPage() {
   const { t, i18n } = useTranslation();
@@ -50,8 +51,25 @@ export default function OrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64" data-testid="loader-orders">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6 container mx-auto px-4 py-8">
+        <div className="space-y-2">
+          <div className="h-8 w-48 bg-muted animate-shimmer rounded" />
+          <div className="h-4 w-64 bg-muted/50 animate-shimmer rounded" />
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border rounded-lg p-6 space-y-4 animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+              <div className="flex justify-between">
+                <div className="space-y-2 flex-1">
+                  <div className="h-5 w-32 bg-muted animate-shimmer rounded" />
+                  <div className="h-4 w-48 bg-muted/50 animate-shimmer rounded" />
+                </div>
+                <div className="h-6 w-24 bg-muted animate-shimmer rounded" />
+              </div>
+              <div className="h-4 w-full bg-muted/30 animate-shimmer rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -69,16 +87,14 @@ export default function OrdersPage() {
 
       {orders.length === 0 ? (
         <Card data-testid="card-no-orders">
-          <CardContent className="py-12">
-            <div className="text-center">
-              <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-semibold mb-2" data-testid="text-no-orders-title">
-                {i18n.language === 'ar' ? 'لا توجد طلبات' : 'No Orders'}
-              </p>
-              <p className="text-muted-foreground" data-testid="text-no-orders-desc">
-                {i18n.language === 'ar' ? 'لم تقم بتقديم أي طلبات بعد' : "You haven't placed any orders yet"}
-              </p>
-            </div>
+          <CardContent className="py-2">
+            <EmptyState
+              icon={ShoppingBag}
+              title={i18n.language === 'ar' ? 'لا توجد طلبات' : 'No Orders Yet'}
+              description={i18n.language === 'ar' ? 'ابدأ التسوق لإنشاء طلبك الأول' : 'Start shopping to create your first order'}
+              actionLabel={i18n.language === 'ar' ? 'تصفح المنتجات' : 'Browse Products'}
+              onAction={() => window.location.href = '/catalog'}
+            />
           </CardContent>
         </Card>
       ) : (

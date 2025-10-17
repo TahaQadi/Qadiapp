@@ -240,9 +240,114 @@ export default function OrderModificationsPage() {
         </div>
       )}
 
-      {/* Review Dialog */}
-      <Dialog open={!!selectedModification} onOpenChange={() => setSelectedModification(null)}>
-        <DialogContent data-testid="dialog-review">
+      {/* Review Dialog - Use Sheet on mobile */}
+      {isMobile ? (
+        <Sheet open={!!selectedModification} onOpenChange={() => setSelectedModification(null)}>
+          <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl">
+            <SheetHeader className="pb-4">
+              <SheetTitle data-testid="sheet-title">
+                {i18n.language === 'ar' ? 'مراجعة طلب التعديل' : 'Review Modification Request'}
+              </SheetTitle>
+              <SheetDescription data-testid="sheet-description">
+                {i18n.language === 'ar' ? 'راجع التفاصيل ووافق أو ارفض الطلب' : 'Review the details and approve or reject the request'}
+              </SheetDescription>
+            </SheetHeader>
+
+            {selectedModification && (
+              <div className="space-y-4 py-4 overflow-y-auto max-h-[60vh]">
+                <div>
+                  <Label data-testid="label-sheet-order">
+                    {i18n.language === 'ar' ? 'رقم الطلب' : 'Order ID'}
+                  </Label>
+                  <p className="text-sm font-mono mt-1" data-testid="text-sheet-order">
+                    #{selectedModification.orderId.substring(0, 8)}
+                  </p>
+                </div>
+
+                <div>
+                  <Label data-testid="label-sheet-type">
+                    {i18n.language === 'ar' ? 'نوع التعديل' : 'Modification Type'}
+                  </Label>
+                  <div className="mt-1">
+                    {getModificationTypeBadge(selectedModification.modificationType)}
+                  </div>
+                </div>
+
+                <div>
+                  <Label data-testid="label-sheet-reason">
+                    {i18n.language === 'ar' ? 'السبب' : 'Reason'}
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1 p-3 bg-muted rounded-md" data-testid="text-sheet-reason">
+                    {selectedModification.reason}
+                  </p>
+                </div>
+
+                {selectedModification.modificationType === 'items' && selectedModification.newTotalAmount && (
+                  <div>
+                    <Label data-testid="label-sheet-total">
+                      {i18n.language === 'ar' ? 'الإجمالي الجديد' : 'New Total'}
+                    </Label>
+                    <p className="text-sm font-semibold mt-1 font-mono" data-testid="text-sheet-total">
+                      {selectedModification.newTotalAmount} {i18n.language === 'ar' ? 'ر.س' : 'SAR'}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="admin-response-sheet" data-testid="label-sheet-response">
+                    {i18n.language === 'ar' ? 'ردك (اختياري)' : 'Your Response (Optional)'}
+                  </Label>
+                  <Textarea
+                    id="admin-response-sheet"
+                    value={adminResponse}
+                    onChange={(e) => setAdminResponse(e.target.value)}
+                    placeholder={i18n.language === 'ar' ? 'أضف ملاحظات أو تعليقات...' : 'Add notes or comments...'}
+                    className="mt-2 min-h-[100px]"
+                    data-testid="input-admin-response-sheet"
+                  />
+                </div>
+              </div>
+            )}
+
+            <SheetFooter className="flex-col gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedModification(null)}
+                className="w-full min-h-[48px]"
+              >
+                {i18n.language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleReview('rejected')}
+                  disabled={reviewMutation.isPending}
+                  className="min-h-[48px]"
+                  data-testid="button-reject-sheet"
+                >
+                  {reviewMutation.isPending && reviewAction === 'rejected' && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  {i18n.language === 'ar' ? 'رفض' : 'Reject'}
+                </Button>
+                <Button
+                  onClick={() => handleReview('approved')}
+                  disabled={reviewMutation.isPending}
+                  className="min-h-[48px]"
+                  data-testid="button-approve-sheet"
+                >
+                  {reviewMutation.isPending && reviewAction === 'approved' && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  {i18n.language === 'ar' ? 'موافقة' : 'Approve'}
+                </Button>
+              </div>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={!!selectedModification} onOpenChange={() => setSelectedModification(null)}>
+          <DialogContent data-testid="dialog-review">
           <DialogHeader>
             <DialogTitle data-testid="dialog-title">
               {i18n.language === 'ar' ? 'مراجعة طلب التعديل' : 'Review Modification Request'}
@@ -339,7 +444,8 @@ export default function OrderModificationsPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      )}
     </div>
   );
 }
