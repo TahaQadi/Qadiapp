@@ -2218,12 +2218,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('PDF generated, buffer size:', pdfBuffer.length);
 
+      // Validate PDF buffer
+      if (!pdfBuffer || pdfBuffer.length < 100) {
+        console.error('Invalid PDF buffer generated');
+        return res.status(500).json({
+          message: "Failed to generate valid PDF",
+          messageAr: "فشل إنشاء ملف PDF صالح"
+        });
+      }
+
       // Ensure we have a proper Buffer
       const bufferToUpload = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
       console.log('Buffer to upload size:', bufferToUpload.length);
 
-      // Save PDF to Object Storage
-      const fileName = `${offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
+      // Save PDF to Object Storage with proper path
+      const fileName = `price-offers/${offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
       console.log('Uploading PDF to Object Storage:', fileName);
       const uploadResult = await PDFStorage.uploadPDF(bufferToUpload, fileName);
 
@@ -2382,7 +2391,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Download PDF from Object Storage
   app.get('/api/pdf/download/:fileName(*)', requireAuth, async (req: any, res) => {
     try {
-      const { PDFStorage } = await import('./object-storage');
       const fileName = req.params.fileName;
 
       if (!fileName) {
@@ -2414,18 +2422,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Sending PDF, size:', pdfBuffer.length);
 
-      // Set headers for PDF download
-      res.writeHead(200, {
-        'Content-Type': 'application/pdf',
-        'Content-Length': pdfBuffer.length,
-        'Content-Disposition': `attachment; filename="${displayFileName}"`,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      });
+      // Validate buffer size
+      if (pdfBuffer.length < 100) {
+        console.error('Downloaded file appears corrupted (too small)');
+        return res.status(500).json({
+          message: "PDF file is corrupted",
+          messageAr: "ملف PDF تالف"
+        });
+      }
 
-      // Send buffer and end response
-      res.end(pdfBuffer);
+      // Set headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      // Send buffer
+      res.send(pdfBuffer);
     } catch (error) {
       console.error('PDF download error:', error);
       res.status(500).json({
