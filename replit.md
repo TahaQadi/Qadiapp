@@ -4,6 +4,17 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
+**Document Management System Implementation (October 17, 2025):**
+- Implemented complete template-based PDF document generation system with 9 section types (header, body, table, terms, signature, footer, image, divider, spacer)
+- Added secure token-based document download system with HMAC-SHA256 signing and 2-hour expiry
+- Created comprehensive document API: generate (`POST /api/documents/generate`), download (`GET /api/documents/:id/download`), list/search (`GET /api/documents`), access logs (`GET /api/documents/:id/logs`)
+- Built admin documents page at `/admin/documents` with search, filters, and document management
+- Created reusable `DocumentDownloadDialog` component for secure document downloads
+- Added Arabic font support (Noto Sans Arabic Regular & Bold) with graceful fallback
+- Implemented null-safe default styles to prevent crashes on templates without explicit styles
+- **Current limitation**: English documents work perfectly; Arabic PDF support requires RTL/BiDi libraries for proper text shaping (documented in ARABIC_RTL_REQUIREMENTS.md)
+- Document access logging and audit trail functionality for admin oversight
+
 **Session Management and Notification Permission Fixes (October 17, 2025):**
 - Fixed "Remember Me" functionality: removed default 30-day maxAge from session configuration, now properly creates session cookies (expires on browser close) when unchecked, and persistent 30-day cookies when checked
 - Fixed notification permission popup stuck in "Enabling..." state: added 10-second timeout wrapper with Promise.race() to handle mobile browser permission dismissal, improved error handling with specific error messages, added VAPID response validation

@@ -33,7 +33,47 @@ interface Template {
 
 export class TemplatePDFGenerator {
   private static readonly LOGO_PATH = path.join(process.cwd(), 'client', 'public', 'logo.png');
+  private static readonly ARABIC_FONT_PATH = path.join(process.cwd(), 'server', 'fonts', 'NotoSansArabic-Regular.ttf');
+  private static readonly ARABIC_FONT_BOLD_PATH = path.join(process.cwd(), 'server', 'fonts', 'NotoSansArabic-Bold.ttf');
   private static readonly DEFAULT_MARGIN = { top: 120, bottom: 80, left: 50, right: 50 };
+  private static readonly DEFAULT_STYLES: TemplateStyles = {
+    primaryColor: '#1a365d',
+    secondaryColor: '#2d3748',
+    accentColor: '#d4af37',
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    margins: { top: 120, bottom: 80, left: 50, right: 50 }
+  };
+  
+  // Feature flag: Arabic PDF generation is currently limited
+  // Arabic text will render with proper fonts but without RTL/BiDi shaping
+  // Set to true to enable Arabic generation (experimental), false to block
+  private static readonly ENABLE_ARABIC_PDF = process.env.ENABLE_ARABIC_PDF === 'true';
+
+  /**
+   * Check if Arabic fonts are available
+   */
+  private static hasArabicFonts(): boolean {
+    return fs.existsSync(this.ARABIC_FONT_PATH) && fs.existsSync(this.ARABIC_FONT_BOLD_PATH);
+  }
+
+  /**
+   * Get appropriate font for language
+   */
+  private static getFont(doc: PDFKit.PDFDocument, language: 'en' | 'ar' | 'both', bold: boolean = false): void {
+    if ((language === 'ar' || language === 'both') && this.hasArabicFonts()) {
+      try {
+        // Register Arabic font if not already registered
+        const fontPath = bold ? this.ARABIC_FONT_BOLD_PATH : this.ARABIC_FONT_PATH;
+        doc.font(fontPath);
+        return;
+      } catch (e) {
+        // Fall back to Helvetica if Arabic font registration fails
+      }
+    }
+    // Default to Helvetica for English
+    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica');
+  }
   
   /**
    * Generate PDF from template and variables
@@ -45,7 +85,25 @@ export class TemplatePDFGenerator {
   ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
-        const margins = template.styles.margins || this.DEFAULT_MARGIN;
+        // Validate Arabic-only PDF generation is enabled
+        // Note: 'both' language mode is allowed as it includes English fallback
+        if (language === 'ar' && !this.ENABLE_ARABIC_PDF) {
+          reject(new Error(
+            'Arabic-only PDF generation is currently disabled. ' +
+            'Arabic text rendering requires RTL/BiDi support. ' +
+            'See ARABIC_RTL_REQUIREMENTS.md for implementation details. ' +
+            'Set ENABLE_ARABIC_PDF=true to enable (experimental) or use language="en" for English-only output.'
+          ));
+          return;
+        }
+
+        // Merge template styles with defaults
+        const styles = {
+          ...this.DEFAULT_STYLES,
+          ...(template.styles || {}),
+          margins: template.styles?.margins || this.DEFAULT_MARGIN
+        };
+        const margins = styles.margins;
         
         const doc = new PDFDocument({
           size: 'A4',
@@ -63,7 +121,7 @@ export class TemplatePDFGenerator {
 
         // Process each section
         for (const section of template.sections) {
-          this.renderSection(doc, section, variables, language, template.styles);
+          this.renderSection(doc, section, variables, language, styles);
         }
 
         doc.end();
@@ -139,13 +197,13 @@ export class TemplatePDFGenerator {
     // Company info (right side)
     const companyInfo = language === 'ar' ? content.companyInfoAr : content.companyInfoEn;
     if (companyInfo) {
+      this.getFont(doc, language, true);
       doc.fontSize(10)
-        .font('Helvetica-Bold')
         .fillColor(primaryColor)
         .text(this.substituteVariables(companyInfo.name, variables), 300, 35, { width: 250, align: 'right' });
       
+      this.getFont(doc, language, false);
       doc.fontSize(8)
-        .font('Helvetica')
         .fillColor('#4a5568')
         .text(this.substituteVariables(companyInfo.address, variables), 300, 50, { width: 250, align: 'right' })
         .text(this.substituteVariables(companyInfo.phone, variables), 300, 63, { width: 250, align: 'right' })
@@ -162,8 +220,8 @@ export class TemplatePDFGenerator {
     // Title
     if (content.titleEn || content.titleAr) {
       const title = language === 'ar' ? content.titleAr : content.titleEn;
+      this.getFont(doc, language, true);
       doc.fontSize(20)
-        .font('Helvetica-Bold')
         .fillColor(primaryColor)
         .text(this.substituteVariables(title, variables), 50, 110, { align: 'center' });
     }
@@ -187,8 +245,8 @@ export class TemplatePDFGenerator {
     const fontSize = styles.fontSize || 10;
     const processedText = this.substituteVariables(text, variables);
 
+    this.getFont(doc, language, false);
     doc.fontSize(fontSize)
-      .font('Helvetica')
       .fillColor('#000000')
       .text(processedText, 50, doc.y, { width: 495, align: 'left' });
     
@@ -218,9 +276,9 @@ export class TemplatePDFGenerator {
     doc.rect(50, tableTop, 495, 25)
       .fillAndStroke(primaryColor, primaryColor);
 
+    this.getFont(doc, language, true);
     doc.fontSize(9)
-      .fillColor('#ffffff')
-      .font('Helvetica-Bold');
+      .fillColor('#ffffff');
 
     columns.forEach((col: string, i: number) => {
       doc.text(col, 55 + (i * colWidth), tableTop + 8, { width: colWidth - 10 });
@@ -228,7 +286,8 @@ export class TemplatePDFGenerator {
 
     // Table rows
     let yPos = tableTop + 25;
-    doc.fillColor('#000000').font('Helvetica').fontSize(9);
+    this.getFont(doc, language, false);
+    doc.fillColor('#000000').fontSize(9);
 
     rows.forEach((row: any[], index: number) => {
       // Check for page break
@@ -277,14 +336,14 @@ export class TemplatePDFGenerator {
     if (!items || items.length === 0) return;
 
     doc.moveDown(1);
+    this.getFont(doc, language, true);
     doc.fontSize(12)
-      .font('Helvetica-Bold')
       .fillColor(secondaryColor)
       .text(title, 50, doc.y);
 
     doc.moveDown(0.5);
+    this.getFont(doc, language, false);
     doc.fontSize(9)
-      .font('Helvetica')
       .fillColor('#000000');
 
     items.forEach((item: string, index: number) => {
@@ -325,13 +384,13 @@ export class TemplatePDFGenerator {
         .lineWidth(1)
         .stroke();
 
+      this.getFont(doc, language, true);
       doc.fontSize(9)
-        .font('Helvetica-Bold')
         .fillColor('#000000')
         .text(this.substituteVariables(name, variables), x + 20, doc.y + 45, { width: sigWidth - 60, align: 'center' });
 
+      this.getFont(doc, language, false);
       doc.fontSize(8)
-        .font('Helvetica')
         .fillColor('#4a5568')
         .text(this.substituteVariables(title, variables), x + 20, doc.y + 3, { width: sigWidth - 60, align: 'center' });
     });
@@ -355,8 +414,8 @@ export class TemplatePDFGenerator {
     const pageHeight = doc.page.height;
     const processedText = this.substituteVariables(text, variables);
 
+    this.getFont(doc, language, false);
     doc.fontSize(7)
-      .font('Helvetica')
       .fillColor('#9ca3af')
       .text(processedText, 50, pageHeight - 50, { width: 495, align: 'center' });
   }

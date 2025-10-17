@@ -23,6 +23,7 @@ import AdminPriceOffersPage from './pages/AdminPriceOffersPage';
 import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
+import AdminDocumentsPage from './pages/AdminDocumentsPage';
 import OrderModificationsPage from './pages/admin/OrderModificationsPage';
 import OrdersPage from './pages/OrdersPage';
 import PriceRequestPage from '@/pages/PriceRequestPage';
@@ -132,6 +133,7 @@ function Router() {
       <Route path="/admin/price-management" component={AdminPriceManagementPage} />
       <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
       <AdminRoute path="/admin/templates" component={AdminTemplatesPage} />
+      <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
       <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />

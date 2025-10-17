@@ -10,7 +10,13 @@ interface DownloadToken {
 }
 
 export class PDFAccessControl {
-  private static readonly SECRET_KEY = process.env.PDF_TOKEN_SECRET || 'default-secret-key-change-in-production';
+  private static readonly SECRET_KEY = (() => {
+    const secret = process.env.SESSION_SECRET || process.env.PDF_TOKEN_SECRET;
+    if (!secret) {
+      throw new Error('CRITICAL: SESSION_SECRET environment variable must be set for secure PDF token generation');
+    }
+    return secret;
+  })();
   private static readonly TOKEN_VALIDITY_HOURS = 2;
 
   /**

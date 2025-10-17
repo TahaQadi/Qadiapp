@@ -35,6 +35,7 @@ interface Version {
   createdAt: string;
   fileName: string;
   fileUrl: string;
+  fileSize: number;
   checksum: string;
 }
 
@@ -63,21 +64,45 @@ export default function AdminDocumentsPage() {
   const [isAccessLogsDialogOpen, setIsAccessLogsDialogOpen] = useState(false);
   const [selectedDocumentIdForLogs, setSelectedDocumentIdForLogs] = useState<string | null>(null);
 
-  const { data: documents = [], isLoading } = useQuery({
-    queryKey: ['/api/admin/documents/search', { searchTerm, documentType, startDate, endDate }],
+  const { data, isLoading } = useQuery<{ documents: Document[] }>({
+    queryKey: ['/api/documents', searchTerm, documentType, startDate, endDate],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (documentType) params.append('documentType', documentType);
+      if (searchTerm) params.append('searchTerm', searchTerm);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
+      const response = await fetch(`/api/documents?${params}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch documents');
+      return response.json();
+    }
   });
+
+  const documents = data?.documents || [];
 
   const { data: versions = [], isLoading: isLoadingVersions } = useQuery({
     queryKey: ['/api/admin/documents', selectedDocumentIdForHistory, 'versions'],
-    queryEnabled: !!selectedDocumentIdForHistory,
+    enabled: !!selectedDocumentIdForHistory,
     initialData: [],
   });
 
-  const { data: accessLogs = [], isLoading: isLoadingAccessLogs } = useQuery({
-    queryKey: ['/api/admin/documents', selectedDocumentIdForLogs, 'accessLogs'],
-    queryEnabled: !!selectedDocumentIdForLogs,
-    initialData: [],
+  const { data: accessLogsData, isLoading: isLoadingAccessLogs } = useQuery<{ logs: AccessLog[] }>({
+    queryKey: ['/api/documents', selectedDocumentIdForLogs, 'logs'],
+    enabled: !!selectedDocumentIdForLogs,
+    queryFn: async () => {
+      if (!selectedDocumentIdForLogs) return { logs: [] };
+      const response = await fetch(`/api/documents/${selectedDocumentIdForLogs}/logs`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch access logs');
+      return response.json();
+    }
   });
+
+  const accessLogs = accessLogsData?.logs || [];
 
   const trackViewMutation = useMutation({
     mutationFn: async (docId: string) => {
@@ -104,8 +129,23 @@ export default function AdminDocumentsPage() {
 
   const handleDownload = async (doc: Document) => {
     try {
-      trackViewMutation.mutate(doc.id);
-      window.open(`/api/pdf/download/${doc.fileUrl}`, '_blank');
+      // Get download token
+      const tokenResponse = await fetch(`/api/documents/${doc.id}/token`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get download token');
+      }
+
+      const { token } = await tokenResponse.json();
+
+      // Download with token
+      window.open(`/api/documents/${doc.id}/download?token=${token}`, '_blank');
+      
+      // Invalidate queries to refresh view counts
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
     } catch (error) {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
