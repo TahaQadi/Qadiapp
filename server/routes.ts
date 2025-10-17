@@ -148,7 +148,7 @@ async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
-  
+
 
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
@@ -1555,7 +1555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      
+
 
       // Create in-app notification
       try {
@@ -2234,15 +2234,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save PDF to Object Storage with proper path
       const fileName = `price-offers/${offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
       console.log('Uploading PDF to Object Storage:', fileName);
-      const uploadResult = await PDFStorage.uploadPDF(bufferToUpload, fileName);
 
+      // Upload to Object Storage with category
+      const uploadResult = await PDFStorage.uploadPDF(bufferToUpload, fileName, 'PRICE_OFFER');
       if (!uploadResult.ok) {
+        console.error('Failed to upload PDF to Object Storage:', uploadResult.error);
         return res.status(500).json({
           message: "Failed to save PDF",
-          messageAr: "فشل حفظ ملف PDF",
+          messageAr: "فشل في حفظ ملف PDF",
           error: uploadResult.error
         });
       }
+
+      console.log(`PDF uploaded successfully. Checksum: ${uploadResult.checksum}`);
 
       // Create price offer record
       const priceOffer = await storage.createPriceOffer({
