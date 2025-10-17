@@ -90,7 +90,7 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes */}
+      {/* Public routes - always accessible */}
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       
@@ -107,7 +107,10 @@ function Router() {
           </div>
         </Route>
       ) : !isAuthenticated ? (
-        <Route path="/" component={LandingPage} />
+        <>
+          <Route path="/" component={LandingPage} />
+          <Route component={LandingPage} />
+        </>
       ) : (
         <>
           <Route path="/">
