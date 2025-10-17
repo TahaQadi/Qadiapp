@@ -316,7 +316,9 @@ export default function AdminTemplatesPage() {
                         className="flex-1 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => {
                           setEditingTemplate(template);
-                          const styles = JSON.parse(template.styles);
+                          const styles = typeof template.styles === 'string' 
+                            ? JSON.parse(template.styles) 
+                            : template.styles;
                           setFormData({
                             nameEn: template.nameEn,
                             nameAr: template.nameAr,
@@ -389,7 +391,9 @@ export default function AdminTemplatesPage() {
           <TemplateEditor
             initialTemplate={editingTemplate ? {
               ...editingTemplate,
-              styles: JSON.parse(editingTemplate.styles) // Ensure styles are parsed correctly
+              styles: typeof editingTemplate.styles === 'string' 
+                ? JSON.parse(editingTemplate.styles) 
+                : editingTemplate.styles
             } : null}
             onSave={(templateData) => {
               if (editingTemplate) {
