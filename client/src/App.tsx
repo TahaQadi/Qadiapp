@@ -107,9 +107,7 @@ function Router() {
           </div>
         </Route>
       ) : !isAuthenticated ? (
-        <Route path="/">
-          <Redirect to="/login" />
-        </Route>
+        <Route path="/" component={LandingPage} />
       ) : (
         <>
           <Route path="/">
