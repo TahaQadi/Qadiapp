@@ -59,16 +59,13 @@ export class PDFGenerator {
         doc.on('end', () => {
           try {
             const pdfBuffer = Buffer.concat(chunks);
-            console.log('PDF generated successfully, size:', pdfBuffer.length);
             resolve(pdfBuffer);
           } catch (err) {
-            console.error('Error concatenating PDF chunks:', err);
             reject(err);
           }
         });
         
         doc.on('error', (err: Error) => {
-          console.error('PDF document error:', err);
           reject(err);
         });
 
@@ -266,7 +263,6 @@ export class PDFGenerator {
         // Finalize the PDF
         doc.end();
       } catch (error) {
-        console.error('PDF generation exception:', error);
         reject(error);
       }
     });
@@ -288,7 +284,6 @@ export class PDFGenerator {
         doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
       }
     } catch (logoError) {
-      console.warn('Could not load logo:', logoError);
       // Continue without logo
     }
 
