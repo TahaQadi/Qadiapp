@@ -1,6 +1,8 @@
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs';
+import ArabicReshaper from 'arabic-reshaper';
+import bidi from 'bidi-js';
 
 interface TemplateSection {
   type: 'header' | 'body' | 'table' | 'terms' | 'signature' | 'footer' | 'image' | 'divider' | 'spacer';
@@ -45,10 +47,10 @@ export class TemplatePDFGenerator {
     margins: { top: 120, bottom: 80, left: 50, right: 50 }
   };
   
-  // Feature flag: Arabic PDF generation is currently limited
-  // Arabic text will render with proper fonts but without RTL/BiDi shaping
-  // Set to true to enable Arabic generation (experimental), false to block
-  private static readonly ENABLE_ARABIC_PDF = process.env.ENABLE_ARABIC_PDF === 'true';
+  // Arabic PDF generation now fully supported with RTL/BiDi text shaping
+  // Uses arabic-reshaper for glyph connection and bidi-js for text ordering
+  // Set to false to disable Arabic PDF generation if needed
+  private static readonly ENABLE_ARABIC_PDF = process.env.ENABLE_ARABIC_PDF !== 'false';
 
   /**
    * Check if Arabic fonts are available
@@ -74,6 +76,69 @@ export class TemplatePDFGenerator {
     // Default to Helvetica for English
     doc.font(bold ? 'Helvetica-Bold' : 'Helvetica');
   }
+
+  /**
+   * Detect if text contains Arabic characters
+   */
+  private static isArabicText(text: string): boolean {
+    if (!text) return false;
+    // Arabic Unicode range: U+0600 to U+06FF
+    const arabicRegex = /[\u0600-\u06FF]/;
+    return arabicRegex.test(text);
+  }
+
+  /**
+   * Process text for proper RTL rendering with BiDi support
+   * This handles Arabic text shaping and bidirectional text ordering
+   */
+  private static processRTLText(text: string): string {
+    if (!text) return text;
+    
+    try {
+      // Step 1: Check if text contains Arabic
+      if (!this.isArabicText(text)) {
+        return text; // Return as-is for non-Arabic text
+      }
+
+      // Step 2: Reshape Arabic characters for proper glyph connection
+      const reshaped = ArabicReshaper.convertArabic(text);
+
+      // Step 3: Apply BiDi algorithm for proper RTL ordering
+      const embeddingLevels = bidi.getEmbeddingLevels(reshaped, 'rtl');
+      const reorderSegments = bidi.getReorderSegments(reshaped, embeddingLevels);
+      
+      // Step 4: Apply reordering
+      let result = reshaped.split('');
+      for (const [start, end] of reorderSegments) {
+        const segment = result.slice(start, end + 1).reverse();
+        result.splice(start, end - start + 1, ...segment);
+      }
+
+      // Step 5: Handle mirrored characters
+      const mirroredChars = bidi.getMirroredCharactersMap(reshaped, embeddingLevels);
+      mirroredChars.forEach((char, index) => {
+        if (index < result.length) {
+          result[index] = char;
+        }
+      });
+
+      return result.join('');
+    } catch (error) {
+      // If processing fails, return original text
+      return text;
+    }
+  }
+
+  /**
+   * Get text alignment based on language
+   */
+  private static getAlignment(language: 'en' | 'ar' | 'both', text?: string): 'left' | 'right' | 'center' {
+    // For explicit Arabic language or if text contains Arabic
+    if (language === 'ar' || (text && this.isArabicText(text))) {
+      return 'right';
+    }
+    return 'left';
+  }
   
   /**
    * Generate PDF from template and variables
@@ -85,14 +150,10 @@ export class TemplatePDFGenerator {
   ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
-        // Validate Arabic-only PDF generation is enabled
-        // Note: 'both' language mode is allowed as it includes English fallback
-        if (language === 'ar' && !this.ENABLE_ARABIC_PDF) {
+        // Check if Arabic PDF generation is enabled
+        if ((language === 'ar' || language === 'both') && !this.ENABLE_ARABIC_PDF) {
           reject(new Error(
-            'Arabic-only PDF generation is currently disabled. ' +
-            'Arabic text rendering requires RTL/BiDi support. ' +
-            'See ARABIC_RTL_REQUIREMENTS.md for implementation details. ' +
-            'Set ENABLE_ARABIC_PDF=true to enable (experimental) or use language="en" for English-only output.'
+            'Arabic PDF generation is disabled. Set ENABLE_ARABIC_PDF=true to enable.'
           ));
           return;
         }
@@ -198,16 +259,21 @@ export class TemplatePDFGenerator {
     const companyInfo = language === 'ar' ? content.companyInfoAr : content.companyInfoEn;
     if (companyInfo) {
       this.getFont(doc, language, true);
+      const companyName = this.processRTLText(this.substituteVariables(companyInfo.name, variables));
       doc.fontSize(10)
         .fillColor(primaryColor)
-        .text(this.substituteVariables(companyInfo.name, variables), 300, 35, { width: 250, align: 'right' });
+        .text(companyName, 300, 35, { width: 250, align: 'right' });
       
       this.getFont(doc, language, false);
+      const address = this.processRTLText(this.substituteVariables(companyInfo.address, variables));
+      const phone = this.processRTLText(this.substituteVariables(companyInfo.phone, variables));
+      const email = this.processRTLText(this.substituteVariables(companyInfo.email, variables));
+      
       doc.fontSize(8)
         .fillColor('#4a5568')
-        .text(this.substituteVariables(companyInfo.address, variables), 300, 50, { width: 250, align: 'right' })
-        .text(this.substituteVariables(companyInfo.phone, variables), 300, 63, { width: 250, align: 'right' })
-        .text(this.substituteVariables(companyInfo.email, variables), 300, 76, { width: 250, align: 'right' });
+        .text(address, 300, 50, { width: 250, align: 'right' })
+        .text(phone, 300, 63, { width: 250, align: 'right' })
+        .text(email, 300, 76, { width: 250, align: 'right' });
     }
 
     // Decorative line
@@ -220,10 +286,11 @@ export class TemplatePDFGenerator {
     // Title
     if (content.titleEn || content.titleAr) {
       const title = language === 'ar' ? content.titleAr : content.titleEn;
+      const processedTitle = this.processRTLText(this.substituteVariables(title, variables));
       this.getFont(doc, language, true);
       doc.fontSize(20)
         .fillColor(primaryColor)
-        .text(this.substituteVariables(title, variables), 50, 110, { align: 'center' });
+        .text(processedTitle, 50, 110, { align: 'center' });
     }
 
     doc.y = 150;
@@ -243,12 +310,14 @@ export class TemplatePDFGenerator {
     if (!text) return;
 
     const fontSize = styles.fontSize || 10;
-    const processedText = this.substituteVariables(text, variables);
+    const substitutedText = this.substituteVariables(text, variables);
+    const processedText = this.processRTLText(substitutedText);
+    const alignment = this.getAlignment(language, substitutedText);
 
     this.getFont(doc, language, false);
     doc.fontSize(fontSize)
       .fillColor('#000000')
-      .text(processedText, 50, doc.y, { width: 495, align: 'left' });
+      .text(processedText, 50, doc.y, { width: 495, align: alignment });
     
     doc.moveDown(1);
   }
@@ -280,8 +349,10 @@ export class TemplatePDFGenerator {
     doc.fontSize(9)
       .fillColor('#ffffff');
 
+    const alignment = this.getAlignment(language);
     columns.forEach((col: string, i: number) => {
-      doc.text(col, 55 + (i * colWidth), tableTop + 8, { width: colWidth - 10 });
+      const processedCol = this.processRTLText(col);
+      doc.text(processedCol, 55 + (i * colWidth), tableTop + 8, { width: colWidth - 10, align: alignment });
     });
 
     // Table rows
@@ -303,7 +374,10 @@ export class TemplatePDFGenerator {
 
       doc.fillColor('#000000');
       row.forEach((cell, i) => {
-        doc.text(String(cell), 55 + (i * colWidth), yPos + 5, { width: colWidth - 10 });
+        const cellText = String(cell);
+        const processedCell = this.processRTLText(cellText);
+        const cellAlignment = this.getAlignment(language, cellText);
+        doc.text(processedCell, 55 + (i * colWidth), yPos + 5, { width: colWidth - 10, align: cellAlignment });
       });
 
       yPos += 20;
@@ -335,11 +409,14 @@ export class TemplatePDFGenerator {
 
     if (!items || items.length === 0) return;
 
+    const processedTitle = this.processRTLText(title);
+    const alignment = this.getAlignment(language, title);
+
     doc.moveDown(1);
     this.getFont(doc, language, true);
     doc.fontSize(12)
       .fillColor(secondaryColor)
-      .text(title, 50, doc.y);
+      .text(processedTitle, 50, doc.y, { align: alignment });
 
     doc.moveDown(0.5);
     this.getFont(doc, language, false);
@@ -347,8 +424,11 @@ export class TemplatePDFGenerator {
       .fillColor('#000000');
 
     items.forEach((item: string, index: number) => {
-      const processedItem = this.substituteVariables(item, variables);
-      doc.text(`${index + 1}. ${processedItem}`, 60, doc.y, { width: 485 });
+      const substitutedItem = this.substituteVariables(item, variables);
+      const processedItem = this.processRTLText(substitutedItem);
+      const itemAlignment = this.getAlignment(language, substitutedItem);
+      const numberPrefix = language === 'ar' ? `${index + 1}. ` : `${index + 1}. `;
+      doc.text(numberPrefix + processedItem, 60, doc.y, { width: 485, align: itemAlignment });
       doc.moveDown(0.3);
     });
 
@@ -384,15 +464,18 @@ export class TemplatePDFGenerator {
         .lineWidth(1)
         .stroke();
 
+      const processedName = this.processRTLText(this.substituteVariables(name, variables));
+      const processedTitle = this.processRTLText(this.substituteVariables(title, variables));
+
       this.getFont(doc, language, true);
       doc.fontSize(9)
         .fillColor('#000000')
-        .text(this.substituteVariables(name, variables), x + 20, doc.y + 45, { width: sigWidth - 60, align: 'center' });
+        .text(processedName, x + 20, doc.y + 45, { width: sigWidth - 60, align: 'center' });
 
       this.getFont(doc, language, false);
       doc.fontSize(8)
         .fillColor('#4a5568')
-        .text(this.substituteVariables(title, variables), x + 20, doc.y + 3, { width: sigWidth - 60, align: 'center' });
+        .text(processedTitle, x + 20, doc.y + 3, { width: sigWidth - 60, align: 'center' });
     });
 
     doc.moveDown(3);
@@ -412,7 +495,8 @@ export class TemplatePDFGenerator {
     if (!text) return;
 
     const pageHeight = doc.page.height;
-    const processedText = this.substituteVariables(text, variables);
+    const substitutedText = this.substituteVariables(text, variables);
+    const processedText = this.processRTLText(substitutedText);
 
     this.getFont(doc, language, false);
     doc.fontSize(7)
