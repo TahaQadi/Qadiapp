@@ -12,9 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package } from 'lucide-react';
 import { Link } from 'wouter';
-import { format } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { formatDateLocalized } from '@/lib/dateUtils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { safeJsonParse } from '@/lib/safeJson';
 import { Input } from '@/components/ui/input';
@@ -604,7 +603,7 @@ export default function AdminOrdersPage() {
                           <span className="text-muted-foreground">
                             {language === 'ar' ? 'التاريخ' : 'Date'}:
                           </span>
-                          <span className="text-xs">{format(new Date(order.createdAt), 'PP', { locale: language === 'ar' ? ar : enUS })}</span>
+                          <span className="text-xs">{formatDateLocalized(new Date(order.createdAt), language)}</span>
                         </div>
 
                         <div className="flex gap-1 pt-2 border-t">
@@ -701,7 +700,7 @@ export default function AdminOrdersPage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="text-sm">{format(new Date(order.createdAt), 'PP', { locale: language === 'ar' ? ar : enUS })}</TableCell>
+                          <TableCell className="text-sm">{formatDateLocalized(new Date(order.createdAt), language)}</TableCell>
                           <TableCell className="text-end">
                             <div className="flex gap-1 justify-end">
                               <Button

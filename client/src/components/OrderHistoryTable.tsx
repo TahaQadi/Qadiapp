@@ -10,9 +10,8 @@ import {
 } from '@/components/ui/table';
 import { Eye, RotateCcw, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
 import { useLanguage } from './LanguageProvider';
+import { formatDateLocalized } from '@/lib/dateUtils';
 
 interface Order {
   id: string;
@@ -40,9 +39,6 @@ export function OrderHistoryTable({ orders, onViewDetails, onReorder }: OrderHis
     delivered: 'default' as const,
   };
 
-  const formatDate = (date: Date) => {
-    return format(date, 'PP', { locale: language === 'ar' ? ar : enUS });
-  };
 
   return (
     <div className="border rounded-md">
@@ -79,7 +75,7 @@ export function OrderHistoryTable({ orders, onViewDetails, onReorder }: OrderHis
           ) : (
             orders.map((order) => (
               <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
-                <TableCell className="text-sm">{formatDate(order.createdAt)}</TableCell>
+                <TableCell className="text-sm">{formatDateLocalized(order.createdAt, language)}</TableCell>
                 <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}</TableCell>
                 <TableCell className="text-sm">
                   {order.itemCount} {t('items')}

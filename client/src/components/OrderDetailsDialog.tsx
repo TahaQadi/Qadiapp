@@ -10,8 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { safeJsonParse } from '@/lib/safeJson';
-import { format } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
+import { formatDateLocalized } from '@/lib/dateUtils';
 import { Package, Calendar, CreditCard, FileText, TrendingUp } from 'lucide-react';
 
 interface OrderItem {
@@ -52,9 +51,6 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
     delivered: { variant: 'default' as const, color: 'text-green-600 dark:text-green-400' },
   };
 
-  const formatDate = (date: Date) => {
-    return format(date, 'PPp', { locale: language === 'ar' ? ar : enUS });
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,7 +77,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                 <Calendar className="h-3 w-3" />
                 {language === 'ar' ? 'تاريخ الطلب' : 'Order Date'}
               </p>
-              <p className="text-sm">{formatDate(order.createdAt)}</p>
+              <p className="text-sm">{formatDateLocalized(order.createdAt, language, 'PPp')}</p>
             </div>
 
             <div className="space-y-1">

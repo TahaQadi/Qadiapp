@@ -4,8 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, FileText, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
-import { formatDistanceToNow } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/dateUtils';
 
 interface OrderTemplateCardProps {
   id: string;
@@ -30,10 +29,7 @@ export function OrderTemplateCard({
   const { language } = useLanguage();
 
   const name = language === 'ar' ? nameAr : nameEn;
-  const timeAgo = formatDistanceToNow(createdAt, {
-    addSuffix: true,
-    locale: language === 'ar' ? ar : enUS,
-  });
+  const timeAgo = formatRelativeTime(createdAt, language);
 
   return (
     <Card className="p-4" data-testid={`card-template-${id}`}>
