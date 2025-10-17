@@ -42,7 +42,7 @@ import { z } from "zod";
 import path from "path";
 import crypto from "crypto";
 import fs from "fs";
-import { emailService } from "./email";
+
 import { generateSitemap } from "./sitemap";
 
 const uploadMemory = multer({ storage: multer.memoryStorage() });
@@ -147,18 +147,7 @@ async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
-  // Email test endpoint
-  app.get('/api/test-email', async (req, res) => {
-    try {
-      const result = await emailService.testConnection();
-      res.json(result);
-    } catch (error: any) {
-      res.status(500).json({
-        success: false,
-        message: `Email test failed: ${error.message}`
-      });
-    }
-  });
+  
 
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
@@ -1562,20 +1551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Send order confirmation email
-      if (client) {
-        try {
-          const language = req.headers['accept-language']?.includes('ar') ? 'ar' : 'en';
-          await emailService.sendOrderConfirmation({
-            order: finalOrder,
-            client,
-            items: validatedItems,
-          }, language as 'en' | 'ar');
-        } catch (emailError: any) {
-          console.error('Error sending order confirmation email:', emailError);
-          // Continue even if email fails - order is already created
-        }
-      }
+      
 
       // Create in-app notification
       try {
