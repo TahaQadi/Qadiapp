@@ -35,6 +35,8 @@ import "./lib/i18n";
 import { HelmetProvider } from 'react-helmet-async';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { InstallPrompt } from '@/components/InstallPrompt';
+import { NotificationPermission } from '@/components/NotificationPermission';
 
 function AdminRoute({
   path,
@@ -159,6 +161,8 @@ function AppContent() {
     <>
       <Router />
       <Toaster />
+      <InstallPrompt />
+      <NotificationPermission />
     </>
   );
 }
