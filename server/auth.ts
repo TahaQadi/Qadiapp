@@ -35,7 +35,10 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      // Don't set default maxAge - let login route handle it based on rememberMe
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
     }
   };
 
@@ -116,12 +119,14 @@ export function setupAuth(app: Express) {
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
     const rememberMe = req.body.rememberMe === true;
     
-    if (rememberMe && req.session) {
-      // Set cookie to expire in 30 days if remember me is checked
-      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
-    } else if (req.session) {
-      // Set cookie to expire when browser closes
-      req.session.cookie.maxAge = undefined as any;
+    if (req.session) {
+      if (rememberMe) {
+        // Set cookie to expire in 30 days if remember me is checked
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+      } else {
+        // Set cookie to expire when browser closes (session cookie)
+        delete req.session.cookie.maxAge;
+      }
     }
     
     res.status(200).json(req.user);
