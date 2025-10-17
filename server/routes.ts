@@ -147,6 +147,19 @@ async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
+  // Email test endpoint
+  app.get('/api/test-email', async (req, res) => {
+    try {
+      const result = await emailService.testConnection();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: `Email test failed: ${error.message}`
+      });
+    }
+  });
+
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
 
@@ -611,17 +624,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/company-users/:companyId", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createCompanyUserSchema.parse(req.body);
-      
+
       // Hash the password before storing
       const { hashPassword } = await import('./auth');
       const hashedPassword = await hashPassword(validatedData.password);
-      
+
       const user = await storage.createCompanyUser({
         ...validatedData,
         companyId: req.params.companyId,
         password: hashedPassword,
       });
-      
+
       res.status(201).json({
         id: user.id,
         username: user.username,
@@ -651,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/company-users/:id", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = updateCompanyUserSchema.parse(req.body);
-      
+
       // If password is being updated, hash it
       let updateData = validatedData;
       if (validatedData.password) {
@@ -659,16 +672,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const hashedPassword = await hashPassword(validatedData.password);
         updateData = { ...validatedData, password: hashedPassword };
       }
-      
+
       const user = await storage.updateCompanyUser(req.params.id, updateData);
-      
+
       if (!user) {
         return res.status(404).json({
           message: "User not found",
           messageAr: "المستخدم غير موجود"
         });
       }
-      
+
       res.json({
         id: user.id,
         username: user.username,
