@@ -13,6 +13,8 @@ import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
 import { PDFStorage } from "./object-storage";
 import { TemplateStorage } from "./template-storage";
+import { TemplatePDFGenerator } from "./template-pdf-generator";
+import { PDFAccessControl } from "./pdf-access-control";
 import {
   loginSchema,
   priceImportRowSchema,
@@ -3048,6 +3050,232 @@ Sitemap: ${baseUrl}/sitemap.xml`;
       res.status(500).send('Error generating RSS feed');
     }
   });
+
+  // ======================
+  // DOCUMENT API ROUTES
+  // ======================
+
+  // Generate PDF from template
+  app.post('/api/documents/generate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { templateId, variables, language = 'both' } = req.body;
+
+      if (!templateId || !variables) {
+        return res.status(400).json({ error: 'Template ID and variables are required' });
+      }
+
+      // Get template
+      const template = await TemplateStorage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Generate PDF
+      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(template as any, variables, language);
+
+      // Upload to object storage
+      const category = template.category.toUpperCase().replace('_', '_') as any;
+      const fileName = `${template.category}-${Date.now()}.pdf`;
+      const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, category);
+
+      if (!uploadResult.ok) {
+        return res.status(500).json({ error: uploadResult.error });
+      }
+
+      // Create document record
+      const document = await storage.createDocumentMetadata({
+        documentType: template.category as any,
+        fileName,
+        fileUrl: uploadResult.fileName!,
+        fileSize: pdfBuffer.length,
+        clientId: req.user!.isAdmin ? variables.clientId : req.user!.id,
+        ltaId: variables.ltaId,
+        orderId: variables.orderId,
+        priceOfferId: variables.priceOfferId,
+        checksum: uploadResult.checksum,
+        metadata: {
+          templateId,
+          variables,
+          generatedBy: req.user!.id,
+          generatedAt: new Date().toISOString()
+        }
+      });
+
+      // Log generation
+      await PDFAccessControl.logDocumentAccess({
+        documentId: document.id,
+        clientId: req.user!.id,
+        action: 'generate',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+
+      res.json({
+        success: true,
+        documentId: document.id,
+        fileName,
+        fileUrl: uploadResult.fileName
+      });
+    } catch (error) {
+      console.error('Document generation error:', error);
+      res.status(500).json({ error: 'Failed to generate document' });
+    }
+  });
+
+  // Get document download token
+  app.post('/api/documents/:id/token', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const document = await storage.getDocumentById(id);
+
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Check permissions
+      if (!req.user!.isAdmin && document.clientId !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Generate token
+      const token = PDFAccessControl.generateDownloadToken(
+        id,
+        req.user!.id,
+        { expiresInHours: 2 }
+      );
+
+      res.json({ token });
+    } catch (error) {
+      console.error('Token generation error:', error);
+      res.status(500).json({ error: 'Failed to generate token' });
+    }
+  });
+
+  // Download document with token
+  app.get('/api/documents/:id/download', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { token } = req.query;
+
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ error: 'Token is required' });
+      }
+
+      // Verify token
+      const verification = PDFAccessControl.verifyDownloadToken(token);
+      if (!verification.valid || verification.documentId !== id) {
+        return res.status(401).json({ error: verification.error || 'Invalid token' });
+      }
+
+      // Get document
+      const document = await storage.getDocumentById(id);
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Download from storage
+      const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
+      if (!downloadResult.ok) {
+        return res.status(500).json({ error: downloadResult.error });
+      }
+
+      // Log download
+      await PDFAccessControl.logDocumentAccess({
+        documentId: id,
+        clientId: verification.clientId!,
+        action: 'download',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+
+      // Increment view count
+      await storage.incrementDocumentViewCount(id);
+
+      // Send file
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      res.send(downloadResult.data);
+    } catch (error) {
+      console.error('Download error:', error);
+      res.status(500).json({ error: 'Failed to download document' });
+    }
+  });
+
+  // List/search documents
+  app.get('/api/documents', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { documentType, searchTerm, startDate, endDate } = req.query;
+
+      const filters: any = {};
+      
+      if (documentType && typeof documentType === 'string') {
+        filters.documentType = documentType;
+      }
+      
+      if (searchTerm && typeof searchTerm === 'string') {
+        filters.searchTerm = searchTerm;
+      }
+      
+      if (startDate && typeof startDate === 'string') {
+        filters.startDate = new Date(startDate);
+      }
+      
+      if (endDate && typeof endDate === 'string') {
+        filters.endDate = new Date(endDate);
+      }
+
+      // Non-admin users can only see their own documents
+      if (!req.user!.isAdmin) {
+        filters.clientId = req.user!.id;
+      }
+
+      const documents = await storage.searchDocuments(filters);
+
+      res.json({ documents });
+    } catch (error) {
+      console.error('Document search error:', error);
+      res.status(500).json({ error: 'Failed to search documents' });
+    }
+  });
+
+  // Get document details
+  app.get('/api/documents/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const document = await storage.getDocumentById(id);
+
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Check permissions
+      if (!req.user!.isAdmin && document.clientId !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      res.json({ document });
+    } catch (error) {
+      console.error('Get document error:', error);
+      res.status(500).json({ error: 'Failed to get document' });
+    }
+  });
+
+  // Get document access logs
+  app.get('/api/documents/:id/logs', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const logs = await storage.getDocumentAccessLogs(id);
+
+      res.json({ logs });
+    } catch (error) {
+      console.error('Get logs error:', error);
+      res.status(500).json({ error: 'Failed to get access logs' });
+    }
+  });
+
+  // ======================
+  // END DOCUMENT ROUTES
+  // ======================
 
   // Demo request endpoint
   app.post('/api/demo-request', async (req: Request, res: Response) => {
