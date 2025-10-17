@@ -243,6 +243,17 @@ export const documents = pgTable("documents", {
 });
 
 // Price Offers table
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // Can be companyId or companyUserId
+  userType: text("user_type").notNull(), // 'client' or 'company_user'
+  endpoint: text("endpoint").notNull().unique(),
+  keys: jsonb("keys").notNull(), // {p256dh: string, auth: string}
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const priceOffers = pgTable("price_offers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   offerNumber: text("offer_number").notNull().unique(),
@@ -290,6 +301,7 @@ export const insertOrderModificationSchema = createInsertSchema(orderModificatio
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, isRead: true, metadata: true });
 export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id: true, createdAt: true, updatedAt: true });
 
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Login schema
 export const loginSchema = z.object({
@@ -445,6 +457,7 @@ export type Order = typeof orders.$inferSelect;
 export type OrderModification = typeof orderModifications.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type PriceOffer = typeof priceOffers.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertCompanyUser = z.infer<typeof insertCompanyUserSchema>;
@@ -462,6 +475,7 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderModification = z.infer<typeof insertOrderModificationSchema>;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertPriceOffer = z.infer<typeof insertPriceOfferSchema>;
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;

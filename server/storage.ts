@@ -13,6 +13,7 @@ import {
   type LtaProduct,
   type LtaClient,
   type PriceOffer,
+  type PushSubscription,
   type InsertClient,
   type InsertCompanyUser,
   type InsertClientDepartment,
@@ -49,6 +50,7 @@ import {
   users,
   priceOffers,
   passwordResetTokens,
+  pushSubscriptions,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -200,6 +202,17 @@ export interface IStorage {
   createPasswordResetToken(token: InsertPasswordResetToken): Promise<any>;
   getPasswordResetToken(token: string): Promise<any>;
   deletePasswordResetToken(id: string): Promise<void>;
+
+  // Push Subscriptions
+  savePushSubscription(data: {
+    userId: string;
+    userType: string;
+    endpoint: string;
+    keys: { p256dh: string; auth: string };
+    userAgent: string | null;
+  }): Promise<any>;
+  getPushSubscriptions(userId: string): Promise<Array<{ endpoint: string; keys: any }>>;
+  deletePushSubscription(endpoint: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1239,6 +1252,55 @@ export class MemStorage implements IStorage {
     await this.db
       .delete(passwordResetTokens)
       .where(eq(passwordResetTokens.id, id))
+      .execute();
+  }
+
+  // Push Subscriptions
+  async savePushSubscription(data: {
+    userId: string;
+    userType: string;
+    endpoint: string;
+    keys: { p256dh: string; auth: string };
+    userAgent: string | null;
+  }): Promise<PushSubscription> {
+    // Delete existing subscription with same endpoint (update scenario)
+    await this.db
+      .delete(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, data.endpoint))
+      .execute();
+
+    const [subscription] = await this.db
+      .insert(pushSubscriptions)
+      .values({
+        userId: data.userId,
+        userType: data.userType,
+        endpoint: data.endpoint,
+        keys: data.keys,
+        userAgent: data.userAgent,
+      })
+      .returning()
+      .execute();
+
+    return subscription;
+  }
+
+  async getPushSubscriptions(userId: string): Promise<Array<{ endpoint: string; keys: any }>> {
+    const subscriptions = await this.db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId))
+      .execute();
+
+    return subscriptions.map(sub => ({
+      endpoint: sub.endpoint,
+      keys: sub.keys,
+    }));
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    await this.db
+      .delete(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, endpoint))
       .execute();
   }
 }

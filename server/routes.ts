@@ -7,6 +7,7 @@ import { setupAuth, isAuthenticated } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
 import passwordResetRoutes from "./password-reset-routes";
 import orderModificationRoutes from "./order-modification-routes";
+import pushRoutes from "./push-routes";
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -157,6 +158,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Order modification routes
   app.use('/api', orderModificationRoutes);
+
+  // Push notification routes
+  app.use('/api/push', pushRoutes);
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
