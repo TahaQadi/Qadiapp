@@ -80,6 +80,7 @@ Preferred communication style: Simple, everyday language.
 
 **Database:** Neon Serverless PostgreSQL (`@neondatabase/serverless`).
 **Session Management:** `express-session`, `connect-pg-simple` for PostgreSQL session persistence.
+**Email Service:** SendGrid integration available but not yet configured (user dismissed initial setup - will configure manually with Hostinger domain later).
 **File Processing:** Multer for multipart form data, product image uploads (to `attached_assets/products/`), LTA document uploads (to `attached_assets/lta-documents/`).
 **Fonts:** Google Fonts CDN (Inter, Noto Sans Arabic, JetBrains Mono).
 **Deployment:** Replit-specific plugins, Vite (frontend) + esbuild (backend) for production builds, static file serving.

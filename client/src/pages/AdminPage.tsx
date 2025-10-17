@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit, ClipboardList } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -81,26 +81,28 @@ export default function AdminPage() {
     {
       id: 'orders',
       path: '/admin/orders',
-      icon: ShoppingCart,
-      titleEn: 'Orders Management',
+      icon: ClipboardList,
+      titleEn: 'Order Management',
       titleAr: 'إدارة الطلبات',
-      descEn: 'View and manage all orders',
-      descAr: 'عرض وإدارة جميع الطلبات',
+      descEn: 'View orders, manage modifications & cancellations',
+      descAr: 'عرض الطلبات وإدارة التعديلات والإلغاءات',
       gradient: 'from-indigo-500/20 to-blue-500/10',
       hoverGradient: 'from-indigo-500/30 to-blue-500/20',
-      testId: 'card-orders'
-    },
-    {
-      id: 'order-modifications',
-      path: '/admin/order-modifications',
-      icon: Edit,
-      titleEn: 'Order Modifications',
-      titleAr: 'تعديلات الطلبات',
-      descEn: 'Review and approve modification requests',
-      descAr: 'مراجعة والموافقة على طلبات التعديل',
-      gradient: 'from-red-500/20 to-pink-500/10',
-      hoverGradient: 'from-red-500/30 to-pink-500/20',
-      testId: 'card-order-modifications'
+      testId: 'card-orders',
+      subItems: [
+        {
+          path: '/admin/orders',
+          titleEn: 'All Orders',
+          titleAr: 'جميع الطلبات',
+          icon: ShoppingCart
+        },
+        {
+          path: '/admin/order-modifications',
+          titleEn: 'Modification Requests',
+          titleAr: 'طلبات التعديل',
+          icon: Edit
+        }
+      ]
     },
     {
       id: 'templates',
@@ -331,6 +333,31 @@ export default function AdminPage() {
                         <p className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400 line-clamp-2">
                           {language === 'ar' ? card.descAr : card.descEn}
                         </p>
+                        {(card as any).subItems && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {(card as any).subItems.map((subItem: any) => {
+                              const SubIcon = subItem.icon;
+                              return (
+                                <Link 
+                                  key={subItem.path} 
+                                  href={subItem.path}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Badge 
+                                    variant="outline" 
+                                    className="gap-1.5 px-2 py-1 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-colors cursor-pointer"
+                                    data-testid={`badge-${subItem.path.split('/').pop()}`}
+                                  >
+                                    <SubIcon className="h-3 w-3" />
+                                    <span className="text-xs">
+                                      {language === 'ar' ? subItem.titleAr : subItem.titleEn}
+                                    </span>
+                                  </Badge>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <ChevronRight className={`
