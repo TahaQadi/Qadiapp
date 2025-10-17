@@ -56,7 +56,38 @@ export default function ProductDetailPage() {
     }
 
     if (!product?.hasPrice) {
-      window.location.href = '/price-request';
+      // Add to price request list in sessionStorage
+      const existingList = sessionStorage.getItem('priceRequestList');
+      const priceRequestList = existingList ? JSON.parse(existingList) : [];
+
+      // Check if product already exists
+      const exists = priceRequestList.some((item: any) => item.productId === product.id);
+      
+      if (exists) {
+        toast({
+          description: language === 'ar' 
+            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
+            : 'Product already in price request list'
+        });
+        return;
+      }
+
+      // Add new product to list
+      priceRequestList.push({
+        productId: product.id,
+        productSku: product.sku,
+        productNameEn: product.nameEn,
+        productNameAr: product.nameAr,
+      });
+
+      // Save updated list to sessionStorage
+      sessionStorage.setItem('priceRequestList', JSON.stringify(priceRequestList));
+
+      toast({
+        description: language === 'ar'
+          ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
+          : `${product.nameEn} added to price request list`
+      });
       return;
     }
 
