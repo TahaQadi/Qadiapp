@@ -1502,6 +1502,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nameAr: ltaProductInfo.nameAr,
           sku: item.sku,
           quantity: item.quantity,
+
+
+  // Get document version history (admin only)
+  app.get('/api/admin/documents/:id/versions', requireAdmin, async (req: any, res) => {
+    try {
+      const { PDFAccessControl } = await import('./pdf-access-control');
+      const versions = await PDFAccessControl.getDocumentVersionHistory(req.params.id);
+      res.json(versions);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "خطأ في جلب تاريخ الإصدارات"
+      });
+    }
+  });
+
+  // Get document access logs (admin only)
+  app.get('/api/admin/documents/:id/access-logs', requireAdmin, async (req: any, res) => {
+    try {
+      const logs = await storage.getDocumentAccessLogs(req.params.id);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "خطأ في جلب سجلات الوصول"
+      });
+    }
+  });
+
+  // Create new document version (admin only)
+  app.post('/api/admin/documents/:id/versions', requireAdmin, uploadDocument.single('file'), async (req: any, res) => {
+    try {
+      const { PDFAccessControl } = await import('./pdf-access-control');
+      
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No file uploaded",
+          messageAr: "لم يتم تحميل ملف"
+        });
+      }
+
+      const { changeNote } = req.body;
+      const fileBuffer = req.file.buffer;
+
+      const result = await PDFAccessControl.createDocumentVersion(
+        req.params.id,
+        fileBuffer,
+        req.client.id,
+        changeNote
+      );
+
+      res.json({
+        ...result,
+        message: "New version created successfully",
+        messageAr: "تم إنشاء إصدار جديد بنجاح"
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "خطأ في إنشاء إصدار جديد"
+      });
+    }
+  });
+
           price: ltaProductInfo.price,
           ltaId: item.ltaId,
           currency: ltaProductInfo.currency,

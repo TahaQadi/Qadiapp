@@ -14,16 +14,26 @@ export class PDFAccessControl {
   private static readonly TOKEN_VALIDITY_HOURS = 2;
 
   /**
-   * Generate a secure, time-limited download token
+   * Generate a secure, time-limited download token with optional restrictions
    */
-  static generateDownloadToken(documentId: string, clientId: string): string {
+  static generateDownloadToken(
+    documentId: string, 
+    clientId: string, 
+    options?: {
+      maxDownloads?: number;
+      allowPrint?: boolean;
+      expiresInHours?: number;
+    }
+  ): string {
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + this.TOKEN_VALIDITY_HOURS);
+    expiresAt.setHours(expiresAt.getHours() + (options?.expiresInHours || this.TOKEN_VALIDITY_HOURS));
 
     const tokenData = {
       documentId,
       clientId,
       expiresAt: expiresAt.toISOString(),
+      maxDownloads: options?.maxDownloads,
+      allowPrint: options?.allowPrint ?? true,
     };
 
     const signature = this.signToken(tokenData);
@@ -120,13 +130,103 @@ export class PDFAccessControl {
   /**
    * Add watermark text to indicate document ownership
    */
-  static getWatermarkText(clientName: string, language: 'en' | 'ar'): string {
+  static getWatermarkText(clientName: string, language: 'en' | 'ar', version?: number): string {
     const timestamp = new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US');
+    const versionText = version ? ` - v${version}` : '';
     
     if (language === 'ar') {
-      return `وثيقة سرية - ${clientName} - ${timestamp}`;
+      return `وثيقة سرية - ${clientName} - ${timestamp}${versionText}`;
     }
     
-    return `CONFIDENTIAL - ${clientName} - ${timestamp}`;
+    return `CONFIDENTIAL - ${clientName} - ${timestamp}${versionText}`;
+  }
+
+  /**
+   * Create a new document version
+   */
+  static async createDocumentVersion(
+    documentId: string,
+    newContent: Buffer,
+    changedBy: string,
+    changeNote?: string
+  ): Promise<{ versionId: string; versionNumber: number }> {
+    const document = await storage.getDocumentById(documentId);
+    
+    if (!document) {
+      throw new Error('Document not found');
+    }
+
+    const currentVersion = (document.metadata?.version || 0) as number;
+    const newVersion = currentVersion + 1;
+
+    // Store the new version
+    const versionId = crypto.randomUUID();
+    await storage.createDocumentMetadata({
+      fileName: `${document.fileName}_v${newVersion}`,
+      fileUrl: document.fileUrl.replace(/\.[^.]+$/, `_v${newVersion}$&`),
+      documentType: document.documentType,
+      clientId: document.clientId,
+      ltaId: document.ltaId,
+      fileSize: newContent.length,
+      checksum: this.calculateChecksum(newContent),
+      metadata: {
+        ...document.metadata,
+        version: newVersion,
+        parentDocumentId: documentId,
+        changedBy,
+        changeNote,
+        createdAt: new Date().toISOString(),
+      }
+    });
+
+    // Update the original document's metadata
+    await storage.updateDocumentMetadata(documentId, {
+      metadata: {
+        ...document.metadata,
+        version: newVersion,
+        lastVersionId: versionId,
+        lastModifiedBy: changedBy,
+        lastModifiedAt: new Date().toISOString(),
+      }
+    });
+
+    return { versionId, versionNumber: newVersion };
+  }
+
+  /**
+   * Calculate checksum for content integrity
+   */
+  private static calculateChecksum(content: Buffer): string {
+    const hash = crypto.createHash('sha256');
+    hash.update(content);
+    return hash.digest('hex');
+  }
+
+  /**
+   * Get document version history
+   */
+  static async getDocumentVersionHistory(documentId: string): Promise<any[]> {
+    const document = await storage.getDocumentById(documentId);
+    
+    if (!document) {
+      return [];
+    }
+
+    // Search for all versions of this document
+    const allDocuments = await storage.searchDocuments({
+      documentType: document.documentType,
+      clientId: document.clientId,
+    });
+
+    return allDocuments
+      .filter(doc => 
+        doc.metadata?.parentDocumentId === documentId || 
+        doc.id === documentId
+      )
+      .sort((a, b) => {
+        const versionA = a.metadata?.version || 0;
+        const versionB = b.metadata?.version || 0;
+        return versionB - versionA;
+      });
   }
 }
