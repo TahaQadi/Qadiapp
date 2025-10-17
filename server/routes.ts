@@ -1619,8 +1619,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-
-
       // Create in-app notification
       try {
         await storage.createNotification({
