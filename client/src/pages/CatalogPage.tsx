@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, Search, ChevronRight, Laptop, Printer, Monitor, Keyboard, Mouse, Headphones, Cable, Speaker, Camera, Smartphone, Tablet, Watch, HardDrive, Cpu, MemoryStick, Wifi, Router, Boxes, ShoppingCart, Heart } from 'lucide-react';
+import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@shared/schema';
 import { SEO } from "@/components/SEO";
 import { useToast } from '@/hooks/use-toast';
+import { getCategoryIcon } from '@/lib/categoryIcons';
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -106,28 +107,6 @@ export default function CatalogPage() {
       .filter(Boolean))];
   };
 
-  // Get icon for category
-  const getCategoryIcon = (category: string) => {
-    const categoryLower = category.toLowerCase();
-    if (categoryLower.includes('computer') || categoryLower.includes('laptop')) return Laptop;
-    if (categoryLower.includes('printer')) return Printer;
-    if (categoryLower.includes('monitor') || categoryLower.includes('display')) return Monitor;
-    if (categoryLower.includes('keyboard')) return Keyboard;
-    if (categoryLower.includes('mouse')) return Mouse;
-    if (categoryLower.includes('headphone') || categoryLower.includes('audio')) return Headphones;
-    if (categoryLower.includes('cable') || categoryLower.includes('wire')) return Cable;
-    if (categoryLower.includes('speaker')) return Speaker;
-    if (categoryLower.includes('camera')) return Camera;
-    if (categoryLower.includes('phone') || categoryLower.includes('mobile')) return Smartphone;
-    if (categoryLower.includes('tablet')) return Tablet;
-    if (categoryLower.includes('watch')) return Watch;
-    if (categoryLower.includes('storage') || categoryLower.includes('drive')) return HardDrive;
-    if (categoryLower.includes('processor') || categoryLower.includes('cpu')) return Cpu;
-    if (categoryLower.includes('memory') || categoryLower.includes('ram')) return MemoryStick;
-    if (categoryLower.includes('network') || categoryLower.includes('wifi')) return Wifi;
-    if (categoryLower.includes('router')) return Router;
-    return Package;
-  };
 
   // Filter products based on search and category
   const filteredProducts = products.filter(p => {
