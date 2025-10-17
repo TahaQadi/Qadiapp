@@ -7,11 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Package, Calendar, DollarSign, Edit } from "lucide-react";
 import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
+import { ModificationSheet } from "@/components/ModificationSheet"; // Assuming ModificationSheet is in this path
+import { useToast } from "@/components/ui/use-toast"; // Assuming useToast is in this path
+import { useIsMobile } from "@/hooks/useIsMobile"; // Assuming useIsMobile is in this path
 
 export default function OrdersPage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [modificationDialogOpen, setModificationDialogOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [modifyOpen, setModifyOpen] = useState(false);
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
@@ -39,7 +45,7 @@ export default function OrdersPage() {
 
   const handleRequestModification = (order: Order) => {
     setSelectedOrder(order);
-    setModificationDialogOpen(true);
+    setModifyOpen(true);
   };
 
   if (isLoading) {
@@ -101,7 +107,7 @@ export default function OrdersPage() {
                         </span>
                       </CardDescription>
                     </div>
-                    <div>
+                    <div className={isMobile ? "w-24" : ""}>
                       {getStatusBadge(order.status)}
                     </div>
                   </div>
@@ -130,7 +136,7 @@ export default function OrdersPage() {
                   {!['cancelled', 'delivered', 'shipped'].includes(order.status) && (
                     <Button
                       variant="outline"
-                      className="w-full"
+                      className={`w-full py-2 rounded-lg ${isMobile ? 'text-base' : 'text-sm'}`}
                       onClick={() => handleRequestModification(order)}
                       data-testid={`button-modify-${order.id}`}
                     >
@@ -145,10 +151,10 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <OrderModificationDialog
+      <ModificationSheet
         order={selectedOrder}
-        open={modificationDialogOpen}
-        onOpenChange={setModificationDialogOpen}
+        open={modifyOpen}
+        onOpenChange={setModifyOpen}
       />
     </div>
   );

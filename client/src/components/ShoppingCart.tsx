@@ -5,6 +5,7 @@ import { Minus, Plus, ShoppingCart as CartIcon, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface CartItem {
   productId: string;
@@ -40,6 +41,7 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const isMobile = useIsMobile();
 
   const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
   const tax = subtotal * 0.15; // 15% tax
@@ -101,35 +103,35 @@ export function ShoppingCart({
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8"
+                        className={isMobile ? "h-11 w-11" : "h-8 w-8"}
                         onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
                         disabled={item.quantity <= 1}
                         data-testid={`button-decrease-${item.sku}`}
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
                       </Button>
-                      <div className="w-10 text-center font-medium" data-testid={`text-quantity-${item.sku}`}>
+                      <div className={isMobile ? "w-12 text-center font-medium text-base" : "w-10 text-center font-medium"} data-testid={`text-quantity-${item.sku}`}>
                         {item.quantity}
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8"
+                        className={isMobile ? "h-11 w-11" : "h-8 w-8"}
                         onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
                         data-testid={`button-increase-${item.sku}`}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
                       </Button>
                     </div>
 
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className={isMobile ? "h-11 w-11 shrink-0" : "h-8 w-8 shrink-0"}
                       onClick={() => onRemoveItem(item.productId)}
                       data-testid={`button-remove-${item.sku}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
                     </Button>
                   </div>
                 ))}
@@ -161,7 +163,7 @@ export function ShoppingCart({
 
               <div className="flex flex-col gap-2">
                 <Button
-                  className="w-full"
+                  className={isMobile ? "w-full min-h-[48px] text-base" : "w-full"}
                   onClick={onSubmitOrder}
                   data-testid="button-submit-order"
                 >
@@ -169,7 +171,7 @@ export function ShoppingCart({
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className={isMobile ? "w-full min-h-[48px] text-base" : "w-full"}
                   onClick={onSaveTemplate}
                   data-testid="button-save-template"
                 >

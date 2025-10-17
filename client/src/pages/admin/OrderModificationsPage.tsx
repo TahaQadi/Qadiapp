@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ModificationStatusBadge } from "@/components/ModificationStatusBadge";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -20,6 +23,7 @@ interface ModificationWithOrder extends OrderModification {
 export default function OrderModificationsPage() {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedModification, setSelectedModification] = useState<ModificationWithOrder | null>(null);
   const [adminResponse, setAdminResponse] = useState("");
   const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | null>(null);
@@ -64,20 +68,11 @@ export default function OrderModificationsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; icon: any; label: string }> = {
-      pending: { variant: "secondary", icon: Clock, label: i18n.language === 'ar' ? 'قيد الانتظار' : 'Pending' },
-      approved: { variant: "default", icon: CheckCircle, label: i18n.language === 'ar' ? 'تمت الموافقة' : 'Approved' },
-      rejected: { variant: "destructive", icon: XCircle, label: i18n.language === 'ar' ? 'مرفوض' : 'Rejected' },
-    };
-
-    const config = variants[status] || variants.pending;
-    const Icon = config.icon;
-
     return (
-      <Badge variant={config.variant} data-testid={`badge-status-${status}`}>
-        <Icon className="w-3 h-3 mr-1" />
-        {config.label}
-      </Badge>
+      <ModificationStatusBadge 
+        status={status as 'pending' | 'approved' | 'rejected'} 
+        data-testid={`badge-status-${status}`}
+      />
     );
   };
 
@@ -182,7 +177,7 @@ export default function OrderModificationsPage() {
 
                   <Button
                     onClick={() => setSelectedModification(modification)}
-                    className="w-full"
+                    className={isMobile ? "w-full min-h-[44px]" : "w-full"}
                     data-testid={`button-review-${modification.id}`}
                   >
                     {i18n.language === 'ar' ? 'مراجعة' : 'Review'}
