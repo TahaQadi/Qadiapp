@@ -340,6 +340,7 @@ export class TemplatePDFGenerator {
 
     const tableTop = doc.y;
     const colWidth = 495 / columns.length;
+    const isRTL = language === 'ar';
 
     // Table header
     doc.rect(50, tableTop, 495, 25)
@@ -350,7 +351,10 @@ export class TemplatePDFGenerator {
       .fillColor('#ffffff');
 
     const alignment = this.getAlignment(language);
-    columns.forEach((col: string, i: number) => {
+    
+    // Reverse column order for RTL languages
+    const displayColumns = isRTL ? [...columns].reverse() : columns;
+    displayColumns.forEach((col: string, i: number) => {
       const processedCol = this.processRTLText(col);
       doc.text(processedCol, 55 + (i * colWidth), tableTop + 8, { width: colWidth - 10, align: alignment });
     });
@@ -373,7 +377,10 @@ export class TemplatePDFGenerator {
       }
 
       doc.fillColor('#000000');
-      row.forEach((cell, i) => {
+      
+      // Reverse row data order for RTL languages to match header
+      const displayRow = isRTL ? [...row].reverse() : row;
+      displayRow.forEach((cell, i) => {
         const cellText = String(cell);
         const processedCell = this.processRTLText(cellText);
         const cellAlignment = this.getAlignment(language, cellText);

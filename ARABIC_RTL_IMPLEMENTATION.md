@@ -78,7 +78,10 @@ All render methods have been updated to support RTL:
 
 1. **renderHeader**: Company info, titles - with RTL text processing
 2. **renderBody**: Paragraph text - with automatic alignment detection
-3. **renderTable**: Headers and cells - with per-cell language detection
+3. **renderTable**: Headers and cells - with **RTL column ordering** (columns reversed for Arabic)
+   - Column headers: Reversed for `language='ar'` (right-to-left reading order)
+   - Row data: Reversed to match header order
+   - Individual cell alignment: Per-cell language detection
 4. **renderTerms**: Numbered lists - with RTL list rendering
 5. **renderSignature**: Names and titles - with RTL text processing
 6. **renderFooter**: Footer text - with RTL text processing
