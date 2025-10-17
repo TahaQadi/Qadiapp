@@ -30,10 +30,7 @@ export default function OrderModificationsPage() {
 
   const reviewMutation = useMutation({
     mutationFn: async ({ modificationId, status, adminResponse }: { modificationId: string; status: string; adminResponse?: string }) => {
-      return apiRequest(`/api/admin/order-modifications/${modificationId}/review`, {
-        method: 'POST',
-        body: JSON.stringify({ status, adminResponse }),
-      });
+      return apiRequest('POST', '/api/admin/order-modifications/' + modificationId + '/review', { status, adminResponse });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/order-modifications'] });

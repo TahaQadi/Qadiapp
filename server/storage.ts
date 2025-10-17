@@ -1079,8 +1079,8 @@ export class MemStorage implements IStorage {
 
   // Notifications
   async createNotification(data: {
-    clientId: string;
-    type: 'order_created' | 'order_status_changed' | 'system';
+    clientId: string | null;
+    type: string;
     titleEn: string;
     titleAr: string;
     messageEn: string;

@@ -4,6 +4,23 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
+**PWA and Push Notifications (October 17, 2025):**
+- Implemented complete PWA (Progressive Web App) infrastructure with manifest.json and service worker
+- Added install prompt component for mobile devices with native app-like installation
+- Created push notifications system with VAPID keys and backend API routes
+- Added `push_subscriptions` table to database for managing notification subscriptions
+- Service worker handles offline caching, push notifications, and background sync
+- Fixed VAPID key generation and integration with web-push library
+- Notifications work on mobile devices with proper permission handling
+
+**Order Modification and Cancellation Feature Completion (October 17, 2025):**
+- Fixed critical TypeScript errors in order modification routes (notification type and clientId null support)
+- Fixed frontend API call in OrderModificationsPage (corrected apiRequest signature to 'POST', url, data)
+- Updated storage.createNotification to accept string type and nullable clientId for admin notifications
+- Verified complete implementation: backend routes, admin UI, client UI, database schema
+- System supports full workflow: client request → admin review → approval/rejection → notification
+- Created comprehensive documentation in ORDER_MODIFICATION_FEATURE.md
+
 **Product Filtering Fix (October 17, 2025):**
 - Fixed critical filtering bug in ordering page where all products showed when no LTA was assigned
 - Refactored `useProductFilters` hook to enforce proper LTA-based filtering hierarchy: LTA → search → category
