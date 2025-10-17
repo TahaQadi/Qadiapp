@@ -4,6 +4,13 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
+**Session Management and Notification Permission Fixes (October 17, 2025):**
+- Fixed "Remember Me" functionality: removed default 30-day maxAge from session configuration, now properly creates session cookies (expires on browser close) when unchecked, and persistent 30-day cookies when checked
+- Fixed notification permission popup stuck in "Enabling..." state: added 10-second timeout wrapper with Promise.race() to handle mobile browser permission dismissal, improved error handling with specific error messages, added VAPID response validation
+- Enhanced security: added httpOnly, secure (production), and sameSite flags to session cookies
+- Better UX: notification permission now resets properly on all code paths (allow, block, dismiss, error)
+- Created comprehensive documentation: REMEMBER_ME_FIX.md and NOTIFICATION_PERMISSION_FIX.md
+
 **PWA and Push Notifications (October 17, 2025):**
 - Implemented complete PWA (Progressive Web App) infrastructure with manifest.json and service worker
 - Added install prompt component for mobile devices with native app-like installation

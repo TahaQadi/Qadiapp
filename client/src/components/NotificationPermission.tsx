@@ -52,10 +52,21 @@ export function NotificationPermission() {
   };
 
   const subscribeUser = async () => {
-    setIsSubscribing(true);
-
     try {
-      const permission = await Notification.requestPermission();
+      setIsSubscribing(true);
+
+      // Request notification permission with timeout
+      // On some mobile browsers, if user dismisses the popup, the promise hangs
+      const permissionPromise = Notification.requestPermission();
+      const timeoutPromise = new Promise<NotificationPermission>((_, reject) => {
+        setTimeout(() => reject(new Error('Permission request timed out')), 10000); // 10 seconds
+      });
+      
+      const permission = await Promise.race([permissionPromise, timeoutPromise]).catch((error) => {
+        // If timeout or error, treat as denied
+        console.error('Permission request error:', error);
+        return 'denied' as NotificationPermission;
+      });
 
       if (permission !== 'granted') {
         toast({
@@ -67,6 +78,7 @@ export function NotificationPermission() {
         });
         setShowPrompt(false);
         localStorage.setItem('notification-permission-dismissed', 'true');
+        setIsSubscribing(false);
         return;
       }
 
@@ -75,6 +87,9 @@ export function NotificationPermission() {
 
       // Get VAPID public key from server
       const vapidResponse = await fetch('/api/push/vapid-public-key');
+      if (!vapidResponse.ok) {
+        throw new Error('Failed to fetch VAPID key');
+      }
       const { publicKey } = await vapidResponse.json();
 
       // Subscribe to push notifications
@@ -96,16 +111,31 @@ export function NotificationPermission() {
       });
 
       setShowPrompt(false);
-    } catch (error) {
+      setIsSubscribing(false);
+    } catch (error: any) {
       console.error('Notification subscription failed:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = language === 'ar'
+        ? 'فشل تفعيل الإشعارات'
+        : 'Failed to enable notifications';
+      
+      if (error.message?.includes('VAPID')) {
+        errorMessage = language === 'ar'
+          ? 'خطأ في تكوين الخادم'
+          : 'Server configuration error';
+      } else if (error.message?.includes('subscription')) {
+        errorMessage = language === 'ar'
+          ? 'فشل الاشتراك في الإشعارات'
+          : 'Subscription failed';
+      }
+
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar'
-          ? 'فشل تفعيل الإشعارات'
-          : 'Failed to enable notifications',
+        description: errorMessage,
       });
-    } finally {
+      
       setIsSubscribing(false);
     }
   };
