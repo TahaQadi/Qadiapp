@@ -4,6 +4,13 @@ This bilingual (Arabic/English) application is designed for businesses to manage
 
 # Recent Changes
 
+**Product Filtering Fix (October 17, 2025):**
+- Fixed critical filtering bug in ordering page where all products showed when no LTA was assigned
+- Refactored `useProductFilters` hook to enforce proper LTA-based filtering hierarchy: LTA → search → category
+- Categories now calculated from LTA-filtered products only (prevents showing irrelevant categories)
+- When no LTA is selected, no products are displayed (previously showed all products)
+- Improved UX: category dropdown now only shows categories that exist in the selected LTA contract
+
 **Code Cleanup and Refactoring (October 17, 2025):**
 - Removed duplicate `/examples` folder containing outdated component duplicates
 - Removed all debug `console.log` statements from server files (pdf-generator.ts, object-storage.ts)
