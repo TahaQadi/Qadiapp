@@ -114,6 +114,16 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    const rememberMe = req.body.rememberMe === true;
+    
+    if (rememberMe && req.session) {
+      // Set cookie to expire in 30 days if remember me is checked
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+    } else if (req.session) {
+      // Set cookie to expire when browser closes
+      req.session.cookie.maxAge = undefined as any;
+    }
+    
     res.status(200).json(req.user);
   });
 

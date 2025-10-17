@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -37,7 +38,7 @@ export default function LoginPage() {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ username: email, password, rememberMe }),
         credentials: 'include',
       });
 
@@ -113,6 +114,24 @@ export default function LoginPage() {
                 data-testid="input-password"
                 required
               />
+            </div>
+
+            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                disabled={isLoading}
+                data-testid="checkbox-remember-me"
+              />
+              <Label 
+                htmlFor="rememberMe" 
+                className="text-sm font-normal cursor-pointer"
+              >
+                {language === 'ar' ? 'تذكرني' : 'Remember me'}
+              </Label>
             </div>
 
             <Button 
