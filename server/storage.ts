@@ -255,6 +255,7 @@ export interface IStorage {
     accessedAt: Date;
   }): Promise<void>;
   getDocumentAccessLogs(documentId: string): Promise<any[]>;
+  incrementDocumentViewCount(documentId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1471,6 +1472,14 @@ export class MemStorage implements IStorage {
     `);
 
     return result.rows;
+  }
+
+  async incrementDocumentViewCount(documentId: string): Promise<void> {
+    await this.db.execute(sql`
+      UPDATE documents 
+      SET view_count = view_count + 1, last_viewed_at = NOW()
+      WHERE id = ${documentId}
+    `);
   }
 }
 

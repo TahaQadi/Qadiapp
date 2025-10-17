@@ -58,7 +58,7 @@ export class PDFAccessControl {
       const expectedSignature = this.signToken({
         documentId: decoded.documentId,
         clientId: decoded.clientId,
-        expiresAt: decoded.expiresAt,
+        expiresAt: typeof decoded.expiresAt === 'string' ? decoded.expiresAt : decoded.expiresAt.toISOString(),
       });
 
       if (decoded.signature !== expectedSignature) {
