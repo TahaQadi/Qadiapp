@@ -33,7 +33,6 @@ import { safeJsonParse } from '@/lib/safeJson';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
-import React from 'react';
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -347,7 +346,7 @@ export default function OrderingPage() {
     setSaveTemplateDialogOpen(false);
   };
 
-  const handleLoadTemplate = (templateData: { id: string; nameEn: string; nameAr: string; items: string; createdAt: string }) => {
+  const handleLoadTemplate = (templateData: { id: string; nameEn: string; nameAr: string; items: string; createdAt: Date }) => {
     const templateItems = safeJsonParse(templateData.items, []) as any[];
     const newCartItems: CartItem[] = [];
 
@@ -956,7 +955,7 @@ export default function OrderingPage() {
               className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
             />
             <div className="min-w-0 hidden xs:block">
-              <h1 className="text-sm sm:text-lg lg:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+              <h1 className="text-sm sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                 {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
               </h1>
               <p className="text-[10px] sm:text-xs text-muted-foreground hidden md:block truncate">
@@ -1199,19 +1198,21 @@ export default function OrderingPage() {
                     </Tabs>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-16 px-4">
-                    <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
-                      <Package className="h-8 w-8 text-muted-foreground" />
+                  <Card className="p-12 text-center border-2 border-dashed">
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center">
+                        <Package className="w-10 h-10 text-muted-foreground/50" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground">
+                        {language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTA Agreements'}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {language === 'ar'
+                          ? 'لم يتم تعيين أي اتفاقيات طويلة الأجل لحسابك بعد.'
+                          : 'No Long-Term Agreements have been assigned to your account yet.'}
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      {language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTAs Assigned'}
-                    </h3>
-                    <p className="text-center text-muted-foreground max-w-md">
-                      {language === 'ar' 
-                        ? 'لم يتم تعيينك لأي اتفاقية طويلة الأجل بعد. يرجى الاتصال بالإدارة لتعيينك لاتفاقية.' 
-                        : 'You have not been assigned to any Long-Term Agreement yet. Please contact administration to be assigned to an LTA.'}
-                    </p>
-                  </div>
+                  </Card>
                 )}
 
                 <div className="flex flex-col gap-4 sm:gap-5">
