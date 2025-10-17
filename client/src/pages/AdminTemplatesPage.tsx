@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -13,11 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   Plus, FileText, Edit, Trash2, Copy, ArrowLeft, Loader2
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { TemplatePreview } from '@/components/TemplatePreview';
+import { TemplateEditor } from '@/components/TemplateEditor';
 
 export default function AdminTemplatesPage() {
   const { language } = useLanguage();
@@ -46,7 +47,7 @@ export default function AdminTemplatesPage() {
   const { data: templates, isLoading } = useQuery({
     queryKey: ['/api/admin/templates', selectedCategory],
     queryFn: async () => {
-      const url = selectedCategory === 'all' 
+      const url = selectedCategory === 'all'
         ? '/api/admin/templates'
         : `/api/admin/templates?category=${selectedCategory}`;
       const res = await apiRequest('GET', url);
@@ -225,9 +226,9 @@ export default function AdminTemplatesPage() {
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
-            <img 
-              src="/logo.png" 
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
+            <img
+              src="/logo.png"
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
               className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
             />
             <div className="min-w-0">
@@ -236,15 +237,19 @@ export default function AdminTemplatesPage() {
               </h1>
               {!isMobile && (
                 <p className="text-xs text-muted-foreground truncate">
-                  {language === 'ar' 
-                    ? 'إنشاء وإدارة قوالب المستندات' 
+                  {language === 'ar'
+                    ? 'إنشاء وإدارة قوالب المستندات'
                     : 'Create and manage document templates'}
                 </p>
               )}
             </div>
           </div>
-          <Button 
-            onClick={() => setCreateDialogOpen(true)}
+          <Button
+            onClick={() => {
+              setEditingTemplate(null);
+              resetForm();
+              setCreateDialogOpen(true);
+            }}
             size={isMobile ? "sm" : "default"}
             className="shrink-0"
           >
@@ -259,8 +264,8 @@ export default function AdminTemplatesPage() {
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4">
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-muted/50">
             {categories.map(cat => (
-              <TabsTrigger 
-                key={cat.value} 
+              <TabsTrigger
+                key={cat.value}
                 value={cat.value}
                 className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
@@ -276,8 +281,8 @@ export default function AdminTemplatesPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {templates?.map((template: any) => (
-                <Card 
-                  key={template.id} 
+                <Card
+                  key={template.id}
                   className="hover:shadow-lg dark:hover:shadow-primary/10 transition-all duration-300 hover:border-primary/50 group"
                 >
                   <CardHeader className="pb-3">
@@ -293,11 +298,11 @@ export default function AdminTemplatesPage() {
                           {language === 'ar' ? template.descriptionAr : template.descriptionEn}
                         </CardDescription>
                       </div>
-                      <Badge 
+                      <Badge
                         variant={template.isActive ? 'default' : 'secondary'}
                         className="shrink-0 text-xs"
                       >
-                        {template.isActive 
+                        {template.isActive
                           ? (language === 'ar' ? 'نشط' : 'Active')
                           : (language === 'ar' ? 'غير نشط' : 'Inactive')}
                       </Badge>
@@ -305,8 +310,8 @@ export default function AdminTemplatesPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="flex gap-1 sm:gap-2">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         className="flex-1 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => {
@@ -332,8 +337,8 @@ export default function AdminTemplatesPage() {
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
                         {!isMobile && (language === 'ar' ? 'تعديل' : 'Edit')}
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         className="flex-1 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => {
@@ -347,8 +352,8 @@ export default function AdminTemplatesPage() {
                         <Copy className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
                         {!isMobile && (language === 'ar' ? 'نسخ' : 'Copy')}
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         className="hover:bg-destructive hover:text-destructive-foreground shrink-0"
                         onClick={() => deleteMutation.mutate(template.id)}
@@ -364,7 +369,7 @@ export default function AdminTemplatesPage() {
         </Tabs>
       </div>
 
-      {/* Create/Edit Dialog */}
+      {/* Create/Edit Template Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={(open) => {
         setCreateDialogOpen(open);
         if (!open) {
@@ -372,180 +377,54 @@ export default function AdminTemplatesPage() {
           resetForm();
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingTemplate 
+              {editingTemplate
                 ? (language === 'ar' ? 'تعديل القالب' : 'Edit Template')
                 : (language === 'ar' ? 'قالب جديد' : 'New Template')}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</Label>
-                <Input
-                  value={formData.nameEn}
-                  onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
-                  placeholder="Professional Template"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</Label>
-                <Input
-                  value={formData.nameAr}
-                  onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                  placeholder="قالب احترافي"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</Label>
-                <Textarea
-                  value={formData.descriptionEn}
-                  onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
-                  placeholder="Template description..."
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</Label>
-                <Textarea
-                  value={formData.descriptionAr}
-                  onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
-                  placeholder="وصف القالب..."
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{language === 'ar' ? 'الفئة' : 'Category'}</Label>
-                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.slice(1).map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {language === 'ar' ? cat.labelAr : cat.labelEn}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{language === 'ar' ? 'اللغة' : 'Language'}</Label>
-                <Select value={formData.language} onValueChange={(v) => setFormData({ ...formData, language: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">{language === 'ar' ? 'إنجليزي' : 'English'}</SelectItem>
-                    <SelectItem value="ar">{language === 'ar' ? 'عربي' : 'Arabic'}</SelectItem>
-                    <SelectItem value="both">{language === 'ar' ? 'ثنائي اللغة' : 'Both'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-4 border-t">
-              <Label className="text-base">{language === 'ar' ? 'تصميم القالب' : 'Template Design'}</Label>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'اللون الأساسي' : 'Primary Color'}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={formData.primaryColor}
-                      onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                      className="w-14 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.primaryColor}
-                      onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'اللون الثانوي' : 'Secondary Color'}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={formData.secondaryColor}
-                      onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
-                      className="w-14 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.secondaryColor}
-                      onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'لون التمييز' : 'Accent Color'}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={formData.accentColor}
-                      onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
-                      className="w-14 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.accentColor}
-                      onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'حجم الخط' : 'Font Size'}</Label>
-                  <Input
-                    type="number"
-                    value={formData.fontSize}
-                    onChange={(e) => setFormData({ ...formData, fontSize: parseInt(e.target.value) })}
-                    min={8}
-                    max={16}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'نوع الخط' : 'Font Family'}</Label>
-                  <Select value={formData.fontFamily || 'Helvetica'} onValueChange={(v) => setFormData({ ...formData, fontFamily: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Helvetica">Helvetica</SelectItem>
-                      <SelectItem value="Times-Roman">Times New Roman</SelectItem>
-                      <SelectItem value="Courier">Courier</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
+          <TemplateEditor
+            initialTemplate={editingTemplate ? {
+              ...editingTemplate,
+              styles: JSON.parse(editingTemplate.styles) // Ensure styles are parsed correctly
+            } : null}
+            onSave={(templateData) => {
+              if (editingTemplate) {
+                updateMutation.mutate({ id: editingTemplate.id, data: templateData });
+              } else {
+                createMutation.mutate(templateData);
+              }
+              setCreateDialogOpen(false);
+              setEditingTemplate(null); // Reset editing template after save
+            }}
+            onCancel={() => {
+              setCreateDialogOpen(false);
+              setEditingTemplate(null); // Reset editing template on cancel
+            }}
+          />
 
           <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setCreateDialogOpen(false)}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateDialogOpen(false);
+                setEditingTemplate(null);
+                resetForm();
+              }}
               className="flex-1 sm:flex-none"
             >
               {language === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button 
-              onClick={handleSave}
-              className="flex-1 sm:flex-none"
+            <Button
+              onClick={() => {
+                // This button is a fallback, the actual save is handled by TemplateEditor's onSave
+                // However, we need to trigger the save in TemplateEditor if it has a save button
+                // For now, we assume TemplateEditor handles its own save and close logic
+              }}
+              className="flex-1 sm:flex-none hidden" // Hidden as TemplateEditor will handle saving
             >
               {language === 'ar' ? 'حفظ' : 'Save'}
             </Button>

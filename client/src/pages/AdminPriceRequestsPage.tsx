@@ -12,13 +12,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive, Download } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive, Download, FileText } from 'lucide-react';
 import { Link } from 'wouter';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
+import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
+import { BatchPdfGenerator } from '@/components/BatchPdfGenerator';
 
 interface Notification {
   id: string;
@@ -62,6 +64,12 @@ export default function AdminPriceRequestsPage() {
   const [pdfLtaId, setPdfLtaId] = useState('');
   const [pdfValidityDays, setPdfValidityDays] = useState('30');
   const [pdfNotes, setPdfNotes] = useState('');
+  const [selectedPriceList, setSelectedPriceList] = useState<any>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
+  const [showBatchGenerator, setShowBatchGenerator] = useState(false);
+
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -257,6 +265,28 @@ export default function AdminPriceRequestsPage() {
     });
   };
 
+  const handleSelectForBatch = (requestId: string) => {
+    setSelectedForBatch(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(requestId)) {
+        newSet.delete(requestId);
+      } else {
+        newSet.add(requestId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBatchGeneratePdf = () => {
+    setShowBatchGenerator(true);
+  };
+
+  const handleCloseBatchGenerator = () => {
+    setShowBatchGenerator(false);
+    setSelectedForBatch(new Set()); // Clear selection after closing
+  };
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       {/* Animated background elements */}
@@ -334,6 +364,24 @@ export default function AdminPriceRequestsPage() {
           </div>
         )}
 
+        {/* Batch Actions Toolbar */}
+        {priceRequests.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">{language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}</h1>
+              <p className="text-muted-foreground">
+                {language === 'ar' ? 'إدارة طلبات الأسعار من العملاء' : 'Manage client price requests'}
+              </p>
+            </div>
+            {selectedForBatch.size > 0 && (
+              <Button onClick={() => setShowBatchGenerator(true)} variant="default">
+                <FileText className="h-4 w-4 mr-2" />
+                {language === 'ar' ? `إنشاء PDF (${selectedForBatch.size})` : `Generate PDFs (${selectedForBatch.size})`}
+              </Button>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
@@ -365,6 +413,7 @@ export default function AdminPriceRequestsPage() {
             {filteredRequests.map((request) => {
               const metadata = parseMetadata(request.metadata);
               const completed = isRequestCompleted(request);
+              const isSelected = selectedForBatch.has(request.id);
 
               return (
                 <Card key={request.id} className={!request.isRead && !completed ? 'border-primary' : completed ? 'border-green-500/30' : ''}>
@@ -447,6 +496,24 @@ export default function AdminPriceRequestsPage() {
                             {language === 'ar' ? 'أرشفة' : 'Archive'}
                           </span>
                         </Button>
+                        {completed && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSelectForBatch(request.id)}
+                            className={`gap-2 ${isSelected ? 'bg-primary/10' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleSelectForBatch(request.id)}
+                              className="h-4 w-4"
+                            />
+                            <span className="hidden sm:inline">
+                              {language === 'ar' ? 'تحديد للدُفعات' : 'Select for Batch'}
+                            </span>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
@@ -689,6 +756,17 @@ export default function AdminPriceRequestsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Batch PDF Generator Dialog */}
+      {showBatchGenerator && (
+        <BatchPdfGenerator
+          isOpen={showBatchGenerator}
+          onClose={handleCloseBatchGenerator}
+          selectedRequests={filteredRequests.filter(r => selectedForBatch.has(r.id))}
+          ltas={ltas}
+          language={language}
+        />
+      )}
     </div>
   );
 }
