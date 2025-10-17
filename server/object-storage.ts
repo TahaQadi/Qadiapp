@@ -37,25 +37,26 @@ export class PDFStorage {
 
   static async downloadPDF(fileName: string): Promise<{ ok: boolean; data?: Buffer; error?: string }> {
     try {
+      console.log('Attempting to download from Object Storage:', fileName);
       const { ok, value, error } = await client.downloadAsBytes(fileName);
       
       if (!ok) {
+        console.error('Object Storage download failed:', error?.message);
         return { ok: false, error: error?.message || 'Download failed' };
       }
 
       if (!value || value.length === 0) {
+        console.error('Downloaded file is empty');
         return { ok: false, error: 'Downloaded file is empty' };
       }
 
       // Convert Uint8Array to Buffer
       const buffer = Buffer.from(value);
-      
-      if (buffer.length < 100) {
-        return { ok: false, error: 'Downloaded file appears corrupted (too small)' };
-      }
+      console.log('Successfully downloaded buffer of size:', buffer.length, 'bytes');
       
       return { ok: true, data: buffer };
     } catch (error: any) {
+      console.error('Exception during PDF download:', error);
       return { ok: false, error: error.message };
     }
   }

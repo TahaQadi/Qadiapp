@@ -2404,10 +2404,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const downloadResult = await PDFStorage.downloadPDF(fileName);
 
       if (!downloadResult.ok || !downloadResult.data) {
-        console.error('PDF not found:', fileName, downloadResult.error);
+        console.error('PDF download failed:', fileName, 'Error:', downloadResult.error);
         return res.status(404).json({
-          message: "PDF not found",
-          messageAr: "لم يتم العثور على PDF",
+          message: "PDF not found or corrupted",
+          messageAr: "لم يتم العثور على PDF أو الملف تالف",
           error: downloadResult.error
         });
       }
@@ -2420,14 +2420,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? downloadResult.data
         : Buffer.from(downloadResult.data);
 
-      console.log('Sending PDF, size:', pdfBuffer.length);
+      console.log('PDF downloaded successfully, size:', pdfBuffer.length, 'bytes');
 
-      // Validate buffer size
-      if (pdfBuffer.length < 100) {
-        console.error('Downloaded file appears corrupted (too small)');
+      // Validate buffer has PDF header
+      const pdfHeader = pdfBuffer.slice(0, 4).toString();
+      if (pdfHeader !== '%PDF') {
+        console.error('Downloaded file is not a valid PDF. Header:', pdfHeader);
         return res.status(500).json({
-          message: "PDF file is corrupted",
-          messageAr: "ملف PDF تالف"
+          message: "Downloaded file is not a valid PDF",
+          messageAr: "الملف المحمل ليس PDF صالح"
         });
       }
 
