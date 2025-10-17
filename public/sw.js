@@ -1,7 +1,6 @@
 const CACHE_NAME = 'alqadi-v1';
 const urlsToCache = [
   '/',
-  '/logo.png',
   '/offline.html'
 ];
 

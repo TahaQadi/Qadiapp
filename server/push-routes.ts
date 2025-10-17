@@ -5,10 +5,10 @@ import { z } from 'zod';
 
 const router = Router();
 
-// Generate VAPID keys (run once and store them)
-// This will be set from environment variables in production
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BEY6oHq8CqRGhF6K_xp3aZ4k-M8qO1NnQ2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'placeholder-private-key';
+// VAPID keys for push notifications
+// Generated using web-push library
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BOiCE4T9ZEExkClb-1uKEh9hZv8SbGB-ivGcb5mqIzo02Ru9CcT6ICQmYSYmHU9jIu4-pg6OAAz-r3X2wSFbpko';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'zndNRfckXOypWnppIh-4zK3xu0C9RB1tlM8ZXakzCb8';
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@alqadi.ps';
 
 // Configure web-push
