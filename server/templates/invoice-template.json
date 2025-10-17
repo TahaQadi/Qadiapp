@@ -1,0 +1,100 @@
+{
+  "nameEn": "Commercial Invoice Template",
+  "nameAr": "قالب الفاتورة التجارية",
+  "descriptionEn": "Professional commercial invoice template",
+  "descriptionAr": "قالب فاتورة تجارية احترافية",
+  "category": "invoice",
+  "language": "both",
+  "sections": [
+    {
+      "type": "header",
+      "content": {
+        "titleEn": "COMMERCIAL INVOICE",
+        "titleAr": "فاتورة تجارية",
+        "showLogo": true,
+        "companyInfoEn": {
+          "name": "Al Qadi Trading Company",
+          "address": "Riyadh, Kingdom of Saudi Arabia",
+          "phone": "+966 XX XXX XXXX",
+          "email": "info@alqadi.com",
+          "taxNumber": "{{taxNumber}}"
+        },
+        "companyInfoAr": {
+          "name": "شركة القاضي التجارية",
+          "address": "الرياض، المملكة العربية السعودية",
+          "phone": "+966 XX XXX XXXX",
+          "email": "info@alqadi.com",
+          "taxNumber": "{{taxNumber}}"
+        }
+      }
+    },
+    {
+      "type": "body",
+      "content": {
+        "textEn": "Invoice Number: {{invoiceNumber}}\nInvoice Date: {{invoiceDate}}\nOrder Reference: {{orderNumber}}\nClient: {{clientName}}\nPayment Due Date: {{dueDate}}",
+        "textAr": "رقم الفاتورة: {{invoiceNumber}}\nتاريخ الفاتورة: {{invoiceDate}}\nمرجع الطلب: {{orderNumber}}\nالعميل: {{clientNameAr}}\nتاريخ الاستحقاق: {{dueDate}}"
+      }
+    },
+    {
+      "type": "table",
+      "content": {
+        "columnsEn": ["Item No.", "SKU", "Product Name", "Quantity", "Unit Price", "Total"],
+        "columnsAr": ["رقم الصنف", "رمز المنتج", "اسم المنتج", "الكمية", "سعر الوحدة", "الإجمالي"],
+        "rows": "{{items}}"
+      }
+    },
+    {
+      "type": "body",
+      "content": {
+        "textEn": "Subtotal: {{subtotal}} SAR\nVAT (15%): {{vatAmount}} SAR\nTotal Amount: {{totalAmount}} SAR",
+        "textAr": "المجموع الفرعي: {{subtotal}} ريال\nضريبة القيمة المضافة (15%): {{vatAmount}} ريال\nالمبلغ الإجمالي: {{totalAmount}} ريال"
+      }
+    },
+    {
+      "type": "terms",
+      "content": {
+        "titleEn": "Payment Terms",
+        "titleAr": "شروط الدفع",
+        "itemsEn": [
+          "Payment due within 30 days of invoice date",
+          "Bank transfer to account details below",
+          "Include invoice number in payment reference",
+          "Late payment may incur additional charges"
+        ],
+        "itemsAr": [
+          "الدفع مستحق خلال 30 يوماً من تاريخ الفاتورة",
+          "التحويل البنكي لتفاصيل الحساب أدناه",
+          "تضمين رقم الفاتورة في مرجع الدفع",
+          "التأخر في الدفع قد يؤدي إلى رسوم إضافية"
+        ]
+      }
+    }
+  ],
+  "variables": [
+    "invoiceNumber",
+    "invoiceDate",
+    "orderNumber",
+    "clientName",
+    "clientNameAr",
+    "dueDate",
+    "items",
+    "subtotal",
+    "vatAmount",
+    "totalAmount",
+    "taxNumber"
+  ],
+  "styles": {
+    "primaryColor": "#1a365d",
+    "secondaryColor": "#2d3748",
+    "accentColor": "#d4af37",
+    "fontSize": 10,
+    "fontFamily": "Helvetica",
+    "margins": {
+      "top": 120,
+      "bottom": 80,
+      "left": 50,
+      "right": 50
+    }
+  },
+  "isActive": true
+}

@@ -1,0 +1,111 @@
+{
+  "nameEn": "Official Price Offer Template",
+  "nameAr": "قالب عرض السعر الرسمي",
+  "descriptionEn": "Professional price offer template with company branding",
+  "descriptionAr": "قالب عرض سعر احترافي مع العلامة التجارية للشركة",
+  "category": "price_offer",
+  "language": "both",
+  "sections": [
+    {
+      "type": "header",
+      "content": {
+        "titleEn": "OFFICIAL PRICE OFFER",
+        "titleAr": "عرض سعر رسمي",
+        "showLogo": true,
+        "companyInfoEn": {
+          "name": "Al Qadi Trading Company",
+          "address": "Riyadh, Kingdom of Saudi Arabia",
+          "phone": "+966 XX XXX XXXX",
+          "email": "info@alqadi.com"
+        },
+        "companyInfoAr": {
+          "name": "شركة القاضي التجارية",
+          "address": "الرياض، المملكة العربية السعودية",
+          "phone": "+966 XX XXX XXXX",
+          "email": "info@alqadi.com"
+        }
+      }
+    },
+    {
+      "type": "body",
+      "content": {
+        "textEn": "Dear {{clientName}},\n\nWe are pleased to present our price offer for the requested products. This offer is valid from {{validFrom}} until {{validUntil}}.",
+        "textAr": "عزيزنا {{clientNameAr}}،\n\nيسعدنا أن نقدم لكم عرض الأسعار للمنتجات المطلوبة. هذا العرض صالح من {{validFrom}} حتى {{validUntil}}."
+      }
+    },
+    {
+      "type": "table",
+      "content": {
+        "columnsEn": ["Item No.", "SKU", "Product Name", "Unit Price", "Currency"],
+        "columnsAr": ["رقم الصنف", "رمز المنتج", "اسم المنتج", "سعر الوحدة", "العملة"],
+        "rows": "{{items}}"
+      }
+    },
+    {
+      "type": "body",
+      "content": {
+        "textEn": "Total Offer Amount: {{totalAmount}} {{currency}}\n\nContract Number: {{ltaNumber}}\nOffer Number: {{offerNumber}}",
+        "textAr": "المبلغ الإجمالي للعرض: {{totalAmount}} {{currency}}\n\nرقم العقد: {{ltaNumber}}\nرقم العرض: {{offerNumber}}"
+      }
+    },
+    {
+      "type": "terms",
+      "content": {
+        "titleEn": "Terms and Conditions",
+        "titleAr": "الشروط والأحكام",
+        "itemsEn": [
+          "Prices are subject to the terms of the Long-Term Agreement (LTA)",
+          "This offer is valid for 30 days from the date of issue",
+          "Payment terms as per LTA contract",
+          "Delivery terms as per LTA contract",
+          "All prices are in the specified currency"
+        ],
+        "itemsAr": [
+          "الأسعار تخضع لشروط اتفاقية الأمد الطويل (LTA)",
+          "هذا العرض صالح لمدة 30 يوماً من تاريخ الإصدار",
+          "شروط الدفع حسب عقد LTA",
+          "شروط التسليم حسب عقد LTA",
+          "جميع الأسعار بالعملة المحددة"
+        ]
+      }
+    },
+    {
+      "type": "signature",
+      "content": {
+        "signatories": [
+          {
+            "nameEn": "Al Qadi Trading Company",
+            "nameAr": "شركة القاضي التجارية",
+            "titleEn": "Authorized Signatory",
+            "titleAr": "المفوض بالتوقيع"
+          }
+        ]
+      }
+    }
+  ],
+  "variables": [
+    "clientName",
+    "clientNameAr",
+    "validFrom",
+    "validUntil",
+    "items",
+    "totalAmount",
+    "currency",
+    "ltaNumber",
+    "offerNumber"
+  ],
+  "styles": {
+    "primaryColor": "#1a365d",
+    "secondaryColor": "#2d3748",
+    "accentColor": "#d4af37",
+    "fontSize": 10,
+    "fontFamily": "Helvetica",
+    "margins": {
+      "top": 120,
+      "bottom": 80,
+      "left": 50,
+      "right": 50
+    }
+  },
+  "isActive": true
+}
