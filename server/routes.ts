@@ -2265,7 +2265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedBy: req.client.id,
       });
 
-      // Create document metadata record
+      // Create document metadata record with comprehensive tracking
       await storage.createDocumentMetadata({
         fileName: uploadResult.fileName!,
         fileUrl: uploadResult.fileName!,
@@ -2280,7 +2280,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           itemCount: items.length,
           language,
           validFrom: offerDate,
-          validUntil
+          validUntil,
+          generatedBy: req.client.nameEn,
+          generatedById: req.client.id,
+          category: 'PRICE_OFFER'
         }
       });
 
