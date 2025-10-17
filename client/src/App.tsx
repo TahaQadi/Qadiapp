@@ -69,7 +69,7 @@ function AdminRoute({
   if (!user) {
     return (
       <Route path={path}>
-        <LandingPage />
+        <Redirect to="/landing" />
       </Route>
     );
   }
@@ -91,6 +91,7 @@ function Router() {
   return (
     <Switch>
       {/* Public routes */}
+      <Route path="/landing" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       
@@ -99,7 +100,7 @@ function Router() {
       <Route path="/catalog/:category" component={CatalogPage} />
       <Route path="/catalog" component={CatalogPage} />
 
-      {/* Show loading state while checking authentication */}
+      {/* Root route - redirect based on auth status */}
       {isLoading ? (
         <Route path="/">
           <div className="flex items-center justify-center min-h-screen">
@@ -107,11 +108,13 @@ function Router() {
           </div>
         </Route>
       ) : !isAuthenticated ? (
-        <Route path="/" component={LandingPage} />
+        <Route path="/">
+          <Redirect to="/landing" />
+        </Route>
       ) : (
         <>
           <Route path="/">
-            {(user as any)?.isAdmin ? <Redirect to="/admin" /> : <OrderingPage />}
+            {(user as any)?.isAdmin ? <Redirect to="/admin" /> : <Redirect to="/ordering" />}
           </Route>
           <ProtectedRoute path="/ordering" component={OrderingPage} />
           <ProtectedRoute path="/orders" component={OrdersPage} />

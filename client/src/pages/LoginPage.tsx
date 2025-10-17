@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import { Link } from 'wouter';
+import { queryClient } from '@/lib/queryClient';
 
 export default function LoginPage() {
   const { language } = useLanguage();
@@ -47,13 +48,22 @@ export default function LoginPage() {
         throw new Error(error.message || 'Login failed');
       }
 
+      const userData = await res.json();
+      
+      // Invalidate auth query to refresh user data
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
       toast({
         title: language === 'ar' ? 'نجح تسجيل الدخول' : 'Login successful',
         description: language === 'ar' ? 'مرحباً بك!' : 'Welcome back!',
       });
       
-      // Redirect to home
-      window.location.href = '/';
+      // Redirect based on user role
+      if (userData.isAdmin) {
+        setLocation('/admin');
+      } else {
+        setLocation('/ordering');
+      }
     } catch (error: any) {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
