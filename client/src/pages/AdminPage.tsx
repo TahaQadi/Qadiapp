@@ -7,10 +7,9 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit, Mail } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
-import { EmailTestPanel } from '@/components/EmailTestPanel';
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -114,18 +113,6 @@ export default function AdminPage() {
       gradient: 'from-teal-500/20 to-cyan-500/10',
       hoverGradient: 'from-teal-500/30 to-cyan-500/20',
       testId: 'card-templates'
-    },
-    {
-      id: 'email-test',
-      path: '#',
-      icon: Mail,
-      titleEn: 'Email Configuration',
-      titleAr: 'إعدادات البريد',
-      descEn: 'Test email service settings',
-      descAr: 'اختبار إعدادات البريد الإلكتروني',
-      gradient: 'from-amber-500/20 to-orange-500/10',
-      hoverGradient: 'from-amber-500/30 to-orange-500/20',
-      testId: 'card-email-test'
     }
   ];
 
@@ -364,16 +351,6 @@ export default function AdminPage() {
               </Card>
             );
           })}
-        </div>
-
-        {/* Email Configuration Section */}
-        <div className="mt-12 pt-8 border-t border-border/50 dark:border-[#d4af37]/10">
-          <h3 className="text-xl font-semibold mb-6">
-            {language === 'ar' ? 'اختبار إعدادات البريد الإلكتروني' : 'Email Configuration Testing'}
-          </h3>
-          <div className="max-w-2xl">
-            <EmailTestPanel />
-          </div>
         </div>
 
         {/* Quick Stats Section (Optional) */}
