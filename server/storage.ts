@@ -51,11 +51,12 @@ import {
   priceOffers,
   passwordResetTokens,
   pushSubscriptions,
+  documents, // Assuming 'documents' schema is imported from '@shared/schema'
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { eq, desc, and, inArray } from "drizzle-orm";
+import { eq, desc, and, inArray, gte, lte } from "drizzle-orm"; // Added gte, lte for searchDocuments
 import crypto from "crypto";
 import { db } from "./db";
 
@@ -131,7 +132,7 @@ export interface IStorage {
   updateOrder(orderId: string, updates: Partial<InsertOrder>): Promise<Order | undefined>;
   cancelOrder(orderId: string, updates: { cancellationReason: string; cancelledAt: Date; cancelledBy: string; status: string }): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
-  
+
   // Order Modifications
   createOrderModification(modification: InsertOrderModification): Promise<OrderModification>;
   getOrderModification(id: string): Promise<OrderModification | undefined>;
@@ -171,7 +172,7 @@ export interface IStorage {
 
   // Notifications
   createNotification(data: {
-    clientId: string;
+    clientId: string | null; // Allow null for system-wide notifications
     type: 'order_created' | 'order_status_changed' | 'system';
     titleEn: string;
     titleAr: string;
@@ -213,6 +214,36 @@ export interface IStorage {
   }): Promise<any>;
   getPushSubscriptions(userId: string): Promise<Array<{ endpoint: string; keys: any }>>;
   deletePushSubscription(endpoint: string): Promise<void>;
+
+  // Document Metadata Methods
+  createDocumentMetadata(data: {
+    fileName: string;
+    fileUrl: string;
+    documentType: 'price_offer' | 'order' | 'invoice' | 'contract' | 'lta_document';
+    clientId?: string;
+    ltaId?: string;
+    orderId?: string;
+    priceOfferId?: string;
+    fileSize: number;
+    checksum?: string;
+    metadata?: any;
+  }): Promise<any>;
+  getDocumentsByType(documentType: string, clientId?: string): Promise<any[]>;
+  getDocumentById(id: string): Promise<any | undefined>;
+  searchDocuments(filters: {
+    documentType?: string;
+    clientId?: string;
+    ltaId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    searchTerm?: string;
+  }): Promise<any[]>;
+  updateDocumentMetadata(id: string, updates: {
+    viewCount?: number;
+    lastViewedAt?: Date;
+    metadata?: any;
+  }): Promise<any | undefined>;
+  deleteDocument(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -393,7 +424,7 @@ export class MemStorage implements IStorage {
   async updateClient(id: string, data: Partial<InsertClient>): Promise<Client | undefined> {
     // Build update object with only provided fields
     const updateData: any = {};
-    
+
     if (data.nameEn !== undefined) updateData.nameEn = data.nameEn;
     if (data.nameAr !== undefined) updateData.nameAr = data.nameAr;
     if (data.email !== undefined) updateData.email = data.email;
@@ -1079,8 +1110,8 @@ export class MemStorage implements IStorage {
 
   // Notifications
   async createNotification(data: {
-    clientId: string | null;
-    type: string;
+    clientId: string | null; // Allow null for system-wide notifications
+    type: 'order_created' | 'order_status_changed' | 'system';
     titleEn: string;
     titleAr: string;
     messageEn: string;
@@ -1302,6 +1333,101 @@ export class MemStorage implements IStorage {
       .delete(pushSubscriptions)
       .where(eq(pushSubscriptions.endpoint, endpoint))
       .execute();
+  }
+
+  // Document Metadata Methods
+  async createDocumentMetadata(data: {
+    fileName: string;
+    fileUrl: string;
+    documentType: 'price_offer' | 'order' | 'invoice' | 'contract' | 'lta_document';
+    clientId?: string;
+    ltaId?: string;
+    orderId?: string;
+    priceOfferId?: string;
+    fileSize: number;
+    checksum?: string;
+    metadata?: any;
+  }): Promise<any> {
+    const [doc] = await db.insert(documents).values({
+      id: crypto.randomUUID(),
+      ...data,
+      metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      createdAt: new Date(),
+    }).returning();
+    return doc;
+  }
+
+  async getDocumentsByType(documentType: string, clientId?: string): Promise<any[]> {
+    let query = db.select().from(documents).where(eq(documents.documentType, documentType));
+
+    if (clientId) {
+      query = query.where(eq(documents.clientId, clientId));
+    }
+
+    return await query.orderBy(desc(documents.createdAt));
+  }
+
+  async getDocumentById(id: string): Promise<any | undefined> {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+    return doc;
+  }
+
+  async searchDocuments(filters: {
+    documentType?: string;
+    clientId?: string;
+    ltaId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    searchTerm?: string;
+  }): Promise<any[]> {
+    let query = db.select().from(documents);
+    const conditions = [];
+
+    if (filters.documentType) {
+      conditions.push(eq(documents.documentType, filters.documentType));
+    }
+    if (filters.clientId) {
+      conditions.push(eq(documents.clientId, filters.clientId));
+    }
+    if (filters.ltaId) {
+      conditions.push(eq(documents.ltaId, filters.ltaId));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(documents.createdAt, filters.startDate));
+    }
+    if (filters.endDate) {
+      conditions.push(lte(documents.createdAt, filters.endDate));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(desc(documents.createdAt));
+  }
+
+  async updateDocumentMetadata(id: string, updates: {
+    viewCount?: number;
+    lastViewedAt?: Date;
+    metadata?: any;
+  }): Promise<any | undefined> {
+    const updateData: any = {};
+
+    if (updates.viewCount !== undefined) updateData.viewCount = updates.viewCount;
+    if (updates.lastViewedAt) updateData.lastViewedAt = updates.lastViewedAt;
+    if (updates.metadata) updateData.metadata = JSON.stringify(updates.metadata);
+
+    const [doc] = await db.update(documents)
+      .set(updateData)
+      .where(eq(documents.id, id))
+      .returning();
+
+    return doc;
+  }
+
+  async deleteDocument(id: string): Promise<boolean> {
+    const result = await db.delete(documents).where(eq(documents.id, id));
+    return result.rowCount > 0;
   }
 }
 

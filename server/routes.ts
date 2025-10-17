@@ -2265,6 +2265,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedBy: req.client.id,
       });
 
+      // Create document metadata record
+      await storage.createDocumentMetadata({
+        fileName: uploadResult.fileName!,
+        fileUrl: uploadResult.fileName!,
+        documentType: 'price_offer',
+        clientId: metadata.clientId,
+        ltaId,
+        priceOfferId: priceOffer.id,
+        fileSize: bufferToUpload.length,
+        checksum: uploadResult.checksum,
+        metadata: {
+          offerNumber,
+          itemCount: items.length,
+          language,
+          validFrom: offerDate,
+          validUntil
+        }
+      });
+
       // Create notification for client about the price offer
       await storage.createNotification({
         clientId: metadata.clientId,
@@ -2388,6 +2407,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحديث حالة عرض السعر"
+      });
+    }
+  });
+
+  // Document Search and Management (Admin)
+  app.get('/api/admin/documents/search', requireAdmin, async (req: any, res) => {
+    try {
+      const { documentType, clientId, ltaId, startDate, endDate, searchTerm } = req.query;
+      
+      const filters: any = {};
+      if (documentType) filters.documentType = documentType;
+      if (clientId) filters.clientId = clientId;
+      if (ltaId) filters.ltaId = ltaId;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      if (searchTerm) filters.searchTerm = searchTerm;
+
+      const documents = await storage.searchDocuments(filters);
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "خطأ في البحث عن المستندات"
+      });
+    }
+  });
+
+  app.get('/api/admin/documents/:id', requireAdmin, async (req: any, res) => {
+    try {
+      const document = await storage.getDocumentById(req.params.id);
+      if (!document) {
+        return res.status(404).json({
+          message: "Document not found",
+          messageAr: "المستند غير موجود"
+        });
+      }
+      res.json(document);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "خطأ في جلب المستند"
+      });
+    }
+  });
+
+  app.patch('/api/admin/documents/:id/metadata', requireAdmin, async (req: any, res) => {
+    try {
+      const { metadata } = req.body;
+      const document = await storage.updateDocumentMetadata(req.params.id, { metadata });
+      res.json(document);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "خطأ في تحديث المستند"
       });
     }
   });
