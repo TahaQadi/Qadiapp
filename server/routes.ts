@@ -315,74 +315,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Request price offer for products
-  app.post("/api/client/price-request", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  // ============================================
+  // PRICE MANAGEMENT - Client Routes
+  // ============================================
+  
+  // Client: Create price request
+  app.post("/api/price-requests", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { productIds, message } = req.body;
+      const { ltaId, products, notes } = req.body;
 
-      if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      if (!ltaId || !products || !Array.isArray(products) || products.length === 0) {
         return res.status(400).json({
-          message: "Product IDs are required",
-          messageAr: "معرفات المنتجات مطلوبة"
+          message: "LTA ID and products are required",
+          messageAr: "معرف الاتفاقية والمنتجات مطلوبة"
         });
       }
 
+      // Verify client has access to this LTA
+      const clientLtas = await storage.getLtasByClient(req.client.id);
+      const hasAccess = clientLtas.some(lta => lta.id === ltaId);
+      
+      if (!hasAccess) {
+        return res.status(403).json({
+          message: "You don't have access to this LTA",
+          messageAr: "ليس لديك صلاحية الوصول لهذه الاتفاقية"
+        });
+      }
+
+      // Generate request number
+      const count = (await storage.getAllPriceRequests()).length + 1;
+      const requestNumber = `PR-${Date.now()}-${count.toString().padStart(4, '0')}`;
+
+      // Create price request
+      const priceRequest = await storage.createPriceRequest({
+        requestNumber,
+        clientId: req.client.id,
+        ltaId,
+        products,
+        notes: notes || null,
+        status: 'pending'
+      });
+
+      // Notify admins
       const client = await storage.getClient(req.client.id);
-      if (!client) {
-        return res.status(404).json({
-          message: "Client not found",
-          messageAr: "العميل غير موجود"
-        });
-      }
-
-      const products = [];
-      for (const productId of productIds) {
-        const product = await storage.getProduct(productId);
-        if (product) {
-          products.push(product);
-        }
-      }
-
-      if (products.length === 0) {
-        return res.status(400).json({
-          message: "No valid products found",
-          messageAr: "لم يتم العثور على منتجات صالحة"
-        });
-      }
-
-      // Create notification for admins
       const admins = await storage.getAdminClients();
-      console.log(`Creating price request notifications for ${admins.length} admins`);
-
+      
       for (const admin of admins) {
-        const notification = await storage.createNotification({
+        await storage.createNotification({
           clientId: admin.id,
-          type: 'price_request',
-          titleEn: 'New Price Offer Request',
-          titleAr: 'طلب عرض سعر جديد',
-          messageEn: `${client.nameEn} has requested pricing for ${products.length} product(s)`,
-          messageAr: `طلب ${client.nameAr} تسعير لـ ${products.length} منتج`,
-          metadata: JSON.stringify({
-            clientId: req.client.id,
-            clientNameEn: client.nameEn,
-            clientNameAr: client.nameAr,
-            productIds,
-            products: products.map(p => ({ id: p.id, sku: p.sku, nameEn: p.nameEn, nameAr: p.nameAr })),
-            message: message || null
-          }),
+          type: 'system',
+          titleEn: 'New Price Request',
+          titleAr: 'طلب سعر جديد',
+          messageEn: `${client?.nameEn} requested pricing for ${products.length} product(s)`,
+          messageAr: `طلب ${client?.nameAr} تسعير لـ ${products.length} منتج`,
+          metadata: JSON.stringify({ requestId: priceRequest.id })
         });
-        console.log(`Created notification ${notification.id} for admin ${admin.id}`);
       }
 
-      // Create notification for client
+      // Notify client
       await storage.createNotification({
         clientId: req.client.id,
-        type: 'price_request_sent',
+        type: 'system',
         titleEn: 'Price Request Submitted',
         titleAr: 'تم إرسال طلب السعر',
-        messageEn: `Your price request for ${products.length} product(s) has been sent to administrators`,
-        messageAr: `تم إرسال طلب السعر الخاص بك لـ ${products.length} منتج إلى المسؤولين`,
-        metadata: JSON.stringify({ productIds }),
+        messageEn: `Your request #${requestNumber} has been submitted`,
+        messageAr: `تم إرسال طلبك رقم ${requestNumber}`,
+        metadata: JSON.stringify({ requestId: priceRequest.id })
       });
 
       res.json({
@@ -395,6 +393,239 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إرسال طلب السعر"
       });
+    }
+  });
+
+  // Client: Get my price requests
+  app.get("/api/price-requests", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const requests = await storage.getPriceRequestsByClient(req.client.id);
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Client: Get price offers sent to me
+  app.get("/api/price-offers", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const offers = await storage.getPriceOffersByClient(req.client.id);
+      res.json(offers);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Client: View price offer (marks as viewed)
+  app.get("/api/price-offers/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const offer = await storage.getPriceOffer(req.params.id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
+      }
+
+      if (offer.clientId !== req.client.id) {
+        return res.status(403).json({ message: "Unauthorized", messageAr: "غير مصرح" });
+      }
+
+      // Mark as viewed if not already
+      if (!offer.viewedAt && offer.status === 'sent') {
+        await storage.updatePriceOffer(req.params.id, {
+          viewedAt: new Date(),
+          status: 'viewed'
+        });
+      }
+
+      const updatedOffer = await storage.getPriceOffer(req.params.id);
+      res.json(updatedOffer);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Client: Accept/Reject price offer
+  app.post("/api/price-offers/:id/respond", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { status, note } = req.body;
+
+      if (!['accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status", messageAr: "حالة غير صالحة" });
+      }
+
+      const offer = await storage.getPriceOffer(req.params.id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
+      }
+
+      if (offer.clientId !== req.client.id) {
+        return res.status(403).json({ message: "Unauthorized", messageAr: "غير مصرح" });
+      }
+
+      if (offer.status !== 'sent' && offer.status !== 'viewed') {
+        return res.status(400).json({ 
+          message: "Offer cannot be modified", 
+          messageAr: "لا يمكن تعديل العرض" 
+        });
+      }
+
+      // Check if expired
+      if (new Date(offer.validUntil) < new Date()) {
+        return res.status(400).json({
+          message: "Offer has expired",
+          messageAr: "انتهت صلاحية العرض"
+        });
+      }
+
+      // Update offer status
+      await storage.updatePriceOffer(req.params.id, {
+        status,
+        respondedAt: new Date(),
+        responseNote: note || null
+      });
+
+      // Notify admins
+      const client = await storage.getClient(req.client.id);
+      const admins = await storage.getAdminClients();
+      
+      for (const admin of admins) {
+        await storage.createNotification({
+          clientId: admin.id,
+          type: 'system',
+          titleEn: `Price Offer ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+          titleAr: status === 'accepted' ? 'تم قبول عرض السعر' : 'تم رفض عرض السعر',
+          messageEn: `${client?.nameEn} ${status} offer #${offer.offerNumber}`,
+          messageAr: `${status === 'accepted' ? 'قبل' : 'رفض'} ${client?.nameAr} العرض رقم ${offer.offerNumber}`,
+          metadata: JSON.stringify({ offerId: offer.id })
+        });
+      }
+
+      res.json({ message: "Response submitted successfully", messageAr: "تم إرسال الرد بنجاح" });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // ============================================
+  // PRICE MANAGEMENT - Admin Routes
+  // ============================================
+
+  // Admin: Get all price requests
+  app.get("/api/admin/price-requests", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const requests = await storage.getAllPriceRequests();
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Get all price offers
+  app.get("/api/admin/price-offers", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const offers = await storage.getAllPriceOffers();
+      res.json(offers);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Create price offer (draft)
+  app.post("/api/admin/price-offers", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { requestId, clientId, ltaId, items, subtotal, tax, total, notes, validUntil } = req.body;
+
+      if (!clientId || !ltaId || !items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({
+          message: "Client ID, LTA ID, and items are required",
+          messageAr: "معرف العميل ومعرف الاتفاقية والمنتجات مطلوبة"
+        });
+      }
+
+      // Generate offer number
+      const count = (await storage.getAllPriceOffers()).length + 1;
+      const offerNumber = `PO-${Date.now()}-${count.toString().padStart(4, '0')}`;
+
+      // Create price offer
+      const offer = await storage.createPriceOffer({
+        offerNumber,
+        requestId: requestId || null,
+        clientId,
+        ltaId,
+        items,
+        subtotal: subtotal.toString(),
+        tax: tax?.toString() || '0',
+        total: total.toString(),
+        notes: notes || null,
+        validUntil: new Date(validUntil || Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+        status: 'draft',
+        createdBy: req.client.id
+      });
+
+      // If created from request, mark request as processed
+      if (requestId) {
+        await storage.updatePriceRequestStatus(requestId, 'processed');
+      }
+
+      res.json(offer);
+    } catch (error) {
+      console.error('Create offer error:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Send price offer (generates PDF and sends to client)
+  app.post("/api/admin/price-offers/:id/send", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const offer = await storage.getPriceOffer(req.params.id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
+      }
+
+      if (offer.status !== 'draft') {
+        return res.status(400).json({ 
+          message: "Only draft offers can be sent", 
+          messageAr: "يمكن إرسال المسودات فقط" 
+        });
+      }
+
+      // Mark as sent (PDF will be generated when accessed)
+      const pdfFileName = `price-offer-${offer.offerNumber}.pdf`;
+      
+      await storage.updatePriceOffer(req.params.id, {
+        status: 'sent',
+        sentAt: new Date(),
+        pdfFileName
+      });
+
+      // Notify client
+      const client = await storage.getClient(offer.clientId);
+      await storage.createNotification({
+        clientId: offer.clientId,
+        type: 'system',
+        titleEn: 'New Price Offer',
+        titleAr: 'عرض سعر جديد',
+        messageEn: `You have received price offer #${offer.offerNumber}`,
+        messageAr: `لقد استلمت عرض السعر رقم ${offer.offerNumber}`,
+        metadata: JSON.stringify({ offerId: offer.id })
+      });
+
+      res.json({ message: "Offer sent successfully", messageAr: "تم إرسال العرض بنجاح" });
+    } catch (error) {
+      console.error('Send offer error:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Delete price offer
+  app.delete("/api/admin/price-offers/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      await storage.deletePriceOffer(req.params.id);
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
