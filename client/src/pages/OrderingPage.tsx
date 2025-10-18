@@ -391,30 +391,6 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
-  const requestPriceMutation = useMutation({
-    mutationFn: async (data: { productIds: string[]; message: string }) => {
-      const res = await apiRequest('POST', '/api/client/price-request', data);
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
-        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
-      });
-      setPriceRequestList([]);
-      setPriceRequestMessage('');
-      setPriceRequestDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message,
-      });
-    },
-  });
-
   const handleAddToPriceRequest = useCallback((product: ProductWithLtaPrice) => {
     setPriceRequestList(prev => {
       // Check if already exists
