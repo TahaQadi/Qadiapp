@@ -441,11 +441,22 @@ export default function OrderingPage() {
       return;
     }
 
+    if (!selectedLtaFilter) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar'
+          ? 'يرجى اختيار اتفاقية'
+          : 'Please select an LTA'
+      });
+      return;
+    }
+
     try {
       const productIds = priceRequestList.map(item => item.productId);
 
       const res = await apiRequest('POST', '/api/price-requests', {
-        ltaId: selectedLta?.id,
+        ltaId: selectedLtaFilter,
         products: priceRequestList.map(item => ({
           productId: item.productId,
           quantity: item.quantity || 1
