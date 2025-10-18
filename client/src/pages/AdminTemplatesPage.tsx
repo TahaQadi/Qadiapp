@@ -235,39 +235,53 @@ export default function AdminTemplatesPage() {
               <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                 {language === 'ar' ? 'إدارة القوالب' : 'Template Management'}
               </h1>
-              {!isMobile && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {language === 'ar'
-                    ? 'إنشاء وإدارة قوالب المستندات'
-                    : 'Create and manage document templates'}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {language === 'ar'
+                  ? 'إنشاء وإدارة قوالب المستندات'
+                  : 'Create and manage document templates'}
+              </p>
             </div>
           </div>
-          <Button
-            onClick={() => {
-              setEditingTemplate(null);
-              resetForm();
-              setCreateDialogOpen(true);
-            }}
-            size={isMobile ? "sm" : "default"}
-            className="shrink-0"
-          >
-            <Plus className="h-4 w-4 sm:mr-2" />
-            {!isMobile && (language === 'ar' ? 'قالب جديد' : 'New Template')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+            <Button
+              onClick={() => {
+                setEditingTemplate(null);
+                resetForm();
+                setCreateDialogOpen(true);
+              }}
+              size={isMobile ? "sm" : "default"}
+              className="shrink-0 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
+            >
+              <Plus className="h-4 w-4 sm:mr-2" />
+              {!isMobile && (language === 'ar' ? 'قالب جديد' : 'New Template')}
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4">
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-muted/50">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 relative z-10">
+        {/* Welcome Section */}
+        <div className="mb-6 sm:mb-8 animate-slide-down">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+            {language === 'ar' ? 'لوحة إدارة القوالب' : 'Template Management Dashboard'}
+          </h2>
+          <p className="text-muted-foreground">
+            {language === 'ar' 
+              ? 'تصميم وتخصيص قوالب المستندات الاحترافية' 
+              : 'Design and customize professional document templates'}
+          </p>
+        </div>
+
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4 sm:space-y-6">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-muted/50 dark:bg-[#222222]/50 border border-border/50 dark:border-[#d4af37]/20">
             {categories.map(cat => (
               <TabsTrigger
                 key={cat.value}
                 value={cat.value}
-                className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-primary dark:data-[state=active]:bg-[#d4af37] data-[state=active]:text-primary-foreground min-h-[44px] px-3 sm:px-4"
               >
                 {language === 'ar' ? cat.labelAr : cat.labelEn}
               </TabsTrigger>
@@ -280,21 +294,24 @@ export default function AdminTemplatesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {templates?.map((template: any) => (
+              {templates?.map((template: any, index: number) => (
                 <Card
                   key={template.id}
-                  className="hover:shadow-lg dark:hover:shadow-primary/10 transition-all duration-300 hover:border-primary/50 group"
+                  className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 group animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <FileText className="h-4 w-4 text-primary shrink-0" />
-                          <CardTitle className="text-sm sm:text-base truncate">
+                          <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+                            <FileText className="h-4 w-4 text-primary dark:text-[#d4af37] shrink-0" />
+                          </div>
+                          <CardTitle className="text-sm sm:text-base truncate font-semibold">
                             {language === 'ar' ? template.nameAr : template.nameEn}
                           </CardTitle>
                         </div>
-                        <CardDescription className="text-xs line-clamp-2">
+                        <CardDescription className="text-xs line-clamp-2 mt-1">
                           {language === 'ar' ? template.descriptionAr : template.descriptionEn}
                         </CardDescription>
                       </div>
@@ -313,7 +330,7 @@ export default function AdminTemplatesPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 hover:bg-primary hover:text-primary-foreground"
+                        className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
                         onClick={() => {
                           setEditingTemplate(template);
                           const styles = typeof template.styles === 'string'
@@ -337,12 +354,12 @@ export default function AdminTemplatesPage() {
                         }}
                       >
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                        {!isMobile && (language === 'ar' ? 'تعديل' : 'Edit')}
+                        <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 hover:bg-primary hover:text-primary-foreground"
+                        className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
                         onClick={() => {
                           const newName = {
                             en: `${template.nameEn} (Copy)`,
@@ -352,12 +369,12 @@ export default function AdminTemplatesPage() {
                         }}
                       >
                         <Copy className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                        {!isMobile && (language === 'ar' ? 'نسخ' : 'Copy')}
+                        <span className="hidden sm:inline">{language === 'ar' ? 'نسخ' : 'Copy'}</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground"
+                        className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground transition-colors"
                         onClick={() => deleteMutation.mutate(template.id)}
                       >
                         <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />

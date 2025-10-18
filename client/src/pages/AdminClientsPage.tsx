@@ -383,41 +383,22 @@ export default function AdminClientsPage() {
                 {language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
               </h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
+                {language === 'ar' ? 'إدارة معلومات العملاء والمستخدمين' : 'Manage client information and users'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              data-testid="button-profile"
-            >
-              <Link href="/profile">
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              data-testid="button-ordering"
-            >
-              <Link href="/">
-                <Package className="h-5 w-5" />
-              </Link>
-            </Button>
+          <div className="flex items-center gap-1 sm:gap-2">
             <LanguageToggle />
             <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
+              className="h-9 w-9 sm:h-10 sm:w-10"
               data-testid="button-logout"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>

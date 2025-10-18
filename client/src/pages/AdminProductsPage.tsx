@@ -511,6 +511,11 @@ export default function AdminProductsPage() {
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        
+        {/* Floating particles */}
+        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
       </div>
 
       {/* Header */}
@@ -537,6 +542,9 @@ export default function AdminProductsPage() {
               <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                 {language === 'ar' ? 'إدارة المنتجات' : 'Product Management'}
               </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {language === 'ar' ? 'إدارة كتالوج المنتجات' : 'Manage product catalog'}
+              </p>
             </div>
           </div>
 
@@ -558,47 +566,59 @@ export default function AdminProductsPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
-        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
-          <CardHeader className="border-b border-border/50 dark:border-[#d4af37]/20">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-              <div>
-                <CardTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
-                  {language === 'ar' ? 'إدارة المنتجات' : 'Product Management'}
+        {/* Welcome Section */}
+        <div className="mb-6 sm:mb-8 animate-slide-down">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+            {language === 'ar' ? 'لوحة إدارة المنتجات' : 'Product Management Dashboard'}
+          </h2>
+          <p className="text-muted-foreground">
+            {language === 'ar' 
+              ? 'إدارة منتجات الكتالوج والأسعار' 
+              : 'Manage catalog products and pricing'}
+          </p>
+        </div>
+
+        <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 animate-fade-in">
+          <CardHeader className="border-b border-border/50 dark:border-[#d4af37]/20 pb-4 sm:pb-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+                    <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+                  </div>
+                  {language === 'ar' ? 'المنتجات' : 'Products'}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {language === 'ar' ? 'إدارة منتجات الكتالوج' : 'Manage catalog products'}
-                </p>
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800] shrink-0"
+                  data-testid="button-create-product"
+                >
+                  <Plus className="h-4 w-4 sm:me-2" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'منتج جديد' : 'New Product'}</span>
+                </Button>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="outline"
                   size="sm"
                   onClick={() => exportProductsMutation.mutate()}
                   disabled={exportProductsMutation.isPending}
-                  className="border-primary/50 dark:border-[#d4af37]/50"
+                  className="border-primary/50 dark:border-[#d4af37]/50 min-h-[44px] flex-1 sm:flex-none"
                   data-testid="button-export-products"
                 >
-                  <Download className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'تصدير' : 'Export'}
+                  <Download className="h-4 w-4 sm:me-2" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'تصدير' : 'Export'}</span>
                 </Button>
                 <Button 
                   variant="outline"
                   size="sm"
                   onClick={() => setImportDialogOpen(true)}
-                  className="border-primary/50 dark:border-[#d4af37]/50"
+                  className="border-primary/50 dark:border-[#d4af37]/50 min-h-[44px] flex-1 sm:flex-none"
                   data-testid="button-import-products"
                 >
-                  <Upload className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'استيراد' : 'Import'}
-                </Button>
-                <Button 
-                  onClick={() => setCreateDialogOpen(true)}
-                  className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
-                  data-testid="button-create-product"
-                >
-                  <Plus className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'منتج جديد' : 'New Product'}
+                  <Upload className="h-4 w-4 sm:me-2" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'استيراد' : 'Import'}</span>
                 </Button>
               </div>
             </div>
