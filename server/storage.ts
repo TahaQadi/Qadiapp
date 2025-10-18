@@ -1590,6 +1590,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = {
-  sessionStore,
-};
+export const storage = new MemStorage();
