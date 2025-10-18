@@ -200,7 +200,7 @@ export interface IStorage {
   getPriceRequestsByClient(clientId: string): Promise<PriceRequest[]>;
   getAllPriceRequests(): Promise<PriceRequest[]>;
   updatePriceRequestStatus(id: string, status: string): Promise<PriceRequest | null>;
-  
+
   // Price Offers
   createPriceOffer(data: InsertPriceOffer): Promise<PriceOffer>;
   getPriceOffer(id: string): Promise<PriceOffer | null>;
@@ -1354,7 +1354,7 @@ export class MemStorage implements IStorage {
 
   async updateExpiredPriceOffers(): Promise<number> {
     const now = new Date();
-    
+
     // Get all offers that are expired but not yet marked as such
     const allOffers = await this.getAllPriceOffers();
     const expiredOffers = allOffers.filter(offer => 
@@ -1590,4 +1590,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = {
+  sessionStore,
+};

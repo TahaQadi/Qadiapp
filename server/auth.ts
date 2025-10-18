@@ -34,8 +34,9 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    rolling: true, // Reset expiration on each request
     cookie: {
-      // Don't set default maxAge - let login route handle it based on rememberMe
+      maxAge: 24 * 60 * 60 * 1000, // Default 24 hours
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
@@ -124,9 +125,11 @@ export function setupAuth(app: Express) {
         // Set cookie to expire in 30 days if remember me is checked
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       } else {
-        // Set cookie to expire when browser closes (session cookie)
-        delete req.session.cookie.maxAge;
+        // Keep default 24 hour session
+        req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
       }
+      
+      console.log(`Session configured: rememberMe=${rememberMe}, maxAge=${req.session.cookie.maxAge}`);
     }
     
     res.status(200).json(req.user);
