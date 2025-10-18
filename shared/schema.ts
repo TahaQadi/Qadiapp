@@ -276,28 +276,40 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Price Requests: Clients request price quotes for selected products
+export const priceRequests = pgTable("price_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestNumber: text("request_number").notNull().unique(),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
+  ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
+  products: jsonb("products").notNull(), // Array of {productId, quantity}
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"), // pending, processed, cancelled
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+});
+
+// Price Offers: Admin creates and sends price offers with pricing
 export const priceOffers = pgTable("price_offers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   offerNumber: text("offer_number").notNull().unique(),
+  requestId: varchar("request_id").references(() => priceRequests.id, { onDelete: "set null" }), // Can be null if admin creates directly
   clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
   ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
-  priceRequestNotificationId: varchar("price_request_notification_id").references(() => notifications.id, { onDelete: "set null" }),
-  status: text("status").notNull().default("draft"), // draft, sent, viewed, accepted, rejected, expired
-  language: text("language").notNull().default("en"),
-  items: jsonb("items").notNull(), // Array of {productId, sku, nameEn, nameAr, contractPrice, currency, quantity}
-  validFrom: timestamp("valid_from").notNull().defaultNow(),
-  validUntil: timestamp("valid_until").notNull(),
+  items: jsonb("items").notNull(), // Array of {productId, nameEn, nameAr, sku, quantity, unitPrice, total}
+  subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 12, scale: 2 }).notNull().default("0"),
+  total: decimal("total", { precision: 12, scale: 2 }).notNull(),
   notes: text("notes"),
+  validUntil: timestamp("valid_until").notNull(),
+  status: text("status").notNull().default("draft"), // draft, sent, viewed, accepted, rejected, expired
   pdfFileName: text("pdf_file_name"),
+  createdBy: varchar("created_by").references(() => clients.id, { onDelete: "set null" }), // Admin who created it
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   sentAt: timestamp("sent_at"),
   viewedAt: timestamp("viewed_at"),
   respondedAt: timestamp("responded_at"),
   responseNote: text("response_note"),
-  generatedBy: varchar("generated_by").references(() => clients.id, { onDelete: "set null" }), // Admin who generated it
-  version: integer("version").notNull().default(1),
-  parentOfferId: varchar("parent_offer_id"), // For tracking revisions
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 
@@ -321,7 +333,8 @@ export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderModificationSchema = createInsertSchema(orderModifications).omit({ id: true, createdAt: true });
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, isRead: true, metadata: true });
-export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPriceRequestSchema = createInsertSchema(priceRequests).omit({ id: true, requestedAt: true });
+export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id: true, createdAt: true });
 
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, lastViewedAt: true, viewCount: true, versionNumber: true });
@@ -480,6 +493,7 @@ export type OrderTemplate = typeof orderTemplates.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderModification = typeof orderModifications.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type PriceRequest = typeof priceRequests.$inferSelect;
 export type PriceOffer = typeof priceOffers.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type Document = typeof documents.$inferSelect;
@@ -500,6 +514,7 @@ export type InsertOrderTemplate = z.infer<typeof insertOrderTemplateSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderModification = z.infer<typeof insertOrderModificationSchema>;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type InsertPriceRequest = z.infer<typeof insertPriceRequestSchema>;
 export type InsertPriceOffer = z.infer<typeof insertPriceOfferSchema>;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
