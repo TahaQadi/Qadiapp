@@ -543,6 +543,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      if (subtotal === undefined || subtotal === null) {
+        return res.status(400).json({
+          message: "Subtotal is required",
+          messageAr: "المجموع الفرعي مطلوب"
+        });
+      }
+
+      if (total === undefined || total === null) {
+        return res.status(400).json({
+          message: "Total is required",
+          messageAr: "المجموع الإجمالي مطلوب"
+        });
+      }
+
       // Generate offer number
       const count = (await storage.getAllPriceOffers()).length + 1;
       const offerNumber = `PO-${Date.now()}-${count.toString().padStart(4, '0')}`;
@@ -554,9 +568,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientId,
         ltaId,
         items,
-        subtotal: subtotal.toString(),
-        tax: tax?.toString() || '0',
-        total: total.toString(),
+        subtotal: typeof subtotal === 'number' ? subtotal.toString() : subtotal.toString(),
+        tax: tax !== undefined && tax !== null ? (typeof tax === 'number' ? tax.toString() : tax.toString()) : '0',
+        total: typeof total === 'number' ? total.toString() : total.toString(),
         notes: notes || null,
         validUntil: new Date(validUntil || Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
         status: 'draft',
@@ -1762,12 +1776,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Step 2: Validate client is assigned to this LTA
       const clientLtas = await storage.getClientLtas(req.client.id);
-      const isClientInLta = clientLtas.some(lta => lta.id === ltaId);
+      const clientLta = clientLtas.find(lta => lta.id === ltaId);
 
-      if (!isClientInLta) {
+      if (!clientLta) {
         return res.status(403).json({
           message: 'You are not authorized to order from this LTA',
           messageAr: 'أنت غير مخول بالطلب من هذه الاتفاقية',
+        });
+      }
+
+      // Validate LTA status and dates
+      if (clientLta.status !== 'active') {
+        return res.status(400).json({
+          message: 'This LTA is not active',
+          messageAr: 'هذه الاتفاقية غير نشطة',
+        });
+      }
+
+      const now = new Date();
+      if (new Date(clientLta.startDate) > now) {
+        return res.status(400).json({
+          message: 'This LTA has not started yet',
+          messageAr: 'لم تبدأ هذه الاتفاقية بعد',
+        });
+      }
+
+      if (new Date(clientLta.endDate) < now) {
+        return res.status(400).json({
+          message: 'This LTA has expired',
+          messageAr: 'انتهت صلاحية هذه الاتفاقية',
         });
       }
 

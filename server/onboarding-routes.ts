@@ -10,7 +10,7 @@ const router = Router();
 const onboardingSchema = z.object({
   user: z.object({
     email: z.string().email('Valid email is required / البريد الإلكتروني صالح مطلوب'),
-    password: z.string().min(8, 'Password must be at least 8 characters / كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
+    password: z.string().min(6, 'Password must be at least 6 characters / كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
     confirmPassword: z.string(),
   }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match / كلمات المرور غير متطابقة",
@@ -35,9 +35,9 @@ const onboardingSchema = z.object({
   }),
   departments: z.array(z.object({
     type: z.string().min(1, 'Department type is required / نوع القسم مطلوب'),
-    contactName: z.string().optional(),
-    contactEmail: z.string().optional(),
-    contactPhone: z.string().optional(),
+    contactName: z.string().min(1, 'Contact name is required / اسم جهة الاتصال مطلوب'),
+    contactEmail: z.string().email('Valid email is required / البريد الإلكتروني صالح مطلوب'),
+    contactPhone: z.string().min(1, 'Contact phone is required / رقم الهاتف مطلوب'),
   })).min(1, 'At least one department is required / قسم واحد على الأقل مطلوب'),
 });
 

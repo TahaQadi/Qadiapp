@@ -1097,20 +1097,32 @@ export class MemStorage implements IStorage {
       failed: [] as Array<{ sku: string; error: string }>,
     };
 
+    // Validate LTA exists
+    const lta = await this.getLta(ltaId);
+    if (!lta) {
+      throw new Error('LTA not found');
+    }
+
     for (const item of products) {
       try {
-        const product = Array.from(this.products.values()).find(p => p.sku === item.sku);
+        // Validate inputs
+        if (!item.sku || !item.contractPrice) {
+          results.failed.push({ sku: item.sku || 'unknown', error: 'Missing SKU or contract price' });
+          continue;
+        }
+
+        const product = await this.getProductBySku(item.sku);
 
         if (!product) {
           results.failed.push({ sku: item.sku, error: 'Product not found' });
           continue;
         }
 
-        const existingAssignment = Array.from(this.ltaProducts.values()).find(
-          lp => lp.ltaId === ltaId && lp.productId === product.id
-        );
+        // Check for existing assignment in database
+        const existingAssignments = await this.getLtaProducts(ltaId);
+        const alreadyAssigned = existingAssignments.some(lp => lp.productId === product.id);
 
-        if (existingAssignment) {
+        if (alreadyAssigned) {
           results.failed.push({ sku: item.sku, error: 'Already assigned to this LTA' });
           continue;
         }
@@ -1119,12 +1131,16 @@ export class MemStorage implements IStorage {
           ltaId,
           productId: product.id,
           contractPrice: item.contractPrice,
-          currency: item.currency,
+          currency: item.currency || 'USD',
         });
 
         results.success++;
       } catch (error) {
-        results.failed.push({ sku: item.sku, error: 'Assignment failed' });
+        console.error('Bulk assignment error:', error);
+        results.failed.push({ 
+          sku: item.sku, 
+          error: error instanceof Error ? error.message : 'Assignment failed' 
+        });
       }
     }
 

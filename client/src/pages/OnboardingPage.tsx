@@ -214,13 +214,29 @@ export default function OnboardingPage() {
         }
         break;
       case 4:
-        const validDepartments = onboardingData.departments.filter(dept => dept.type);
+        const validDepartments = onboardingData.departments.filter(dept => 
+          dept.type && dept.contactName && dept.contactEmail && dept.contactPhone
+        );
         if (validDepartments.length === 0) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى إضافة قسم واحد على الأقل مع تحديد النوع' 
-              : 'Please add at least one department with a type selected',
+              ? 'يرجى إضافة قسم واحد على الأقل مع بيانات الاتصال الكاملة' 
+              : 'Please add at least one department with complete contact information',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        // Check for incomplete departments
+        const incompleteDepartments = onboardingData.departments.filter(dept => 
+          dept.type && (!dept.contactName || !dept.contactEmail || !dept.contactPhone)
+        );
+        if (incompleteDepartments.length > 0) {
+          toast({
+            title: language === 'ar' ? 'خطأ' : 'Error',
+            description: language === 'ar' 
+              ? 'يرجى ملء جميع بيانات الاتصال لكل قسم' 
+              : 'Please fill all contact information for each department',
             variant: 'destructive',
           });
           return false;

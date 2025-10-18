@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Bell, Check, CheckCheck, Trash2, X, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,16 +36,18 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
   const { language } = useLanguage();
   const [open, setOpen] = useState(false);
 
+  // Fetch notifications and their unread count
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    // Removed refetchInterval to manage polling manually via useEffect
   });
 
-  const { data: unreadCount } = useQuery<{ count: number }>({
+  const { data: unreadCount, queryKey: unreadCountQueryKey } = useQuery<{ count: number }>({
     queryKey: ['/api/client/notifications/unread-count'],
-    refetchInterval: 30000,
+    // Removed refetchInterval here as well
   });
 
+  // Mutation to mark a single notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest('PATCH', `/api/client/notifications/${id}/read`);
@@ -56,6 +58,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     },
   });
 
+  // Mutation to mark all notifications as read
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
       await apiRequest('PATCH', '/api/client/notifications/mark-all-read');
@@ -66,6 +69,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     },
   });
 
+  // Mutation to delete a notification
   const deleteNotificationMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest('DELETE', `/api/client/notifications/${id}`);
@@ -76,6 +80,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     },
   });
 
+  // Get the appropriate icon for a notification type
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'order_created':
@@ -87,6 +92,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     }
   };
 
+  // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return formatDistanceToNow(date, {
@@ -95,6 +101,53 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     });
   };
 
+  // Effect for polling notification unread count
+  // This replaces the refetchInterval on the useQuery hook for better control
+  // and to implement visibility and error handling.
+  const unreadCountQuery = useQuery<{ count: number }>({
+    queryKey: ['/api/client/notifications/unread-count'],
+    staleTime: 1000 * 60 * 5, // Keep data fresh for 5 minutes
+    gcTime: 1000 * 60 * 10,  // Garbage collect after 10 minutes if not used
+  });
+
+  useEffect(() => {
+    // Assume 'user' object is available in the component's scope if needed for authentication checks
+    // For this example, we'll assume it's always okay to poll if the component is mounted.
+    // If 'user' is indeed required, uncomment the `if (!user) return;` line.
+    // const user = getUserFromAuth(); // Replace with actual user retrieval logic
+
+    // if (!user) return; // Only poll if user is authenticated
+
+    let mounted = true;
+    const interval = setInterval(() => {
+      // Poll only if the tab is visible and the component is mounted
+      if (mounted && document.visibilityState === 'visible') {
+        unreadCountQuery.refetch().catch(err => {
+          console.error('Failed to refresh notification count:', err);
+        });
+      }
+    }, 30000); // Poll every 30 seconds
+
+    // Re-fetch when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && mounted) {
+        unreadCountQuery.refetch().catch(err => {
+          console.error('Failed to refresh notification count:', err);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup function to clear interval and remove event listener
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [unreadCountQuery]); // Dependency array includes unreadCountQuery to ensure it's reactive
+
+  // Render sidebar variant
   if (variant === 'sidebar') {
     return (
       <Popover open={open} onOpenChange={setOpen}>
@@ -227,6 +280,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     );
   }
 
+  // Render default variant (e.g., for header icon)
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
