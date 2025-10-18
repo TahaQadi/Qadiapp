@@ -121,8 +121,17 @@ export default function ClientPriceOffersPage() {
     }
   };
 
-  const handleDownload = async (fileName: string) => {
-    window.open(`/api/pdf/download/${fileName}`, '_blank');
+  const handleDownload = async (fileName: string, offerId: string) => {
+    try {
+      const tokenResponse = await apiRequest<{ token: string }>('POST', `/api/pdf/generate-token/${offerId}`);
+      window.open(`/api/pdf/download/${fileName}?token=${tokenResponse.token}`, '_blank');
+    } catch (error) {
+      toast({
+        title: t('error', 'خطأ'),
+        description: t('Failed to generate download token', 'فشل إنشاء رمز التنزيل'),
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleRespond = (offer: PriceOffer, action: 'accepted' | 'rejected') => {
@@ -239,7 +248,7 @@ export default function ClientPriceOffersPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownload(offer.pdfFileName)}
+                            onClick={() => handleDownload(offer.pdfFileName, offer.id)}
                             data-testid={`button-download-${offer.id}`}
                           >
                             <Download className="h-4 w-4" />
