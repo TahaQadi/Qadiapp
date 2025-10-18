@@ -1,8 +1,19 @@
 # Overview
 
-This bilingual (Arabic/English) application is designed for businesses to manage and fulfill Long-Term Agreement (LTA) based product orders. It centers around LTAs, where each LTA represents a contract defining products from a master catalog for specific clients. Key features include client authentication with role-based access, product image management, bulk product import via CSV, a responsive product grid, order templates, and integration with Pipefy for order processing. The project aims to streamline contract fulfillment and enhance the ordering experience for LTA clients.
+This bilingual (Arabic/English) application is designed for businesses to manage and fulfill Long-Term Agreement (LTA) based product orders. It centers around LTAs, where each LTA represents a contract defining products from a master catalog for specific clients. Key features include client authentication with role-based access, comprehensive price management system, product image management, bulk product import via CSV, a responsive product grid, order templates, and integration with Pipefy for order processing. The project aims to streamline contract fulfillment and enhance the ordering experience for LTA clients.
 
 # Recent Changes
+
+**Complete Price Management System Rework (October 18, 2025):**
+- Rebuilt price management from scratch with comprehensive database-backed workflow
+- New two-table design: `price_requests` (client creates) and `price_offers` (admin creates/sends)
+- Client workflow: Select products from LTA → Submit price request → Receive offer → Accept/Reject
+- Admin workflow: Review requests → Create draft offer → Send offer (generates PDF) → Track responses
+- Complete REST API: 10 endpoints for price requests and offers (client and admin)
+- Status flow: Request (pending → processed) | Offer (draft → sent → viewed → accepted/rejected/expired)
+- Integrated notifications at each step of the workflow
+- PDF generation on offer send with secure token-based download system
+- LTA-based access control: clients only request products from their assigned LTAs
 
 **Document Management System with Full Arabic RTL Support (October 17, 2025):**
 - Implemented complete template-based PDF document generation system with 9 section types (header, body, table, terms, signature, footer, image, divider, spacer)
