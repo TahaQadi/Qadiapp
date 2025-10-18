@@ -572,7 +572,7 @@ export default function AdminOrdersPage() {
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-3">
                   {paginatedOrders.map((order) => (
-                    <Card key={order.id} className="border-border/50 dark:border-[#d4af37]/20">
+                    <Card key={order.id} className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300">
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">

@@ -222,7 +222,7 @@ export default function AdminVendorsPage() {
   const downloadCSVTemplate = () => {
     const headers = ['Vendor Number', 'Name (EN)', 'Name (AR)', 'Email', 'Phone', 'Address'];
     const sampleData = ['V001', 'ABC Company', 'شركة ABC', 'contact@abc.com', '+966123456789', 'Riyadh, Saudi Arabia'];
-    
+
     const csv = [
       headers.join(','),
       sampleData.join(','),

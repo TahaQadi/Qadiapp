@@ -439,10 +439,10 @@ export default function AdminPriceManagementPage() {
                 </p>
               </div>
             ) : filteredRequests.length === 0 ? (
-              <Card className="border-2 border-dashed">
-                <CardContent className="p-16 text-center">
+              <Card className="border-2 border-dashed border-border/50 dark:border-[#d4af37]/20">
+                <CardContent className="p-8 sm:p-16 text-center">
                   <div className="flex flex-col items-center gap-4">
-                    <Package className="h-20 w-20 text-muted-foreground opacity-50" />
+                    <Package className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground opacity-50" />
                     <div className="space-y-2">
                       <h3 className="text-xl font-semibold">
                         {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
@@ -467,7 +467,7 @@ export default function AdminPriceManagementPage() {
                   const completed = isRequestCompleted(request);
 
                   return (
-                    <Card key={request.id} className={!request.isRead && !completed ? 'border-primary shadow-lg' : completed ? 'border-green-500/30 shadow-md' : 'shadow-sm'}>
+                    <Card key={request.id} className={`${!request.isRead && !completed ? 'border-primary dark:border-[#d4af37] shadow-lg dark:shadow-[#d4af37]/20' : completed ? 'border-green-500/30 dark:border-green-500/30 shadow-md' : 'border-border/50 dark:border-[#d4af37]/20 shadow-sm'} hover:shadow-xl dark:hover:shadow-[#d4af37]/20 transition-all duration-300`}>
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="space-y-1 flex-1">
@@ -632,10 +632,10 @@ export default function AdminPriceManagementPage() {
                 </p>
               </div>
             ) : filteredOffers.length === 0 ? (
-              <Card className="border-2 border-dashed">
-                <CardContent className="p-16 text-center">
+              <Card className="border-2 border-dashed border-border/50 dark:border-[#d4af37]/20">
+                <CardContent className="p-8 sm:p-16 text-center">
                   <div className="flex flex-col items-center gap-4">
-                    <FileText className="h-20 w-20 text-muted-foreground opacity-50" />
+                    <FileText className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground opacity-50" />
                     <div className="space-y-2">
                       <h3 className="text-xl font-semibold">
                         {language === 'ar' ? 'لا توجد عروض أسعار' : 'No Price Offers'}
@@ -648,7 +648,7 @@ export default function AdminPriceManagementPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="shadow-md">
+              <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-md hover:shadow-xl dark:hover:shadow-[#d4af37]/20 transition-all duration-300">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table>
