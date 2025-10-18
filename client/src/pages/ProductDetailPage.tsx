@@ -62,11 +62,11 @@ export default function ProductDetailPage() {
 
       // Check if product already exists
       const exists = priceRequestList.some((item: any) => item.productId === product.id);
-      
+
       if (exists) {
         toast({
-          description: language === 'ar' 
-            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
+          description: language === 'ar'
+            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار'
             : 'Product already in price request list'
         });
         return;

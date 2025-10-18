@@ -316,8 +316,8 @@ export default function AdminTemplatesPage() {
                         className="flex-1 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => {
                           setEditingTemplate(template);
-                          const styles = typeof template.styles === 'string' 
-                            ? JSON.parse(template.styles) 
+                          const styles = typeof template.styles === 'string'
+                            ? JSON.parse(template.styles)
                             : template.styles;
                           setFormData({
                             nameEn: template.nameEn,
@@ -384,24 +384,22 @@ export default function AdminTemplatesPage() {
             <DialogTitle>
               {editingTemplate
                 ? (language === 'ar' ? 'تعديل القالب' : 'Edit Template')
-                : (language === 'ar' ? 'قالب جديد' : 'New Template')
-              }
+                : (language === 'ar' ? 'قالب جديد' : 'New Template')}
             </DialogTitle>
             <DialogDescription>
               {editingTemplate
                 ? (language === 'ar' ? 'تعديل تفاصيل ومحتوى القالب' : 'Edit template details and content')
-                : (language === 'ar' ? 'إنشاء قالب مستند جديد' : 'Create a new document template')
-              }
+                : (language === 'ar' ? 'إنشاء قالب مستند جديد' : 'Create a new document template')}
             </DialogDescription>
           </DialogHeader>
 
           <TemplateEditor
             initialTemplate={editingTemplate ? {
-                ...editingTemplate,
-                styles: typeof editingTemplate.styles === 'string' 
-                  ? JSON.parse(editingTemplate.styles) 
-                  : editingTemplate.styles
-              } : null}
+              ...editingTemplate,
+              styles: typeof editingTemplate.styles === 'string'
+                ? JSON.parse(editingTemplate.styles)
+                : (editingTemplate.styles || {})
+            } : null}
             onSave={(templateData) => {
               if (editingTemplate) {
                 updateMutation.mutate({ id: editingTemplate.id, data: templateData });

@@ -69,7 +69,7 @@ export default function CatalogPage() {
 
     // Check if product already exists
     const exists = priceRequestList.some((item: any) => item.productId === product.id);
-    
+
     if (exists) {
       toast({
         description: language === 'ar' 
@@ -345,7 +345,7 @@ export default function CatalogPage() {
                           animate-fade-in" 
                           style={{ animationDelay: `${index * 50}ms` }}
                           data-testid={`card-product-${product.id}`}>
-                          
+
                           {/* Gradient Overlay */}
                           <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/10 
                             group-hover:from-green-500/30 group-hover:to-emerald-500/20
@@ -397,7 +397,7 @@ export default function CatalogPage() {
                               </Badge>
                             )}
                           </CardContent>
-                          
+
                           {user && (
                             <CardFooter className="p-3 pt-0">
                               {product.hasPrice && product.contractPrice ? (

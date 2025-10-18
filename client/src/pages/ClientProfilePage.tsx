@@ -19,6 +19,7 @@ import { z } from 'zod';
 import type { ClientDepartment, ClientLocation } from '@shared/schema';
 import { DepartmentManagementDialog } from '@/components/DepartmentManagementDialog';
 import { LocationManagementDialog } from '@/components/LocationManagementDialog';
+import { SEO } from '@/components/SEO';
 
 const updateProfileSchema = z.object({
   nameEn: z.string().min(1, 'English name is required'),
@@ -34,6 +35,8 @@ export default function ClientProfilePage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+
+  const isArabic = language === 'ar';
 
   const form = useForm<UpdateProfileForm>({
     resolver: zodResolver(updateProfileSchema),
@@ -53,16 +56,16 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تم تحديث الملف الشخصي' : 'Profile Updated',
-        description: language === 'ar' ? 'تم حفظ التغييرات بنجاح' : 'Your changes have been saved successfully',
+        title: isArabic ? 'تم تحديث الملف الشخصي' : 'Profile Updated',
+        description: isArabic ? 'تم حفظ التغييرات بنجاح' : 'Your changes have been saved successfully',
       });
       setIsEditing(false);
     },
     onError: () => {
       toast({
         variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'فشل تحديث الملف الشخصي' : 'Failed to update profile',
+        title: isArabic ? 'خطأ' : 'Error',
+        description: isArabic ? 'فشل تحديث الملف الشخصي' : 'Failed to update profile',
       });
     },
   });
@@ -84,8 +87,8 @@ export default function ClientProfilePage() {
   const [editingDepartment, setEditingDepartment] = useState<ClientDepartment | null>(null);
   const [editingLocation, setEditingLocation] = useState<ClientLocation | null>(null);
 
-  const departments = (user.departments || []) as ClientDepartment[];
-  const locations = (user.locations || []) as ClientLocation[];
+  const departments = (user?.departments || []) as ClientDepartment[];
+  const locations = (user?.locations || []) as ClientLocation[];
 
   // Department Mutations
   const createDepartmentMutation = useMutation({
@@ -96,8 +99,8 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تمت الإضافة' : 'Added',
-        description: language === 'ar' ? 'تم إضافة القسم بنجاح' : 'Department added successfully',
+        title: isArabic ? 'تمت الإضافة' : 'Added',
+        description: isArabic ? 'تم إضافة القسم بنجاح' : 'Department added successfully',
       });
       setDepartmentDialogOpen(false);
       setEditingDepartment(null);
@@ -112,8 +115,8 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تم التحديث' : 'Updated',
-        description: language === 'ar' ? 'تم تحديث القسم بنجاح' : 'Department updated successfully',
+        title: isArabic ? 'تم التحديث' : 'Updated',
+        description: isArabic ? 'تم تحديث القسم بنجاح' : 'Department updated successfully',
       });
       setDepartmentDialogOpen(false);
       setEditingDepartment(null);
@@ -127,8 +130,8 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
-        description: language === 'ar' ? 'تم حذف القسم بنجاح' : 'Department deleted successfully',
+        title: isArabic ? 'تم الحذف' : 'Deleted',
+        description: isArabic ? 'تم حذف القسم بنجاح' : 'Department deleted successfully',
       });
     },
   });
@@ -142,8 +145,8 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تمت الإضافة' : 'Added',
-        description: language === 'ar' ? 'تم إضافة الموقع بنجاح' : 'Location added successfully',
+        title: isArabic ? 'تمت الإضافة' : 'Added',
+        description: isArabic ? 'تم إضافة الموقع بنجاح' : 'Location added successfully',
       });
       setLocationDialogOpen(false);
       setEditingLocation(null);
@@ -158,8 +161,8 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تم التحديث' : 'Updated',
-        description: language === 'ar' ? 'تم تحديث الموقع بنجاح' : 'Location updated successfully',
+        title: isArabic ? 'تم التحديث' : 'Updated',
+        description: isArabic ? 'تم تحديث الموقع بنجاح' : 'Location updated successfully',
       });
       setLocationDialogOpen(false);
       setEditingLocation(null);
@@ -173,8 +176,8 @@ export default function ClientProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
-        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
-        description: language === 'ar' ? 'تم حذف الموقع بنجاح' : 'Location deleted successfully',
+        title: isArabic ? 'تم الحذف' : 'Deleted',
+        description: isArabic ? 'تم حذف الموقع بنجاح' : 'Location deleted successfully',
       });
     },
   });
@@ -196,69 +199,22 @@ export default function ClientProfilePage() {
   };
 
   const departmentTypeLabels = {
-    finance: language === 'ar' ? 'المالية' : 'Finance',
-    purchase: language === 'ar' ? 'المشتريات' : 'Purchase',
-    warehouse: language === 'ar' ? 'المستودع' : 'Warehouse',
+    finance: isArabic ? 'المالية' : 'Finance',
+    purchase: isArabic ? 'المشتريات' : 'Purchase',
+    warehouse: isArabic ? 'المستودع' : 'Warehouse',
   };
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/logo.png" 
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
-              className="h-10 w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] transition-transform hover:scale-110 duration-300"
-            />
-            <div>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
-                {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all duration-300"
-            >
-              <Link href="/">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <LanguageToggle />
-            <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.location.href = '/api/logout'}
-              className="hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 relative z-10">
-        <div className="max-w-4xl mx-auto animate-fade-in">
-          <h2 className="text-3xl font-bold mb-8 animate-slide-down">
-            {language === 'ar' ? 'معلومات الحساب' : 'Account Information'}
-          </h2>
-
+    <>
+      <SEO
+        title={isArabic ? "الملف الشخصي" : "Profile"}
+        description={isArabic ? "إدارة معلومات الملف الشخصي" : "Manage your profile information"}
+        noIndex={true}
+      />
+      <div className="min-h-screen bg-background" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-4xl">
           <div className="grid gap-6">
             {/* Personal Information Card */}
             <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 animate-fade-in" style={{ animationDelay: '100ms' }}>
@@ -267,25 +223,25 @@ export default function ClientProfilePage() {
                   <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
                     <User className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                   </div>
-                  {language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}
+                  {isArabic ? 'المعلومات الشخصية' : 'Personal Information'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                    <p className="text-sm text-muted-foreground mb-1">{language === 'ar' ? 'الاسم بالعربية' : 'Name (Arabic)'}</p>
-                    <p className="font-medium text-foreground dark:text-white">{user.nameAr}</p>
+                    <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'الاسم بالعربية' : 'Name (Arabic)'}</p>
+                    <p className="font-medium text-foreground dark:text-white">{user?.nameAr || '-'}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                    <p className="text-sm text-muted-foreground mb-1">{language === 'ar' ? 'الاسم بالإنجليزية' : 'Name (English)'}</p>
-                    <p className="font-medium text-foreground dark:text-white">{user.nameEn}</p>
+                    <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'الاسم بالإنجليزية' : 'Name (English)'}</p>
+                    <p className="font-medium text-foreground dark:text-white">{user?.nameEn || '-'}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10 md:col-span-2">
                     <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
                       <Mail className="h-4 w-4" />
-                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                      {isArabic ? 'البريد الإلكتروني' : 'Email'}
                     </p>
-                    <p className="font-medium text-foreground dark:text-white">{user.email}</p>
+                    <p className="font-medium text-foreground dark:text-white">{user?.email || '-'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -299,7 +255,7 @@ export default function ClientProfilePage() {
                     <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
                       <Building2 className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                     </div>
-                    {language === 'ar' ? 'معلومات العميل' : 'Client Information'}
+                    {isArabic ? 'معلومات العميل' : 'Client Information'}
                   </CardTitle>
                   {!isEditing ? (
                     <Button
@@ -310,7 +266,7 @@ export default function ClientProfilePage() {
                       data-testid="button-edit-profile"
                     >
                       <Edit2 className="h-4 w-4" />
-                      {language === 'ar' ? 'تعديل' : 'Edit'}
+                      {isArabic ? 'تعديل' : 'Edit'}
                     </Button>
                   ) : (
                     <div className="flex gap-2">
@@ -322,7 +278,7 @@ export default function ClientProfilePage() {
                         data-testid="button-cancel-edit"
                       >
                         <X className="h-4 w-4" />
-                        {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                        {isArabic ? 'إلغاء' : 'Cancel'}
                       </Button>
                       <Button
                         size="sm"
@@ -332,9 +288,9 @@ export default function ClientProfilePage() {
                         data-testid="button-save-profile"
                       >
                         <Save className="h-4 w-4" />
-                        {updateProfileMutation.isPending 
-                          ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...')
-                          : (language === 'ar' ? 'حفظ' : 'Save')
+                        {updateProfileMutation.isPending
+                          ? (isArabic ? 'جاري الحفظ...' : 'Saving...')
+                          : (isArabic ? 'حفظ' : 'Save')
                         }
                       </Button>
                     </div>
@@ -345,7 +301,7 @@ export default function ClientProfilePage() {
                 {isEditing ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="nameAr">{language === 'ar' ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</Label>
+                      <Label htmlFor="nameAr">{isArabic ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</Label>
                       <Input
                         id="nameAr"
                         {...form.register('nameAr')}
@@ -356,7 +312,7 @@ export default function ClientProfilePage() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="nameEn">{language === 'ar' ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</Label>
+                      <Label htmlFor="nameEn">{isArabic ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</Label>
                       <Input
                         id="nameEn"
                         {...form.register('nameEn')}
@@ -369,7 +325,7 @@ export default function ClientProfilePage() {
                     <div className="space-y-2">
                       <Label htmlFor="email" className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
-                        {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                        {isArabic ? 'البريد الإلكتروني' : 'Email'}
                       </Label>
                       <Input
                         id="email"
@@ -384,7 +340,7 @@ export default function ClientProfilePage() {
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                        {isArabic ? 'رقم الهاتف' : 'Phone Number'}
                       </Label>
                       <Input
                         id="phone"
@@ -397,26 +353,26 @@ export default function ClientProfilePage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                      <p className="text-sm text-muted-foreground mb-1">{language === 'ar' ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</p>
-                      <p className="font-medium text-foreground dark:text-white">{user.client?.nameAr || '-'}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.client?.nameAr || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                      <p className="text-sm text-muted-foreground mb-1">{language === 'ar' ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</p>
-                      <p className="font-medium text-foreground dark:text-white">{user.client?.nameEn || '-'}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.client?.nameEn || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
                         <Mail className="h-4 w-4" />
-                        {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                        {isArabic ? 'البريد الإلكتروني' : 'Email'}
                       </p>
-                      <p className="font-medium text-foreground dark:text-white">{user.client?.email || '-'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.client?.email || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                        {isArabic ? 'رقم الهاتف' : 'Phone Number'}
                       </p>
-                      <p className="font-medium text-foreground dark:text-white">{user.client?.phone || '-'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.client?.phone || '-'}</p>
                     </div>
                   </div>
                 )}
@@ -431,7 +387,7 @@ export default function ClientProfilePage() {
                     <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
                       <Building2 className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                     </div>
-                    {language === 'ar' ? 'الأقسام' : 'Departments'}
+                    {isArabic ? 'الأقسام' : 'Departments'}
                   </CardTitle>
                   <Button
                     variant="outline"
@@ -444,20 +400,20 @@ export default function ClientProfilePage() {
                     data-testid="button-add-department"
                   >
                     <Plus className="h-4 w-4" />
-                    {language === 'ar' ? 'إضافة قسم' : 'Add Department'}
+                    {isArabic ? 'إضافة قسم' : 'Add Department'}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 {departments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {language === 'ar' ? 'لا توجد أقسام مسجلة' : 'No departments registered'}
+                    {isArabic ? 'لا توجد أقسام مسجلة' : 'No departments registered'}
                   </div>
                 ) : (
                   <div className="grid gap-3">
                     {departments.map((dept) => (
-                      <div 
-                        key={dept.id} 
+                      <div
+                        key={dept.id}
                         className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10 hover-elevate"
                         data-testid={`department-card-${dept.id}`}
                       >
@@ -525,7 +481,7 @@ export default function ClientProfilePage() {
                     <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
                       <MapPin className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                     </div>
-                    {language === 'ar' ? 'المواقع' : 'Locations'}
+                    {isArabic ? 'المواقع' : 'Locations'}
                   </CardTitle>
                   <Button
                     variant="outline"
@@ -538,20 +494,20 @@ export default function ClientProfilePage() {
                     data-testid="button-add-location"
                   >
                     <Plus className="h-4 w-4" />
-                    {language === 'ar' ? 'إضافة موقع' : 'Add Location'}
+                    {isArabic ? 'إضافة موقع' : 'Add Location'}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 {locations.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {language === 'ar' ? 'لا توجد مواقع مسجلة' : 'No locations registered'}
+                    {isArabic ? 'لا توجد مواقع مسجلة' : 'No locations registered'}
                   </div>
                 ) : (
                   <div className="grid gap-3">
                     {locations.map((location) => (
-                      <div 
-                        key={location.id} 
+                      <div
+                        key={location.id}
                         className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10 hover-elevate"
                         data-testid={`location-card-${location.id}`}
                       >
@@ -559,16 +515,16 @@ export default function ClientProfilePage() {
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="font-medium text-foreground dark:text-white">
-                                {language === 'ar' ? location.nameAr : location.nameEn}
+                                {isArabic ? location.nameAr : location.nameEn}
                               </h4>
                               {location.isHeadquarters && (
                                 <Badge variant="default" data-testid={`badge-headquarters-${location.id}`}>
-                                  {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                                  {isArabic ? 'المقر الرئيسي' : 'Headquarters'}
                                 </Badge>
                               )}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {language === 'ar' ? location.addressAr : location.addressEn}
+                              {isArabic ? location.addressAr : location.addressEn}
                               {(location.city || location.country) && (
                                 <span>
                                   {', '}
@@ -613,8 +569,8 @@ export default function ClientProfilePage() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
 
       {/* Dialogs */}
       <DepartmentManagementDialog
@@ -631,6 +587,6 @@ export default function ClientProfilePage() {
         onSave={handleSaveLocation}
         isSaving={createLocationMutation.isPending || updateLocationMutation.isPending}
       />
-    </div>
+    </>
   );
 }
