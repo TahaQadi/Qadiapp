@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useState, useRef } from 'react';
 
 export interface CartItem {
   productId: string;
@@ -26,6 +27,116 @@ interface ShoppingCartProps {
   onSubmitOrder: () => void;
   onSaveTemplate: () => void;
   currency: string;
+}
+
+function CartItemCard({ 
+  item, 
+  currency, 
+  onUpdateQuantity, 
+  onRemoveItem 
+}: { 
+  item: CartItem; 
+  currency: string; 
+  onUpdateQuantity: (id: string, qty: number) => void; 
+  onRemoveItem: (id: string) => void; 
+}) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+  const isMobile = useIsMobile();
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const startX = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    isDragging.current = true;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX.current;
+    // Only allow left swipe (negative values)
+    if (diff < 0) {
+      setSwipeOffset(Math.max(diff, -100));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    if (swipeOffset < -60) {
+      onRemoveItem(item.productId);
+    }
+    setSwipeOffset(0);
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      data-testid={`cart-item-${item.sku}`}
+    >
+      {/* Delete background */}
+      <div className="absolute inset-0 bg-destructive flex items-center justify-end px-6">
+        <Trash2 className="h-5 w-5 text-destructive-foreground" />
+      </div>
+
+      {/* Main content */}
+      <div
+        className="flex gap-3 bg-background transition-transform duration-200"
+        style={{ transform: `translateX(${swipeOffset}px)` }}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">
+            {language === 'ar' ? item.nameAr : item.nameEn}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t('sku')}: {item.sku}
+          </p>
+          <p className="font-mono text-sm mt-1">
+            {currency} {item.price}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className={isMobile ? "h-11 w-11 active-elevate-2" : "h-8 w-8 active-elevate-2"}
+            onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
+            disabled={item.quantity <= 1}
+            data-testid={`button-decrease-${item.sku}`}
+          >
+            <Minus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
+          </Button>
+          <div className={isMobile ? "w-12 text-center font-medium text-base transition-all" : "w-10 text-center font-medium transition-all"} data-testid={`text-quantity-${item.sku}`}>
+            <span className="inline-block animate-scale-in">{item.quantity}</span>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className={isMobile ? "h-11 w-11" : "h-8 w-8"}
+            onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+            data-testid={`button-increase-${item.sku}`}
+          >
+            <Plus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
+          </Button>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className={isMobile ? "h-11 w-11 shrink-0" : "h-8 w-8 shrink-0"}
+          onClick={() => onRemoveItem(item.productId)}
+          data-testid={`button-remove-${item.sku}`}
+        >
+          <Trash2 className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function ShoppingCart({
@@ -82,58 +193,13 @@ export function ShoppingCart({
             <ScrollArea className="flex-1 px-6">
               <div className="space-y-4 pb-4">
                 {items.map((item) => (
-                  <div
+                  <CartItemCard
                     key={item.productId}
-                    className="flex gap-3"
-                    data-testid={`cart-item-${item.sku}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {language === 'ar' ? item.nameAr : item.nameEn}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t('sku')}: {item.sku}
-                      </p>
-                      <p className="font-mono text-sm mt-1">
-                        {currency} {item.price}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={isMobile ? "h-11 w-11 active-elevate-2" : "h-8 w-8 active-elevate-2"}
-                        onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        data-testid={`button-decrease-${item.sku}`}
-                      >
-                        <Minus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
-                      </Button>
-                      <div className={isMobile ? "w-12 text-center font-medium text-base transition-all" : "w-10 text-center font-medium transition-all"} data-testid={`text-quantity-${item.sku}`}>
-                        <span className="inline-block animate-scale-in">{item.quantity}</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={isMobile ? "h-11 w-11" : "h-8 w-8"}
-                        onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-                        data-testid={`button-increase-${item.sku}`}
-                      >
-                        <Plus className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
-                      </Button>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={isMobile ? "h-11 w-11 shrink-0" : "h-8 w-8 shrink-0"}
-                      onClick={() => onRemoveItem(item.productId)}
-                      data-testid={`button-remove-${item.sku}`}
-                    >
-                      <Trash2 className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
-                    </Button>
-                  </div>
+                    item={item}
+                    currency={currency}
+                    onUpdateQuantity={onUpdateQuantity}
+                    onRemoveItem={onRemoveItem}
+                  />
                 ))}
               </div>
             </ScrollArea>

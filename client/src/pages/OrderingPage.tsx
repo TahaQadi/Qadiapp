@@ -89,12 +89,16 @@ export default function OrderingPage() {
     handleClearCart
   } = useCartActions();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('');
+  const [customQuantity, setCustomQuantity] = useState(1);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<ProductWithLtaPrice | null>(null);
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLtaFilter, setSelectedLtaFilter] = useState<string>('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [scrolled, setScrolled] = useState(false);
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
@@ -387,13 +391,37 @@ export default function OrderingPage() {
     deleteTemplateMutation.mutate(id);
   };
 
+  const requestPriceMutation = useMutation({
+    mutationFn: async (data: { productIds: string[]; message: string }) => {
+      const res = await apiRequest('POST', '/api/client/price-request', data);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+      setPriceRequestList([]);
+      setPriceRequestMessage('');
+      setPriceRequestDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
   const handleAddToPriceRequest = useCallback((product: ProductWithLtaPrice) => {
     setPriceRequestList(prev => {
       // Check if already exists
       if (prev.some(item => item.productId === product.id)) {
         toast({
-          description: language === 'ar' 
-            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
+          description: language === 'ar'
+            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار'
             : 'Product already in price request list'
         });
         return prev;
@@ -430,8 +458,8 @@ export default function OrderingPage() {
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' 
-          ? 'يرجى إضافة منتجات لطلب السعر' 
+        description: language === 'ar'
+          ? 'يرجى إضافة منتجات لطلب السعر'
           : 'Please add products to request price'
       });
       return;
@@ -477,13 +505,15 @@ export default function OrderingPage() {
   const handleClearFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedCategory('all');
+    setSelectedCategories([]); // Clear multi-select
+    setPriceRange([0, 10000]); // Reset price range
   }, []);
 
   // Use memoized product filters - must be after all hooks
   const { filteredProducts, categories } = useProductFilters(
     products || [],
     searchQuery,
-    selectedCategory,
+    selectedCategory, // This will need to be adjusted for multi-select
     selectedLtaFilter
   );
 
@@ -534,8 +564,8 @@ export default function OrderingPage() {
     }
   };
 
-  const cartItemCount = useMemo(() => 
-    cart.reduce((sum, item) => sum + item.quantity, 0), 
+  const cartItemCount = useMemo(() =>
+    cart.reduce((sum, item) => sum + item.quantity, 0),
     [cart]
   );
 
@@ -582,7 +612,7 @@ export default function OrderingPage() {
     const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
     const [, setLocation] = useLocation();
     const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
-    const [customQuantity, setCustomQuantity] = useState(1);
+    // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
 
     const productSlug = product.nameEn?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
     const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
@@ -628,7 +658,7 @@ export default function OrderingPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
 
         {/* Product Image */}
-        <div 
+        <div
           className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
           onClick={handleCardClick}
         >
@@ -671,8 +701,8 @@ export default function OrderingPage() {
         {/* Product Info */}
         <CardContent className="flex-1 p-4 space-y-3 relative z-10">
           <div>
-            <h3 
-              className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary transition-colors cursor-pointer" 
+            <h3
+              className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary transition-colors cursor-pointer"
               data-testid={`text-product-name-${product.id}`}
               onClick={handleCardClick}
             >
@@ -882,8 +912,8 @@ export default function OrderingPage() {
                 e.stopPropagation();
                 handleAddToPriceRequest(product);
               }}
-              variant={inPriceRequest 
-                ? 'secondary' 
+              variant={inPriceRequest
+                ? 'secondary'
                 : 'outline'
               }
               className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
@@ -1120,8 +1150,8 @@ export default function OrderingPage() {
               {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
             </h2>
             <p className="text-muted-foreground">
-              {language === 'ar' 
-                ? 'إدارة طلباتك وسلة التسوق من مكان واحد' 
+              {language === 'ar'
+                ? 'إدارة طلباتك وسلة التسوق من مكان واحد'
                 : 'Manage your orders and shopping cart from one place'}
             </p>
           </div>
@@ -1139,8 +1169,8 @@ export default function OrderingPage() {
                       {language === 'ar' ? 'تصفح كتالوج المنتجات' : 'Browse Product Catalog'}
                     </h3>
                     <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                      {language === 'ar' 
-                        ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار' 
+                      {language === 'ar'
+                        ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار'
                         : 'Explore all available products and request price quotes'}
                     </p>
                   </div>
@@ -1258,8 +1288,8 @@ export default function OrderingPage() {
                               {language === 'ar' ? 'جميع الفئات' : 'All Categories'} ({products.filter(p => selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter).length})
                             </SelectItem>
                             {categories.filter(c => c !== 'all').map((category) => {
-                              const count = products.filter(p => 
-                                p.category === category && 
+                              const count = products.filter(p =>
+                                p.category === category &&
                                 (selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter)
                               ).length;
                               return (
@@ -1492,8 +1522,8 @@ export default function OrderingPage() {
                 <div className="text-center py-8">
                   <Heart className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
                   <p className="text-sm text-muted-foreground mb-4">
-                    {language === 'ar' 
-                      ? 'قائمتك فارغة. أضف منتجات بدون أسعار من صفحة المنتجات أدناه.' 
+                    {language === 'ar'
+                      ? 'قائمتك فارغة. أضف منتجات بدون أسعار من صفحة المنتجات أدناه.'
                       : 'Your list is empty. Add products without prices from the products page below.'}
                   </p>
                   <Button onClick={() => setPriceRequestDialogOpen(false)}>
@@ -1531,8 +1561,8 @@ export default function OrderingPage() {
                     <Textarea
                       value={priceRequestMessage}
                       onChange={(e) => setPriceRequestMessage(e.target.value)}
-                      placeholder={language === 'ar' 
-                        ? 'أضف أي ملاحظات أو تفاصيل إضافية...' 
+                      placeholder={language === 'ar'
+                        ? 'أضف أي ملاحظات أو تفاصيل إضافية...'
                         : 'Add any notes or additional details...'}
                       rows={4}
                     />
@@ -1541,16 +1571,16 @@ export default function OrderingPage() {
               )}
             </div>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setPriceRequestDialogOpen(false)}
                 data-testid="button-close-price-request-dialog"
               >
                 {language === 'ar' ? 'إغلاق' : 'Close'}
               </Button>
               {priceRequestList.length > 0 && (
-                <Button 
-                  onClick={handleSubmitPriceRequest} 
+                <Button
+                  onClick={handleSubmitPriceRequest}
                   disabled={requestPriceMutation.isPending}
                   data-testid="button-send-price-request"
                 >
@@ -1559,7 +1589,7 @@ export default function OrderingPage() {
                   ) : (
                     <Send className="h-4 w-4 me-2" />
                   )}
-                  {requestPriceMutation.isPending 
+                  {requestPriceMutation.isPending
                     ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
                     : (language === 'ar' ? 'إرسال الطلب' : 'Send Request')
                   }
