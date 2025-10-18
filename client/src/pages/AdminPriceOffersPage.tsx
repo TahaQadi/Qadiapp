@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -7,11 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Download, FileText, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Download, FileText, Eye, CheckCircle, XCircle, Clock, Trash2, BarChart3, CalendarClock, Ban } from 'lucide-react';
 import { Link } from 'wouter';
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface PriceOffer {
   id: string;
@@ -47,10 +52,23 @@ interface LTA {
 
 export default function AdminPriceOffersPage() {
   const { language } = useLanguage();
+  const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [selectedDeleteFilters, setSelectedDeleteFilters] = useState<{
+    status: string[];
+    expired: boolean;
+  }>({ status: [], expired: false });
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<PriceOffer | null>(null);
+  const [extendDays, setExtendDays] = useState<number>(30);
 
   const { data: offers = [], isLoading } = useQuery<PriceOffer[]>({
     queryKey: ['/api/admin/price-offers'],
+  });
+
+  const { data: analytics } = useQuery<any>({
+    queryKey: ['/api/admin/price-offers/analytics'],
   });
 
   const { data: clients = [] } = useQuery<Client[]>({
@@ -59,6 +77,73 @@ export default function AdminPriceOffersPage() {
 
   const { data: ltas = [] } = useQuery<LTA[]>({
     queryKey: ['/api/admin/ltas'],
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (filters: any) => {
+      const res = await apiRequest('POST', '/api/admin/price-offers/bulk-delete', { filters });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted Successfully',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers/analytics'] });
+      setBulkDeleteDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل الحذف' : 'Delete failed'),
+      });
+    },
+  });
+
+  const extendMutation = useMutation({
+    mutationFn: async ({ id, days }: { id: string; days: number }) => {
+      const res = await apiRequest('PATCH', `/api/admin/price-offers/${id}/extend`, { days });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم التمديد' : 'Extended',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+      setExtendDialogOpen(false);
+      setSelectedOffer(null);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('PATCH', `/api/admin/price-offers/${id}/revoke`, {});
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم الإلغاء' : 'Revoked',
+        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
   });
 
   const getClientName = (clientId: string) => {

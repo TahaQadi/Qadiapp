@@ -1123,7 +1123,7 @@ export class MemStorage implements IStorage {
   // Notifications
   async createNotification(data: {
     clientId: string | null; // Allow null for system-wide notifications
-    type: 'order_created' | 'order_status_changed' | 'system';
+    type: 'order_created' | 'order_status_changed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent';
     titleEn: string;
     titleAr: string;
     messageEn: string;
@@ -1269,6 +1269,52 @@ export class MemStorage implements IStorage {
       .execute();
 
     return this.getPriceOffer(id);
+  }
+
+  async updatePriceOfferValidity(id: string, validUntil: Date): Promise<PriceOffer | null> {
+    await this.db
+      .update(priceOffers)
+      .set({
+        validUntil,
+        updatedAt: new Date()
+      })
+      .where(eq(priceOffers.id, id))
+      .execute();
+
+    return this.getPriceOffer(id);
+  }
+
+  async deletePriceOffer(id: string): Promise<void> {
+    await this.db
+      .delete(priceOffers)
+      .where(eq(priceOffers.id, id))
+      .execute();
+  }
+
+  async updateExpiredPriceOffers(): Promise<number> {
+    const now = new Date();
+    
+    // Get all offers that are expired but not yet marked as such
+    const allOffers = await this.getAllPriceOffers();
+    const expiredOffers = allOffers.filter(offer => 
+      new Date(offer.validUntil) < now && 
+      offer.status !== 'accepted' && 
+      offer.status !== 'rejected' &&
+      offer.status !== 'expired' &&
+      offer.status !== 'revoked'
+    );
+
+    // Update each expired offer
+    const updatePromises = expiredOffers.map(offer =>
+      this.db
+        .update(priceOffers)
+        .set({ status: 'expired', updatedAt: new Date() })
+        .where(eq(priceOffers.id, offer.id))
+        .execute()
+    );
+
+    await Promise.all(updatePromises);
+    return expiredOffers.length;
   }
 
   // Password Reset Tokens

@@ -2201,20 +2201,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       validUntil.setDate(validUntil.getDate() + validityDays);
 
       console.log('Generating PDF for offer:', offerNumber);
-      const pdfBuffer = await PDFGenerator.generatePriceOffer({
-        offerId: offerNumber,
+      
+      // Get active price offer template
+      const priceOfferTemplates = await TemplateStorage.getTemplates('price_offer');
+      const activeTemplate = priceOfferTemplates.find(t => t.isActive);
+      
+      if (!activeTemplate) {
+        return res.status(500).json({
+          message: "No active price offer template found. Please create one in Templates.",
+          messageAr: "لم يتم العثور على قالب عرض سعر نشط. يرجى إنشاء واحد في القوالب."
+        });
+      }
+
+      // Prepare variables for template with company info
+      const templateVariables = {
+        offerNumber,
         offerDate: offerDate.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
         clientNameEn: client.nameEn,
         clientNameAr: client.nameAr,
-        clientEmail: client.email || undefined,
-        clientPhone: client.phone || undefined,
+        clientEmail: client.email || '',
+        clientPhone: client.phone || '',
         ltaNameEn: lta.nameEn,
         ltaNameAr: lta.nameAr,
-        items,
+        ltaNumber: lta.referenceNumber || 'N/A',
+        items: items,
         validUntil: validUntil.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
-        notes: notes || undefined,
-        language: language as 'en' | 'ar'
-      });
+        notes: notes || '',
+        totalItems: items.length,
+        generatedBy: req.client.nameEn,
+        generatedDate: new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US'),
+        // Company information
+        companyNameEn: 'Al Qadi Trading Company',
+        companyNameAr: 'شركة القاضي التجارية',
+        companyAddressEn: 'Riyadh, Kingdom of Saudi Arabia',
+        companyAddressAr: 'الرياض، المملكة العربية السعودية',
+        companyPhone: '+966 XX XXX XXXX',
+        companyEmail: 'info@alqadi.com',
+        companyWebsite: 'www.alqadi.com'
+      };
+
+      // Generate PDF using template system with RTL support
+      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(
+        activeTemplate,
+        templateVariables,
+        language as 'en' | 'ar' | 'both'
+      );
 
       console.log('PDF generated, buffer size:', pdfBuffer.length);
 
@@ -2324,6 +2355,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all price offers (admin only)
   app.get('/api/admin/price-offers', requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
+      // Update expired offers before fetching
+      await storage.updateExpiredPriceOffers();
+      
       const offers = await storage.getAllPriceOffers();
       res.json(offers);
     } catch (error) {
@@ -2337,6 +2371,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get client's price offers
   app.get('/api/client/price-offers', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      // Update expired offers before fetching
+      await storage.updateExpiredPriceOffers();
+      
       const offers = await storage.getPriceOffersByClient(req.client.id);
       res.json(offers);
     } catch (error) {
@@ -2410,6 +2447,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء تحديث حالة عرض السعر"
+      });
+    }
+  });
+
+  // Bulk delete price offers (admin only)
+  app.post('/api/admin/price-offers/bulk-delete', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { filters } = req.body;
+      // filters can include: status, dateRange, clientId, ltaId, expired
+      
+      const allOffers = await storage.getAllPriceOffers();
+      let offersToDelete = allOffers;
+
+      // Apply filters
+      if (filters.status && filters.status.length > 0) {
+        offersToDelete = offersToDelete.filter(o => filters.status.includes(o.status));
+      }
+
+      if (filters.clientId) {
+        offersToDelete = offersToDelete.filter(o => o.clientId === filters.clientId);
+      }
+
+      if (filters.ltaId) {
+        offersToDelete = offersToDelete.filter(o => o.ltaId === filters.ltaId);
+      }
+
+      if (filters.expired) {
+        const now = new Date();
+        offersToDelete = offersToDelete.filter(o => new Date(o.validUntil) < now);
+      }
+
+      if (filters.startDate) {
+        offersToDelete = offersToDelete.filter(o => new Date(o.createdAt) >= new Date(filters.startDate));
+      }
+
+      if (filters.endDate) {
+        offersToDelete = offersToDelete.filter(o => new Date(o.createdAt) <= new Date(filters.endDate));
+      }
+
+      // Delete filtered offers
+      const deletePromises = offersToDelete.map(offer => storage.deletePriceOffer(offer.id));
+      await Promise.all(deletePromises);
+
+      res.json({
+        message: `Successfully deleted ${offersToDelete.length} price offers`,
+        messageAr: `تم حذف ${offersToDelete.length} عرض سعر بنجاح`,
+        count: offersToDelete.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء حذف عروض الأسعار"
+      });
+    }
+  });
+
+  // Get price offer analytics (admin only)
+  app.get('/api/admin/price-offers/analytics', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      // Update expired offers before calculating analytics
+      await storage.updateExpiredPriceOffers();
+      
+      const offers = await storage.getAllPriceOffers();
+      const now = new Date();
+
+      const analytics = {
+        total: offers.length,
+        byStatus: {
+          sent: offers.filter(o => o.status === 'sent').length,
+          viewed: offers.filter(o => o.status === 'viewed').length,
+          accepted: offers.filter(o => o.status === 'accepted').length,
+          rejected: offers.filter(o => o.status === 'rejected').length,
+          expired: offers.filter(o => new Date(o.validUntil) < now && o.status !== 'accepted' && o.status !== 'rejected').length
+        },
+        acceptanceRate: offers.filter(o => o.respondedAt).length > 0
+          ? ((offers.filter(o => o.status === 'accepted').length / offers.filter(o => o.respondedAt).length) * 100).toFixed(2)
+          : 0,
+        pending: offers.filter(o => !o.respondedAt && new Date(o.validUntil) >= now).length,
+        averageResponseTime: calculateAverageResponseTime(offers),
+        recentOffers: offers.slice(-10).reverse()
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء جلب تحليلات عروض الأسعار"
+      });
+    }
+  });
+
+  // Extend price offer validity (admin only)
+  app.patch('/api/admin/price-offers/:id/extend', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { days } = req.body;
+      const offer = await storage.getPriceOffer(req.params.id);
+
+      if (!offer) {
+        return res.status(404).json({
+          message: "Price offer not found",
+          messageAr: "عرض السعر غير موجود"
+        });
+      }
+
+      // Only extend if not yet accepted/rejected
+      if (offer.status === 'accepted' || offer.status === 'rejected') {
+        return res.status(400).json({
+          message: "Cannot extend an offer that has been accepted or rejected",
+          messageAr: "لا يمكن تمديد عرض تم قبوله أو رفضه"
+        });
+      }
+
+      const newValidUntil = new Date(offer.validUntil);
+      newValidUntil.setDate(newValidUntil.getDate() + days);
+
+      const updatedOffer = await storage.updatePriceOfferValidity(req.params.id, newValidUntil);
+
+      res.json({
+        message: `Offer validity extended by ${days} days`,
+        messageAr: `تم تمديد صلاحية العرض بمقدار ${days} يوم`,
+        offer: updatedOffer
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء تمديد صلاحية العرض"
+      });
+    }
+  });
+
+  // Helper function to calculate average response time
+  function calculateAverageResponseTime(offers: any[]): string {
+    const respondedOffers = offers.filter(o => o.respondedAt && o.sentAt);
+    if (respondedOffers.length === 0) return '0';
+    
+    const totalTime = respondedOffers.reduce((sum, offer) => {
+      const sent = new Date(offer.sentAt).getTime();
+      const responded = new Date(offer.respondedAt).getTime();
+      return sum + (responded - sent);
+    }, 0);
+    
+    const avgMilliseconds = totalTime / respondedOffers.length;
+    const avgDays = (avgMilliseconds / (1000 * 60 * 60 * 24)).toFixed(1);
+    return avgDays;
+  }
+
+  // Revoke price offer (admin only)
+  app.patch('/api/admin/price-offers/:id/revoke', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const offer = await storage.getPriceOffer(req.params.id);
+
+      if (!offer) {
+        return res.status(404).json({
+          message: "Price offer not found",
+          messageAr: "عرض السعر غير موجود"
+        });
+      }
+
+      if (offer.status === 'accepted') {
+        return res.status(400).json({
+          message: "Cannot revoke an accepted offer",
+          messageAr: "لا يمكن إلغاء عرض تم قبوله"
+        });
+      }
+
+      const updatedOffer = await storage.updatePriceOfferStatus(req.params.id, 'revoked', {
+        revokedAt: new Date(),
+        revokedBy: req.client.id
+      });
+
+      res.json({
+        message: "Price offer revoked successfully",
+        messageAr: "تم إلغاء عرض السعر بنجاح",
+        offer: updatedOffer
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء إلغاء العرض"
       });
     }
   });
