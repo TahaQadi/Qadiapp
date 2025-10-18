@@ -1,675 +1,182 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useLanguage } from '@/components/LanguageProvider';
-import { safeJsonParse } from '@/lib/safeJson';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LanguageToggle } from '@/components/LanguageToggle';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Check, Clock, Package, User, Mail, Phone, Archive, Download, FileText } from 'lucide-react';
-import { Link } from 'wouter';
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { formatDistanceToNow } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
-import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
-import { BatchPdfGenerator } from '@/components/BatchPdfGenerator';
-
-interface Notification {
-  id: string;
-  type: string;
-  titleEn: string;
-  titleAr: string;
-  messageEn: string;
-  messageAr: string;
-  isRead: boolean;
-  metadata: string | null;
-  pdfFileName?: string | null;
-  createdAt: string;
-}
-
-interface PriceRequestMetadata {
-  clientId: string;
-  clientNameEn: string;
-  clientNameAr: string;
-  productIds: string[];
-  products: Array<{
-    id: string;
-    sku: string;
-    nameEn: string;
-    nameAr: string;
-  }>;
-  message?: string;
-}
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/components/LanguageProvider";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileText, Eye, Clock, CheckCircle, Package } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { formatDateLocalized } from "@/lib/dateUtils";
+import type { PriceRequest, Client, Lta } from "@shared/schema";
 
 export default function AdminPriceRequestsPage() {
   const { language } = useLanguage();
-  const { toast } = useToast();
-  const [selectedRequest, setSelectedRequest] = useState<Notification | null>(null);
-  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [contractPrice, setContractPrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [selectedLtaId, setSelectedLtaId] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
-  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-  const [selectedRequestForPdf, setSelectedRequestForPdf] = useState<Notification | null>(null);
-  const [pdfLtaId, setPdfLtaId] = useState('');
-  const [pdfValidityDays, setPdfValidityDays] = useState('30');
-  const [pdfNotes, setPdfNotes] = useState('');
-  const [selectedPriceList, setSelectedPriceList] = useState<any>(null);
-  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
-  const [showBatchGenerator, setShowBatchGenerator] = useState(false);
-  const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
-  const [bulkSelectedLtaId, setBulkSelectedLtaId] = useState('');
-  const [bulkPrices, setBulkPrices] = useState<Record<string, { price: string; currency: string }>>({});
-  const [bulkAssignRequest, setBulkAssignRequest] = useState<Notification | null>(null);
+  const [, setLocation] = useLocation();
+  const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
-
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: ['/api/client/notifications'],
+  const { data: requests = [], isLoading } = useQuery<PriceRequest[]>({
+    queryKey: ["/api/admin/price-requests"],
   });
 
-  const { data: ltas = [] } = useQuery<any[]>({
-    queryKey: ['/api/admin/ltas'],
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
   });
 
-  const { data: ltaAssignments } = useQuery<{
-    ltaClients: Array<{ ltaId: string; clientId: string }>;
-    ltaProducts: Array<{ ltaId: string; productId: string; contractPrice: string; currency: string }>;
-  }>({
-    queryKey: ['/api/admin/lta-assignments'],
+  const { data: ltas = [] } = useQuery<Lta[]>({
+    queryKey: ["/api/ltas"],
   });
 
-  const priceRequests = notifications.filter(n => n.type === 'price_request');
+  const getClientName = (clientId: string) => {
+    const client = clients.find((c) => c.id === clientId);
+    return client ? (language === "ar" ? client.nameAr : client.nameEn) : clientId;
+  };
 
-  // Check if a product has been assigned to an LTA that the client has access to
-  const isProductAssignedToLta = (productId: string, clientId: string) => {
-    if (!ltaAssignments) return false;
+  const getLtaName = (ltaId: string) => {
+    const lta = ltas.find((l) => l.id === ltaId);
+    return lta ? (language === "ar" ? lta.nameAr : lta.nameEn) : ltaId;
+  };
 
-    // Find all LTAs that the client has access to
-    const clientLtaIds = ltaAssignments.ltaClients
-      .filter(lc => lc.clientId === clientId)
-      .map(lc => lc.ltaId);
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; labelAr: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+      pending: { label: "Pending", labelAr: "قيد الانتظار", variant: "default" },
+      processed: { label: "Processed", labelAr: "تمت المعالجة", variant: "secondary" },
+      cancelled: { label: "Cancelled", labelAr: "ملغي", variant: "destructive" },
+    };
 
-    // Check if the product is assigned to any of those LTAs
-    return ltaAssignments.ltaProducts.some(lp => 
-      lp.productId === productId && clientLtaIds.includes(lp.ltaId)
+    const config = statusConfig[status] || statusConfig.pending;
+    return (
+      <Badge variant={config.variant}>
+        {language === "ar" ? config.labelAr : config.label}
+      </Badge>
     );
   };
 
-  // Helper function to parse metadata safely
-  const parseMetadata = (metadataStr: string | null): PriceRequestMetadata => {
-    if (!metadataStr) {
-      return { 
-        clientId: '', 
-        clientNameEn: '', 
-        clientNameAr: '', 
-        productIds: [], 
-        products: [] 
-      };
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case "processed":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "cancelled":
+        return <FileText className="h-4 w-4 text-red-600" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />;
     }
-
-    return typeof metadataStr === 'string' 
-      ? safeJsonParse(metadataStr, { 
-          clientId: '', 
-          clientNameEn: '', 
-          clientNameAr: '', 
-          productIds: [], 
-          products: [] 
-        })
-      : metadataStr;
   };
 
-  // Check if all products in a request have been assigned
-  const isRequestCompleted = (request: Notification) => {
-    const metadata = parseMetadata(request.metadata);
-
-    if (!metadata.products || metadata.products.length === 0) return false;
-
-    return metadata.products.every(product => isProductAssignedToLta(product.id, metadata.clientId));
-  };
-
-  // Filter requests based on status
-  const filteredRequests = priceRequests.filter(request => {
-    if (statusFilter === 'all') return true;
-    const completed = isRequestCompleted(request);
-    return statusFilter === 'completed' ? completed : !completed;
-  });
-
-  const markAsReadMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest('PATCH', `/api/client/notifications/${id}/read`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-    },
-  });
-
-  const archiveRequestMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest('DELETE', `/api/client/notifications/${id}`);
-    },
-    onSuccess: () => {
-      toast({
-        title: language === 'ar' ? 'تم الأرشفة' : 'Archived',
-        description: language === 'ar' ? 'تم أرشفة الطلب بنجاح' : 'Request archived successfully',
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-    },
-  });
-
-  const assignProductMutation = useMutation({
-    mutationFn: async (data: { ltaId: string; productId: string; contractPrice: string; currency: string; clientId?: string }) => {
-      const res = await apiRequest('POST', `/api/admin/ltas/${data.ltaId}/products`, {
-        productId: data.productId,
-        contractPrice: data.contractPrice,
-        currency: data.currency,
-        clientId: data.clientId,
-      });
-      return res.json();
-    },
-    onSuccess: (data, variables) => {
-      toast({
-        title: language === 'ar' ? 'تم إضافة المنتج' : 'Product Added',
-        description: language === 'ar' ? 'تم إضافة المنتج إلى الاتفاقية بنجاح' : 'Product added to LTA successfully',
-      });
-      setPriceDialogOpen(false);
-      setContractPrice('');
-      setSelectedProduct(null);
-      setSelectedLtaId('');
-      setSelectedRequest(null);
-      // Refresh the price requests list and LTA assignments
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/lta-assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/products/all'] });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message,
-      });
-    },
-  });
-
-  const bulkAssignMutation = useMutation({
-    mutationFn: async (data: { ltaId: string; products: Array<{ sku: string; contractPrice: string; currency: string }>; clientId: string }) => {
-      const res = await apiRequest('POST', `/api/admin/ltas/${data.ltaId}/products/bulk`, {
-        products: data.products,
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: language === 'ar' ? 'تم التعيين' : 'Assigned Successfully',
-        description: language === 'ar' 
-          ? `تم تعيين ${data.success} منتج بنجاح` 
-          : `Successfully assigned ${data.success} products`,
-      });
-      setBulkAssignDialogOpen(false);
-      setBulkSelectedLtaId('');
-      setBulkPrices({});
-      setBulkAssignRequest(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/lta-assignments'] });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message,
-      });
-    },
-  });
-
-  const generatePdfMutation = useMutation({
-    mutationFn: async (data: { notificationId: string; ltaId: string; validityDays: number; notes?: string }) => {
-      const res = await apiRequest('POST', `/api/admin/price-requests/${data.notificationId}/generate-pdf`, {
-        language,
-        ltaId: data.ltaId,
-        validityDays: data.validityDays,
-        notes: data.notes,
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: language === 'ar' ? 'تم إنشاء PDF' : 'PDF Generated',
-        description: data.message || (language === 'ar' ? 'تم إنشاء مستند عرض السعر بنجاح' : 'Price offer document generated successfully'),
-      });
-      setPdfDialogOpen(false);
-      setPdfLtaId('');
-      setPdfValidityDays('30');
-      setPdfNotes('');
-      setSelectedRequestForPdf(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message || (language === 'ar' ? 'فشل إنشاء PDF' : 'Failed to generate PDF'),
-      });
-    },
-  });
-
-  const handleAssignPrice = (product: any, request: Notification) => {
-    setSelectedProduct(product);
+  const handleViewRequest = (request: PriceRequest) => {
     setSelectedRequest(request);
-    setPriceDialogOpen(true);
+    setViewDialogOpen(true);
   };
 
-  const handleSubmitPrice = () => {
-    if (!selectedProduct || !selectedLtaId || !contractPrice) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'يرجى ملء جميع الحقول' : 'Please fill all fields',
-      });
-      return;
-    }
-
-    const metadata = selectedRequest ? parseMetadata(selectedRequest.metadata) : null;
-
-    assignProductMutation.mutate({
-      ltaId: selectedLtaId,
-      productId: selectedProduct.id,
-      contractPrice,
-      currency,
-      clientId: metadata.clientId,
-    });
+  const handleCreateOffer = (request: PriceRequest) => {
+    setLocation(`/admin/price-offers/create?requestId=${request.id}`);
   };
-
-  const handleBulkAssign = (request: Notification) => {
-    const metadata = parseMetadata(request.metadata);
-    setBulkAssignRequest(request);
-    
-    // Initialize prices object
-    const initialPrices: Record<string, { price: string; currency: string }> = {};
-    metadata.products.forEach((product: any) => {
-      initialPrices[product.id] = { price: '', currency: 'USD' };
-    });
-    setBulkPrices(initialPrices);
-    setBulkAssignDialogOpen(true);
-  };
-
-  const handleBulkPriceChange = (productId: string, field: 'price' | 'currency', value: string) => {
-    setBulkPrices(prev => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        [field]: value,
-      }
-    }));
-  };
-
-  const handleSubmitBulkAssign = () => {
-    if (!bulkSelectedLtaId) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'يرجى اختيار اتفاقية' : 'Please select an LTA',
-      });
-      return;
-    }
-
-    const metadata = bulkAssignRequest ? parseMetadata(bulkAssignRequest.metadata) : null;
-    if (!metadata) return;
-
-    // Validate all prices are filled
-    const products = metadata.products.map((product: any) => {
-      const priceData = bulkPrices[product.id];
-      if (!priceData || !priceData.price) {
-        throw new Error(`Price missing for ${product.sku}`);
-      }
-      return {
-        sku: product.sku,
-        contractPrice: priceData.price,
-        currency: priceData.currency,
-      };
-    });
-
-    bulkAssignMutation.mutate({
-      ltaId: bulkSelectedLtaId,
-      products,
-      clientId: metadata.clientId,
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return formatDistanceToNow(date, {
-      addSuffix: true,
-      locale: language === 'ar' ? ar : enUS,
-    });
-  };
-
-  const handleSelectForBatch = (requestId: string) => {
-    setSelectedForBatch(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(requestId)) {
-        newSet.delete(requestId);
-      } else {
-        newSet.add(requestId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleBatchGeneratePdf = () => {
-    setShowBatchGenerator(true);
-  };
-
-  const handleCloseBatchGenerator = () => {
-    setShowBatchGenerator(false);
-    setSelectedForBatch(new Set()); // Clear selection after closing
-  };
-
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300">
-              <Link href="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'طلبات عروض الأسعار' : 'Price Requests'}
-              </p>
-            </div>
-            {priceRequests.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{priceRequests.length}</Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-6">
-        {/* Filter Tabs */}
-        {priceRequests.length > 0 && (
-          <div className="flex gap-3 mb-6">
-            <Button
-              variant={statusFilter === 'all' ? 'default' : 'outline'}
-              onClick={() => setStatusFilter('all')}
-              className="gap-2"
-            >
-              {language === 'ar' ? 'الكل' : 'All'}
-              <Badge variant={statusFilter === 'all' ? 'secondary' : 'outline'}>
-                {priceRequests.length}
-              </Badge>
-            </Button>
-            <Button
-              variant={statusFilter === 'pending' ? 'default' : 'outline'}
-              onClick={() => setStatusFilter('pending')}
-              className="gap-2"
-            >
-              {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
-              <Badge variant={statusFilter === 'pending' ? 'secondary' : 'outline'}>
-                {priceRequests.filter(r => !isRequestCompleted(r)).length}
-              </Badge>
-            </Button>
-            <Button
-              variant={statusFilter === 'completed' ? 'default' : 'outline'}
-              onClick={() => setStatusFilter('completed')}
-              className="gap-2"
-            >
-              {language === 'ar' ? 'مكتمل' : 'Completed'}
-              <Badge variant={statusFilter === 'completed' ? 'secondary' : 'outline'}>
-                {priceRequests.filter(r => isRequestCompleted(r)).length}
-              </Badge>
-            </Button>
-          </div>
-        )}
-
-        {/* Batch Actions Toolbar */}
-        {priceRequests.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">{language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}</h1>
-              <p className="text-muted-foreground">
-                {language === 'ar' ? 'إدارة طلبات الأسعار من العملاء' : 'Manage client price requests'}
-              </p>
-            </div>
-            {selectedForBatch.size > 0 && (
-              <Button onClick={() => setShowBatchGenerator(true)} variant="default">
-                <FileText className="h-4 w-4 mr-2" />
-                {language === 'ar' ? `إنشاء PDF (${selectedForBatch.size})` : `Generate PDFs (${selectedForBatch.size})`}
-              </Button>
-            )}
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{language === "ar" ? "طلبات الأسعار" : "Price Requests"}</h1>
+            <p className="text-muted-foreground mt-1">
+              {language === "ar" ? "إدارة طلبات الأسعار من العملاء" : "Manage client price requests"}
             </p>
           </div>
-        ) : filteredRequests.length === 0 ? (
-          <Card className="p-16 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <Package className="h-20 w-20 text-muted-foreground opacity-50" />
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold">
-                  {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  {statusFilter === 'all' 
-                    ? (language === 'ar' 
-                      ? 'لم يتم استلام أي طلبات لعروض الأسعار بعد'
-                      : 'No price requests have been received yet')
-                    : (language === 'ar'
-                      ? `لا توجد طلبات ${statusFilter === 'pending' ? 'قيد الانتظار' : 'مكتملة'}`
-                      : `No ${statusFilter} requests`)}
-                </p>
-              </div>
-            </div>
+          <Button variant="outline" asChild>
+            <Link href="/admin/price-offers">
+              <FileText className="h-4 w-4 mr-2" />
+              {language === "ar" ? "عروض الأسعار" : "Price Offers"}
+            </Link>
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="h-24 bg-muted"></CardHeader>
+                <CardContent className="h-32 bg-muted/50"></CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : requests.length === 0 ? (
+          <Card className="p-12 text-center border-dashed">
+            <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-muted-foreground">
+              {language === "ar" ? "لا توجد طلبات أسعار" : "No price requests"}
+            </p>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {filteredRequests.map((request) => {
-              const metadata = parseMetadata(request.metadata);
-              const completed = isRequestCompleted(request);
-              const isSelected = selectedForBatch.has(request.id);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {requests.map((request) => {
+              const products = typeof request.products === "string" ? JSON.parse(request.products) : request.products;
+              const isPending = request.status === "pending";
 
               return (
-                <Card key={request.id} className={!request.isRead && !completed ? 'border-primary' : completed ? 'border-green-500/30' : ''}>
+                <Card key={request.id} className="hover-elevate">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="flex items-center gap-2">
-                          {!request.isRead && !completed && (
-                            <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
-                          )}
-                          {language === 'ar' ? metadata.clientNameAr : metadata.clientNameEn}
-                          {completed && (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
-                              <Check className="h-3 w-3 me-1" />
-                              {language === 'ar' ? 'مكتمل' : 'Completed'}
-                            </Badge>
-                          )}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {getStatusIcon(request.status)}
+                          {request.requestNumber}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          <Clock className="inline h-3 w-3 mr-1" />
-                          {formatDate(request.createdAt)}
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {getClientName(request.clientId)}
                         </p>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {!completed && metadata.products.length > 1 && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => handleBulkAssign(request)}
-                            className="gap-2"
-                          >
-                            <Package className="h-4 w-4" />
-                            <span className="hidden sm:inline">
-                              {language === 'ar' ? 'تعيين الكل' : 'Assign All'}
-                            </span>
-                          </Button>
-                        )}
-                        {completed && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRequestForPdf(request);
-                                setPdfDialogOpen(true);
-                              }}
-                              className="gap-2"
-                            >
-                              <Package className="h-4 w-4" />
-                              <span className="hidden sm:inline">
-                                {language === 'ar' ? 'إنشاء PDF' : 'Generate PDF'}
-                              </span>
-                            </Button>
-                            {request.pdfFileName && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  window.open(`/api/pdf/download/${request.pdfFileName}`, '_blank');
-                                }}
-                                className="gap-2"
-                              >
-                                <Download className="h-4 w-4" />
-                                <span className="hidden sm:inline">
-                                  {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
-                                </span>
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        {!request.isRead && !completed && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => markAsReadMutation.mutate(request.id)}
-                            className="gap-2"
-                          >
-                            <Check className="h-4 w-4" />
-                            <span className="hidden sm:inline">
-                              {language === 'ar' ? 'وضع علامة كمقروء' : 'Mark as Read'}
-                            </span>
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => archiveRequestMutation.mutate(request.id)}
-                          disabled={archiveRequestMutation.isPending}
-                          className="gap-2"
-                        >
-                          <Archive className="h-4 w-4" />
-                          <span className="hidden sm:inline">
-                            {language === 'ar' ? 'أرشفة' : 'Archive'}
-                          </span>
-                        </Button>
-                        {completed && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleSelectForBatch(request.id)}
-                            className={`gap-2 ${isSelected ? 'bg-primary/10' : ''}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleSelectForBatch(request.id)}
-                              className="h-4 w-4"
-                            />
-                            <span className="hidden sm:inline">
-                              {language === 'ar' ? 'تحديد للدُفعات' : 'Select for Batch'}
-                            </span>
-                          </Button>
-                        )}
-                      </div>
+                      {getStatusBadge(request.status)}
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {metadata.message && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <p className="text-sm">{metadata.message}</p>
-                        </div>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {language === "ar" ? "الاتفاقية" : "LTA"}
+                      </span>
+                      <span className="font-medium text-right flex-1 ml-2 truncate">
+                        {getLtaName(request.ltaId)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {language === "ar" ? "عدد المنتجات" : "Products"}
+                      </span>
+                      <span className="font-medium">{products.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {language === "ar" ? "التاريخ" : "Date"}
+                      </span>
+                      <span className="font-medium">
+                        {formatDateLocalized(new Date(request.requestedAt), language)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewRequest(request)}
+                        data-testid={`button-view-${request.id}`}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        {language === "ar" ? "عرض" : "View"}
+                      </Button>
+                      {isPending && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleCreateOffer(request)}
+                          data-testid={`button-create-offer-${request.id}`}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          {language === "ar" ? "إنشاء عرض" : "Create Offer"}
+                        </Button>
                       )}
-
-                      <div>
-                        <h4 className="font-semibold mb-3">
-                          {language === 'ar' ? 'المنتجات المطلوبة:' : 'Requested Products:'}
-                        </h4>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                              <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                              <TableHead className="text-end">{language === 'ar' ? 'إجراء' : 'Action'}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {metadata.products.map((product) => {
-                              const hasPrice = isProductAssignedToLta(product.id, metadata.clientId);
-                              return (
-                                <TableRow key={product.id}>
-                                  <TableCell className="font-mono">{product.sku}</TableCell>
-                                  <TableCell>
-                                    {language === 'ar' ? product.nameAr : product.nameEn}
-                                  </TableCell>
-                                  <TableCell className="text-end">
-                                    {hasPrice ? (
-                                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
-                                        <Check className="h-3 w-3 me-1" />
-                                        {language === 'ar' ? 'تم التعيين' : 'Assigned'}
-                                      </Badge>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleAssignPrice(product, request)}
-                                      >
-                                        {language === 'ar' ? 'تعيين سعر' : 'Assign Price'}
-                                      </Button>
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -677,306 +184,71 @@ export default function AdminPriceRequestsPage() {
             })}
           </div>
         )}
-      </main>
+      </div>
 
-      {/* Assign Price Dialog */}
-      <Dialog open={priceDialogOpen} onOpenChange={setPriceDialogOpen}>
-        <DialogContent>
+      {/* View Request Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
-              {language === 'ar' ? 'تعيين سعر للمنتج' : 'Assign Product Price'}
+              {selectedRequest?.requestNumber}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">
-                {language === 'ar' ? 'المنتج' : 'Product'}
-              </p>
-              <div className="space-y-1">
-                <p className="font-medium text-base">
-                  {selectedProduct && (language === 'ar' ? selectedProduct.nameAr : selectedProduct?.nameEn)}
-                </p>
-                <p className="text-sm text-muted-foreground font-mono">
-                  SKU: {selectedProduct?.sku}
-                </p>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">{language === "ar" ? "العميل" : "Client"}:</span>
+                  <div className="mt-1 font-medium">{getClientName(selectedRequest.clientId)}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === "ar" ? "الاتفاقية" : "LTA"}:</span>
+                  <div className="mt-1 font-medium">{getLtaName(selectedRequest.ltaId)}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === "ar" ? "الحالة" : "Status"}:</span>
+                  <div className="mt-1">{getStatusBadge(selectedRequest.status)}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === "ar" ? "التاريخ" : "Date"}:</span>
+                  <div className="mt-1 font-medium">
+                    {formatDateLocalized(new Date(selectedRequest.requestedAt), language)}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="lta-select">
-                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
-              </Label>
-              <Select value={selectedLtaId} onValueChange={setSelectedLtaId}>
-                <SelectTrigger id="lta-select">
-                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ltas.map((lta) => (
-                    <SelectItem key={lta.id} value={lta.id}>
-                      {language === 'ar' ? lta.nameAr : lta.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="border rounded-lg p-4 space-y-2">
+                <h4 className="font-semibold">{language === "ar" ? "المنتجات المطلوبة" : "Requested Products"}</h4>
+                {(typeof selectedRequest.products === "string" ? JSON.parse(selectedRequest.products) : selectedRequest.products).map((product: any, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm py-2 border-b last:border-0">
+                    <div>
+                      <div className="font-medium">{product.productId}</div>
+                      <div className="text-muted-foreground">SKU: {product.sku || "N/A"}</div>
+                    </div>
+                    <span className="font-medium">{language === "ar" ? "الكمية" : "Qty"}: {product.quantity}</span>
+                  </div>
+                ))}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="contract-price">
-                {language === 'ar' ? 'السعر التعاقدي' : 'Contract Price'}
-              </Label>
-              <Input
-                id="contract-price"
-                type="number"
-                step="0.01"
-                value={contractPrice}
-                onChange={(e) => setContractPrice(e.target.value)}
-                placeholder="0.00"
-                className="font-mono"
-              />
-            </div>
+              {selectedRequest.notes && (
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">{language === "ar" ? "ملاحظات" : "Notes"}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedRequest.notes}</p>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="currency">
-                {language === 'ar' ? 'العملة' : 'Currency'}
-              </Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger id="currency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="ILS">ILS</SelectItem>
-                  <SelectItem value="JOD">JOD</SelectItem>
-                </SelectContent>
-              </Select>
+              {selectedRequest.status === "pending" && (
+                <div className="flex justify-end pt-4">
+                  <Button onClick={() => handleCreateOffer(selectedRequest)} data-testid="button-create-offer-from-dialog">
+                    <FileText className="h-4 w-4 mr-2" />
+                    {language === "ar" ? "إنشاء عرض سعر" : "Create Price Offer"}
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPriceDialogOpen(false)}
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={handleSubmitPrice}
-              disabled={assignProductMutation.isPending}
-            >
-              {assignProductMutation.isPending
-                ? (language === 'ar' ? 'جاري الإضافة...' : 'Adding...')
-                : (language === 'ar' ? 'إضافة' : 'Add')
-              }
-            </Button>
-          </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
-
-      {/* Bulk Assignment Dialog */}
-      <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'ar' ? 'تعيين الأسعار للمنتجات' : 'Assign Prices to All Products'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="bulk-lta-select">
-                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
-              </Label>
-              <Select value={bulkSelectedLtaId} onValueChange={setBulkSelectedLtaId}>
-                <SelectTrigger id="bulk-lta-select">
-                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ltas.map((lta) => (
-                    <SelectItem key={lta.id} value={lta.id}>
-                      {language === 'ar' ? lta.nameAr : lta.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="w-[100px]">{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'اسم المنتج' : 'Product Name'}</TableHead>
-                    <TableHead className="w-[140px]">{language === 'ar' ? 'السعر' : 'Price'}</TableHead>
-                    <TableHead className="w-[120px]">{language === 'ar' ? 'العملة' : 'Currency'}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bulkAssignRequest && parseMetadata(bulkAssignRequest.metadata).products.map((product: any, index: number) => (
-                    <TableRow key={product.id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                      <TableCell className="font-mono text-xs">{product.sku}</TableCell>
-                      <TableCell className="font-medium">
-                        {language === 'ar' ? product.nameAr : product.nameEn}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={bulkPrices[product.id]?.price || ''}
-                          onChange={(e) => handleBulkPriceChange(product.id, 'price', e.target.value)}
-                          className="font-mono h-9"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select 
-                          value={bulkPrices[product.id]?.currency || 'USD'} 
-                          onValueChange={(value) => handleBulkPriceChange(product.id, 'currency', value)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
-                            <SelectItem value="ILS">ILS</SelectItem>
-                            <SelectItem value="JOD">JOD</SelectItem>
-                            <SelectItem value="SAR">SAR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                {language === 'ar' 
-                  ? 'سيتم تعيين جميع المنتجات إلى الاتفاقية المحددة دفعة واحدة. تأكد من إدخال جميع الأسعار بشكل صحيح.'
-                  : 'All products will be assigned to the selected LTA at once. Make sure all prices are entered correctly.'}
-              </p>
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setBulkAssignDialogOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={handleSubmitBulkAssign}
-              disabled={bulkAssignMutation.isPending || !bulkSelectedLtaId}
-              className="w-full sm:w-auto"
-            >
-              {bulkAssignMutation.isPending
-                ? (language === 'ar' ? 'جاري التعيين...' : 'Assigning...')
-                : (language === 'ar' ? 'تعيين الكل' : 'Assign All')
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* PDF Generation Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'ar' ? 'إنشاء مستند عرض السعر' : 'Generate Price Offer Document'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="pdf-lta-select">
-                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
-              </Label>
-              <Select value={pdfLtaId} onValueChange={setPdfLtaId}>
-                <SelectTrigger id="pdf-lta-select">
-                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ltas.map((lta) => (
-                    <SelectItem key={lta.id} value={lta.id}>
-                      {language === 'ar' ? lta.nameAr : lta.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="validity-days">
-                {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Offer Validity (days)'}
-              </Label>
-              <Input
-                id="validity-days"
-                type="number"
-                value={pdfValidityDays}
-                onChange={(e) => setPdfValidityDays(e.target.value)}
-                placeholder="30"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="pdf-notes">
-                {language === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Additional Notes (Optional)'}
-              </Label>
-              <Textarea
-                id="pdf-notes"
-                value={pdfNotes}
-                onChange={(e) => setPdfNotes(e.target.value)}
-                placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPdfDialogOpen(false)}
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={() => {
-                if (!pdfLtaId || !selectedRequestForPdf) {
-                  toast({
-                    variant: 'destructive',
-                    title: language === 'ar' ? 'خطأ' : 'Error',
-                    description: language === 'ar' ? 'يرجى اختيار اتفاقية' : 'Please select an LTA',
-                  });
-                  return;
-                }
-                generatePdfMutation.mutate({
-                  notificationId: selectedRequestForPdf.id,
-                  ltaId: pdfLtaId,
-                  validityDays: parseInt(pdfValidityDays) || 30,
-                  notes: pdfNotes || undefined,
-                });
-              }}
-              disabled={generatePdfMutation.isPending}
-            >
-              {generatePdfMutation.isPending
-                ? (language === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
-                : (language === 'ar' ? 'إنشاء PDF' : 'Generate PDF')
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Batch PDF Generator Dialog */}
-      {showBatchGenerator && (
-        <BatchPdfGenerator
-          isOpen={showBatchGenerator}
-          onClose={handleCloseBatchGenerator}
-          selectedRequests={filteredRequests.filter(r => selectedForBatch.has(r.id))}
-          ltas={ltas}
-          language={language}
-        />
-      )}
     </div>
   );
 }

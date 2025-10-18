@@ -591,17 +591,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Mark as sent (PDF will be generated when accessed)
-      const pdfFileName = `price-offer-${offer.offerNumber}.pdf`;
+      // Get client and LTA details for PDF
+      const client = await storage.getClient(offer.clientId);
+      const lta = await storage.getLta(offer.ltaId);
       
+      if (!client || !lta) {
+        return res.status(404).json({ 
+          message: "Client or LTA not found", 
+          messageAr: "العميل أو الاتفاقية غير موجودة" 
+        });
+      }
+
+      // Get active price offer template
+      const priceOfferTemplates = await TemplateStorage.getTemplates('price_offer');
+      const activeTemplate = priceOfferTemplates.find(t => t.isActive);
+      
+      if (!activeTemplate) {
+        return res.status(500).json({
+          message: "No active price offer template found",
+          messageAr: "لم يتم العثور على قالب عرض سعر نشط"
+        });
+      }
+
+      // Prepare template variables
+      const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
+      const templateVariables = {
+        offerNumber: offer.offerNumber,
+        offerDate: new Date(offer.createdAt).toLocaleDateString('en-US'),
+        clientNameEn: client.nameEn,
+        clientNameAr: client.nameAr,
+        clientEmail: client.email || '',
+        clientPhone: client.phone || '',
+        ltaNameEn: lta.nameEn,
+        ltaNameAr: lta.nameAr,
+        ltaNumber: lta.referenceNumber || 'N/A',
+        items: items,
+        subtotal: offer.subtotal,
+        tax: offer.tax,
+        total: offer.total,
+        validUntil: new Date(offer.validUntil).toLocaleDateString('en-US'),
+        notes: offer.notes || '',
+        companyNameEn: 'Al Qadi Trading Company',
+        companyNameAr: 'شركة القاضي التجارية',
+        companyAddressEn: 'Riyadh, Kingdom of Saudi Arabia',
+        companyAddressAr: 'الرياض، المملكة العربية السعودية',
+        companyPhone: '+966 XX XXX XXXX',
+        companyEmail: 'info@alqadi.com',
+        companyWebsite: 'www.alqadi.com'
+      };
+
+      // Generate PDF
+      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(
+        activeTemplate,
+        templateVariables,
+        'en'
+      );
+
+      if (!pdfBuffer || pdfBuffer.length < 100) {
+        return res.status(500).json({
+          message: "Failed to generate valid PDF",
+          messageAr: "فشل إنشاء ملف PDF صالح"
+        });
+      }
+
+      // Upload PDF to Object Storage
+      const pdfFileName = `price-offers/${offer.offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
+      const uploadResult = await PDFStorage.uploadPDF(Buffer.from(pdfBuffer), pdfFileName, 'PRICE_OFFER');
+      
+      if (!uploadResult.ok) {
+        return res.status(500).json({
+          message: "Failed to save PDF",
+          messageAr: "فشل في حفظ ملف PDF",
+          error: uploadResult.error
+        });
+      }
+
+      // Update offer with PDF and mark as sent
       await storage.updatePriceOffer(req.params.id, {
         status: 'sent',
         sentAt: new Date(),
-        pdfFileName
+        pdfFileName: uploadResult.fileName || pdfFileName
       });
 
       // Notify client
-      const client = await storage.getClient(offer.clientId);
       await storage.createNotification({
         clientId: offer.clientId,
         type: 'system',
@@ -612,7 +684,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: JSON.stringify({ offerId: offer.id })
       });
 
-      res.json({ message: "Offer sent successfully", messageAr: "تم إرسال العرض بنجاح" });
+      res.json({ 
+        message: "Offer sent successfully", 
+        messageAr: "تم إرسال العرض بنجاح",
+        pdfFileName: uploadResult.fileName 
+      });
     } catch (error) {
       console.error('Send offer error:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
