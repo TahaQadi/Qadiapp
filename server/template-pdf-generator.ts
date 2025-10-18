@@ -243,6 +243,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const primaryColor = styles.primaryColor || '#1a365d';
     const accentColor = styles.accentColor || '#d4af37';
     
@@ -306,6 +309,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const text = language === 'ar' ? content.textAr : content.textEn;
     if (!text) return;
 
@@ -332,6 +338,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const primaryColor = styles.primaryColor || '#1a365d';
     const columns = language === 'ar' ? content.columnsAr : content.columnsEn;
     const rows = variables[content.rows] || [];
@@ -410,6 +419,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const secondaryColor = styles.secondaryColor || '#2d3748';
     const title = language === 'ar' ? content.titleAr : content.titleEn;
     const items = language === 'ar' ? content.itemsAr : content.itemsEn;
@@ -452,6 +464,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const signatories = content.signatories || [];
     if (signatories.length === 0) return;
 
@@ -498,6 +513,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const text = language === 'ar' ? content.textAr : content.textEn;
     if (!text) return;
 
@@ -521,6 +539,9 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar' | 'both',
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) return;
+    
     const imagePath = this.substituteVariables(content.path, variables);
     if (!imagePath || !fs.existsSync(imagePath)) return;
 
@@ -550,6 +571,9 @@ export class TemplatePDFGenerator {
     content: any,
     styles: TemplateStyles
   ): void {
+    // Null safety check
+    if (!content) content = {};
+    
     const color = content.color || styles.primaryColor || '#000000';
     const thickness = content.thickness || 1;
 
@@ -569,6 +593,9 @@ export class TemplatePDFGenerator {
     doc: PDFKit.PDFDocument,
     content: any
   ): void {
+    // Null safety check
+    if (!content) content = {};
+    
     const height = content.height || 20;
     doc.y += height;
   }
