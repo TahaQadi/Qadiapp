@@ -332,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify client has access to this LTA
-      const clientLtas = await storage.getLtasByClient(req.client.id);
+      const clientLtas = await storage.getClientLtas(req.client.id);
       const hasAccess = clientLtas.some(lta => lta.id === ltaId);
       
       if (!hasAccess) {
