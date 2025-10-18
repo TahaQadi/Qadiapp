@@ -69,6 +69,10 @@ export default function AdminPriceRequestsPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
   const [showBatchGenerator, setShowBatchGenerator] = useState(false);
+  const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
+  const [bulkSelectedLtaId, setBulkSelectedLtaId] = useState('');
+  const [bulkPrices, setBulkPrices] = useState<Record<string, { price: string; currency: string }>>({});
+  const [bulkAssignRequest, setBulkAssignRequest] = useState<Notification | null>(null);
 
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
@@ -199,6 +203,36 @@ export default function AdminPriceRequestsPage() {
     },
   });
 
+  const bulkAssignMutation = useMutation({
+    mutationFn: async (data: { ltaId: string; products: Array<{ sku: string; contractPrice: string; currency: string }>; clientId: string }) => {
+      const res = await apiRequest('POST', `/api/admin/ltas/${data.ltaId}/products/bulk`, {
+        products: data.products,
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم التعيين' : 'Assigned Successfully',
+        description: language === 'ar' 
+          ? `تم تعيين ${data.success} منتج بنجاح` 
+          : `Successfully assigned ${data.success} products`,
+      });
+      setBulkAssignDialogOpen(false);
+      setBulkSelectedLtaId('');
+      setBulkPrices({});
+      setBulkAssignRequest(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/lta-assignments'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
   const generatePdfMutation = useMutation({
     mutationFn: async (data: { notificationId: string; ltaId: string; validityDays: number; notes?: string }) => {
       const res = await apiRequest('POST', `/api/admin/price-requests/${data.notificationId}/generate-pdf`, {
@@ -253,6 +287,62 @@ export default function AdminPriceRequestsPage() {
       productId: selectedProduct.id,
       contractPrice,
       currency,
+      clientId: metadata.clientId,
+    });
+  };
+
+  const handleBulkAssign = (request: Notification) => {
+    const metadata = parseMetadata(request.metadata);
+    setBulkAssignRequest(request);
+    
+    // Initialize prices object
+    const initialPrices: Record<string, { price: string; currency: string }> = {};
+    metadata.products.forEach((product: any) => {
+      initialPrices[product.id] = { price: '', currency: 'USD' };
+    });
+    setBulkPrices(initialPrices);
+    setBulkAssignDialogOpen(true);
+  };
+
+  const handleBulkPriceChange = (productId: string, field: 'price' | 'currency', value: string) => {
+    setBulkPrices(prev => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        [field]: value,
+      }
+    }));
+  };
+
+  const handleSubmitBulkAssign = () => {
+    if (!bulkSelectedLtaId) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'يرجى اختيار اتفاقية' : 'Please select an LTA',
+      });
+      return;
+    }
+
+    const metadata = bulkAssignRequest ? parseMetadata(bulkAssignRequest.metadata) : null;
+    if (!metadata) return;
+
+    // Validate all prices are filled
+    const products = metadata.products.map((product: any) => {
+      const priceData = bulkPrices[product.id];
+      if (!priceData || !priceData.price) {
+        throw new Error(`Price missing for ${product.sku}`);
+      }
+      return {
+        sku: product.sku,
+        contractPrice: priceData.price,
+        currency: priceData.currency,
+      };
+    });
+
+    bulkAssignMutation.mutate({
+      ltaId: bulkSelectedLtaId,
+      products,
       clientId: metadata.clientId,
     });
   };
@@ -438,6 +528,19 @@ export default function AdminPriceRequestsPage() {
                         </p>
                       </div>
                       <div className="flex gap-2 flex-wrap">
+                        {!completed && metadata.products.length > 1 && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleBulkAssign(request)}
+                            className="gap-2"
+                          >
+                            <Package className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              {language === 'ar' ? 'تعيين الكل' : 'Assign All'}
+                            </span>
+                          </Button>
+                        )}
                         {completed && (
                           <>
                             <Button
@@ -663,6 +766,113 @@ export default function AdminPriceRequestsPage() {
               {assignProductMutation.isPending
                 ? (language === 'ar' ? 'جاري الإضافة...' : 'Adding...')
                 : (language === 'ar' ? 'إضافة' : 'Add')
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Assignment Dialog */}
+      <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'تعيين الأسعار للمنتجات' : 'Assign Prices to All Products'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="bulk-lta-select">
+                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
+              </Label>
+              <Select value={bulkSelectedLtaId} onValueChange={setBulkSelectedLtaId}>
+                <SelectTrigger id="bulk-lta-select">
+                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {ltas.map((lta) => (
+                    <SelectItem key={lta.id} value={lta.id}>
+                      {language === 'ar' ? lta.nameAr : lta.nameEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[100px]">{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
+                    <TableHead>{language === 'ar' ? 'اسم المنتج' : 'Product Name'}</TableHead>
+                    <TableHead className="w-[140px]">{language === 'ar' ? 'السعر' : 'Price'}</TableHead>
+                    <TableHead className="w-[120px]">{language === 'ar' ? 'العملة' : 'Currency'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bulkAssignRequest && parseMetadata(bulkAssignRequest.metadata).products.map((product: any, index: number) => (
+                    <TableRow key={product.id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+                      <TableCell className="font-mono text-xs">{product.sku}</TableCell>
+                      <TableCell className="font-medium">
+                        {language === 'ar' ? product.nameAr : product.nameEn}
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={bulkPrices[product.id]?.price || ''}
+                          onChange={(e) => handleBulkPriceChange(product.id, 'price', e.target.value)}
+                          className="font-mono h-9"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select 
+                          value={bulkPrices[product.id]?.currency || 'USD'} 
+                          onValueChange={(value) => handleBulkPriceChange(product.id, 'currency', value)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="ILS">ILS</SelectItem>
+                            <SelectItem value="JOD">JOD</SelectItem>
+                            <SelectItem value="SAR">SAR</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                {language === 'ar' 
+                  ? 'سيتم تعيين جميع المنتجات إلى الاتفاقية المحددة دفعة واحدة. تأكد من إدخال جميع الأسعار بشكل صحيح.'
+                  : 'All products will be assigned to the selected LTA at once. Make sure all prices are entered correctly.'}
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setBulkAssignDialogOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={handleSubmitBulkAssign}
+              disabled={bulkAssignMutation.isPending || !bulkSelectedLtaId}
+              className="w-full sm:w-auto"
+            >
+              {bulkAssignMutation.isPending
+                ? (language === 'ar' ? 'جاري التعيين...' : 'Assigning...')
+                : (language === 'ar' ? 'تعيين الكل' : 'Assign All')
               }
             </Button>
           </DialogFooter>
