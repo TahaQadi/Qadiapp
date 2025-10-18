@@ -449,14 +449,14 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/95 backdrop-blur-xl shadow-lg">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
               asChild
-              className="shrink-0"
+              className="shrink-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all"
               data-testid="button-back-admin"
             >
               <Link href="/admin">
@@ -464,13 +464,17 @@ export default function AdminOrdersPage() {
               </Link>
             </Button>
             <div className="flex items-center gap-2 min-w-0">
-              <Package className="h-5 w-5 text-primary dark:text-[#d4af37] shrink-0" />
-              <h1 className="text-xl font-semibold truncate">
+              <div className="p-1.5 rounded-lg bg-primary/10 dark:bg-[#d4af37]/10 shrink-0">
+                <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+              </div>
+              <h1 className="text-xl font-semibold truncate bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
                 {language === 'ar' ? 'إدارة الطلبات' : 'Orders Management'}
               </h1>
             </div>
             {orders.length > 0 && (
-              <Badge variant="secondary" className="hidden sm:inline-flex shrink-0">{orders.length}</Badge>
+              <Badge variant="secondary" className="hidden sm:inline-flex shrink-0 bg-primary/10 dark:bg-[#d4af37]/10 text-primary dark:text-[#d4af37] border-primary/20 dark:border-[#d4af37]/20">
+                {orders.length}
+              </Badge>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -482,30 +486,32 @@ export default function AdminOrdersPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 relative z-10">
-        <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+        <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-xl bg-card/50 dark:bg-card/30 backdrop-blur-sm">
+          <CardHeader className="pb-4 space-y-1">
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <div className="p-2 rounded-lg bg-primary/10 dark:bg-[#d4af37]/10">
+                <Package className="h-6 w-6 text-primary dark:text-[#d4af37]" />
+              </div>
               {language === 'ar' ? 'جميع الطلبات' : 'All Orders'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             {/* Filters */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none transition-colors group-focus-within:text-primary dark:group-focus-within:text-[#d4af37]" />
                   <Input
-                    placeholder={language === 'ar' ? 'البحث...' : 'Search...'}
+                    placeholder={language === 'ar' ? 'البحث في الطلبات...' : 'Search orders...'}
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 h-11 border-border/50 dark:border-[#d4af37]/20 focus-visible:ring-primary dark:focus-visible:ring-[#d4af37] bg-background/50 dark:bg-background/30 transition-all"
                     data-testid="input-search-orders"
                   />
                 </div>
 
                 <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                  <SelectTrigger data-testid="select-filter-status">
+                  <SelectTrigger className="h-11 border-border/50 dark:border-[#d4af37]/20 bg-background/50 dark:bg-background/30 transition-all" data-testid="select-filter-status">
                     <SelectValue placeholder={language === 'ar' ? 'جميع الحالات' : 'All Statuses'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -572,48 +578,55 @@ export default function AdminOrdersPage() {
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-3">
                   {paginatedOrders.map((order) => (
-                    <Card key={order.id} className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300">
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-start justify-between gap-2">
+                    <Card 
+                      key={order.id} 
+                      className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group"
+                    >
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <input
                                 type="checkbox"
                                 checked={selectedOrders.has(order.id)}
                                 onChange={() => toggleOrderSelection(order.id)}
-                                className="rounded border-gray-300 shrink-0"
+                                className="rounded border-gray-300 shrink-0 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
                               />
-                              <p className="font-mono text-sm font-semibold truncate">
-                                #{order.id.slice(0, 8)}
-                              </p>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <p className="font-mono text-sm font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                                  #{order.id.slice(0, 8)}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-sm text-muted-foreground truncate">
+                            <p className="text-sm text-muted-foreground truncate ps-6">
                               {getClientName(order.clientId)}
                             </p>
                           </div>
                           {getStatusBadge(order.status)}
                         </div>
 
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            {language === 'ar' ? 'المبلغ' : 'Amount'}:
-                          </span>
-                          <span className="font-mono font-semibold">{order.totalAmount}</span>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
+                            <span className="text-xs text-muted-foreground font-medium">
+                              {language === 'ar' ? 'المبلغ' : 'Amount'}
+                            </span>
+                            <span className="font-mono font-bold text-sm">{order.totalAmount}</span>
+                          </div>
+                          <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
+                            <span className="text-xs text-muted-foreground font-medium">
+                              {language === 'ar' ? 'التاريخ' : 'Date'}
+                            </span>
+                            <span className="text-xs font-medium truncate">{formatDateLocalized(new Date(order.createdAt), language)}</span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            {language === 'ar' ? 'التاريخ' : 'Date'}:
-                          </span>
-                          <span className="text-xs">{formatDateLocalized(new Date(order.createdAt), language)}</span>
-                        </div>
-
-                        <div className="flex gap-1 pt-2 border-t">
+                        <div className="flex gap-2 pt-2 border-t border-border/50">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewDetails(order)}
-                            className="flex-1"
+                            className="flex-1 hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#d4af37] dark:hover:text-black transition-all"
                           >
                             <Eye className="h-4 w-4 me-1" />
                             {language === 'ar' ? 'عرض' : 'View'}
@@ -622,7 +635,8 @@ export default function AdminOrdersPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handlePrintOrder(order)}
-                            className="h-9 w-9 p-0"
+                            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
+                            title={language === 'ar' ? 'طباعة' : 'Print'}
                           >
                             <Printer className="h-4 w-4" />
                           </Button>
@@ -630,7 +644,8 @@ export default function AdminOrdersPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleShareOrder(order)}
-                            className="h-9 w-9 p-0"
+                            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
+                            title={language === 'ar' ? 'مشاركة' : 'Share'}
                           >
                             <Share2 className="h-4 w-4" />
                           </Button>
@@ -638,7 +653,8 @@ export default function AdminOrdersPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleExportPDF(order)}
-                            className="h-9 w-9 p-0"
+                            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
+                            title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -649,48 +665,57 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden lg:block border rounded-lg overflow-hidden">
+                <div className="hidden lg:block border border-border/50 dark:border-[#d4af37]/20 rounded-lg overflow-hidden bg-card/30 dark:bg-card/20 backdrop-blur-sm">
                   <Table>
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="bg-muted/50 dark:bg-muted/30 hover:bg-muted/70 dark:hover:bg-muted/40">
                         <TableHead className="w-12">
                           <input
                             type="checkbox"
                             checked={selectedOrders.size === paginatedOrders.length && paginatedOrders.length > 0}
                             onChange={toggleAllOrders}
-                            className="rounded border-gray-300"
+                            className="rounded border-gray-300 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
                           />
                         </TableHead>
-                        <TableHead>{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'المبلغ' : 'Amount'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
-                        <TableHead className="text-end">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'المبلغ' : 'Amount'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                        <TableHead className="font-semibold">{language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
+                        <TableHead className="text-end font-semibold">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedOrders.map((order) => (
-                        <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
+                        <TableRow 
+                          key={order.id} 
+                          data-testid={`row-order-${order.id}`}
+                          className="hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors group"
+                        >
                           <TableCell>
                             <input
                               type="checkbox"
                               checked={selectedOrders.has(order.id)}
                               onChange={() => toggleOrderSelection(order.id)}
-                              className="rounded border-gray-300"
+                              className="rounded border-gray-300 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
                             />
                           </TableCell>
-                          <TableCell className="font-mono text-sm">#{order.id.slice(0, 8)}</TableCell>
-                          <TableCell>{getClientName(order.clientId)}</TableCell>
-                          <TableCell>{getLtaName(order.ltaId)}</TableCell>
-                          <TableCell className="font-mono">{order.totalAmount}</TableCell>
+                          <TableCell className="font-mono text-sm font-semibold">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                              #{order.id.slice(0, 8)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">{getClientName(order.clientId)}</TableCell>
+                          <TableCell className="text-muted-foreground">{getLtaName(order.ltaId)}</TableCell>
+                          <TableCell className="font-mono font-semibold">{order.totalAmount}</TableCell>
                           <TableCell>
                             <Select
                               value={order.status}
                               onValueChange={(value) => handleStatusChange(order.id, value)}
                             >
-                              <SelectTrigger className="w-32">
+                              <SelectTrigger className="w-36 border-border/30 dark:border-[#d4af37]/10">
                                 {getStatusBadge(order.status)}
                               </SelectTrigger>
                               <SelectContent>
@@ -704,12 +729,13 @@ export default function AdminOrdersPage() {
                           </TableCell>
                           <TableCell className="text-sm">{formatDateLocalized(new Date(order.createdAt), language)}</TableCell>
                           <TableCell className="text-end">
-                            <div className="flex gap-1 justify-end">
+                            <div className="flex gap-1 justify-end opacity-70 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleViewDetails(order)}
                                 data-testid={`button-view-${order.id}`}
+                                className="hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#d4af37] dark:hover:text-black transition-all"
                               >
                                 <Eye className="h-4 w-4 me-1" />
                                 {language === 'ar' ? 'عرض' : 'View'}
@@ -718,7 +744,7 @@ export default function AdminOrdersPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handlePrintOrder(order)}
-                                className="h-9 w-9 p-0"
+                                className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
                                 title={language === 'ar' ? 'طباعة' : 'Print'}
                               >
                                 <Printer className="h-4 w-4" />
@@ -727,7 +753,7 @@ export default function AdminOrdersPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleShareOrder(order)}
-                                className="h-9 w-9 p-0"
+                                className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
                                 title={language === 'ar' ? 'مشاركة' : 'Share'}
                               >
                                 <Share2 className="h-4 w-4" />
@@ -736,7 +762,7 @@ export default function AdminOrdersPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleExportPDF(order)}
-                                className="h-9 w-9 p-0"
+                                className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
                                 title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                               >
                                 <Download className="h-4 w-4" />
