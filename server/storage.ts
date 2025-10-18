@@ -12,6 +12,7 @@ import {
   type Lta,
   type LtaProduct,
   type LtaClient,
+  type PriceRequest,
   type PriceOffer,
   type PushSubscription,
   type InsertClient,
@@ -27,6 +28,7 @@ import {
   type InsertLta,
   type InsertLtaProduct,
   type InsertLtaClient,
+  type InsertPriceRequest,
   type InsertPriceOffer,
   type InsertPasswordResetToken,
   type AuthUser,
@@ -48,6 +50,7 @@ import {
   ltaProducts,
   ltaClients,
   users,
+  priceRequests,
   priceOffers,
   passwordResetTokens,
   pushSubscriptions,
@@ -191,6 +194,13 @@ export interface IStorage {
   getAllProductsWithClientPrices(clientId: string): Promise<Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }>>;
   getAdminClients(): Promise<Client[]>;
 
+  // Price Requests
+  createPriceRequest(data: InsertPriceRequest): Promise<PriceRequest>;
+  getPriceRequest(id: string): Promise<PriceRequest | null>;
+  getPriceRequestsByClient(clientId: string): Promise<PriceRequest[]>;
+  getAllPriceRequests(): Promise<PriceRequest[]>;
+  updatePriceRequestStatus(id: string, status: string): Promise<PriceRequest | null>;
+  
   // Price Offers
   createPriceOffer(data: InsertPriceOffer): Promise<PriceOffer>;
   getPriceOffer(id: string): Promise<PriceOffer | null>;
@@ -198,6 +208,7 @@ export interface IStorage {
   getAllPriceOffers(): Promise<PriceOffer[]>;
   updatePriceOfferStatus(id: string, status: string, additionalData?: Partial<PriceOffer>): Promise<PriceOffer | null>;
   updatePriceOffer(id: string, data: Partial<PriceOffer>): Promise<PriceOffer | null>;
+  deletePriceOffer(id: string): Promise<void>;
 
   // Password Reset Tokens
   createPasswordResetToken(token: InsertPasswordResetToken): Promise<any>;
@@ -1206,6 +1217,57 @@ export class MemStorage implements IStorage {
     return result.length;
   }
 
+  // Price Requests
+  async createPriceRequest(data: InsertPriceRequest): Promise<PriceRequest> {
+    const result = await this.db
+      .insert(priceRequests)
+      .values(data)
+      .returning()
+      .execute();
+    return result[0];
+  }
+
+  async getPriceRequest(id: string): Promise<PriceRequest | null> {
+    const result = await this.db
+      .select()
+      .from(priceRequests)
+      .where(eq(priceRequests.id, id))
+      .execute();
+    return result[0] || null;
+  }
+
+  async getPriceRequestsByClient(clientId: string): Promise<PriceRequest[]> {
+    const result = await this.db
+      .select()
+      .from(priceRequests)
+      .where(eq(priceRequests.clientId, clientId))
+      .orderBy(desc(priceRequests.requestedAt))
+      .execute();
+    return result;
+  }
+
+  async getAllPriceRequests(): Promise<PriceRequest[]> {
+    const result = await this.db
+      .select()
+      .from(priceRequests)
+      .orderBy(desc(priceRequests.requestedAt))
+      .execute();
+    return result;
+  }
+
+  async updatePriceRequestStatus(id: string, status: string): Promise<PriceRequest | null> {
+    await this.db
+      .update(priceRequests)
+      .set({
+        status,
+        processedAt: status === 'processed' ? new Date() : undefined
+      })
+      .where(eq(priceRequests.id, id))
+      .execute();
+
+    return this.getPriceRequest(id);
+  }
+
   // Price Offers
   async createPriceOffer(data: InsertPriceOffer): Promise<PriceOffer> {
     const result = await this.db
@@ -1249,7 +1311,6 @@ export class MemStorage implements IStorage {
       .update(priceOffers)
       .set({
         status,
-        updatedAt: new Date(),
         ...additionalData
       })
       .where(eq(priceOffers.id, id))
@@ -1261,23 +1322,7 @@ export class MemStorage implements IStorage {
   async updatePriceOffer(id: string, data: Partial<PriceOffer>): Promise<PriceOffer | null> {
     await this.db
       .update(priceOffers)
-      .set({
-        ...data,
-        updatedAt: new Date()
-      })
-      .where(eq(priceOffers.id, id))
-      .execute();
-
-    return this.getPriceOffer(id);
-  }
-
-  async updatePriceOfferValidity(id: string, validUntil: Date): Promise<PriceOffer | null> {
-    await this.db
-      .update(priceOffers)
-      .set({
-        validUntil,
-        updatedAt: new Date()
-      })
+      .set(data)
       .where(eq(priceOffers.id, id))
       .execute();
 
@@ -1308,7 +1353,7 @@ export class MemStorage implements IStorage {
     const updatePromises = expiredOffers.map(offer =>
       this.db
         .update(priceOffers)
-        .set({ status: 'expired', updatedAt: new Date() })
+        .set({ status: 'expired' })
         .where(eq(priceOffers.id, offer.id))
         .execute()
     );
