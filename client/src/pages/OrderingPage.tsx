@@ -444,9 +444,13 @@ export default function OrderingPage() {
     try {
       const productIds = priceRequestList.map(item => item.productId);
 
-      const res = await apiRequest('POST', '/api/client/price-request', {
-        productIds,
-        message: priceRequestMessage || undefined
+      const res = await apiRequest('POST', '/api/price-requests', {
+        ltaId: selectedLta?.id,
+        products: priceRequestList.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity || 1
+        })),
+        notes: priceRequestMessage || undefined
       });
 
       if (!res.ok) {
