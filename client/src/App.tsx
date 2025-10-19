@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, lazy } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import NotFound from "@/pages/not-found";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LandingPage from "@/pages/LandingPage";
@@ -40,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { NotificationPermission } from '@/components/NotificationPermission';
+import LoadingSkeleton from '@/components/ui/loading-skeleton';
 
 function AdminRoute({
   path,
@@ -181,13 +182,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
-        <TooltipProvider>
-          <ThemeProvider>
-            <LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <TooltipProvider>
               <AppContent />
-            </LanguageProvider>
-          </ThemeProvider>
-        </TooltipProvider>
+            </TooltipProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </HelmetProvider>
     </QueryClientProvider>
   );

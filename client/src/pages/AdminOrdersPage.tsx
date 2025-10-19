@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -13,12 +13,15 @@ import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Dow
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateLocalized } from '@/lib/dateUtils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, cacheStrategies } from '@/lib/queryClient';
 import { safeJsonParse } from '@/lib/safeJson';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { Skeleton } from "@/components/ui/skeleton";
+import { VirtualList } from "@/components/VirtualList";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface Order {
   id: string;
@@ -62,10 +65,41 @@ export default function AdminOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const itemsPerPage = 10;
+  const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
-    queryKey: ['/api/admin/orders'],
+
+  // Fetch all orders for virtual scrolling
+  const { data: allOrdersData, isLoading: isLoadingAll } = useQuery<any>({
+    queryKey: ['/api/admin/orders', 'all'],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/orders?all=true`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch orders');
+      return res.json();
+    },
+    enabled: useVirtualScrolling,
+    ...cacheStrategies.orders,
   });
+
+  // Fetch paginated orders
+  const { data: ordersData = { orders: [], totalPages: 1 }, isLoading } = useQuery<any>({
+    queryKey: ['/api/admin/orders', currentPage, itemsPerPage, statusFilter, searchQuery],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/orders?page=${currentPage}&pageSize=${itemsPerPage}&status=${statusFilter}&search=${searchQuery}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch orders');
+      return res.json();
+    },
+    enabled: !useVirtualScrolling,
+    keepPreviousData: true,
+  });
+
+  const orders = useVirtualScrolling ? allOrdersData?.orders || [] : ordersData.orders;
+  const totalPages = useVirtualScrolling ? 1 : ordersData.totalPages;
+
 
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['/api/admin/clients'],
@@ -392,10 +426,10 @@ export default function AdminOrdersPage() {
   };
 
   const toggleAllOrders = () => {
-    if (selectedOrders.size === paginatedOrders.length) {
+    if (selectedOrders.size === orders.length) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(paginatedOrders.map(o => o.id)));
+      setSelectedOrders(new Set(orders.map(o => o.id)));
     }
   };
 
@@ -416,7 +450,7 @@ export default function AdminOrdersPage() {
   // Filter and search orders
   const filteredOrders = orders.filter(order => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(order.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.pipefyCardId?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -425,7 +459,6 @@ export default function AdminOrdersPage() {
   });
 
   // Pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
@@ -439,6 +472,92 @@ export default function AdminOrdersPage() {
     setStatusFilter(value);
     setCurrentPage(1);
   };
+
+  const renderOrderCard = (order: Order) => (
+    <Card key={order.id} 
+      className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group"
+    >
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                checked={selectedOrders.has(order.id)}
+                onChange={() => toggleOrderSelection(order.id)}
+                className="rounded border-gray-300 shrink-0 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
+              />
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                <p className="font-mono text-sm font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  #{order.id.slice(0, 8)}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground truncate ps-6">
+              {getClientName(order.clientId)}
+            </p>
+          </div>
+          {getStatusBadge(order.status)}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
+            <span className="text-xs text-muted-foreground font-medium">
+              {language === 'ar' ? 'المبلغ' : 'Amount'}
+            </span>
+            <span className="font-mono font-bold text-sm">{order.totalAmount}</span>
+          </div>
+          <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
+            <span className="text-xs text-muted-foreground font-medium">
+              {language === 'ar' ? 'التاريخ' : 'Date'}
+            </span>
+            <span className="text-xs font-medium truncate">{formatDateLocalized(new Date(order.createdAt), language)}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2 border-t border-border/50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewDetails(order)}
+            className="flex-1 hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#d4af37] dark:hover:text-black transition-all"
+          >
+            <Eye className="h-4 w-4 me-1" />
+            {language === 'ar' ? 'عرض' : 'View'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handlePrintOrder(order)}
+            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
+            title={language === 'ar' ? 'طباعة' : 'Print'}
+          >
+            <Printer className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleShareOrder(order)}
+            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
+            title={language === 'ar' ? 'مشاركة' : 'Share'}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleExportPDF(order)}
+            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
+            title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
@@ -526,6 +645,14 @@ export default function AdminOrdersPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="virtual-scroll"
+                    checked={useVirtualScrolling}
+                    onCheckedChange={setUseVirtualScrolling}
+                  />
+                  <Label htmlFor="virtual-scroll">{language === 'ar' ? 'التمرير الافتراضي' : 'Virtual Scrolling'}</Label>
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {language === 'ar'
                     ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} من ${filteredOrders.length} طلب`
@@ -559,7 +686,7 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            {ordersLoading ? (
+            {(isLoading || isLoadingAll) ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="border border-border/50 dark:border-[#d4af37]/20 rounded-lg p-4">
@@ -576,7 +703,7 @@ export default function AdminOrdersPage() {
                   </div>
                 ))}
               </div>
-            ) : paginatedOrders.length === 0 ? (
+            ) : orders.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
                 <p className="text-muted-foreground">
@@ -587,91 +714,7 @@ export default function AdminOrdersPage() {
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-3">
-                  {paginatedOrders.map((order) => (
-                    <Card 
-                      key={order.id} 
-                      className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group"
-                    >
-                      <CardContent className="p-4 space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <input
-                                type="checkbox"
-                                checked={selectedOrders.has(order.id)}
-                                onChange={() => toggleOrderSelection(order.id)}
-                                className="rounded border-gray-300 shrink-0 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
-                              />
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <p className="font-mono text-sm font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                                  #{order.id.slice(0, 8)}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground truncate ps-6">
-                              {getClientName(order.clientId)}
-                            </p>
-                          </div>
-                          {getStatusBadge(order.status)}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
-                            <span className="text-xs text-muted-foreground font-medium">
-                              {language === 'ar' ? 'المبلغ' : 'Amount'}
-                            </span>
-                            <span className="font-mono font-bold text-sm">{order.totalAmount}</span>
-                          </div>
-                          <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/30">
-                            <span className="text-xs text-muted-foreground font-medium">
-                              {language === 'ar' ? 'التاريخ' : 'Date'}
-                            </span>
-                            <span className="text-xs font-medium truncate">{formatDateLocalized(new Date(order.createdAt), language)}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 pt-2 border-t border-border/50">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewDetails(order)}
-                            className="flex-1 hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#d4af37] dark:hover:text-black transition-all"
-                          >
-                            <Eye className="h-4 w-4 me-1" />
-                            {language === 'ar' ? 'عرض' : 'View'}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handlePrintOrder(order)}
-                            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
-                            title={language === 'ar' ? 'طباعة' : 'Print'}
-                          >
-                            <Printer className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleShareOrder(order)}
-                            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
-                            title={language === 'ar' ? 'مشاركة' : 'Share'}
-                          >
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleExportPDF(order)}
-                            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
-                            title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {paginatedOrders.map((order) => renderOrderCard(order))}
                 </div>
 
                 {/* Desktop Table View */}
@@ -682,7 +725,7 @@ export default function AdminOrdersPage() {
                         <TableHead className="w-12">
                           <input
                             type="checkbox"
-                            checked={selectedOrders.size === paginatedOrders.length && paginatedOrders.length > 0}
+                            checked={selectedOrders.size === orders.length && orders.length > 0}
                             onChange={toggleAllOrders}
                             className="rounded border-gray-300 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
                           />
@@ -698,8 +741,8 @@ export default function AdminOrdersPage() {
                     </TableHeader>
                     <TableBody>
                       {paginatedOrders.map((order) => (
-                        <TableRow 
-                          key={order.id} 
+                        <TableRow
+                          key={order.id}
                           data-testid={`row-order-${order.id}`}
                           className="hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors group"
                         >
@@ -786,7 +829,7 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {totalPages > 1 && !useVirtualScrolling && (
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                     <div className="text-sm text-muted-foreground">
                       {language === 'ar'

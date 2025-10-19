@@ -63,10 +63,77 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Prefetch common queries
+// Granular cache strategies by data type
+export const cacheStrategies = {
+  // Static/rarely changing data
+  products: {
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  },
+  categories: {
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+  },
+  vendors: {
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 20 * 60 * 1000, // 20 minutes
+  },
+  
+  // Semi-dynamic data
+  clients: {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  },
+  templates: {
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 20 * 60 * 1000, // 20 minutes
+  },
+  
+  // Frequently changing data
+  orders: {
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  },
+  modifications: {
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 3 * 60 * 1000, // 3 minutes
+  },
+  
+  // Real-time data
+  notifications: {
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 60 * 1000, // 1 minute
+  },
+  
+  // User-specific data
+  profile: {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  },
+};
+
+// Prefetch common queries with optimized strategies
 export const prefetchCommonQueries = async () => {
-  await queryClient.prefetchQuery({
-    queryKey: ['/api/products'],
-    staleTime: 10 * 60 * 1000, // 10 minutes for products
+  const prefetchPromises = [
+    queryClient.prefetchQuery({
+      queryKey: ['/api/products'],
+      ...cacheStrategies.products,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ['/api/categories'],
+      ...cacheStrategies.categories,
+    }),
+  ];
+  
+  await Promise.allSettled(prefetchPromises);
+};
+
+// Invalidate specific cache patterns
+export const invalidateCachePattern = (pattern: string) => {
+  queryClient.invalidateQueries({
+    predicate: (query) => 
+      query.queryKey.some((key) => 
+        typeof key === 'string' && key.includes(pattern)
+      ),
   });
 };
