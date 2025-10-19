@@ -1,3 +1,4 @@
+// Moved from /admin/ subfolder to flat structure
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";

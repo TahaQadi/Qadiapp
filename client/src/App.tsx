@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import OrderingPage from "@/pages/OrderingPage";
@@ -131,19 +132,19 @@ function Router() {
       <AdminRoute path="/admin/products" component={AdminProductsPage} />
       <AdminRoute path="/admin/vendors" component={AdminVendorsPage} />
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
-      <Route path="/admin/price-management" component={AdminPriceManagementPage} />
-      <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
-      {/* Redirect old templates route to documents page with templates tab */}
+      <AdminRoute path="/admin/price-management" component={AdminPriceManagementPage} />
+      <AdminRoute path="/admin/price-requests" component={AdminPriceRequestsPage} />
+      <AdminRoute path="/admin/price-offers" component={AdminPriceOffersPage} />
+      <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
+      <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />
+      <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
+      <AdminRoute path="/admin/documents/list" component={AdminDocumentListPage} />
+      <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
+      <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
+      {/* Redirect old templates route */}
       <Route path="/admin/templates">
         <Redirect to="/admin/documents" />
       </Route>
-      <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
-      <AdminRoute path="/admin/documents/list" component={AdminDocumentListPage} />
-      <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
-      <Route path="/admin/orders" component={AdminOrdersPage} />
-      <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />
-      <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
-      <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />
@@ -166,7 +167,9 @@ function AppContent() {
 
   return (
     <>
-      <Router />
+      <ErrorBoundary>
+        <Router />
+      </ErrorBoundary>
       <Toaster />
       <InstallPrompt />
       <NotificationPermission />
