@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { FileText, Download, Search, Calendar, History, Eye, ArrowLeft, Plus, Edit, Trash2, Copy, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,9 @@ import { apiRequest, queryClient as globalQueryClient } from '@/lib/queryClient'
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TemplateEditor } from '@/components/TemplateEditor';
 import { Link } from 'wouter';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { EmptyState } from '@/components/EmptyState';
+import { PaginationControls } from '@/components/PaginationControls';
 
 interface Document {
   id: string;
@@ -70,6 +73,10 @@ export default function AdminDocumentsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Pagination state for documents
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isVersionHistoryDialogOpen, setIsVersionHistoryDialogOpen] = useState(false);
   const [selectedDocumentIdForHistory, setSelectedDocumentIdForHistory] = useState<string | null>(null);
 
@@ -100,6 +107,12 @@ export default function AdminDocumentsPage() {
   });
 
   const documents = data?.documents || [];
+
+  // Pagination logic
+  const totalPages = Math.ceil(documents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedDocuments = documents.slice(startIndex, endIndex);
 
   const { data: versions = [], isLoading: isLoadingVersions } = useQuery({
     queryKey: ['/api/admin/documents', selectedDocumentIdForHistory, 'versions'],
@@ -232,6 +245,21 @@ export default function AdminDocumentsPage() {
   const handleViewAccessLogs = (docId: string) => {
     setSelectedDocumentIdForLogs(docId);
     setIsAccessLogsDialogOpen(true);
+  };
+
+  // Helper functions for document table
+  const handleDownloadDocument = (docId: string) => {
+    const doc = documents.find(d => d.id === docId);
+    if (doc) {
+      handleDownload(doc);
+    }
+  };
+
+  const handleViewDocument = (docId: string) => {
+    const doc = documents.find(d => d.id === docId);
+    if (doc) {
+      window.open(doc.fileUrl, '_blank');
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -422,95 +450,84 @@ export default function AdminDocumentsPage() {
                   </Card>
                 </div>
 
-                {/* Documents Table */}
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{language === 'ar' ? 'اسم الملف' : 'File Name'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الحجم' : 'Size'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'المشاهدات' : 'Views'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center h-32">
-                            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                          </TableCell>
-                        </TableRow>
-                      ) : documents.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center h-32">
-                            <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                            <div className="text-muted-foreground">
-                              {language === 'ar' ? 'لا توجد مستندات' : 'No documents found'}
+                {/* Documents Table/List */}
+                {isLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <LoadingSkeleton key={i} type="card" />
+                    ))}
+                  </div>
+                ) : documents.length === 0 ? (
+                  <EmptyState
+                    icon={FileText}
+                    title={language === 'ar' ? 'لا توجد مستندات' : 'No documents found'}
+                    description={language === 'ar' ? 'جرب تعديل الفلاتر الخاصة بك.' : 'Try adjusting your filters'}
+                  />
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      {paginatedDocuments.map((doc: Document) => (
+                        <Card key={doc.id} className="p-4 hover:bg-muted/50" data-testid={`row-document-${doc.id}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                                <h3 className="font-medium truncate">{doc.fileName.split('/').pop()}</h3>
+                                <Badge variant="outline" className={getDocumentTypeColor(doc.documentType)}>
+                                  {getDocumentTypeLabel(doc.documentType)}
+                                </Badge>
+                              </div>
+                              <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                                <p>{language === 'ar' ? 'النوع' : 'Type'}: {getDocumentTypeLabel(doc.documentType)}</p>
+                                <p>{language === 'ar' ? 'معرف الطلب' : 'Order ID'}: {doc.orderId || 'N/A'}</p>
+                                <p>{language === 'ar' ? 'العميل' : 'Client'}: {doc.clientId || 'N/A'}</p>
+                                <p>{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}: {format(new Date(doc.createdAt), 'PPp')}</p>
+                              </div>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        documents.map((doc: Document) => (
-                          <TableRow key={doc.id} className="hover:bg-muted/50" data-testid={`row-document-${doc.id}`}>
-                            <TableCell className="font-medium max-w-xs truncate">
-                              {doc.fileName.split('/').pop()}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={getDocumentTypeColor(doc.documentType)}>
-                                {getDocumentTypeLabel(doc.documentType)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {formatFileSize(doc.fileSize)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                {doc.viewCount || 0}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {format(new Date(doc.createdAt), 'PPp')}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDownload(doc)}
-                                  title={language === 'ar' ? 'تنزيل' : 'Download'}
-                                  data-testid={`button-download-${doc.id}`}
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewHistory(doc.id)}
-                                  title={language === 'ar' ? 'سجل الإصدارات' : 'Version History'}
-                                  data-testid={`button-history-${doc.id}`}
-                                >
-                                  <History className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewAccessLogs(doc.id)}
-                                  title={language === 'ar' ? 'سجلات الوصول' : 'Access Logs'}
-                                  data-testid={`button-logs-${doc.id}`}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownload(doc)}
+                                title={language === 'ar' ? 'تنزيل' : 'Download'}
+                                data-testid={`button-download-${doc.id}`}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewHistory(doc.id)}
+                                title={language === 'ar' ? 'سجل الإصدارات' : 'Version History'}
+                                data-testid={`button-history-${doc.id}`}
+                              >
+                                <History className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewAccessLogs(doc.id)}
+                                title={language === 'ar' ? 'سجلات الوصول' : 'Access Logs'}
+                                data-testid={`button-logs-${doc.id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+
+                    <PaginationControls
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      itemsPerPage={itemsPerPage}
+                      totalItems={documents.length}
+                      onPageChange={setCurrentPage}
+                      onItemsPerPageChange={setItemsPerPage}
+                    />
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -570,7 +587,7 @@ export default function AdminDocumentsPage() {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2">
                               <div className="p-1.5 rounded-lg bg-primary/10">
                                 <FileText className="h-4 w-4 text-primary shrink-0" />
                               </div>

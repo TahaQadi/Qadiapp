@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -19,6 +19,9 @@ import { Link } from 'wouter';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TemplatePreview } from '@/components/TemplatePreview';
 import { TemplateEditor } from '@/components/TemplateEditor';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { EmptyState } from '@/components/EmptyState';
+import { PaginationControls } from '@/components/PaginationControls';
 
 export default function AdminTemplatesPage() {
   const { language } = useLanguage();
@@ -27,6 +30,10 @@ export default function AdminTemplatesPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -44,7 +51,7 @@ export default function AdminTemplatesPage() {
     isDefault: false,
   });
 
-  const { data: templates, isLoading } = useQuery({
+  const { data: templates = [], isLoading } = useQuery({
     queryKey: ['/api/admin/templates', selectedCategory],
     queryFn: async () => {
       const url = selectedCategory === 'all'
@@ -54,6 +61,12 @@ export default function AdminTemplatesPage() {
       return res.json();
     },
   });
+
+  const totalPages = Math.ceil(templates.length / itemsPerPage);
+  const paginatedTemplates = templates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -289,101 +302,120 @@ export default function AdminTemplatesPage() {
           </TabsList>
 
           {isLoading ? (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {templates?.map((template: any, index: number) => (
-                <Card
-                  key={template.id}
-                  className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 group animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
-                            <FileText className="h-4 w-4 text-primary dark:text-[#d4af37] shrink-0" />
-                          </div>
-                          <CardTitle className="text-sm sm:text-base truncate font-semibold">
-                            {language === 'ar' ? template.nameAr : template.nameEn}
-                          </CardTitle>
-                        </div>
-                        <CardDescription className="text-xs line-clamp-2 mt-1">
-                          {language === 'ar' ? template.descriptionAr : template.descriptionEn}
-                        </CardDescription>
-                      </div>
-                      <Badge
-                        variant={template.isActive ? 'default' : 'secondary'}
-                        className="shrink-0 text-xs"
-                      >
-                        {template.isActive
-                          ? (language === 'ar' ? 'نشط' : 'Active')
-                          : (language === 'ar' ? 'غير نشط' : 'Inactive')}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex gap-1 sm:gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
-                        onClick={() => {
-                          setEditingTemplate(template);
-                          const styles = typeof template.styles === 'string'
-                            ? JSON.parse(template.styles)
-                            : template.styles;
-                          setFormData({
-                            nameEn: template.nameEn,
-                            nameAr: template.nameAr,
-                            descriptionEn: template.descriptionEn || '',
-                            descriptionAr: template.descriptionAr || '',
-                            category: template.category,
-                            language: template.language,
-                            primaryColor: styles.primaryColor,
-                            secondaryColor: styles.secondaryColor,
-                            accentColor: styles.accentColor,
-                            fontSize: styles.fontSize,
-                            fontFamily: styles.fontFamily || 'Helvetica',
-                            isDefault: false,
-                          });
-                          setCreateDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
-                        onClick={() => {
-                          const newName = {
-                            en: `${template.nameEn} (Copy)`,
-                            ar: `${template.nameAr} (نسخة)`,
-                          };
-                          duplicateMutation.mutate({ id: template.id, name: newName });
-                        }}
-                      >
-                        <Copy className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">{language === 'ar' ? 'نسخ' : 'Copy'}</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                        onClick={() => deleteMutation.mutate(template.id)}
-                      >
-                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <LoadingSkeleton key={i} type="card" />
               ))}
             </div>
+          ) : paginatedTemplates.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No templates found"
+              description="Create a new template to get started"
+            />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {paginatedTemplates.map((template: any, index: number) => (
+                  <Card
+                    key={template.id}
+                    className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 group animate-fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+                              <FileText className="h-4 w-4 text-primary dark:text-[#d4af37] shrink-0" />
+                            </div>
+                            <CardTitle className="text-sm sm:text-base truncate font-semibold">
+                              {language === 'ar' ? template.nameAr : template.nameEn}
+                            </CardTitle>
+                          </div>
+                          <CardDescription className="text-xs line-clamp-2 mt-1">
+                            {language === 'ar' ? template.descriptionAr : template.descriptionEn}
+                          </CardDescription>
+                        </div>
+                        <Badge
+                          variant={template.isActive ? 'default' : 'secondary'}
+                          className="shrink-0 text-xs"
+                        >
+                          {template.isActive
+                            ? (language === 'ar' ? 'نشط' : 'Active')
+                            : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex gap-1 sm:gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
+                          onClick={() => {
+                            setEditingTemplate(template);
+                            const styles = typeof template.styles === 'string'
+                              ? JSON.parse(template.styles)
+                              : template.styles;
+                            setFormData({
+                              nameEn: template.nameEn,
+                              nameAr: template.nameAr,
+                              descriptionEn: template.descriptionEn || '',
+                              descriptionAr: template.descriptionAr || '',
+                              category: template.category,
+                              language: template.language,
+                              primaryColor: styles.primaryColor,
+                              secondaryColor: styles.secondaryColor,
+                              accentColor: styles.accentColor,
+                              fontSize: styles.fontSize,
+                              fontFamily: styles.fontFamily || 'Helvetica',
+                              isDefault: false,
+                            });
+                            setCreateDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
+                          onClick={() => {
+                            const newName = {
+                              en: `${template.nameEn} (Copy)`,
+                              ar: `${template.nameAr} (نسخة)`,
+                            };
+                            duplicateMutation.mutate({ id: template.id, name: newName });
+                          }}
+                        >
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">{language === 'ar' ? 'نسخ' : 'Copy'}</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          onClick={() => deleteMutation.mutate(template.id)}
+                        >
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                itemsPerPage={itemsPerPage}
+                totalItems={templates.length}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
+            </>
           )}
         </Tabs>
       </div>
