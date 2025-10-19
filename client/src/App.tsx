@@ -41,6 +41,10 @@ import { Loader2 } from "lucide-react";
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { NotificationPermission } from '@/components/NotificationPermission';
 import LoadingSkeleton from '@/components/ui/loading-skeleton';
+import { usePageTracking } from '@/lib/analytics';
+import { errorMonitoring } from '@/lib/errorMonitoring';
+import { performanceMonitoring } from '@/lib/performanceMonitoring';
+
 
 function AdminRoute({
   path,
@@ -179,6 +183,40 @@ function AppContent() {
 }
 
 function App() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Track page views
+  usePageTracking();
+
+  // Initialize monitoring in production
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      // Log performance metrics after page load
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const metrics = performanceMonitoring.getMetrics();
+          console.log('[Performance] Core Web Vitals:', metrics);
+        }, 3000);
+      });
+
+      // Set up error monitoring context
+      errorMonitoring.captureError = (error, context) => {
+        errorMonitoring.captureError(error, {
+          ...context,
+          isAuthenticated,
+        });
+      };
+    }
+  }, [isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
