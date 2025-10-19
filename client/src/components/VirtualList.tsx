@@ -1,53 +1,108 @@
-
-import { useRef, useEffect, useState, ReactNode } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface VirtualListProps<T> {
   items: T[];
-  itemHeight: number;
-  containerHeight: number;
-  renderItem: (item: T, index: number) => ReactNode;
+  renderItem: (item: T, index: number) => React.ReactNode;
+  estimateSize?: number;
   overscan?: number;
+  className?: string;
+  height?: string | number;
+  onEndReached?: () => void;
+  endReachedThreshold?: number;
+  keyExtractor?: (item: T, index: number) => string | number;
 }
 
 export function VirtualList<T>({
   items,
-  itemHeight,
-  containerHeight,
   renderItem,
-  overscan = 3,
+  estimateSize = 100,
+  overscan = 5,
+  className = '',
+  height = '600px',
+  onEndReached,
+  endReachedThreshold = 0.8,
+  keyExtractor = (_item, index) => index,
 }: VirtualListProps<T>) {
-  const [scrollTop, setScrollTop] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
 
-  const totalHeight = items.length * itemHeight;
-  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-  const endIndex = Math.min(
-    items.length - 1,
-    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
+  const rowVirtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => estimateSize,
+    overscan,
+    measureElement:
+      typeof window !== 'undefined' &&
+      navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
+  });
+
+  // Infinite scroll detection
+  const handleScroll = useCallback(() => {
+    if (!parentRef.current || !onEndReached) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = parentRef.current;
+    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+
+    if (scrollPercentage >= endReachedThreshold && !hasReachedEnd) {
+      setHasReachedEnd(true);
+      onEndReached();
+
+      // Reset after 1 second to allow for new loads
+      setTimeout(() => setHasReachedEnd(false), 1000);
+    }
+  }, [onEndReached, endReachedThreshold, hasReachedEnd]);
+
+  useEffect(() => {
+    const element = parentRef.current;
+    if (!element) return;
+
+    element.addEventListener('scroll', handleScroll);
+    return () => element.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Memoize virtual items to prevent unnecessary re-renders
+  const virtualItems = useMemo(
+    () => rowVirtualizer.getVirtualItems(),
+    [rowVirtualizer.getVirtualItems()]
   );
-
-  const visibleItems = items.slice(startIndex, endIndex + 1);
-  const offsetY = startIndex * itemHeight;
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollTop(e.currentTarget.scrollTop);
-  };
 
   return (
     <div
-      ref={containerRef}
-      onScroll={handleScroll}
-      style={{ height: containerHeight, overflow: 'auto' }}
-      className="relative"
+      ref={parentRef}
+      className={`overflow-auto ${className}`}
+      style={{ height }}
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
-        <div style={{ transform: `translateY(${offsetY}px)` }}>
-          {visibleItems.map((item, index) => (
-            <div key={startIndex + index} style={{ height: itemHeight }}>
-              {renderItem(item, startIndex + index)}
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {virtualItems.map((virtualItem) => {
+          const item = items[virtualItem.index];
+          const key = keyExtractor(item, virtualItem.index);
+
+          return (
+            <div
+              key={key}
+              data-index={virtualItem.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              {renderItem(item, virtualItem.index)}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
