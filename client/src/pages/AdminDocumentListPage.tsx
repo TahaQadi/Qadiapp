@@ -31,7 +31,7 @@ export default function AdminDocumentListPage() {
   const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [documentType, setDocumentType] = useState<string>('');
+  const [documentType, setDocumentType] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
@@ -41,7 +41,7 @@ export default function AdminDocumentListPage() {
     queryKey: ['/api/documents', searchTerm, documentType, startDate, endDate],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (documentType) params.append('documentType', documentType);
+      if (documentType && documentType !== 'all') params.append('documentType', documentType);
       if (searchTerm) params.append('searchTerm', searchTerm);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
@@ -146,11 +146,12 @@ export default function AdminDocumentListPage() {
                   <SelectValue placeholder={language === 'ar' ? 'نوع المستند' : 'Document Type'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                  <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
                   <SelectItem value="price_offer">{getDocumentTypeLabel('price_offer')}</SelectItem>
                   <SelectItem value="order">{getDocumentTypeLabel('order')}</SelectItem>
                   <SelectItem value="invoice">{getDocumentTypeLabel('invoice')}</SelectItem>
                   <SelectItem value="contract">{getDocumentTypeLabel('contract')}</SelectItem>
+                  <SelectItem value="lta_document">{getDocumentTypeLabel('lta_document')}</SelectItem>
                 </SelectContent>
               </Select>
 
