@@ -54,7 +54,7 @@ export default function AdminVendorsPage() {
     errors: Array<{ row: number; vendorNumber: string; message: string; messageAr: string }>;
   } | null>(null);
 
-  const { data: vendors = [], isLoading } = useQuery<Vendor[]>({
+  const { data: vendors = [], isLoading: vendorsLoading } = useQuery<Vendor[]>({
     queryKey: ['/api/admin/vendors'],
   });
 
@@ -431,11 +431,13 @@ export default function AdminVendorsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8" data-testid="text-loading">
-                {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-              </div>
-            ) : vendors.length === 0 ? (
+            {vendorsLoading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : vendors.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground" data-testid="text-no-vendors">
                 {language === 'ar' ? 'لا توجد موردين' : 'No vendors found'}
               </div>

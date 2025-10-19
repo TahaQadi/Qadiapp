@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +22,7 @@ import { Link } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { PaginationControls } from '@/components/PaginationControls';
 
 const productFormSchema = z.object({
   nameEn: z.string().min(1, 'English name is required'),
@@ -227,18 +227,18 @@ export default function AdminProductsPage() {
     mutationFn: async ({ productId, file }: { productId: string; file: File }) => {
       const formData = new FormData();
       formData.append('image', file);
-      
+
       const response = await fetch(`/api/admin/products/${productId}/image`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Upload failed');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -261,11 +261,11 @@ export default function AdminProductsPage() {
       const response = await fetch('/api/admin/products/export', {
         credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error('Export failed');
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -293,24 +293,24 @@ export default function AdminProductsPage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
       const totalRows = Math.max(0, lines.length - 1);
-      
+
       setImportProgress({ current: 0, total: totalRows, processing: true });
-      
+
       const response = await fetch('/api/admin/products/import', {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Import failed');
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
@@ -334,7 +334,7 @@ export default function AdminProductsPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     if (file.size > 5 * 1024 * 1024) {
       toast({ 
         variant: 'destructive',
@@ -342,9 +342,9 @@ export default function AdminProductsPage() {
       });
       return;
     }
-    
+
     setImageFile(file);
-    
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -367,7 +367,7 @@ export default function AdminProductsPage() {
       });
       return;
     }
-    
+
     await importProductsMutation.mutateAsync(importFile);
   };
 
@@ -375,7 +375,7 @@ export default function AdminProductsPage() {
     const csvHeader = 'SKU,Name (EN),Name (AR),Category Num,Unit Type,Unit,Unit Per Box,Cost Price Per Box,Cost Price Per Piece,Specifications (AR),Vendor Number,Main Category,Category,Selling Price Pack,Selling Price Piece,Description (EN),Description (AR),Image URL\n';
     const csvExample = '"SAMPLE-001","Sample Product","منتج عينة","1101","Box","Piece","12","120.00","10.50","مواصفات المنتج","V001","Electronics","Mobile Phones","130.00","11.00","Sample product description","وصف المنتج النموذجي",""';
     const csv = csvHeader + csvExample;
-    
+
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv; charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -390,14 +390,14 @@ export default function AdminProductsPage() {
   const handleCreateProduct = async (data: ProductFormValues) => {
     try {
       const product = await createProductMutation.mutateAsync(data);
-      
+
       if (imageFile && product.id) {
         await uploadImageMutation.mutateAsync({
           productId: product.id,
           file: imageFile,
         });
       }
-      
+
       setCreateDialogOpen(false);
       setImageFile(null);
       setImagePreview(null);
@@ -435,17 +435,17 @@ export default function AdminProductsPage() {
 
   const handleUpdateProduct = async (data: ProductFormValues) => {
     if (!selectedProduct) return;
-    
+
     try {
       await updateProductMutation.mutateAsync({ id: selectedProduct.id, data });
-      
+
       if (imageFile) {
         await uploadImageMutation.mutateAsync({
           productId: selectedProduct.id,
           file: imageFile,
         });
       }
-      
+
       setEditDialogOpen(false);
       setImageFile(null);
       setImagePreview(null);
@@ -472,10 +472,10 @@ export default function AdminProductsPage() {
       product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.nameAr.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
     const matchesVendor = vendorFilter === 'all' || product.vendorId === vendorFilter;
-    
+
     return matchesSearch && matchesCategory && matchesVendor;
   });
 
@@ -511,7 +511,7 @@ export default function AdminProductsPage() {
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
+
         {/* Floating particles */}
         <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float"></div>
         <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
@@ -623,7 +623,7 @@ export default function AdminProductsPage() {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="p-6">
             {/* Filters */}
             <div className="space-y-4 mb-6">
@@ -781,40 +781,12 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-muted-foreground">
-                      {language === 'ar' 
-                        ? `صفحة ${currentPage} من ${totalPages}`
-                        : `Page ${currentPage} of ${totalPages}`
-                      }
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="border-primary/50 dark:border-[#d4af37]/50"
-                        data-testid="button-prev-page"
-                      >
-                        <ChevronLeft className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'السابق' : 'Previous'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="border-primary/50 dark:border-[#d4af37]/50"
-                        data-testid="button-next-page"
-                      >
-                        {language === 'ar' ? 'التالي' : 'Next'}
-                        <ChevronRight className="h-4 w-4 ms-1" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  language={language}
+                />
               </>
             )}
           </CardContent>
@@ -1558,7 +1530,7 @@ export default function AdminProductsPage() {
               }
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50 dark:border-[#d4af37]/20">
               <div className="space-y-1">

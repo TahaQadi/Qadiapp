@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -19,6 +18,7 @@ import { safeJsonParse } from '@/lib/safeJson';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Order {
   id: string;
@@ -63,7 +63,7 @@ export default function AdminOrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const itemsPerPage = 10;
 
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ['/api/admin/orders'],
   });
 
@@ -288,7 +288,7 @@ export default function AdminOrdersPage() {
               ${language === 'ar' ? 'طباعة' : 'Print'}
             </button>
           </div>
-          
+
           <script>
             if (document.readyState === 'complete') {
               window.print();
@@ -358,7 +358,7 @@ export default function AdminOrdersPage() {
 
   const handleShareOrder = (order: Order) => {
     const shareUrl = `${window.location.origin}/admin/orders?orderId=${order.id}`;
-    
+
     if (navigator.share) {
       navigator.share({
         title: `${language === 'ar' ? 'طلب' : 'Order'} #${order.id.slice(0, 8)}`,
@@ -420,7 +420,7 @@ export default function AdminOrdersPage() {
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(order.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.pipefyCardId?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesStatus && matchesSearch;
   });
 
@@ -532,7 +532,7 @@ export default function AdminOrdersPage() {
                     : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} of ${filteredOrders.length} orders`
                   }
                 </div>
-                
+
                 {selectedOrders.size > 0 && (
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">
@@ -559,12 +559,22 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent dark:border-[#d4af37] dark:border-r-transparent"></div>
-                <p className="text-muted-foreground mt-3">
-                  {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                </p>
+            {ordersLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="border border-border/50 dark:border-[#d4af37]/20 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-6 w-24" />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : paginatedOrders.length === 0 ? (
               <div className="text-center py-12">

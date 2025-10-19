@@ -534,9 +534,9 @@ export default function AdminClientsPage() {
             </CardHeader>
             <CardContent>
               {clientsLoading ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-16 bg-muted rounded animate-pulse" />
+                    <div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />
                   ))}
                 </div>
               ) : clients.length === 0 ? (
@@ -698,9 +698,9 @@ export default function AdminClientsPage() {
               </CardHeader>
               <CardContent>
                 {clientsLoading ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-16 bg-muted rounded animate-pulse" />
+                      <div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />
                     ))}
                   </div>
                 ) : clients.length === 0 ? (
