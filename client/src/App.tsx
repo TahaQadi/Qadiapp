@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, lazy } from "react";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
@@ -24,6 +24,7 @@ import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
 import AdminDocumentsPage from './pages/AdminDocumentsPage';
+import AdminDocumentListPage from './pages/AdminDocumentListPage';
 import OrderModificationsPage from './pages/admin/OrderModificationsPage';
 import OrdersPage from './pages/OrdersPage';
 import PriceRequestPage from '@/pages/PriceRequestPage';
@@ -134,7 +135,7 @@ function Router() {
       <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
       <AdminRoute path="/admin/templates" component={AdminTemplatesPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
-      <Route path="/admin/documents/list" component={lazy(() => import('./pages/AdminDocumentListPage'))} />
+      <AdminRoute path="/admin/documents/list" component={AdminDocumentListPage} />
       <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />
