@@ -105,6 +105,18 @@ export default function AdminPage() {
       ]
     },
     {
+      id: 'reports',
+      path: '/admin/reports',
+      icon: Settings,
+      titleEn: 'System Reports',
+      titleAr: 'تقارير النظام',
+      descEn: 'Security audit and performance metrics',
+      descAr: 'فحص الأمان ومقاييس الأداء',
+      gradient: 'from-violet-500/20 to-fuchsia-500/10',
+      hoverGradient: 'from-violet-500/30 to-fuchsia-500/20',
+      testId: 'card-reports'
+    },
+    {
       id: 'templates',
       path: '/admin/templates',
       icon: FileText,
