@@ -47,11 +47,26 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors
+        if (error?.message?.includes('4')) return false;
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
       retry: false,
+      gcTime: 5 * 60 * 1000,
     },
   },
 });
+
+// Prefetch common queries
+export const prefetchCommonQueries = async () => {
+  await queryClient.prefetchQuery({
+    queryKey: ['/api/products'],
+    staleTime: 10 * 60 * 1000, // 10 minutes for products
+  });
+};
