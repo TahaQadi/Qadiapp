@@ -40,7 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { NotificationPermission } from '@/components/NotificationPermission';
-import LoadingSkeleton from '@/components/ui/loading-skeleton';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { usePageTracking } from '@/lib/analytics';
 import { errorMonitoring } from '@/lib/errorMonitoring';
 import { performanceMonitoring } from '@/lib/performanceMonitoring';
@@ -200,10 +200,14 @@ function AppWithProviders() {
       });
 
       // Set up error monitoring context
+      const originalCaptureError = errorMonitoring.captureError.bind(errorMonitoring);
       errorMonitoring.captureError = (error, context) => {
-        errorMonitoring.captureError(error, {
+        originalCaptureError(error, {
           ...context,
-          isAuthenticated,
+          metadata: {
+            ...context?.metadata,
+            isAuthenticated,
+          },
         });
       };
     }
