@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, lazy } from "react";
 import NotFound from "@/pages/not-found";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LandingPage from "@/pages/LandingPage";
@@ -99,7 +99,7 @@ function Router() {
       <Route path="/landing" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
-      
+
       {/* Public product pages for SEO */}
       <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
       <Route path="/catalog/:category" component={CatalogPage} />
@@ -126,7 +126,7 @@ function Router() {
           <Route path="/profile" component={ClientProfilePage} />
         </>
       )}
-      
+
       {/* Admin routes */}
       <AdminRoute path="/admin" component={AdminPage} />
       <AdminRoute path="/admin/products" component={AdminProductsPage} />
