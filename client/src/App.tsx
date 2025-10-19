@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, lazy } from "react";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
