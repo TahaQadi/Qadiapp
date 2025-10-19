@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Download, Search, Filter, Eye, Trash2, Calendar, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +37,8 @@ export default function AdminDocumentListPage() {
   const [endDate, setEndDate] = useState('');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data, isLoading } = useQuery<{ documents: Document[] }>({
     queryKey: ['/api/documents', searchTerm, documentType, startDate, endDate],
@@ -68,6 +71,16 @@ export default function AdminDocumentListPage() {
   });
 
   const documents = data?.documents || [];
+  
+  // Pagination
+  const totalPages = Math.ceil(documents.length / itemsPerPage);
+  const paginatedDocuments = documents.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
+  // Reset to page 1 when filters change
+  const resetPage = () => setPage(1);
 
   const getDocumentTypeLabel = (type: string) => {
     const labels: Record<string, { en: string; ar: string }> = {
@@ -131,17 +144,45 @@ export default function AdminDocumentListPage() {
           </CardHeader>
           <CardContent>
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  {language === 'ar' ? 'الفلاتر' : 'Filters'}
+                </h3>
+                {(searchTerm || documentType !== 'all' || startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setDocumentType('all');
+                      setStartDate('');
+                      setEndDate('');
+                      resetPage();
+                    }}
+                  >
+                    {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    resetPage();
+                  }}
                 />
               </div>
 
-              <Select value={documentType} onValueChange={setDocumentType}>
+              <Select value={documentType} onValueChange={(value) => {
+                setDocumentType(value);
+                resetPage();
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder={language === 'ar' ? 'نوع المستند' : 'Document Type'} />
                 </SelectTrigger>
@@ -158,16 +199,23 @@ export default function AdminDocumentListPage() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  resetPage();
+                }}
                 placeholder={language === 'ar' ? 'من تاريخ' : 'From Date'}
               />
 
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  resetPage();
+                }}
                 placeholder={language === 'ar' ? 'إلى تاريخ' : 'To Date'}
               />
+              </div>
             </div>
 
             {/* Documents Table */}
@@ -185,11 +233,18 @@ export default function AdminDocumentListPage() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[40px]" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                          <TableCell><Skeleton className="h-8 w-[100px]" /></TableCell>
+                        </TableRow>
+                      ))}
+                    </>
                   ) : documents.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
@@ -197,7 +252,7 @@ export default function AdminDocumentListPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    documents.map((doc) => (
+                    paginatedDocuments.map((doc) => (
                       <TableRow key={doc.id}>
                         <TableCell className="font-medium">
                           {doc.fileName.split('/').pop()}
@@ -236,6 +291,93 @@ export default function AdminDocumentListPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  {language === 'ar' 
+                    ? `عرض ${(page - 1) * itemsPerPage + 1}-${Math.min(page * itemsPerPage, documents.length)} من ${documents.length}`
+                    : `Showing ${(page - 1) * itemsPerPage + 1}-${Math.min(page * itemsPerPage, documents.length)} of ${documents.length}`
+                  }
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    {language === 'ar' ? 'السابق' : 'Previous'}
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                      .map((p, idx, arr) => (
+                        <div key={p} className="flex items-center">
+                          {idx > 0 && arr[idx - 1] !== p - 1 && (
+                            <span className="px-2 text-muted-foreground">...</span>
+                          )}
+                          <Button
+                            variant={page === p ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setPage(p)}
+                            className="min-w-[2.5rem]"
+                          >
+                            {p}
+                          </Button>
+                        </div>
+                      ))
+                    }
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    {language === 'ar' ? 'التالي' : 'Next'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Stats */}
+            {!isLoading && documents.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{documents.length}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'إجمالي المستندات' : 'Total Documents'}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {documents.reduce((sum, doc) => sum + (doc.viewCount || 0), 0)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'إجمالي المشاهدات' : 'Total Views'}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {documentType === 'all' 
+                        ? documents.length 
+                        : documents.filter(d => d.documentType === documentType).length
+                      }
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'المستندات المفلترة' : 'Filtered Documents'}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
