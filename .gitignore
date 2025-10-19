@@ -37,5 +37,7 @@ yarn-error.log*
 replit.nix
 
 # Test coverage
-coverage/
+coverage
 *.lcov
+test-results/
+.vitest/

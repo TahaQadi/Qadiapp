@@ -8,19 +8,33 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './client/src/__tests__/setup.ts',
+    include: ['client/src/__tests__/**/*.{test,spec}.{ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'client/src/__tests__/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/mockData',
-        '**/dist',
+      include: [
+        'client/src/components/**/*.{ts,tsx}',
+        'client/src/pages/**/*.{ts,tsx}',
+        'client/src/hooks/**/*.{ts,tsx}',
+        'client/src/lib/**/*.{ts,tsx}',
       ],
+      exclude: [
+        'client/src/**/*.test.{ts,tsx}',
+        'client/src/**/*.spec.{ts,tsx}',
+        'client/src/__tests__/**',
+        'client/src/components/ui/**',
+      ],
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 60,
+        statements: 60,
+      },
     },
-    testTimeout: 10000,
+    reporters: ['verbose', 'html'],
+    outputFile: {
+      html: './test-results/index.html',
+    },
   },
   resolve: {
     alias: {

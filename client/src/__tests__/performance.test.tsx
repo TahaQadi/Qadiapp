@@ -1,0 +1,120 @@
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AdminProductsPage from '@/pages/AdminProductsPage';
+
+// Mock auth hook
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'admin-1', nameEn: 'Admin User', isAdmin: true },
+    isAuthenticated: true,
+    isLoading: false,
+  }),
+}));
+
+// Mock wouter
+vi.mock('wouter', () => ({
+  useLocation: () => ['/', vi.fn()],
+  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
+  useRoute: () => [false, {}],
+}));
+
+describe('Performance Tests', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { 
+          retry: false,
+          staleTime: 5 * 60 * 1000, // 5 minutes
+          cacheTime: 10 * 60 * 1000, // 10 minutes
+        },
+        mutations: { retry: false },
+      },
+    });
+
+    // Mock large dataset
+    const largeProductList = Array.from({ length: 100 }, (_, i) => ({
+      id: `prod-${i}`,
+      sku: `SKU-${i.toString().padStart(3, '0')}`,
+      nameEn: `Product ${i}`,
+      nameAr: `منتج ${i}`,
+      contractPrice: '100.00',
+    }));
+
+    global.fetch = vi.fn((url) => {
+      if (url.includes('/api/admin/products')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(largeProductList),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    }) as any;
+  });
+
+  it('should render large lists efficiently', async () => {
+    const startTime = performance.now();
+    
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AdminProductsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Product 0')).toBeInTheDocument();
+    });
+
+    const endTime = performance.now();
+    const renderTime = endTime - startTime;
+
+    // Should render within 2 seconds even with 100 items
+    expect(renderTime).toBeLessThan(2000);
+  });
+
+  it('should cache query results', async () => {
+    let fetchCount = 0;
+    global.fetch = vi.fn((url) => {
+      if (url.includes('/api/admin/products')) {
+        fetchCount++;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([
+            { id: 'prod-1', sku: 'SKU-001', nameEn: 'Test Product', nameAr: 'منتج تجريبي', contractPrice: '100.00' }
+          ]),
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+    }) as any;
+
+    const { unmount } = render(
+      <QueryClientProvider client={queryClient}>
+        <AdminProductsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Product')).toBeInTheDocument();
+    });
+
+    const firstFetchCount = fetchCount;
+
+    // Remount same component
+    unmount();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AdminProductsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Product')).toBeInTheDocument();
+    });
+
+    // Should use cached data, not fetch again
+    expect(fetchCount).toBe(firstFetchCount);
+  });
+});
