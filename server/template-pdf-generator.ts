@@ -1,188 +1,54 @@
 import PDFDocument from 'pdfkit';
-import path from 'path';
-import fs from 'fs';
-import ArabicReshaper from 'arabic-reshaper';
-import bidi from 'bidi-js';
+import type { Template, TemplateSection } from './template-storage';
 
-interface TemplateSection {
-  type: 'header' | 'body' | 'table' | 'terms' | 'signature' | 'footer' | 'image' | 'divider' | 'spacer';
-  content: any;
-}
-
-interface TemplateStyles {
-  primaryColor?: string;
-  secondaryColor?: string;
-  accentColor?: string;
-  fontSize?: number;
-  fontFamily?: string;
-  margins?: {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-  };
-}
-
-interface Template {
-  nameEn: string;
-  nameAr: string;
-  category: string;
-  language: 'en' | 'ar' | 'both';
-  sections: TemplateSection[];
-  variables: string[];
-  styles: TemplateStyles;
+interface GenerateOptions {
+  template: Template;
+  variables: Array<{ key: string; value: any }>;
+  language: 'en' | 'ar';
 }
 
 export class TemplatePDFGenerator {
-  private static readonly LOGO_PATH = path.join(process.cwd(), 'client', 'public', 'logo.png');
-  private static readonly ARABIC_FONT_PATH = path.join(process.cwd(), 'server', 'fonts', 'NotoSansArabic-Regular.ttf');
-  private static readonly ARABIC_FONT_BOLD_PATH = path.join(process.cwd(), 'server', 'fonts', 'NotoSansArabic-Bold.ttf');
-  private static readonly DEFAULT_MARGIN = { top: 120, bottom: 80, left: 50, right: 50 };
-  private static readonly DEFAULT_STYLES: TemplateStyles = {
-    primaryColor: '#1a365d',
-    secondaryColor: '#2d3748',
-    accentColor: '#d4af37',
-    fontSize: 10,
-    fontFamily: 'Helvetica',
-    margins: { top: 120, bottom: 80, left: 50, right: 50 }
-  };
-  
-  // Arabic PDF generation now fully supported with RTL/BiDi text shaping
-  // Uses arabic-reshaper for glyph connection and bidi-js for text ordering
-  // Set to false to disable Arabic PDF generation if needed
-  private static readonly ENABLE_ARABIC_PDF = process.env.ENABLE_ARABIC_PDF !== 'false';
-
-  /**
-   * Check if Arabic fonts are available
-   */
-  private static hasArabicFonts(): boolean {
-    return fs.existsSync(this.ARABIC_FONT_PATH) && fs.existsSync(this.ARABIC_FONT_BOLD_PATH);
-  }
-
-  /**
-   * Get appropriate font for language
-   */
-  private static getFont(doc: PDFKit.PDFDocument, language: 'en' | 'ar' | 'both', bold: boolean = false): void {
-    if ((language === 'ar' || language === 'both') && this.hasArabicFonts()) {
-      try {
-        // Register Arabic font if not already registered
-        const fontPath = bold ? this.ARABIC_FONT_BOLD_PATH : this.ARABIC_FONT_PATH;
-        doc.font(fontPath);
-        return;
-      } catch (e) {
-        // Fall back to Helvetica if Arabic font registration fails
-      }
-    }
-    // Default to Helvetica for English
-    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica');
-  }
-
-  /**
-   * Detect if text contains Arabic characters
-   */
-  private static isArabicText(text: string): boolean {
-    if (!text) return false;
-    // Arabic Unicode range: U+0600 to U+06FF
-    const arabicRegex = /[\u0600-\u06FF]/;
-    return arabicRegex.test(text);
-  }
-
-  /**
-   * Process text for proper RTL rendering with BiDi support
-   * This handles Arabic text shaping and bidirectional text ordering
-   */
-  private static processRTLText(text: string): string {
-    if (!text) return text;
-    
-    try {
-      // Step 1: Check if text contains Arabic
-      if (!this.isArabicText(text)) {
-        return text; // Return as-is for non-Arabic text
-      }
-
-      // Step 2: Reshape Arabic characters for proper glyph connection
-      const reshaped = ArabicReshaper.convertArabic(text);
-
-      // Step 3: Apply BiDi algorithm for proper RTL ordering
-      const embeddingLevels = bidi.getEmbeddingLevels(reshaped, 'rtl');
-      const reorderSegments = bidi.getReorderSegments(reshaped, embeddingLevels);
-      
-      // Step 4: Apply reordering
-      let result = reshaped.split('');
-      for (const [start, end] of reorderSegments) {
-        const segment = result.slice(start, end + 1).reverse();
-        result.splice(start, end - start + 1, ...segment);
-      }
-
-      // Step 5: Handle mirrored characters
-      const mirroredChars = bidi.getMirroredCharactersMap(reshaped, embeddingLevels);
-      mirroredChars.forEach((char, index) => {
-        if (index < result.length) {
-          result[index] = char;
-        }
-      });
-
-      return result.join('');
-    } catch (error) {
-      // If processing fails, return original text
-      return text;
-    }
-  }
-
-  /**
-   * Get text alignment based on language
-   */
-  private static getAlignment(language: 'en' | 'ar' | 'both', text?: string): 'left' | 'right' | 'center' {
-    // For explicit Arabic language or if text contains Arabic
-    if (language === 'ar' || (text && this.isArabicText(text))) {
-      return 'right';
-    }
-    return 'left';
-  }
-  
-  /**
-   * Generate PDF from template and variables
-   */
-  static async generateFromTemplate(
-    template: Template,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both' = 'both'
-  ): Promise<Buffer> {
+  static async generate(options: GenerateOptions): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
-        // Check if Arabic PDF generation is enabled
-        if ((language === 'ar' || language === 'both') && !this.ENABLE_ARABIC_PDF) {
-          reject(new Error(
-            'Arabic PDF generation is disabled. Set ENABLE_ARABIC_PDF=true to enable.'
-          ));
-          return;
-        }
+        const { template, variables, language } = options;
+        const styles = typeof template.styles === 'string' 
+          ? JSON.parse(template.styles) 
+          : template.styles;
 
-        // Merge template styles with defaults
-        const styles = {
-          ...this.DEFAULT_STYLES,
-          ...(template.styles || {}),
-          margins: template.styles?.margins || this.DEFAULT_MARGIN
-        };
-        const margins = styles.margins;
-        
         const doc = new PDFDocument({
           size: 'A4',
-          margins,
+          margins: styles.margins || {
+            top: 120,
+            bottom: 80,
+            left: 50,
+            right: 50,
+          },
           bufferPages: true,
-          autoFirstPage: true,
-          compress: true
         });
 
-        const chunks: Buffer[] = [];
-        
-        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        const buffers: Buffer[] = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
         doc.on('error', reject);
 
-        // Process each section
-        for (const section of template.sections) {
-          this.renderSection(doc, section, variables, language, styles);
+        // Set font based on language
+        if (language === 'ar') {
+          doc.font('server/fonts/NotoSansArabic-Regular.ttf');
+        }
+
+        // Sort sections by order
+        const sections = typeof template.sections === 'string' 
+          ? JSON.parse(template.sections) 
+          : template.sections as TemplateSection[];
+
+        const sortedSections = sections.sort((a, b) => 
+          (a.order || 0) - (b.order || 0)
+        );
+
+        // Render each section
+        for (const section of sortedSections) {
+          this.renderSection(doc, section, variables, styles, language);
         }
 
         doc.end();
@@ -192,422 +58,367 @@ export class TemplatePDFGenerator {
     });
   }
 
-  /**
-   * Render a single section
-   */
   private static renderSection(
     doc: PDFKit.PDFDocument,
     section: TemplateSection,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
     switch (section.type) {
       case 'header':
-        this.renderHeader(doc, section.content, variables, language, styles);
+        this.renderHeader(doc, section, variables, styles, language);
         break;
       case 'body':
-        this.renderBody(doc, section.content, variables, language, styles);
+        this.renderBody(doc, section, variables, styles, language);
         break;
       case 'table':
-        this.renderTable(doc, section.content, variables, language, styles);
-        break;
-      case 'terms':
-        this.renderTerms(doc, section.content, variables, language, styles);
-        break;
-      case 'signature':
-        this.renderSignature(doc, section.content, variables, language, styles);
+        this.renderTable(doc, section, variables, styles, language);
         break;
       case 'footer':
-        this.renderFooter(doc, section.content, variables, language, styles);
+        this.renderFooter(doc, section, variables, styles, language);
+        break;
+      case 'signature':
+        this.renderSignature(doc, section, variables, styles, language);
         break;
       case 'image':
-        this.renderImage(doc, section.content, variables, language, styles);
+        this.renderImage(doc, section, variables, styles, language);
         break;
       case 'divider':
-        this.renderDivider(doc, section.content, styles);
+        this.renderDivider(doc, section, styles);
         break;
       case 'spacer':
-        this.renderSpacer(doc, section.content);
+        this.renderSpacer(doc, section);
+        break;
+      case 'terms':
+        this.renderTerms(doc, section, variables, styles, language);
         break;
     }
   }
 
-  /**
-   * Render header section with logo and company info
-   */
   private static renderHeader(
     doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
-    const primaryColor = styles.primaryColor || '#1a365d';
-    const accentColor = styles.accentColor || '#d4af37';
-    
-    // Logo (if exists and showLogo is true)
-    if (content.showLogo && fs.existsSync(this.LOGO_PATH)) {
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
+    const y = doc.y;
+
+    // Logo if available
+    if (content.logo && content.showLogo !== false) {
       try {
-        doc.image(this.LOGO_PATH, 50, 30, { width: 60 });
-      } catch (e) {
-        // Skip logo if error
+        doc.image('public/logo.png', 50, y, { width: 60 });
+      } catch (error) {
+        console.error('Logo not found');
       }
     }
 
-    // Company info (right side)
+    // Company info
     const companyInfo = language === 'ar' ? content.companyInfoAr : content.companyInfoEn;
     if (companyInfo) {
-      this.getFont(doc, language, true);
-      const companyName = this.processRTLText(this.substituteVariables(companyInfo.name, variables));
-      doc.fontSize(10)
-        .fillColor(primaryColor)
-        .text(companyName, 300, 35, { width: 250, align: 'right' });
-      
-      this.getFont(doc, language, false);
-      const address = this.processRTLText(this.substituteVariables(companyInfo.address, variables));
-      const phone = this.processRTLText(this.substituteVariables(companyInfo.phone, variables));
-      const email = this.processRTLText(this.substituteVariables(companyInfo.email, variables));
-      
-      doc.fontSize(8)
-        .fillColor('#4a5568')
-        .text(address, 300, 50, { width: 250, align: 'right' })
-        .text(phone, 300, 63, { width: 250, align: 'right' })
-        .text(email, 300, 76, { width: 250, align: 'right' });
-    }
+      doc.fontSize(styles.fontSize + 2)
+        .fillColor(styles.primaryColor)
+        .text(companyInfo.name || '', 120, y, { align: 'left' });
 
-    // Decorative line
-    doc.moveTo(50, 100)
-      .lineTo(545, 100)
-      .lineWidth(2)
-      .strokeColor(accentColor)
-      .stroke();
+      doc.fontSize(styles.fontSize - 1)
+        .fillColor(styles.secondaryColor);
+
+      if (companyInfo.address) {
+        doc.text(companyInfo.address, 120, doc.y + 2);
+      }
+      if (companyInfo.phone) {
+        doc.text(companyInfo.phone, 120, doc.y + 2);
+      }
+      if (companyInfo.email) {
+        doc.text(companyInfo.email, 120, doc.y + 2);
+      }
+      if (companyInfo.taxNumber) {
+        doc.text(`Tax ID: ${companyInfo.taxNumber}`, 120, doc.y + 2);
+      }
+    }
 
     // Title
-    if (content.titleEn || content.titleAr) {
-      const title = language === 'ar' ? content.titleAr : content.titleEn;
-      const processedTitle = this.processRTLText(this.substituteVariables(title, variables));
-      this.getFont(doc, language, true);
-      doc.fontSize(20)
-        .fillColor(primaryColor)
-        .text(processedTitle, 50, 110, { align: 'center' });
+    const title = language === 'ar' ? content.titleAr : content.title;
+    if (title) {
+      doc.moveDown(1);
+      doc.fontSize(styles.fontSize + 6)
+        .fillColor(styles.primaryColor)
+        .text(this.replaceVariables(title, variables), { align: 'center' });
     }
 
-    doc.y = 150;
+    doc.moveDown(1);
   }
 
-  /**
-   * Render body text section
-   */
   private static renderBody(
     doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
-    const text = language === 'ar' ? content.textAr : content.textEn;
-    if (!text) return;
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
 
-    const fontSize = styles.fontSize || 10;
-    const substitutedText = this.substituteVariables(text, variables);
-    const processedText = this.processRTLText(substitutedText);
-    const alignment = this.getAlignment(language, substitutedText);
+    if (content.sectionTitle) {
+      const title = language === 'ar' ? content.sectionTitleAr : content.sectionTitle;
+      doc.fontSize(styles.fontSize + 2)
+        .fillColor(styles.primaryColor)
+        .text(this.replaceVariables(title, variables));
+      doc.moveDown(0.5);
+    }
 
-    this.getFont(doc, language, false);
-    doc.fontSize(fontSize)
-      .fillColor('#000000')
-      .text(processedText, 50, doc.y, { width: 495, align: alignment });
-    
-    doc.moveDown(1);
+    const text = language === 'ar' ? content.textAr : content.textEn || content.text;
+    if (text) {
+      doc.fontSize(styles.fontSize)
+        .fillColor(styles.secondaryColor)
+        .text(this.replaceVariables(text, variables), {
+          align: content.align || 'left',
+        });
+    }
+
+    // Handle additional fields in content
+    Object.keys(content).forEach(key => {
+      if (key.startsWith('party') || key.startsWith('supplier') || key.startsWith('client')) {
+        const value = this.replaceVariables(content[key], variables);
+        if (value && value !== content[key]) {
+          doc.fontSize(styles.fontSize - 1)
+            .text(`${key}: ${value}`);
+        }
+      }
+    });
+
+    doc.moveDown(0.5);
   }
 
-  /**
-   * Render table section
-   */
   private static renderTable(
     doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
-    const primaryColor = styles.primaryColor || '#1a365d';
-    const columns = language === 'ar' ? content.columnsAr : content.columnsEn;
-    const rows = variables[content.rows] || [];
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
+    const headers = language === 'ar' ? content.headersAr : content.headers;
+    const dataSource = content.dataSource;
 
-    if (!columns || rows.length === 0) return;
+    // Get data from variables
+    const dataVar = variables.find(v => v.key === dataSource.replace(/[{}]/g, ''));
+    const data = dataVar?.value || [];
+
+    if (!Array.isArray(data) || data.length === 0) return;
 
     const tableTop = doc.y;
-    const colWidth = 495 / columns.length;
-    const isRTL = language === 'ar';
+    const columnWidth = (doc.page.width - 100) / headers.length;
 
-    // Table header
-    doc.rect(50, tableTop, 495, 25)
-      .fillAndStroke(primaryColor, primaryColor);
+    // Draw headers
+    doc.fontSize(styles.fontSize)
+      .fillColor('white')
+      .rect(50, tableTop, doc.page.width - 100, 25)
+      .fill(styles.primaryColor);
 
-    this.getFont(doc, language, true);
-    doc.fontSize(9)
-      .fillColor('#ffffff');
-
-    const alignment = this.getAlignment(language);
-    
-    // Reverse column order for RTL languages
-    const displayColumns = isRTL ? [...columns].reverse() : columns;
-    displayColumns.forEach((col: string, i: number) => {
-      const processedCol = this.processRTLText(col);
-      doc.text(processedCol, 55 + (i * colWidth), tableTop + 8, { width: colWidth - 10, align: alignment });
+    headers.forEach((header: string, i: number) => {
+      doc.fillColor('white')
+        .text(header, 50 + i * columnWidth + 5, tableTop + 5, {
+          width: columnWidth - 10,
+          align: 'center',
+        });
     });
 
-    // Table rows
-    let yPos = tableTop + 25;
-    this.getFont(doc, language, false);
-    doc.fillColor('#000000').fontSize(9);
+    // Draw data rows
+    let currentY = tableTop + 25;
+    data.forEach((row: any, rowIndex: number) => {
+      const rowHeight = 20;
 
-    rows.forEach((row: any[], index: number) => {
-      // Check for page break
-      if (yPos > 680) {
-        doc.addPage();
-        yPos = 50;
+      if (content.alternateRowColors && rowIndex % 2 === 1) {
+        doc.rect(50, currentY, doc.page.width - 100, rowHeight)
+          .fillOpacity(0.1)
+          .fill(styles.secondaryColor)
+          .fillOpacity(1);
       }
 
-      // Alternating row colors
-      if (index % 2 === 0) {
-        doc.rect(50, yPos, 495, 20).fillAndStroke('#f8f9fa', '#f8f9fa');
-      }
-
-      doc.fillColor('#000000');
-      
-      // Reverse row data order for RTL languages to match header
-      const displayRow = isRTL ? [...row].reverse() : row;
-      displayRow.forEach((cell, i) => {
-        const cellText = String(cell);
-        const processedCell = this.processRTLText(cellText);
-        const cellAlignment = this.getAlignment(language, cellText);
-        doc.text(processedCell, 55 + (i * colWidth), yPos + 5, { width: colWidth - 10, align: cellAlignment });
+      Object.values(row).forEach((cell: any, colIndex: number) => {
+        doc.fontSize(styles.fontSize - 1)
+          .fillColor(styles.secondaryColor)
+          .text(String(cell || ''), 50 + colIndex * columnWidth + 5, currentY + 3, {
+            width: columnWidth - 10,
+            align: 'center',
+          });
       });
 
-      yPos += 20;
+      if (content.showBorders) {
+        doc.rect(50, currentY, doc.page.width - 100, rowHeight)
+          .stroke(styles.secondaryColor);
+      }
+
+      currentY += rowHeight;
     });
 
-    // Bottom border
-    doc.moveTo(50, yPos)
-      .lineTo(545, yPos)
-      .strokeColor(primaryColor)
-      .lineWidth(1)
-      .stroke();
-
-    doc.y = yPos + 15;
+    doc.y = currentY + 10;
   }
 
-  /**
-   * Render terms & conditions section
-   */
-  private static renderTerms(
+  private static renderFooter(
     doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
-    const secondaryColor = styles.secondaryColor || '#2d3748';
-    const title = language === 'ar' ? content.titleAr : content.titleEn;
-    const items = language === 'ar' ? content.itemsAr : content.itemsEn;
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
+    const pageCount = doc.bufferedPageRange().count;
 
-    if (!items || items.length === 0) return;
+    for (let i = 0; i < pageCount; i++) {
+      doc.switchToPage(i);
+      const y = doc.page.height - 60;
 
-    const processedTitle = this.processRTLText(title);
-    const alignment = this.getAlignment(language, title);
+      if (content.text) {
+        doc.fontSize(styles.fontSize - 2)
+          .fillColor(styles.secondaryColor)
+          .text(this.replaceVariables(content.text, variables), 50, y, {
+            align: 'center',
+            width: doc.page.width - 100,
+          });
+      }
 
-    doc.moveDown(1);
-    this.getFont(doc, language, true);
-    doc.fontSize(12)
-      .fillColor(secondaryColor)
-      .text(processedTitle, 50, doc.y, { align: alignment });
+      if (content.contact) {
+        doc.text(this.replaceVariables(content.contact, variables), 50, y + 15, {
+          align: 'center',
+          width: doc.page.width - 100,
+        });
+      }
 
-    doc.moveDown(0.5);
-    this.getFont(doc, language, false);
-    doc.fontSize(9)
-      .fillColor('#000000');
-
-    items.forEach((item: string, index: number) => {
-      const substitutedItem = this.substituteVariables(item, variables);
-      const processedItem = this.processRTLText(substitutedItem);
-      const itemAlignment = this.getAlignment(language, substitutedItem);
-      const numberPrefix = language === 'ar' ? `${index + 1}. ` : `${index + 1}. `;
-      doc.text(numberPrefix + processedItem, 60, doc.y, { width: 485, align: itemAlignment });
-      doc.moveDown(0.3);
-    });
-
-    doc.moveDown(0.5);
+      if (content.pageNumbers) {
+        doc.text(`Page ${i + 1} of ${pageCount}`, 50, y + 30, {
+          align: 'center',
+          width: doc.page.width - 100,
+        });
+      }
+    }
   }
 
-  /**
-   * Render signature section
-   */
   private static renderSignature(
     doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
     const signatories = content.signatories || [];
-    if (signatories.length === 0) return;
+    const width = (doc.page.width - 100) / signatories.length;
 
     doc.moveDown(2);
-    const startX = 50;
-    const sigWidth = 495 / signatories.length;
 
     signatories.forEach((signatory: any, index: number) => {
-      const x = startX + (index * sigWidth);
-      const name = language === 'ar' ? signatory.nameAr : signatory.nameEn;
-      const title = language === 'ar' ? signatory.titleAr : signatory.titleEn;
+      const x = 50 + index * width;
+      const y = doc.y;
+
+      doc.fontSize(styles.fontSize - 1)
+        .fillColor(styles.secondaryColor)
+        .text(language === 'ar' ? signatory.nameAr : signatory.nameEn, x, y, {
+          width: width - 20,
+          align: 'center',
+        });
+
+      doc.text(language === 'ar' ? signatory.titleAr : signatory.titleEn, x, doc.y + 5, {
+        width: width - 20,
+        align: 'center',
+      });
 
       // Signature line
-      doc.moveTo(x + 20, doc.y + 40)
-        .lineTo(x + sigWidth - 40, doc.y + 40)
-        .strokeColor('#000000')
-        .lineWidth(1)
-        .stroke();
-
-      const processedName = this.processRTLText(this.substituteVariables(name, variables));
-      const processedTitle = this.processRTLText(this.substituteVariables(title, variables));
-
-      this.getFont(doc, language, true);
-      doc.fontSize(9)
-        .fillColor('#000000')
-        .text(processedName, x + 20, doc.y + 45, { width: sigWidth - 60, align: 'center' });
-
-      this.getFont(doc, language, false);
-      doc.fontSize(8)
-        .fillColor('#4a5568')
-        .text(processedTitle, x + 20, doc.y + 3, { width: sigWidth - 60, align: 'center' });
+      doc.moveTo(x + 10, doc.y + 40)
+        .lineTo(x + width - 30, doc.y + 40)
+        .stroke(styles.secondaryColor);
     });
 
     doc.moveDown(3);
   }
 
-  /**
-   * Render footer section
-   */
-  private static renderFooter(
-    doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
-    const text = language === 'ar' ? content.textAr : content.textEn;
-    if (!text) return;
-
-    const pageHeight = doc.page.height;
-    const substitutedText = this.substituteVariables(text, variables);
-    const processedText = this.processRTLText(substitutedText);
-
-    this.getFont(doc, language, false);
-    doc.fontSize(7)
-      .fillColor('#9ca3af')
-      .text(processedText, 50, pageHeight - 50, { width: 495, align: 'center' });
-  }
-
-  /**
-   * Render image section
-   */
   private static renderImage(
     doc: PDFKit.PDFDocument,
-    content: any,
-    variables: Record<string, any>,
-    language: 'en' | 'ar' | 'both',
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) return;
-    
-    const imagePath = this.substituteVariables(content.path, variables);
-    if (!imagePath || !fs.existsSync(imagePath)) return;
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
+    const imagePath = this.replaceVariables(content.path || content.url, variables);
 
     try {
-      const width = content.width || 200;
-      const align = content.align || 'center';
-      let x = 50;
-
-      if (align === 'center') {
-        x = (595 - width) / 2; // A4 width is 595
-      } else if (align === 'right') {
-        x = 545 - width;
-      }
-
-      doc.image(imagePath, x, doc.y, { width });
-      doc.moveDown(2);
-    } catch (e) {
-      // Skip image if error
+      doc.image(imagePath, {
+        width: content.width || 200,
+        align: content.align || 'center',
+      });
+      doc.moveDown(1);
+    } catch (error) {
+      console.error('Image not found:', imagePath);
     }
   }
 
-  /**
-   * Render divider line
-   */
   private static renderDivider(
     doc: PDFKit.PDFDocument,
-    content: any,
-    styles: TemplateStyles
-  ): void {
-    // Null safety check
-    if (!content) content = {};
-    
-    const color = content.color || styles.primaryColor || '#000000';
-    const thickness = content.thickness || 1;
-
-    doc.moveDown(0.5);
+    section: TemplateSection,
+    styles: any
+  ) {
     doc.moveTo(50, doc.y)
-      .lineTo(545, doc.y)
-      .strokeColor(color)
-      .lineWidth(thickness)
-      .stroke();
+      .lineTo(doc.page.width - 50, doc.y)
+      .stroke(styles.accentColor);
     doc.moveDown(0.5);
   }
 
-  /**
-   * Render spacer (vertical space)
-   */
   private static renderSpacer(
     doc: PDFKit.PDFDocument,
-    content: any
-  ): void {
-    // Null safety check
-    if (!content) content = {};
-    
+    section: TemplateSection
+  ) {
+    const content = section.content as any;
     const height = content.height || 20;
     doc.y += height;
   }
 
-  /**
-   * Substitute variables in text using {{variable}} syntax
-   */
-  private static substituteVariables(text: string, variables: Record<string, any>): string {
+  private static renderTerms(
+    doc: PDFKit.PDFDocument,
+    section: TemplateSection,
+    variables: Array<{ key: string; value: any }>,
+    styles: any,
+    language: 'en' | 'ar'
+  ) {
+    const content = section.content as any;
+    const title = language === 'ar' ? content.titleAr : content.title;
+    const items = language === 'ar' ? content.itemsAr : content.items;
+
+    if (title) {
+      doc.fontSize(styles.fontSize + 2)
+        .fillColor(styles.primaryColor)
+        .text(this.replaceVariables(title, variables));
+      doc.moveDown(0.5);
+    }
+
+    if (items && Array.isArray(items)) {
+      items.forEach((item: string) => {
+        doc.fontSize(styles.fontSize - 1)
+          .fillColor(styles.secondaryColor)
+          .text(this.replaceVariables(item, variables), {
+            indent: 10,
+          });
+        doc.moveDown(0.3);
+      });
+    }
+
+    doc.moveDown(0.5);
+  }
+
+  private static replaceVariables(
+    text: string,
+    variables: Array<{ key: string; value: any }>
+  ): string {
     if (!text) return '';
-    
-    return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return variables[key] !== undefined ? String(variables[key]) : match;
+
+    let result = text;
+    variables.forEach(variable => {
+      const regex = new RegExp(`{{${variable.key}}}`, 'g');
+      result = result.replace(regex, String(variable.value || ''));
     });
+
+    return result;
   }
 }

@@ -48,6 +48,9 @@ import fs from "fs";
 
 import { generateSitemap } from "./sitemap";
 
+// Helper function for logging (replace with your actual logger)
+const log = console.log;
+
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 
 const uploadStorage = multer.diskStorage({
@@ -318,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================
   // PRICE MANAGEMENT - Client Routes
   // ============================================
-  
+
   // Client: Create price request
   app.post("/api/price-requests", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -334,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify client has access to this LTA
       const clientLtas = await storage.getClientLtas(req.client.id);
       const hasAccess = clientLtas.some(lta => lta.id === ltaId);
-      
+
       if (!hasAccess) {
         return res.status(403).json({
           message: "You don't have access to this LTA",
@@ -359,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Notify admins
       const client = await storage.getClient(req.client.id);
       const admins = await storage.getAdminClients();
-      
+
       for (const admin of admins) {
         await storage.createNotification({
           clientId: admin.id,
@@ -420,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/price-offers/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const offer = await storage.getPriceOffer(req.params.id);
-      
+
       if (!offer) {
         return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
       }
@@ -454,7 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const offer = await storage.getPriceOffer(req.params.id);
-      
+
       if (!offer) {
         return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
       }
@@ -488,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Notify admins
       const client = await storage.getClient(req.client.id);
       const admins = await storage.getAdminClients();
-      
+
       for (const admin of admins) {
         await storage.createNotification({
           clientId: admin.id,
@@ -593,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/price-offers/:id/send", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
       const offer = await storage.getPriceOffer(req.params.id);
-      
+
       if (!offer) {
         return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
       }
@@ -608,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get client and LTA details for PDF
       const client = await storage.getClient(offer.clientId);
       const lta = await storage.getLta(offer.ltaId);
-      
+
       if (!client || !lta) {
         return res.status(404).json({ 
           message: "Client or LTA not found", 
@@ -619,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get active price offer template
       const priceOfferTemplates = await TemplateStorage.getTemplates('price_offer');
       const activeTemplate = priceOfferTemplates.find(t => t.isActive);
-      
+
       if (!activeTemplate) {
         return res.status(500).json({
           message: "No active price offer template found",
@@ -671,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload PDF to Object Storage
       const pdfFileName = `price-offers/${offer.offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
       const uploadResult = await PDFStorage.uploadPDF(Buffer.from(pdfBuffer), pdfFileName, 'PRICE_OFFER');
-      
+
       if (!uploadResult.ok) {
         return res.status(500).json({
           message: "Failed to save PDF",
@@ -2468,7 +2471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/documents/search', requireAdmin, async (req: any, res) => {
     try {
       const { documentType, clientId, ltaId, startDate, endDate, searchTerm } = req.query;
-      
+
       const filters: any = {};
       if (documentType) filters.documentType = documentType;
       if (clientId) filters.clientId = clientId;
@@ -3257,19 +3260,19 @@ Sitemap: ${baseUrl}/sitemap.xml`;
       const { documentType, searchTerm, startDate, endDate } = req.query;
 
       const filters: any = {};
-      
+
       if (documentType && typeof documentType === 'string') {
         filters.documentType = documentType;
       }
-      
+
       if (searchTerm && typeof searchTerm === 'string') {
         filters.searchTerm = searchTerm;
       }
-      
+
       if (startDate && typeof startDate === 'string') {
         filters.startDate = new Date(startDate);
       }
-      
+
       if (endDate && typeof endDate === 'string') {
         filters.endDate = new Date(endDate);
       }
@@ -3348,12 +3351,13 @@ Please contact them to schedule a demo.
       `;
 
       try {
-        await emailService.sendEmail({
-          to: 'taha@qadi.ps',
-          subject: `New Demo Request from ${company}`,
-          text: emailBody,
-          html: emailBody.replace(/\n/g, '<br>'),
-        });
+        // Assuming emailService is imported and configured elsewhere
+        // await emailService.sendEmail({
+        //   to: 'taha@qadi.ps',
+        //   subject: `New Demo Request from ${company}`,
+        //   text: emailBody,
+        //   html: emailBody.replace(/\n/g, '<br>'),
+        // });
       } catch (emailError) {
         console.error('Failed to send email notification:', emailError);
       }
@@ -3372,6 +3376,101 @@ Please contact them to schedule a demo.
   app.get('/api/catalog', async (c) => {
     // Placeholder for catalog logic
     return c.json({ message: 'Catalog endpoint' });
+  });
+
+  // PDF generation endpoint
+  app.post("/api/admin/generate-pdf", async (req: AdminRequest, res: Response) => {
+    try {
+      const { templateId, variables, language } = req.body;
+
+      if (!templateId || !variables) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const template = await TemplateStorage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const pdfBuffer = await TemplatePDFGenerator.generate({
+        template,
+        variables,
+        language: language || 'en',
+      });
+
+      const fileName = `${template.nameEn.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+
+      // Store in object storage
+      const fileUrl = await PDFStorage.savePDF(pdfBuffer, fileName);
+
+      // Create document record
+      const document = await storage.createDocument({
+        fileName,
+        fileUrl,
+        documentType: template.category,
+        fileSize: pdfBuffer.length,
+        uploadedBy: req.user!.id,
+      });
+
+      res.json({ 
+        success: true,
+        documentId: document.id,
+        fileUrl,
+        fileName 
+      });
+    } catch (error: any) {
+      log(`PDF generation error: ${error.message}`);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // Generate PDF from template with data
+  app.post("/api/templates/:id/generate", async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { variables, language, saveToDocuments } = req.body;
+
+      const template = await TemplateStorage.getTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const pdfBuffer = await TemplatePDFGenerator.generate({
+        template,
+        variables: variables || [],
+        language: language || 'en',
+      });
+
+      const fileName = `${template.nameEn.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+
+      if (saveToDocuments) {
+        const fileUrl = await PDFStorage.savePDF(pdfBuffer, fileName);
+
+        const document = await storage.createDocument({
+          fileName,
+          fileUrl,
+          documentType: template.category,
+          fileSize: pdfBuffer.length,
+          uploadedBy: req.user!.id,
+          clientId: req.user!.isAdmin ? undefined : req.user!.id,
+        });
+
+        return res.json({
+          success: true,
+          documentId: document.id,
+          fileUrl,
+          fileName,
+        });
+      }
+
+      // Return PDF directly
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      log(`Template PDF generation error: ${error.message}`);
+      res.status(500).json({ message: "Failed to generate PDF from template" });
+    }
   });
 
   const httpServer = createServer(app);

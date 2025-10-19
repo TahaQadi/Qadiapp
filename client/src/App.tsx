@@ -134,6 +134,7 @@ function Router() {
       <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
       <AdminRoute path="/admin/templates" component={AdminTemplatesPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
+      <Route path="/admin/documents/list" component={lazy(() => import('./pages/AdminDocumentListPage'))} />
       <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />
