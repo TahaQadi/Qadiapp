@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -21,11 +21,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ArrowLeft, Plus, Pencil, Trash2, Eye, CalendarIcon, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Eye, CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
-import { EmptyState } from '@/components/EmptyState';
 import { PaginationControls } from '@/components/PaginationControls';
+import { EmptyState } from '@/components/EmptyState';
 
 const ltaFormSchema = z.object({
   nameEn: z.string().min(1, 'English name is required'),
@@ -58,26 +58,36 @@ export default function AdminLtaListPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const navigate = useNavigate();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedLta, setSelectedLta] = useState<Lta | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: ltas = [], isLoading } = useQuery<Lta[]>({
     queryKey: ['/api/admin/ltas'],
   });
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const filteredLtas = useMemo(() => {
+    return ltas.filter(lta => {
+      const matchesStatus = statusFilter === 'all' || lta.status === statusFilter;
+      const matchesSearch = searchTerm === '' || 
+        lta.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lta.nameAr.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesStatus && matchesSearch;
+    });
+  }, [ltas, statusFilter, searchTerm]);
 
-  const totalPages = Math.ceil(ltas.length / itemsPerPage);
-  const paginatedLtas = ltas.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedLtas = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredLtas.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredLtas, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredLtas.length / itemsPerPage);
 
   const createForm = useForm<LtaFormValues>({
     resolver: zodResolver(ltaFormSchema),
@@ -261,7 +271,7 @@ export default function AdminLtaListPage() {
                 {language === 'ar' ? 'إدارة جميع الاتفاقيات والعقود' : 'Manage all agreements and contracts'}
               </p>
             </div>
-            <Button
+            <Button 
               onClick={() => setCreateDialogOpen(true)}
               className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black font-medium shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               data-testid="button-create-lta"
@@ -271,78 +281,121 @@ export default function AdminLtaListPage() {
             </Button>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 flex flex-col sm:flex-row gap-3">
+              <Input
+                placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="flex-1"
+              />
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === 'ar' ? 'جميع الحالات' : 'All Status'}</SelectItem>
+                  <SelectItem value="active">{language === 'ar' ? 'نشط' : 'Active'}</SelectItem>
+                  <SelectItem value="inactive">{language === 'ar' ? 'غير نشط' : 'Inactive'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-16 bg-muted/50 dark:bg-white/5 rounded-lg animate-pulse" />
-                ))}
-              </div>
-            ) : ltas.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-primary/10 dark:bg-[#d4af37]/10 flex items-center justify-center">
-                  <Plus className="h-8 w-8 text-primary dark:text-[#d4af37]" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTAs Yet'}</h3>
-                <p className="text-muted-foreground mb-4">
-                  {language === 'ar' ? 'ابدأ بإنشاء اتفاقية جديدة' : 'Get started by creating a new LTA'}
-                </p>
-                <Button
-                  onClick={() => setCreateDialogOpen(true)}
-                  variant="outline"
-                  className="border-primary dark:border-[#d4af37]"
-                >
-                  <Plus className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'إنشاء اتفاقية' : 'Create LTA'}
-                </Button>
-              </div>
+              <LoadingSkeleton variant="list" count={5} />
+            ) : filteredLtas.length === 0 ? (
+              <EmptyState
+                icon={Plus}
+                title={language === 'ar' ? 'لا توجد اتفاقيات' : 'No LTAs Found'}
+                description={language === 'ar' ? 'ابدأ بإنشاء اتفاقية جديدة' : 'Get started by creating a new LTA'}
+                actionLabel={language === 'ar' ? 'إنشاء اتفاقية' : 'Create LTA'}
+                onAction={() => setCreateDialogOpen(true)}
+              />
             ) : (
               <>
-                <div className="rounded-md border">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="p-4 text-start">Contract Number</th>
-                        <th className="p-4 text-start">Client</th>
-                        <th className="p-4 text-start">Start Date</th>
-                        <th className="p-4 text-start">End Date</th>
-                        <th className="p-4 text-start">Status</th>
-                        <th className="p-4 text-start">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedLtas.map((lta) => (
-                        <tr key={lta.id} className="border-b">
-                          <td className="p-4">{lta.contractNumber}</td>
-                          <td className="p-4">{lta.client?.companyName || 'N/A'}</td>
-                          <td className="p-4">{new Date(lta.startDate).toLocaleDateString()}</td>
-                          <td className="p-4">{new Date(lta.endDate).toLocaleDateString()}</td>
-                          <td className="p-4">
-                            <Badge variant={lta.status === 'active' ? 'default' : 'secondary'}>
-                              {lta.status}
-                            </Badge>
-                          </td>
-                          <td className="p-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/admin/ltas/${lta.id}`)}
-                            >
-                              View Details
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="grid grid-cols-1 gap-4">
+                  {paginatedLtas.map((lta) => (
+                  <div 
+                    key={lta.id}
+                    className="group relative overflow-hidden rounded-lg border border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-white/5 p-4 sm:p-6 hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300"
+                    data-testid={`row-lta-${lta.id}`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold truncate">
+                            {language === 'ar' ? lta.nameAr : lta.nameEn}
+                          </h3>
+                          {getStatusBadge(lta.status)}
+                        </div>
+                        {(lta.descriptionEn || lta.descriptionAr) && (
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {language === 'ar' ? lta.descriptionAr : lta.descriptionEn}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4" />
+                            <span>{formatDate(lta.startDate)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4" />
+                            <span>{formatDate(lta.endDate)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/ltas/${lta.id}`)}
+                          className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
+                          data-testid={`button-view-${lta.id}`}
+                        >
+                          <Eye className="h-4 w-4 me-1" />
+                          {language === 'ar' ? 'عرض' : 'View'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditLta(lta)}
+                          className="hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
+                          data-testid={`button-edit-${lta.id}`}
+                        >
+                          <Pencil className="h-4 w-4 me-1" />
+                          {language === 'ar' ? 'تعديل' : 'Edit'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteLta(lta)}
+                          className="hover:bg-destructive/10 text-destructive"
+                          data-testid={`button-delete-${lta.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 me-1" />
+                          {language === 'ar' ? 'حذف' : 'Delete'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
                 </div>
-
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}
                   itemsPerPage={itemsPerPage}
-                  totalItems={ltas.length}
+                  totalItems={filteredLtas.length}
                   onPageChange={setCurrentPage}
-                  onItemsPerPageChange={setItemsPerPage}
+                  onItemsPerPageChange={(value) => {
+                    setItemsPerPage(value);
+                    setCurrentPage(1);
+                  }}
+                  language={language}
                 />
               </>
             )}
@@ -716,7 +769,7 @@ export default function AdminLtaListPage() {
               {language === 'ar' ? 'تأكيد الحذف' : 'Confirm Deletion'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === 'ar'
+              {language === 'ar' 
                 ? `هل أنت متأكد من حذف الاتفاقية "${selectedLta?.nameAr}"؟ هذا الإجراء لا يمكن التراجع عنه.`
                 : `Are you sure you want to delete the LTA "${selectedLta?.nameEn}"? This action cannot be undone.`}
             </AlertDialogDescription>

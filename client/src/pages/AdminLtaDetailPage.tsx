@@ -25,6 +25,7 @@ import { ArrowLeft, Pencil, Plus, Trash2, CalendarIcon, Upload, Download } from 
 import { Label } from '@/components/ui/label';
 import { DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 
 const ltaFormSchema = z.object({
   nameEn: z.string().min(1, 'English name is required'),
@@ -387,7 +388,7 @@ export default function AdminLtaDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/ltas', ltaId, 'products'] });
       setImportResults(data);
       setImportFile(null);
-      
+
       toast({
         description: language === 'ar'
           ? `تم استيراد ${data.success} منتج بنجاح`
@@ -408,7 +409,7 @@ export default function AdminLtaDetailPage() {
       formData.append('nameEn', data.nameEn);
       formData.append('nameAr', data.nameAr);
       formData.append('document', data.file);
-      
+
       const response = await fetch(`/api/admin/ltas/${ltaId}/documents`, {
         method: 'POST',
         credentials: 'include',
@@ -557,13 +558,13 @@ export default function AdminLtaDetailPage() {
 
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = (event) => {
         const text = event.target?.result as string;
         const lines = text.split('\n').filter(line => line.trim());
-        
+
         const dataLines = lines.slice(1);
-        
+
         const products = dataLines.map(line => {
           const [sku, contractPrice, currency] = line.split(',').map(s => s.trim());
           return {
@@ -584,7 +585,7 @@ export default function AdminLtaDetailPage() {
   const handleBulkImport = async () => {
     try {
       const products = await parseCSV();
-      
+
       if (products.length === 0) {
         toast({
           variant: 'destructive',
@@ -758,11 +759,7 @@ KB-001,89.99,SAR`;
           </CardHeader>
           <CardContent>
             {productsLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
-                ))}
-              </div>
+              <LoadingSkeleton count={3} className="h-12" />
             ) : (
               <div className="border rounded-md">
                 <Table>
@@ -843,11 +840,7 @@ KB-001,89.99,SAR`;
           </CardHeader>
           <CardContent>
             {clientsLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
-                ))}
-              </div>
+              <LoadingSkeleton count={3} className="h-12" />
             ) : (
               <div className="border rounded-md">
                 <Table>
@@ -913,11 +906,7 @@ KB-001,89.99,SAR`;
           </CardHeader>
           <CardContent>
             {documentsLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-12 bg-muted rounded animate-pulse" />
-                ))}
-              </div>
+              <LoadingSkeleton count={3} className="h-12" />
             ) : (
               <div className="border rounded-md">
                 <Table>

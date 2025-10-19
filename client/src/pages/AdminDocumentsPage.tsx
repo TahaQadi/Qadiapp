@@ -540,8 +540,8 @@ export default function AdminDocumentsPage() {
                   {language === 'ar' ? 'إدارة القوالب' : 'Template Management'}
                 </h2>
                 <p className="text-muted-foreground">
-                  {language === 'ar' 
-                    ? 'تصميم وتخصيص قوالب المستندات الاحترافية' 
+                  {language === 'ar'
+                    ? 'تصميم وتخصيص قوالب المستندات الاحترافية'
                     : 'Design and customize professional document templates'}
                 </p>
               </div>
