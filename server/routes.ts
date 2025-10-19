@@ -596,6 +596,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Generate PDF for price request
+  app.post("/api/admin/price-requests/:id/generate-pdf", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { language = 'en' } = req.body;
+      const priceRequest = await db.query.priceRequests.findFirst({
+        where: eq(schema.priceRequests.id, req.params.id)
+      });
+
+      if (!priceRequest) {
+        return res.status(404).json({ 
+          message: "Price request not found", 
+          messageAr: "طلب السعر غير موجود" 
+        });
+      }
+
+      // Get client and LTA details
+      const client = await storage.getClient(priceRequest.clientId);
+      const lta = await storage.getLta(priceRequest.ltaId);
+
+      if (!client || !lta) {
+        return res.status(404).json({ 
+          message: "Client or LTA not found", 
+          messageAr: "العميل أو الاتفاقية غير موجودة" 
+        });
+      }
+
+      // Get products from price request
+      const products = typeof priceRequest.products === 'string' 
+        ? JSON.parse(priceRequest.products) 
+        : priceRequest.products;
+
+      const productDetails = [];
+      for (const item of products) {
+        const product = await db.query.products.findFirst({
+          where: eq(schema.products.id, item.productId)
+        });
+        if (product) {
+          productDetails.push({
+            sku: product.sku,
+            nameEn: product.nameEn,
+            nameAr: product.nameAr,
+            quantity: item.quantity || 1,
+            contractPrice: product.sellingPricePiece || '0.00',
+            currency: 'ILS'
+          });
+        }
+      }
+
+      // Generate PDF using PDFGenerator
+      const { PDFGenerator } = await import('./pdf-generator');
+      const pdfBuffer = await PDFGenerator.generatePriceOffer({
+        offerId: priceRequest.requestNumber,
+        offerDate: new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'),
+        clientNameEn: client.nameEn,
+        clientNameAr: client.nameAr,
+        clientEmail: client.email || '',
+        clientPhone: client.phone || '',
+        ltaNameEn: lta.nameEn,
+        ltaNameAr: lta.nameAr,
+        items: productDetails,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'),
+        notes: priceRequest.notes || '',
+        language: language as 'en' | 'ar'
+      });
+
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="price-request-${priceRequest.requestNumber}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('Error generating PDF for price request:', error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : 'Failed to generate PDF',
+        messageAr: 'فشل في إنشاء ملف PDF'
+      });
+    }
+  });
+
   // Admin: Send price offer (generates PDF and sends to client)
   app.post("/api/admin/price-offers/:id/send", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {

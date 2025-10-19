@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Eye, Clock, CheckCircle, Package } from "lucide-react";
+import { FileText, Eye, Clock, CheckCircle, Package, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import type { PriceRequest, Client, Lta } from "@shared/schema";
@@ -15,6 +18,9 @@ export default function AdminPriceRequestsPage() {
   const [, setLocation] = useLocation();
   const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [pdfRequest, setPdfRequest] = useState<PriceRequest | null>(null);
+  const [pdfLanguage, setPdfLanguage] = useState<'en' | 'ar'>('en');
 
   const { data: requests = [], isLoading } = useQuery<PriceRequest[]>({
     queryKey: ["/api/admin/price-requests"],
@@ -74,6 +80,39 @@ export default function AdminPriceRequestsPage() {
   const handleCreateOffer = (request: PriceRequest) => {
     setLocation(`/admin/price-offers/create?requestId=${request.id}`);
   };
+
+  const handleGeneratePDF = (request: PriceRequest) => {
+    setPdfRequest(request);
+    setPdfDialogOpen(true);
+  };
+
+  const generatePdfMutation = useMutation({
+    mutationFn: async (data: { requestId: string; language: 'en' | 'ar' }) => {
+      const res = await apiRequest('POST', `/api/admin/price-requests/${data.requestId}/generate-pdf`, {
+        language: data.language
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to generate PDF');
+      }
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === "ar" ? "تم إنشاء PDF" : "PDF Generated",
+        description: data.message || (language === "ar" ? "تم إنشاء ملف PDF بنجاح" : "PDF generated successfully")
+      });
+      setPdfDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/price-requests"] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: language === "ar" ? "خطأ" : "Error",
+        description: error.message
+      });
+    }
+  });
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -166,16 +205,28 @@ export default function AdminPriceRequestsPage() {
                         {language === "ar" ? "عرض" : "View"}
                       </Button>
                       {isPending && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleCreateOffer(request)}
-                          data-testid={`button-create-offer-${request.id}`}
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          {language === "ar" ? "إنشاء عرض" : "Create Offer"}
-                        </Button>
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleCreateOffer(request)}
+                            data-testid={`button-create-offer-${request.id}`}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            {language === "ar" ? "إنشاء عرض" : "Create Offer"}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleGeneratePDF(request)}
+                            data-testid={`button-generate-pdf-${request.id}`}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            {language === "ar" ? "PDF" : "PDF"}
+                          </Button>
+                        </>
                       )}
                     </div>
                   </CardContent>
@@ -245,6 +296,71 @@ export default function AdminPriceRequestsPage() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Generation Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ar" ? "إنشاء PDF لطلب السعر" : "Generate PDF for Price Request"}
+            </DialogTitle>
+          </DialogHeader>
+          {pdfRequest && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {language === "ar" ? "اللغة" : "Language"}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant={pdfLanguage === 'en' ? 'default' : 'outline'}
+                    onClick={() => setPdfLanguage('en')}
+                    className="flex-1"
+                  >
+                    English
+                  </Button>
+                  <Button
+                    variant={pdfLanguage === 'ar' ? 'default' : 'outline'}
+                    onClick={() => setPdfLanguage('ar')}
+                    className="flex-1"
+                  >
+                    العربية
+                  </Button>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setPdfDialogOpen(false)}
+                >
+                  {language === "ar" ? "إلغاء" : "Cancel"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    generatePdfMutation.mutate({
+                      requestId: pdfRequest.id,
+                      language: pdfLanguage
+                    });
+                  }}
+                  disabled={generatePdfMutation.isPending}
+                >
+                  {generatePdfMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {language === "ar" ? "جاري الإنشاء..." : "Generating..."}
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-4 w-4 mr-2" />
+                      {language === "ar" ? "إنشاء PDF" : "Generate PDF"}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
