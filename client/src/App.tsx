@@ -182,7 +182,7 @@ function AppContent() {
   );
 }
 
-function App() {
+function AppWithProviders() {
   const { isAuthenticated, isLoading } = useAuth();
 
   // Track page views
@@ -218,16 +218,22 @@ function App() {
   }
 
   return (
+    <HelmetProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <AppContent />
+          </TooltipProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </HelmetProvider>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <HelmetProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <TooltipProvider>
-              <AppContent />
-            </TooltipProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </HelmetProvider>
+      <AppWithProviders />
     </QueryClientProvider>
   );
 }
