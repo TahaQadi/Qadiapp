@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Search, Filter, Eye, Trash2, Calendar, History, LogOut } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { FileText, Download, Search, Calendar, History, Eye, ArrowLeft, Plus, Edit, Trash2, Copy, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { apiRequest, queryClient as globalQueryClient } from '@/lib/queryClient';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { TemplateEditor } from '@/components/TemplateEditor';
+import { Link } from 'wouter';
 
 interface Document {
   id: string;
@@ -52,9 +59,14 @@ export default function AdminDocumentsPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState('documents');
+
+  // Documents state
   const [searchTerm, setSearchTerm] = useState('');
-  const [documentType, setDocumentType] = useState<string>('');
+  const [documentType, setDocumentType] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -64,11 +76,17 @@ export default function AdminDocumentsPage() {
   const [isAccessLogsDialogOpen, setIsAccessLogsDialogOpen] = useState(false);
   const [selectedDocumentIdForLogs, setSelectedDocumentIdForLogs] = useState<string | null>(null);
 
+  // Templates state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Documents queries
   const { data, isLoading } = useQuery<{ documents: Document[] }>({
     queryKey: ['/api/documents', searchTerm, documentType, startDate, endDate],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (documentType) params.append('documentType', documentType);
+      if (documentType && documentType !== 'all') params.append('documentType', documentType);
       if (searchTerm) params.append('searchTerm', searchTerm);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
@@ -104,32 +122,87 @@ export default function AdminDocumentsPage() {
 
   const accessLogs = accessLogsData?.logs || [];
 
-  const trackViewMutation = useMutation({
-    mutationFn: async (docId: string) => {
-      const doc = documents.find((d: Document) => d.id === docId);
-      if (!doc) return;
+  // Templates queries
+  const { data: templates, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['/api/admin/templates', selectedCategory],
+    queryFn: async () => {
+      const url = selectedCategory === 'all'
+        ? '/api/admin/templates'
+        : `/api/admin/templates?category=${selectedCategory}`;
+      const res = await apiRequest('GET', url);
+      return res.json();
+    },
+  });
 
-      await fetch(`/api/admin/documents/${docId}/metadata`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          metadata: {
-            ...doc.metadata,
-            viewCount: (doc.viewCount || 0) + 1,
-            lastViewedAt: new Date().toISOString()
-          }
-        })
-      });
+  // Template mutations
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest('POST', '/api/admin/templates', data);
+      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/documents/search'] });
-    }
+      toast({
+        title: language === 'ar' ? 'تم إنشاء القالب' : 'Template Created',
+        description: language === 'ar' ? 'تم إنشاء القالب بنجاح' : 'Template created successfully',
+      });
+      setCreateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: any) => {
+      const res = await apiRequest('PUT', `/api/admin/templates/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم التحديث' : 'Updated',
+        description: language === 'ar' ? 'تم تحديث القالب بنجاح' : 'Template updated successfully',
+      });
+      setEditingTemplate(null);
+      setCreateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/templates/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+        description: language === 'ar' ? 'تم حذف القالب بنجاح' : 'Template deleted successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: async ({ id, name }: any) => {
+      const res = await apiRequest('POST', `/api/admin/templates/${id}/duplicate`, { name });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم النسخ' : 'Duplicated',
+        description: language === 'ar' ? 'تم نسخ القالب بنجاح' : 'Template duplicated successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
   });
 
   const handleDownload = async (doc: Document) => {
     try {
-      // Get download token
       const tokenResponse = await fetch(`/api/documents/${doc.id}/token`, {
         method: 'POST',
         credentials: 'include'
@@ -140,11 +213,7 @@ export default function AdminDocumentsPage() {
       }
 
       const { token } = await tokenResponse.json();
-
-      // Download with token
       window.open(`/api/documents/${doc.id}/download?token=${token}`, '_blank');
-      
-      // Invalidate queries to refresh view counts
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
     } catch (error) {
       toast({
@@ -193,192 +262,386 @@ export default function AdminDocumentsPage() {
     return colors[type] || 'bg-gray-500/10 text-gray-700 border-gray-200';
   };
 
+  const categories = [
+    { value: 'all', labelEn: 'All Templates', labelAr: 'جميع القوالب' },
+    { value: 'price_offer', labelEn: 'Price Offers', labelAr: 'عروض الأسعار' },
+    { value: 'order', labelEn: 'Orders', labelAr: 'الطلبات' },
+    { value: 'invoice', labelEn: 'Invoices', labelAr: 'الفواتير' },
+    { value: 'contract', labelEn: 'Contracts', labelAr: 'العقود' },
+    { value: 'report', labelEn: 'Reports', labelAr: 'التقارير' },
+    { value: 'other', labelEn: 'Other', labelAr: 'أخرى' },
+  ];
+
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            {language === 'ar' ? 'إدارة المستندات' : 'Document Management'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 sm:h-10 sm:w-10"
+              data-testid="button-back"
+            >
+              <Link href="/admin">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'مكتبة المستندات' : 'Document Library'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {language === 'ar'
+                  ? 'إدارة المستندات والقوالب'
+                  : 'Manage documents and templates'}
+              </p>
             </div>
-
-            <Select value={documentType} onValueChange={setDocumentType}>
-              <SelectTrigger>
-                <SelectValue placeholder={language === 'ar' ? 'نوع المستند' : 'Document Type'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                <SelectItem value="price_offer">{getDocumentTypeLabel('price_offer')}</SelectItem>
-                <SelectItem value="order">{getDocumentTypeLabel('order')}</SelectItem>
-                <SelectItem value="invoice">{getDocumentTypeLabel('invoice')}</SelectItem>
-                <SelectItem value="contract">{getDocumentTypeLabel('contract')}</SelectItem>
-                <SelectItem value="lta_document">{getDocumentTypeLabel('lta_document')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                placeholder={language === 'ar' ? 'من تاريخ' : 'From Date'}
-              />
-            </div>
-
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder={language === 'ar' ? 'إلى تاريخ' : 'To Date'}
-            />
           </div>
-
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{documents.length}</div>
-                <div className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'إجمالي المستندات' : 'Total Documents'}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-green-50 to-green-100/50">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">
-                  {formatFileSize(documents.reduce((sum: number, doc: Document) => sum + doc.fileSize, 0))}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'المساحة المستخدمة' : 'Storage Used'}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">
-                  {documents.reduce((sum: number, doc: Document) => sum + (doc.viewCount || 0), 0)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'إجمالي المشاهدات' : 'Total Views'}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">
-                  {documents.filter((d: Document) => documentType ? d.documentType === documentType : true).length}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'المستندات المفلترة' : 'Filtered Docs'}
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
           </div>
+        </div>
+      </header>
 
-          {/* Documents Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{language === 'ar' ? 'اسم الملف' : 'File Name'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'الحجم' : 'Size'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'المشاهدات' : 'Views'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
-                  <TableHead>{language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center h-32">
-                      {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                    </TableCell>
-                  </TableRow>
-                ) : documents.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center h-32">
-                      <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                      <div className="text-muted-foreground">
-                        {language === 'ar' ? 'لا توجد مستندات' : 'No documents found'}
+      {/* Main Content */}
+      <div className="container mx-auto p-6 max-w-7xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="documents" data-testid="tab-documents">
+              <FileText className="h-4 w-4 mr-2" />
+              {language === 'ar' ? 'المستندات' : 'Documents'}
+            </TabsTrigger>
+            <TabsTrigger value="templates" data-testid="tab-templates">
+              <Edit className="h-4 w-4 mr-2" />
+              {language === 'ar' ? 'القوالب' : 'Templates'}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-6 w-6" />
+                  {language === 'ar' ? 'إدارة المستندات' : 'Document Management'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      data-testid="input-search"
+                    />
+                  </div>
+
+                  <Select value={documentType} onValueChange={setDocumentType}>
+                    <SelectTrigger data-testid="select-document-type">
+                      <SelectValue placeholder={language === 'ar' ? 'نوع المستند' : 'Document Type'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                      <SelectItem value="price_offer">{getDocumentTypeLabel('price_offer')}</SelectItem>
+                      <SelectItem value="order">{getDocumentTypeLabel('order')}</SelectItem>
+                      <SelectItem value="invoice">{getDocumentTypeLabel('invoice')}</SelectItem>
+                      <SelectItem value="contract">{getDocumentTypeLabel('contract')}</SelectItem>
+                      <SelectItem value="lta_document">{getDocumentTypeLabel('lta_document')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      placeholder={language === 'ar' ? 'من تاريخ' : 'From Date'}
+                      data-testid="input-start-date"
+                    />
+                  </div>
+
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    placeholder={language === 'ar' ? 'إلى تاريخ' : 'To Date'}
+                    data-testid="input-end-date"
+                  />
+                </div>
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50">
+                    <CardContent className="pt-6">
+                      <div className="text-2xl font-bold" data-testid="text-total-documents">{documents.length}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'إجمالي المستندات' : 'Total Documents'}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  documents.map((doc: Document) => (
-                    <TableRow key={doc.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium max-w-xs truncate">
-                        {doc.fileName.split('/').pop()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getDocumentTypeColor(doc.documentType)}>
-                          {getDocumentTypeLabel(doc.documentType)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatFileSize(doc.fileSize)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                          {doc.viewCount || 0}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-green-50 to-green-100/50">
+                    <CardContent className="pt-6">
+                      <div className="text-2xl font-bold" data-testid="text-storage-used">
+                        {formatFileSize(documents.reduce((sum: number, doc: Document) => sum + doc.fileSize, 0))}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'المساحة المستخدمة' : 'Storage Used'}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50">
+                    <CardContent className="pt-6">
+                      <div className="text-2xl font-bold" data-testid="text-total-views">
+                        {documents.reduce((sum: number, doc: Document) => sum + (doc.viewCount || 0), 0)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'إجمالي المشاهدات' : 'Total Views'}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50">
+                    <CardContent className="pt-6">
+                      <div className="text-2xl font-bold" data-testid="text-filtered-docs">
+                        {documents.filter((d: Document) => (documentType && documentType !== 'all') ? d.documentType === documentType : true).length}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'المستندات المفلترة' : 'Filtered Docs'}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Documents Table */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{language === 'ar' ? 'اسم الملف' : 'File Name'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'الحجم' : 'Size'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'المشاهدات' : 'Views'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center h-32">
+                            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+                          </TableCell>
+                        </TableRow>
+                      ) : documents.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center h-32">
+                            <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                            <div className="text-muted-foreground">
+                              {language === 'ar' ? 'لا توجد مستندات' : 'No documents found'}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        documents.map((doc: Document) => (
+                          <TableRow key={doc.id} className="hover:bg-muted/50" data-testid={`row-document-${doc.id}`}>
+                            <TableCell className="font-medium max-w-xs truncate">
+                              {doc.fileName.split('/').pop()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={getDocumentTypeColor(doc.documentType)}>
+                                {getDocumentTypeLabel(doc.documentType)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatFileSize(doc.fileSize)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                {doc.viewCount || 0}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {format(new Date(doc.createdAt), 'PPp')}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownload(doc)}
+                                  title={language === 'ar' ? 'تنزيل' : 'Download'}
+                                  data-testid={`button-download-${doc.id}`}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewHistory(doc.id)}
+                                  title={language === 'ar' ? 'سجل الإصدارات' : 'Version History'}
+                                  data-testid={`button-history-${doc.id}`}
+                                >
+                                  <History className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewAccessLogs(doc.id)}
+                                  title={language === 'ar' ? 'سجلات الوصول' : 'Access Logs'}
+                                  data-testid={`button-logs-${doc.id}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Templates Tab */}
+          <TabsContent value="templates" className="space-y-4">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  {language === 'ar' ? 'إدارة القوالب' : 'Template Management'}
+                </h2>
+                <p className="text-muted-foreground">
+                  {language === 'ar' 
+                    ? 'تصميم وتخصيص قوالب المستندات الاحترافية' 
+                    : 'Design and customize professional document templates'}
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  setEditingTemplate(null);
+                  setCreateDialogOpen(true);
+                }}
+                size={isMobile ? "sm" : "default"}
+                data-testid="button-new-template"
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                {!isMobile && (language === 'ar' ? 'قالب جديد' : 'New Template')}
+              </Button>
+            </div>
+
+            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4">
+              <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-muted/50">
+                {categories.map(cat => (
+                  <TabsTrigger
+                    key={cat.value}
+                    value={cat.value}
+                    className="text-xs sm:text-sm whitespace-nowrap min-h-[44px] px-3 sm:px-4"
+                    data-testid={`tab-category-${cat.value}`}
+                  >
+                    {language === 'ar' ? cat.labelAr : cat.labelEn}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {isLoadingTemplates ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {templates?.map((template: any, index: number) => (
+                    <Card
+                      key={template.id}
+                      className="hover:shadow-lg transition-all duration-300"
+                      data-testid={`card-template-${template.id}`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="p-1.5 rounded-lg bg-primary/10">
+                                <FileText className="h-4 w-4 text-primary shrink-0" />
+                              </div>
+                              <CardTitle className="text-sm sm:text-base truncate font-semibold">
+                                {language === 'ar' ? template.nameAr : template.nameEn}
+                              </CardTitle>
+                            </div>
+                            <CardDescription className="text-xs line-clamp-2 mt-1">
+                              {language === 'ar' ? template.descriptionAr : template.descriptionEn}
+                            </CardDescription>
+                          </div>
+                          <Badge
+                            variant={template.isActive ? 'default' : 'secondary'}
+                            className="shrink-0 text-xs"
+                          >
+                            {template.isActive
+                              ? (language === 'ar' ? 'نشط' : 'Active')
+                              : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                          </Badge>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(doc.createdAt), 'PPp')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex gap-1 sm:gap-2">
                           <Button
-                            variant="ghost"
                             size="sm"
-                            onClick={() => handleDownload(doc)}
-                            title={language === 'ar' ? 'تنزيل' : 'Download'}
+                            variant="outline"
+                            className="flex-1 min-h-[44px]"
+                            onClick={() => {
+                              setEditingTemplate(template);
+                              setCreateDialogOpen(true);
+                            }}
+                            data-testid={`button-edit-${template.id}`}
                           >
-                            <Download className="h-4 w-4" />
+                            <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
                           </Button>
                           <Button
-                            variant="ghost"
                             size="sm"
-                            onClick={() => handleViewHistory(doc.id)}
-                            title={language === 'ar' ? 'سجل الإصدارات' : 'Version History'}
+                            variant="outline"
+                            className="flex-1 min-h-[44px]"
+                            onClick={() => {
+                              const newName = {
+                                en: `${template.nameEn} (Copy)`,
+                                ar: `${template.nameAr} (نسخة)`,
+                              };
+                              duplicateMutation.mutate({ id: template.id, name: newName });
+                            }}
+                            data-testid={`button-duplicate-${template.id}`}
                           >
-                            <History className="h-4 w-4" />
+                            <Copy className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{language === 'ar' ? 'نسخ' : 'Copy'}</span>
                           </Button>
                           <Button
-                            variant="ghost"
                             size="sm"
-                            onClick={() => handleViewAccessLogs(doc.id)}
-                            title={language === 'ar' ? 'سجلات الوصول' : 'Access Logs'}
+                            variant="outline"
+                            className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => deleteMutation.mutate(template.id)}
+                            data-testid={`button-delete-${template.id}`}
                           >
-                            <LogOut className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Version History Dialog */}
       <Dialog open={isVersionHistoryDialogOpen} onOpenChange={setIsVersionHistoryDialogOpen}>
@@ -483,6 +746,49 @@ export default function AdminDocumentsPage() {
               {language === 'ar' ? 'إغلاق' : 'Close'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Template Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={(open) => {
+        setCreateDialogOpen(open);
+        if (!open) {
+          setEditingTemplate(null);
+        }
+      }}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTemplate
+                ? (language === 'ar' ? 'تعديل القالب' : 'Edit Template')
+                : (language === 'ar' ? 'قالب جديد' : 'New Template')}
+            </DialogTitle>
+            <DialogDescription>
+              {editingTemplate
+                ? (language === 'ar' ? 'تعديل تفاصيل ومحتوى القالب' : 'Edit template details and content')
+                : (language === 'ar' ? 'إنشاء قالب مستند جديد' : 'Create a new document template')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <TemplateEditor
+            initialTemplate={editingTemplate ? {
+              ...editingTemplate,
+              styles: typeof editingTemplate.styles === 'string'
+                ? JSON.parse(editingTemplate.styles)
+                : (editingTemplate.styles || {})
+            } : null}
+            onSave={(templateData) => {
+              if (editingTemplate) {
+                updateMutation.mutate({ id: editingTemplate.id, data: templateData });
+              } else {
+                createMutation.mutate(templateData);
+              }
+            }}
+            onCancel={() => {
+              setCreateDialogOpen(false);
+              setEditingTemplate(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>

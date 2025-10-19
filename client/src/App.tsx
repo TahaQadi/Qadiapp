@@ -133,7 +133,10 @@ function Router() {
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
       <Route path="/admin/price-management" component={AdminPriceManagementPage} />
       <Route path="/admin/price-requests" component={AdminPriceRequestsPage} />
-      <AdminRoute path="/admin/templates" component={AdminTemplatesPage} />
+      {/* Redirect old templates route to documents page with templates tab */}
+      <Route path="/admin/templates">
+        <Redirect to="/admin/documents" />
+      </Route>
       <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
       <AdminRoute path="/admin/documents/list" component={AdminDocumentListPage} />
       <Route path="/admin/price-offers" component={AdminPriceOffersPage} />
