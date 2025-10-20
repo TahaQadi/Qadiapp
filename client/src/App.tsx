@@ -34,6 +34,7 @@ import ProductDetailPage from '@/pages/ProductDetailPage';
 import CatalogPage from '@/pages/CatalogPage';
 import OnboardingPage from '@/pages/OnboardingPage';
 import AdminReportsPage from './pages/AdminReportsPage';
+import AdminDemoRequestsPage from "@/pages/AdminDemoRequestsPage";
 import { ProtectedRoute } from '@/lib/protected-route';
 import "./lib/i18n";
 import { HelmetProvider } from 'react-helmet-async';
@@ -148,6 +149,7 @@ function Router() {
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <AdminRoute path="/admin/reports" component={AdminReportsPage} />
+      <AdminRoute path="/admin/demo-requests" component={AdminDemoRequestsPage} />
       {/* Redirect old templates route */}
       <Route path="/admin/templates">
         <Redirect to="/admin/documents" />
