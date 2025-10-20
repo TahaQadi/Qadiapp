@@ -9,6 +9,7 @@ import passwordResetRoutes from "./password-reset-routes";
 import orderModificationRoutes from "./order-modification-routes";
 import pushRoutes from "./push-routes";
 import analyticsRoutes from "./analytics-routes";
+import demoRequestRoutes from "./demo-request-routes";
 import demoRequestRoutes from './demo-request-routes'; // Import demo request routes
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
@@ -171,6 +172,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Analytics and error monitoring routes
   app.use("/api", analyticsRoutes);
+
+  // Demo request routes (public POST, admin GET/PATCH)
+  app.use(demoRequestRoutes);
 
   // Demo request routes
   app.use('/api', demoRequestRoutes); // Register demo request routes

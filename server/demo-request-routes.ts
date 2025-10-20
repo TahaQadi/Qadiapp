@@ -1,7 +1,8 @@
 
 import { Router, Request, Response } from 'express';
 import { db } from './db';
-import { demoRequests } from '../shared/schema';
+import { demoRequests, clients } from '../shared/schema';
+import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
 const router = Router();
@@ -26,11 +27,9 @@ router.post('/api/demo-request', async (req: Request, res: Response) => {
       company: data.company,
       message: data.message || null,
       status: 'pending',
-      createdAt: new Date(),
     }).returning();
 
-    // TODO: Send email notification to admin
-    // This can be integrated with your email service
+    // Log for admin notification
     console.log('Demo request received:', {
       id: request.id,
       name: request.name,
@@ -50,12 +49,17 @@ router.post('/api/demo-request', async (req: Request, res: Response) => {
 });
 
 // Get all demo requests (admin only)
-router.get('/api/demo-requests', async (req: Request, res: Response) => {
+router.get('/api/admin/demo-requests', async (req: Request, res: Response) => {
   try {
-    // Add auth check here when ready
-    const requests = await db.query.demoRequests.findMany({
-      orderBy: (demoRequests, { desc }) => [desc(demoRequests.createdAt)],
-    });
+    // Check if user is admin
+    if (!req.user || !(req.user as any).isAdmin) {
+      return res.status(403).json({ 
+        message: 'Unauthorized - Admin access required',
+        messageAr: 'غير مصرح - مطلوب صلاحيات المسؤول'
+      });
+    }
+
+    const requests = await db.select().from(demoRequests).orderBy(desc(demoRequests.createdAt));
 
     res.json(requests);
   } catch (error) {
@@ -65,8 +69,16 @@ router.get('/api/demo-requests', async (req: Request, res: Response) => {
 });
 
 // Update demo request status (admin only)
-router.patch('/api/demo-requests/:id', async (req: Request, res: Response) => {
+router.patch('/api/admin/demo-requests/:id', async (req: Request, res: Response) => {
   try {
+    // Check if user is admin
+    if (!req.user || !(req.user as any).isAdmin) {
+      return res.status(403).json({ 
+        message: 'Unauthorized - Admin access required',
+        messageAr: 'غير مصرح - مطلوب صلاحيات المسؤول'
+      });
+    }
+
     const { id } = req.params;
     const { status, notes } = req.body;
 
