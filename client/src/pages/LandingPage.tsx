@@ -8,7 +8,7 @@ import { SEO } from "@/components/SEO";
 import { DemoRequestDialog } from "@/components/DemoRequestDialog";
 
 export default function LandingPage() {
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const isArabic = language === 'ar';
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
@@ -170,6 +170,14 @@ export default function LandingPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+              className="text-white hover:text-[#d4af37] transition-colors text-xs sm:text-sm"
+            >
+              {language === 'en' ? 'العربية' : 'English'}
+            </Button>
             <Button 
               onClick={handleLogin}
               size="sm"
