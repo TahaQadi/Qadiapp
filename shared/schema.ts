@@ -551,3 +551,17 @@ export interface AuthUser {
   companyNameEn?: string;
   companyNameAr?: string;
 }
+
+// Demo Request table schema
+export const demoRequests = pgTable("demo_requests", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  company: text("company").notNull(),
+  message: text("message"),
+  status: text("status").notNull().default('pending'), // pending, contacted, scheduled, completed, cancelled
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+});

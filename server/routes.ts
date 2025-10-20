@@ -9,6 +9,7 @@ import passwordResetRoutes from "./password-reset-routes";
 import orderModificationRoutes from "./order-modification-routes";
 import pushRoutes from "./push-routes";
 import analyticsRoutes from "./analytics-routes";
+import demoRequestRoutes from './demo-request-routes'; // Import demo request routes
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -170,6 +171,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Analytics and error monitoring routes
   app.use("/api", analyticsRoutes);
+
+  // Demo request routes
+  app.use('/api', demoRequestRoutes); // Register demo request routes
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
@@ -471,9 +475,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (offer.status !== 'sent' && offer.status !== 'viewed') {
-        return res.status(400).json({ 
-          message: "Offer cannot be modified", 
-          messageAr: "لا يمكن تعديل العرض" 
+        return res.status(400).json({
+          message: "Offer cannot be modified",
+          messageAr: "لا يمكن تعديل العرض"
         });
       }
 
@@ -605,9 +609,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!priceRequest) {
-        return res.status(404).json({ 
-          message: "Price request not found", 
-          messageAr: "طلب السعر غير موجود" 
+        return res.status(404).json({
+          message: "Price request not found",
+          messageAr: "طلب السعر غير موجود"
         });
       }
 
@@ -616,15 +620,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lta = await storage.getLta(priceRequest.ltaId);
 
       if (!client || !lta) {
-        return res.status(404).json({ 
-          message: "Client or LTA not found", 
-          messageAr: "العميل أو الاتفاقية غير موجودة" 
+        return res.status(404).json({
+          message: "Client or LTA not found",
+          messageAr: "العميل أو الاتفاقية غير موجودة"
         });
       }
 
       // Get products from price request
-      const products = typeof priceRequest.products === 'string' 
-        ? JSON.parse(priceRequest.products) 
+      const products = typeof priceRequest.products === 'string'
+        ? JSON.parse(priceRequest.products)
         : priceRequest.products;
 
       const productDetails = [];
@@ -668,7 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Error generating PDF for price request:', error);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: error instanceof Error ? error.message : 'Failed to generate PDF',
         messageAr: 'فشل في إنشاء ملف PDF'
       });
@@ -685,9 +689,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (offer.status !== 'draft') {
-        return res.status(400).json({ 
-          message: "Only draft offers can be sent", 
-          messageAr: "يمكن إرسال المسودات فقط" 
+        return res.status(400).json({
+          message: "Only draft offers can be sent",
+          messageAr: "يمكن إرسال المسودات فقط"
         });
       }
 
@@ -696,9 +700,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lta = await storage.getLta(offer.ltaId);
 
       if (!client || !lta) {
-        return res.status(404).json({ 
-          message: "Client or LTA not found", 
-          messageAr: "العميل أو الاتفاقية غير موجودة" 
+        return res.status(404).json({
+          message: "Client or LTA not found",
+          messageAr: "العميل أو الاتفاقية غير موجودة"
         });
       }
 
@@ -784,10 +788,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: JSON.stringify({ offerId: offer.id })
       });
 
-      res.json({ 
-        message: "Offer sent successfully", 
+      res.json({
+        message: "Offer sent successfully",
         messageAr: "تم إرسال العرض بنجاح",
-        pdfFileName: uploadResult.fileName 
+        pdfFileName: uploadResult.fileName
       });
     } catch (error) {
       console.error('Send offer error:', error);
@@ -3495,11 +3499,11 @@ Please contact them to schedule a demo.
         uploadedBy: req.user!.id,
       });
 
-      res.json({ 
+      res.json({
         success: true,
         documentId: document.id,
         fileUrl,
-        fileName 
+        fileName
       });
     } catch (error: any) {
       log(`PDF generation error: ${error.message}`);
