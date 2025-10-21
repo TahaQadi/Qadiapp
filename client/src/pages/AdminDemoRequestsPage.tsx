@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,11 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDateLocalized } from "@/lib/dateUtils";
-import { PlayCircle, Mail, Phone, Building2, Calendar, FileText, Loader2, Eye } from "lucide-react";
-import { useState } from "react";
+import { PlayCircle, Mail, Phone, Building2, Calendar, FileText, Loader2, Eye, CheckCircle2, Clock, XCircle, Filter } from "lucide-react";
+import { useState, useMemo } from "react";
 
 interface DemoRequest {
   id: number;
@@ -26,18 +28,65 @@ interface DemoRequest {
   updatedAt?: string;
 }
 
+type StatusFilter = 'all' | DemoRequest['status'];
+
+const STATUS_CONFIG = {
+  pending: { 
+    label: 'Pending', 
+    labelAr: 'قيد الانتظار', 
+    variant: 'default' as const,
+    icon: Clock,
+    color: 'text-yellow-600 dark:text-yellow-500'
+  },
+  contacted: { 
+    label: 'Contacted', 
+    labelAr: 'تم الاتصال', 
+    variant: 'secondary' as const,
+    icon: Phone,
+    color: 'text-blue-600 dark:text-blue-500'
+  },
+  scheduled: { 
+    label: 'Scheduled', 
+    labelAr: 'مجدول', 
+    variant: 'outline' as const,
+    icon: Calendar,
+    color: 'text-purple-600 dark:text-purple-500'
+  },
+  completed: { 
+    label: 'Completed', 
+    labelAr: 'مكتمل', 
+    variant: 'secondary' as const,
+    icon: CheckCircle2,
+    color: 'text-green-600 dark:text-green-500'
+  },
+  cancelled: { 
+    label: 'Cancelled', 
+    labelAr: 'ملغي', 
+    variant: 'destructive' as const,
+    icon: XCircle,
+    color: 'text-red-600 dark:text-red-500'
+  },
+} as const;
+
 export default function AdminDemoRequestsPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
+  
+  // State management
   const [selectedRequest, setSelectedRequest] = useState<DemoRequest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  const { data: requests = [], isLoading } = useQuery<DemoRequest[]>({
+  // Data fetching
+  const { data: requests = [], isLoading, isError } = useQuery<DemoRequest[]>({
     queryKey: ["/api/admin/demo-requests"],
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: true,
   });
 
+  // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; status: string; notes: string }) => {
       const res = await apiRequest('PATCH', `/api/admin/demo-requests/${data.id}`, {
@@ -53,7 +102,7 @@ export default function AdminDemoRequestsPage() {
         description: language === 'ar' ? 'تم تحديث الطلب بنجاح' : 'Request updated successfully',
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-      setDialogOpen(false);
+      handleCloseDialog();
     },
     onError: () => {
       toast({
@@ -64,11 +113,42 @@ export default function AdminDemoRequestsPage() {
     },
   });
 
+  // Filtered and sorted requests
+  const filteredRequests = useMemo(() => {
+    let filtered = requests;
+    
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(req => req.status === statusFilter);
+    }
+    
+    return filtered.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [requests, statusFilter]);
+
+  // Statistics
+  const stats = useMemo(() => ({
+    total: requests.length,
+    pending: requests.filter(r => r.status === 'pending').length,
+    contacted: requests.filter(r => r.status === 'contacted').length,
+    scheduled: requests.filter(r => r.status === 'scheduled').length,
+    completed: requests.filter(r => r.status === 'completed').length,
+    cancelled: requests.filter(r => r.status === 'cancelled').length,
+  }), [requests]);
+
+  // Handlers
   const handleViewRequest = (request: DemoRequest) => {
     setSelectedRequest(request);
     setStatus(request.status);
     setNotes(request.notes || '');
     setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedRequest(null);
+    setStatus('');
+    setNotes('');
   };
 
   const handleUpdate = () => {
@@ -80,91 +160,187 @@ export default function AdminDemoRequestsPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, { label: string; labelAr: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-      pending: { label: 'Pending', labelAr: 'قيد الانتظار', variant: 'default' },
-      contacted: { label: 'Contacted', labelAr: 'تم الاتصال', variant: 'secondary' },
-      scheduled: { label: 'Scheduled', labelAr: 'مجدول', variant: 'outline' },
-      completed: { label: 'Completed', labelAr: 'مكتمل', variant: 'secondary' },
-      cancelled: { label: 'Cancelled', labelAr: 'ملغي', variant: 'destructive' },
-    };
-    const config = variants[status] || variants.pending;
+  const getStatusBadge = (requestStatus: string) => {
+    const config = STATUS_CONFIG[requestStatus as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+    const Icon = config.icon;
+    
     return (
-      <Badge variant={config.variant}>
+      <Badge variant={config.variant} className="gap-1.5">
+        <Icon className="h-3 w-3" />
         {language === 'ar' ? config.labelAr : config.label}
       </Badge>
     );
   };
 
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
-              {language === 'ar' ? 'طلبات العروض التوضيحية' : 'Demo Requests'}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {language === 'ar' ? 'إدارة طلبات العروض التوضيحية من العملاء' : 'Manage demo requests from clients'}
-            </p>
-          </div>
-        </div>
+  const renderEmptyState = () => (
+    <Card className="p-12 text-center border-dashed">
+      <PlayCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+      <h3 className="text-lg font-semibold mb-2">
+        {language === 'ar' ? 'لا توجد طلبات' : 'No Requests'}
+      </h3>
+      <p className="text-muted-foreground">
+        {statusFilter === 'all' 
+          ? (language === 'ar' ? 'لا توجد طلبات عروض توضيحية' : 'No demo requests yet')
+          : (language === 'ar' ? `لا توجد طلبات ${STATUS_CONFIG[statusFilter].labelAr}` : `No ${STATUS_CONFIG[statusFilter].label.toLowerCase()} requests`)}
+      </p>
+    </Card>
+  );
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="h-24 bg-muted"></CardHeader>
-                <CardContent className="h-32 bg-muted/50"></CardContent>
-              </Card>
-            ))}
+  const renderLoadingSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader className="h-24 bg-muted rounded-t-lg"></CardHeader>
+          <CardContent className="h-32 bg-muted/50"></CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderStatCards = () => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">
+                {language === 'ar' ? 'الإجمالي' : 'Total'}
+              </p>
+              <p className="text-2xl font-bold">{stats.total}</p>
+            </div>
           </div>
-        ) : requests.length === 0 ? (
-          <Card className="p-12 text-center border-dashed">
-            <PlayCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-muted-foreground">
-              {language === 'ar' ? 'لا توجد طلبات عروض توضيحية' : 'No demo requests'}
+        </CardContent>
+      </Card>
+      
+      {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+        const Icon = config.icon;
+        const count = stats[key as keyof typeof stats];
+        return (
+          <Card 
+            key={key}
+            className={`hover:shadow-md transition-shadow cursor-pointer ${statusFilter === key ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(key as StatusFilter)}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Icon className={`h-4 w-4 ${config.color}`} />
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {language === 'ar' ? config.labelAr : config.label}
+                  </p>
+                  <p className="text-2xl font-bold">{count}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Header */}
+        <header className="mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                {language === 'ar' ? 'طلبات العروض التوضيحية' : 'Demo Requests'}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                {language === 'ar' ? 'إدارة طلبات العروض التوضيحية من العملاء' : 'Manage demo requests from clients'}
+              </p>
+            </div>
+            
+            {/* Filter Tabs */}
+            <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="w-auto">
+              <TabsList>
+                <TabsTrigger value="all">
+                  {language === 'ar' ? 'الكل' : 'All'} ({stats.total})
+                </TabsTrigger>
+                <TabsTrigger value="pending">
+                  {language === 'ar' ? 'قيد الانتظار' : 'Pending'} ({stats.pending})
+                </TabsTrigger>
+                <TabsTrigger value="contacted">
+                  {language === 'ar' ? 'تم الاتصال' : 'Contacted'} ({stats.contacted})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </header>
+
+        {/* Statistics */}
+        {!isLoading && requests.length > 0 && renderStatCards()}
+
+        {/* Content */}
+        {isError ? (
+          <Card className="p-8 text-center border-destructive">
+            <XCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
+            <p className="text-destructive">
+              {language === 'ar' ? 'خطأ في تحميل الطلبات' : 'Error loading requests'}
             </p>
           </Card>
+        ) : isLoading ? (
+          renderLoadingSkeleton()
+        ) : filteredRequests.length === 0 ? (
+          renderEmptyState()
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {requests.map((request) => (
-              <Card key={request.id} className="hover-elevate transition-all">
+            {filteredRequests.map((request) => (
+              <Card key={request.id} className="hover:shadow-lg transition-all duration-300 group">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Building2 className="h-4 w-4 flex-shrink-0" />
+                      <CardTitle className="text-lg flex items-center gap-2 mb-1">
+                        <Building2 className="h-4 w-4 flex-shrink-0 text-primary" />
                         <span className="truncate">{request.company}</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1 truncate">{request.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{request.name}</p>
                     </div>
                     {getStatusBadge(request.status)}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="truncate">{request.email}</span>
+                    <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <a 
+                      href={`mailto:${request.email}`} 
+                      className="truncate hover:text-primary transition-colors"
+                    >
+                      {request.email}
+                    </a>
                   </div>
+                  
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{request.phone}</span>
+                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <a 
+                      href={`tel:${request.phone}`}
+                      className="hover:text-primary transition-colors"
+                    >
+                      {request.phone}
+                    </a>
                   </div>
+                  
                   <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatDateLocalized(new Date(request.createdAt), language)}</span>
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">
+                      {formatDateLocalized(new Date(request.createdAt), language)}
+                    </span>
                   </div>
+                  
                   {request.message && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div className="flex items-start gap-2 text-sm pt-2 border-t">
+                      <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                       <p className="line-clamp-2 text-muted-foreground">{request.message}</p>
                     </div>
                   )}
+                  
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2"
+                    className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                     onClick={() => handleViewRequest(request)}
                     data-testid={`button-view-request-${request.id}`}
                   >
@@ -178,68 +354,93 @@ export default function AdminDemoRequestsPage() {
         )}
       </div>
 
+      {/* Details Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
               {selectedRequest?.company} - {selectedRequest?.name}
             </DialogTitle>
           </DialogHeader>
+          
           {selectedRequest && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">
                     {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
                   </Label>
-                  <p className="font-medium mt-1">{selectedRequest.email}</p>
+                  <a 
+                    href={`mailto:${selectedRequest.email}`}
+                    className="block font-medium hover:text-primary transition-colors"
+                  >
+                    {selectedRequest.email}
+                  </a>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">
+                
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">
                     {language === 'ar' ? 'الهاتف' : 'Phone'}
                   </Label>
-                  <p className="font-medium mt-1">{selectedRequest.phone}</p>
+                  <a 
+                    href={`tel:${selectedRequest.phone}`}
+                    className="block font-medium hover:text-primary transition-colors"
+                  >
+                    {selectedRequest.phone}
+                  </a>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">
+                    {language === 'ar' ? 'تاريخ الطلب' : 'Request Date'}
+                  </Label>
+                  <p className="font-medium">
+                    {formatDateLocalized(new Date(selectedRequest.createdAt), language)}
+                  </p>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">
+                    {language === 'ar' ? 'الحالة الحالية' : 'Current Status'}
+                  </Label>
+                  <div>{getStatusBadge(selectedRequest.status)}</div>
                 </div>
               </div>
 
               {selectedRequest.message && (
-                <div>
-                  <Label className="text-muted-foreground">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground uppercase">
                     {language === 'ar' ? 'الرسالة' : 'Message'}
                   </Label>
-                  <p className="mt-1 p-3 bg-muted rounded-md">{selectedRequest.message}</p>
+                  <div className="p-3 bg-muted rounded-md text-sm">
+                    {selectedRequest.message}
+                  </div>
                 </div>
               )}
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="status">
-                  {language === 'ar' ? 'الحالة' : 'Status'}
+                  {language === 'ar' ? 'تحديث الحالة' : 'Update Status'}
                 </Label>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger id="status" data-testid="select-status">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">
-                      {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
-                    </SelectItem>
-                    <SelectItem value="contacted">
-                      {language === 'ar' ? 'تم الاتصال' : 'Contacted'}
-                    </SelectItem>
-                    <SelectItem value="scheduled">
-                      {language === 'ar' ? 'مجدول' : 'Scheduled'}
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      {language === 'ar' ? 'مكتمل' : 'Completed'}
-                    </SelectItem>
-                    <SelectItem value="cancelled">
-                      {language === 'ar' ? 'ملغي' : 'Cancelled'}
-                    </SelectItem>
+                    {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          {config.icon && <config.icon className={`h-4 w-4 ${config.color}`} />}
+                          {language === 'ar' ? config.labelAr : config.label}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="notes">
                   {language === 'ar' ? 'ملاحظات' : 'Notes'}
                 </Label>
@@ -248,23 +449,36 @@ export default function AdminDemoRequestsPage() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={language === 'ar' ? 'أضف ملاحظات...' : 'Add notes...'}
-                  rows={3}
+                  rows={4}
                   data-testid="textarea-notes"
+                  className="resize-none"
                 />
               </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="button-cancel">
+              <DialogFooter className="gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleCloseDialog} 
+                  data-testid="button-cancel"
+                  disabled={updateMutation.isPending}
+                >
                   {language === 'ar' ? 'إلغاء' : 'Cancel'}
                 </Button>
-                <Button onClick={handleUpdate} disabled={updateMutation.isPending} data-testid="button-save">
+                <Button 
+                  onClick={handleUpdate} 
+                  disabled={updateMutation.isPending}
+                  data-testid="button-save"
+                >
                   {updateMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       {language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}
                     </>
                   ) : (
-                    language === 'ar' ? 'حفظ' : 'Save'
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      {language === 'ar' ? 'حفظ' : 'Save'}
+                    </>
                   )}
                 </Button>
               </DialogFooter>
