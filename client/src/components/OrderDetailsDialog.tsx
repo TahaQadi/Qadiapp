@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -130,6 +131,11 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
             <FileText className="h-5 w-5" />
             {language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}
           </DialogTitle>
+          <DialogDescription>
+            {language === 'ar'
+              ? 'عرض معلومات تفصيلية عن الطلب والسجل الزمني'
+              : 'View detailed order information and timeline'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -211,8 +217,8 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
           {/* Order Timeline */}
           {orderHistory.length > 0 && (
             <>
-              <OrderTimeline 
-                history={orderHistory} 
+              <OrderTimeline
+                history={orderHistory}
                 currentStatus={order.status}
               />
               <Separator />

@@ -890,7 +890,7 @@ export default function AdminOrdersPage() {
               {language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}
             </DialogTitle>
             <DialogDescription>
-              {language === 'ar' ? 'معلومات تفصيلية عن الطلب' : 'Detailed information about the order'}
+              {language === 'ar' ? 'معلومات تفصيلية عن الطلب والجدول الزمني' : 'Detailed information about the order and timeline'}
             </DialogDescription>
           </DialogHeader>
           {selectedOrder && (

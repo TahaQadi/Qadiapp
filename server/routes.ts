@@ -1393,22 +1393,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/orders", requireAdmin, async (req: any, res) => {
     try {
       const { page, pageSize, status, search, all } = req.query;
-      
+
       // If 'all' parameter is present, return all orders without pagination
       if (all === 'true') {
         const orders = await storage.getOrders();
         res.json({ orders });
         return;
       }
-      
+
       // Get all orders first
       let orders = await storage.getOrders();
-      
+
       // Apply status filter
       if (status && status !== 'all') {
         orders = orders.filter(order => order.status === status);
       }
-      
+
       // Apply search filter (search in order ID)
       if (search) {
         const searchLower = search.toString().toLowerCase();
@@ -1416,7 +1416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           order.id.toLowerCase().includes(searchLower)
         );
       }
-      
+
       // Apply pagination
       const pageNum = parseInt(page as string) || 1;
       const pageSizeNum = parseInt(pageSize as string) || 10;
@@ -1424,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endIndex = startIndex + pageSizeNum;
       const paginatedOrders = orders.slice(startIndex, endIndex);
       const totalPages = Math.ceil(orders.length / pageSizeNum);
-      
+
       res.json({
         orders: paginatedOrders,
         totalPages,
@@ -1516,7 +1516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/orders/:id/history', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      
+
       // Verify order access
       const order = await storage.getOrder(id);
       if (!order) {
@@ -1569,132 +1569,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { status, notes } = req.body;
 
       if (!status) {
-        return res.status(400).json({ message: 'Status is required' });
+        return res.status(400).json({ error: 'Status is required' });
       }
 
-      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Invalid status' });
-      }
-
-      // Get the order to retrieve client ID and previous status
       const order = await storage.getOrder(id);
       if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
+        return res.status(404).json({ error: 'Order not found' });
       }
 
-      const previousStatus = order.status;
+      // Only create history if status actually changed
+      if (order.status !== status) {
+        // Update the order status first
+        const updatedOrder = await storage.updateOrderStatus(id, status);
 
-      // Don't create history if status hasn't changed
-      if (previousStatus !== status) {
-        // Update order status
-        await storage.updateOrderStatus(id, status);
-
-        // Create history entry
-        await storage.createOrderHistory({
-          orderId: id,
-          status,
-          changedBy: req.client.id,
-          notes: notes || null,
-          isAdminNote: !!notes,
-        });
-      }
-
-      // Create notification for the client
-      const statusMessages: Record<string, { titleEn: string; titleAr: string; messageEn: string; messageAr: string }> = {
-        confirmed: {
-          titleEn: 'Order Confirmed',
-          titleAr: 'تم تأكيد الطلب',
-          messageEn: `Your order #${id.substring(0, 8)} has been confirmed and is being processed`,
-          messageAr: `تم تأكيد طلبك #${id.substring(0, 8)} وجاري معالجته`
-        },
-        processing: {
-          titleEn: 'Order Processing',
-          titleAr: 'جاري معالجة الطلب',
-          messageEn: `Your order #${id.substring(0, 8)} is now being processed`,
-          messageAr: `طلبك #${id.substring(0, 8)} قيد المعالجة الآن`
-        },
-        shipped: {
-          titleEn: 'Order Shipped',
-          titleAr: 'تم شحن الطلب',
-          messageEn: `Your order #${id.substring(0, 8)} has been shipped and is on its way`,
-          messageAr: `تم شحن طلبك #${id.substring(0, 8)} وهو في الطريق إليك`
-        },
-        delivered: {
-          titleEn: 'Order Delivered',
-          titleAr: 'تم تسليم الطلب',
-          messageEn: `Your order #${id.substring(0, 8)} has been delivered successfully`,
-          messageAr: `تم تسليم طلبك #${id.substring(0, 8)} بنجاح`
-        },
-        cancelled: {
-          titleEn: 'Order Cancelled',
-          titleAr: 'تم إلغاء الطلب',
-          messageEn: `Your order #${id.substring(0, 8)} has been cancelled`,
-          messageAr: `تم إلغاء طلبك #${id.substring(0, 8)}`
-        },
-        pending: {
-          titleEn: 'Order Status Updated',
-          titleAr: 'تم تحديث حالة الطلب',
-          messageEn: `Your order #${id.substring(0, 8)} status has been updated to pending`,
-          messageAr: `تم تحديث حالة طلبك #${id.substring(0, 8)} إلى قيد الانتظار`
+        if (!updatedOrder) {
+          return res.status(500).json({ error: 'Failed to update order status' });
         }
-      };
 
-      const notificationData = statusMessages[status];
-
-      if (notificationData) {
-        await storage.createNotification({
-          clientId: order.clientId,
-          type: 'order_status_changed',
-          titleEn: notificationData.titleEn,
-          titleAr: notificationData.titleAr,
-          messageEn: notificationData.messageEn,
-          messageAr: notificationData.messageAr,
-          metadata: JSON.stringify({
+        // Then create order history entry
+        try {
+          await storage.createOrderHistory({
             orderId: id,
             status,
-            previousStatus,
-            timestamp: new Date().toISOString()
-          })
-        });
-
-        // Send push notification if user has subscriptions
-        const subscriptions = await storage.getPushSubscriptions(order.clientId);
-        if (subscriptions && subscriptions.length > 0) {
-          const webpush = await import('web-push');
-          const payload = JSON.stringify({
-            title: notificationData.titleEn,
-            body: notificationData.messageEn,
-            url: '/orders',
-            tag: `order-${id}`,
-            icon: '/icon-192.png',
-            badge: '/icon-192.png',
-            data: { orderId: id, status }
+            changedBy: req.session.userId || 'admin',
+            changedAt: new Date(),
+            notes: notes || null,
+            isAdminNote: !!notes,
           });
-
-          // Send to all subscriptions
-          await Promise.allSettled(
-            subscriptions.map(async (sub: any) => {
-              try {
-                await webpush.sendNotification({
-                  endpoint: sub.endpoint,
-                  keys: sub.keys
-                }, payload);
-              } catch (error: any) {
-                // If subscription is invalid or expired, remove it
-                if (error.statusCode === 410 || error.statusCode === 404) {
-                  await storage.deletePushSubscription(sub.endpoint);
-                }
-              }
-            })
-          );
+        } catch (historyError: any) {
+          console.error('Error creating order history:', historyError);
+          // Don't fail the request if history creation fails
         }
-      }
 
-      res.json({ message: 'Order status updated successfully' });
+        res.json(updatedOrder);
+      } else {
+        // Status didn't change, just return the order
+        res.json(order);
+      }
     } catch (error: any) {
       console.error('Error updating order status:', error);
-      res.status(500).json({ message: error.message || 'Failed to update order status' });
+      res.status(500).json({ error: error.message || 'Failed to update order status' });
     }
   });
 
