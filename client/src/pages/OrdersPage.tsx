@@ -128,10 +128,12 @@ export default function OrdersPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.location.href = '/api/logout'}
+              asChild
               className="h-9 w-9 sm:h-10 sm:w-10"
             >
-              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Link href="/logout">
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
             </Button>
           </div>
         </div>

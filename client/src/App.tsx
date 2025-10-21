@@ -7,10 +7,10 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, lazy, Suspense } from "react";
-import NotFound from "@/pages/not-found";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import LandingPage from "@/pages/LandingPage";
+import NotFoundPage from "@/pages/not-found";
+import OnboardingPage from "@/pages/OnboardingPage";
 import LoginPage from "@/pages/LoginPage";
+import LogoutPage from "@/pages/LogoutPage";
 import OrderingPage from "@/pages/OrderingPage";
 import ClientProfilePage from "@/pages/ClientProfilePage";
 import AdminPage from "@/pages/AdminPage";
@@ -32,7 +32,6 @@ import PriceRequestPage from '@/pages/PriceRequestPage';
 import ClientPriceOffersPage from '@/pages/ClientPriceOffersPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CatalogPage from '@/pages/CatalogPage';
-import OnboardingPage from '@/pages/OnboardingPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminDemoRequestsPage from "@/pages/AdminDemoRequestsPage";
 import { ProtectedRoute } from '@/lib/protected-route';
@@ -106,6 +105,7 @@ function Router() {
       <Route path="/landing" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/logout" component={LogoutPage} />
 
       {/* Public product pages for SEO */}
       <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
@@ -154,7 +154,7 @@ function Router() {
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />
 
-      <Route component={NotFound} />
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }

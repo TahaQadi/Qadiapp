@@ -1117,13 +1117,14 @@ export default function OrderingPage() {
                   {/* Logout Button */}
                   <div className="pt-4 border-t">
                     <Button
-                      variant="destructive"
-                      className="w-full justify-start gap-3 h-11 text-sm touch-manipulation active:scale-95"
-                      onClick={() => window.location.href = '/api/logout'}
-                      data-testid="sidebar-logout"
+                      variant="ghost"
+                      size="icon"
+                      asChild
+                      className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
                     >
-                      <LogOut className="h-4 w-4" />
-                      <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+                      <Link href="/logout">
+                        <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </Link>
                     </Button>
                   </div>
                 </div>
