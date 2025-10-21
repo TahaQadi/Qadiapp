@@ -372,6 +372,214 @@ args = "echo \"\""
 task = "shell.exec"
 args = "echo \"✅ Production build completed!\""
 
+[[workflows.workflow]]
+name = "Maint - Clear Cache"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🧹 Clearing development caches...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 1: Clearing Vite cache...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "rm -rf node_modules/.vite"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Vite cache cleared\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 2: Clearing build cache...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "rm -rf node_modules/.cache"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Build cache cleared\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 3: Clearing dist folder...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "rm -rf dist"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Dist folder cleared\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"♻️  All caches cleared successfully!\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"💡 Tip: Restart the dev server to see changes\""
+
+[[workflows.workflow]]
+name = "Maint - Install Dependencies"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📦 Installing dependencies...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running clean install (npm ci)...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm ci"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Dependencies installed successfully!\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📊 Installation summary:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "du -sh node_modules"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"💡 All packages installed from lockfile\""
+
+[[workflows.workflow]]
+name = "Maint - View Error Logs"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📋 Fetching recent error logs...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"⚠️  Last 50 application errors:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "tsx server/scripts/view-error-logs.ts"
+
+[[workflows.workflow]]
+name = "DB - Backup"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"💾 Creating database backup...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 1: Creating backups directory...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p backups"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Backups directory ready\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 2: Generating backup file...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "BACKUP_FILE=\"backups/backup_$(date +%Y%m%d_%H%M%S).sql\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pg_dump $DATABASE_URL > $BACKUP_FILE"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Database backup created\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📊 Backup details:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "ls -lh $BACKUP_FILE"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"💾 Backup saved to: $BACKUP_FILE\""
+
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_database:1.0.0"]
 
