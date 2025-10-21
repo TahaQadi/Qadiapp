@@ -29,17 +29,23 @@ export async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Session configuration with security best practices
+  // Note: rolling: true extends session on each request, which is appropriate for
+  // active business users. Sessions still expire after maxAge of inactivity.
+  // For additional security, consider implementing:
+  // - IP-based session validation for admin users
+  // - Activity-based reauthentication for sensitive operations
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
-    rolling: true, // Reset expiration on each request
+    rolling: true, // Reset expiration on each request to keep active users logged in
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // Default 24 hours
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // Default: 24 hours of inactivity
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      httpOnly: true, // Prevent XSS attacks
+      sameSite: 'lax', // CSRF protection
     }
   };
 
