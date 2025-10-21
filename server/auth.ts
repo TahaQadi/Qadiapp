@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { Client, AuthUser } from "@shared/schema";
+import { AuthenticatedRequest, AdminRequest } from "./types";
 
 declare global {
   namespace Express {
@@ -173,4 +174,41 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
     return next();
   }
   res.status(401).json({ message: "Unauthorized" });
+}
+
+// Middleware to attach client data from authenticated user
+async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // req.user is already an AuthUser from Passport Local Strategy
+    // Attach it to req.client for backwards compatibility
+    (req as any).client = req.user;
+    next();
+  } catch (error) {
+    console.error("Error in getClientFromAuth:", error);
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+  }
+}
+
+// Require auth middleware
+export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  isAuthenticated(req, res, async () => {
+    await getClientFromAuth(req, res, next);
+  });
+}
+
+// Require admin middleware
+export async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction) {
+  await requireAuth(req, res, () => {
+    if (!req.client?.isAdmin) {
+      return res.status(403).json({
+        message: "Unauthorized - Admin access required",
+        messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
+      });
+    }
+    next();
+  });
 }

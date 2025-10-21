@@ -132,7 +132,8 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
 
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -325,19 +326,20 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
         </div>
       )}
 
-            {/* Feedback Button - Show for delivered orders without feedback */}
-            {order.status === 'delivered' && !feedbackData && (
-              <Button
-                onClick={() => setShowFeedback(true)}
-                className="w-full"
-                variant="outline"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                {language === 'ar' ? 'تقييم الطلب' : 'Rate This Order'}
-              </Button>
-            )}
-          </div>
-        </DialogContent>
+        {/* Feedback Button - Show for delivered orders without feedback */}
+        {order.status === 'delivered' && !feedbackData && (
+          <DialogFooter className="mt-6">
+            <Button
+              onClick={() => setShowFeedback(true)}
+              className="w-full"
+              variant="outline"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              {language === 'ar' ? 'تقييم الطلب' : 'Rate This Order'}
+            </Button>
+          </DialogFooter>
+        )}
+      </DialogContent>
 
         {/* Feedback Dialog */}
         {order && (

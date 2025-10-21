@@ -4,7 +4,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { errorLogger } from "./error-logger";
-import { setupAuth, isAuthenticated } from "./auth";
+import { setupAuth, isAuthenticated, requireAuth, requireAdmin } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
 import passwordResetRoutes from "./password-reset-routes";
 import orderModificationRoutes from './order-modification-routes';
@@ -113,43 +113,6 @@ const uploadDocument = multer({
     }
   }
 });
-
-// Middleware to attach client data from authenticated user
-async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    // req.user is already an AuthUser from Passport Local Strategy
-    // Attach it to req.client for backwards compatibility
-    (req as any).client = req.user;
-    next();
-  } catch (error) {
-    console.error("Error in getClientFromAuth:", error);
-    res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
-  }
-}
-
-// Require auth middleware
-async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  isAuthenticated(req, res, async () => {
-    await getClientFromAuth(req, res, next);
-  });
-}
-
-// Require admin middleware
-async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction) {
-  await requireAuth(req, res, () => {
-    if (!req.client?.isAdmin) {
-      return res.status(403).json({
-        message: "Unauthorized - Admin access required",
-        messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
-      });
-    }
-    next();
-  });
-}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
