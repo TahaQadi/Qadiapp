@@ -35,19 +35,45 @@ export default function AdminDocumentListPage() {
   const [documentType, setDocumentType] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [clientFilter, setClientFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [templateFilter, setTemplateFilter] = useState<string>('all');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Fetch clients for client filter
+  const { data: clientsData } = useQuery({
+    queryKey: ['/api/admin/clients'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/clients', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch clients');
+      return response.json();
+    }
+  });
+
+  // Fetch templates for template filter
+  const { data: templatesData } = useQuery({
+    queryKey: ['/api/admin/templates'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/templates', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    }
+  });
+
   const { data, isLoading } = useQuery<{ documents: Document[] }>({
-    queryKey: ['/api/documents', searchTerm, documentType, startDate, endDate],
+    queryKey: ['/api/documents', searchTerm, documentType, startDate, endDate, clientFilter, statusFilter, templateFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (documentType && documentType !== 'all') params.append('documentType', documentType);
       if (searchTerm) params.append('searchTerm', searchTerm);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
+      if (clientFilter && clientFilter !== 'all') params.append('clientId', clientFilter);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (templateFilter && templateFilter !== 'all') params.append('templateId', templateFilter);
 
       const response = await fetch(`/api/documents?${params}`, {
         credentials: 'include'
@@ -70,7 +96,29 @@ export default function AdminDocumentListPage() {
     }
   });
 
-  const documents = data?.documents || [];
+  const allDocuments = data?.documents || [];
+  const clients = clientsData || [];
+  const templates = templatesData || [];
+  
+  // Client-side filtering for additional criteria
+  const documents = allDocuments.filter(doc => {
+    // Client filter
+    if (clientFilter !== 'all' && doc.clientId !== clientFilter) return false;
+    
+    // Status filter (if metadata contains status)
+    if (statusFilter !== 'all' && doc.metadata) {
+      const metadata = typeof doc.metadata === 'string' ? JSON.parse(doc.metadata) : doc.metadata;
+      if (metadata.status !== statusFilter) return false;
+    }
+    
+    // Template filter (if metadata contains templateId)
+    if (templateFilter !== 'all' && doc.metadata) {
+      const metadata = typeof doc.metadata === 'string' ? JSON.parse(doc.metadata) : doc.metadata;
+      if (metadata.templateId !== templateFilter) return false;
+    }
+    
+    return true;
+  });
   
   // Pagination
   const totalPages = Math.ceil(documents.length / itemsPerPage);
@@ -81,6 +129,17 @@ export default function AdminDocumentListPage() {
 
   // Reset to page 1 when filters change
   const resetPage = () => setPage(1);
+  
+  // Count active filters
+  const activeFiltersCount = [
+    searchTerm,
+    documentType !== 'all',
+    startDate,
+    endDate,
+    clientFilter !== 'all',
+    statusFilter !== 'all',
+    templateFilter !== 'all'
+  ].filter(Boolean).length;
 
   const getDocumentTypeLabel = (type: string) => {
     const labels: Record<string, { en: string; ar: string }> = {
@@ -150,7 +209,7 @@ export default function AdminDocumentListPage() {
                   <Filter className="h-4 w-4" />
                   {language === 'ar' ? 'الفلاتر' : 'Filters'}
                 </h3>
-                {(searchTerm || documentType !== 'all' || startDate || endDate) && (
+                {activeFiltersCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -159,62 +218,123 @@ export default function AdminDocumentListPage() {
                       setDocumentType('all');
                       setStartDate('');
                       setEndDate('');
+                      setClientFilter('all');
+                      setStatusFilter('all');
+                      setTemplateFilter('all');
                       resetPage();
                     }}
                   >
-                    {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'}
+                    {language === 'ar' ? 'مسح الفلاتر' : 'Clear Filters'} ({activeFiltersCount})
                   </Button>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Search */}
                 <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      resetPage();
+                    }}
+                  />
+                </div>
+
+                {/* Document Type */}
+                <Select value={documentType} onValueChange={(value) => {
+                  setDocumentType(value);
+                  resetPage();
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === 'ar' ? 'نوع المستند' : 'Document Type'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="price_offer">{getDocumentTypeLabel('price_offer')}</SelectItem>
+                    <SelectItem value="order">{getDocumentTypeLabel('order')}</SelectItem>
+                    <SelectItem value="invoice">{getDocumentTypeLabel('invoice')}</SelectItem>
+                    <SelectItem value="contract">{getDocumentTypeLabel('contract')}</SelectItem>
+                    <SelectItem value="lta_document">{getDocumentTypeLabel('lta_document')}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Client Filter */}
+                <Select value={clientFilter} onValueChange={(value) => {
+                  setClientFilter(value);
+                  resetPage();
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === 'ar' ? 'العميل' : 'Client'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'جميع العملاء' : 'All Clients'}</SelectItem>
+                    {clients.map((client: any) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {language === 'ar' ? client.nameAr : client.nameEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Template Filter */}
+                <Select value={templateFilter} onValueChange={(value) => {
+                  setTemplateFilter(value);
+                  resetPage();
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === 'ar' ? 'القالب' : 'Template'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'جميع القوالب' : 'All Templates'}</SelectItem>
+                    {templates.map((template: any) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {language === 'ar' ? template.nameAr : template.nameEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Date Range - Start */}
                 <Input
-                  placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
-                  value={searchTerm}
+                  type="date"
+                  value={startDate}
                   onChange={(e) => {
-                    setSearchTerm(e.target.value);
+                    setStartDate(e.target.value);
                     resetPage();
                   }}
+                  placeholder={language === 'ar' ? 'من تاريخ' : 'From Date'}
                 />
-              </div>
 
-              <Select value={documentType} onValueChange={(value) => {
-                setDocumentType(value);
-                resetPage();
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder={language === 'ar' ? 'نوع المستند' : 'Document Type'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                  <SelectItem value="price_offer">{getDocumentTypeLabel('price_offer')}</SelectItem>
-                  <SelectItem value="order">{getDocumentTypeLabel('order')}</SelectItem>
-                  <SelectItem value="invoice">{getDocumentTypeLabel('invoice')}</SelectItem>
-                  <SelectItem value="contract">{getDocumentTypeLabel('contract')}</SelectItem>
-                  <SelectItem value="lta_document">{getDocumentTypeLabel('lta_document')}</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Date Range - End */}
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    resetPage();
+                  }}
+                  placeholder={language === 'ar' ? 'إلى تاريخ' : 'To Date'}
+                />
 
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={(value) => {
+                  setStatusFilter(value);
                   resetPage();
-                }}
-                placeholder={language === 'ar' ? 'من تاريخ' : 'From Date'}
-              />
-
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  resetPage();
-                }}
-                placeholder={language === 'ar' ? 'إلى تاريخ' : 'To Date'}
-              />
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === 'ar' ? 'الحالة' : 'Status'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'جميع الحالات' : 'All Statuses'}</SelectItem>
+                    <SelectItem value="draft">{language === 'ar' ? 'مسودة' : 'Draft'}</SelectItem>
+                    <SelectItem value="sent">{language === 'ar' ? 'مرسل' : 'Sent'}</SelectItem>
+                    <SelectItem value="viewed">{language === 'ar' ? 'تمت المشاهدة' : 'Viewed'}</SelectItem>
+                    <SelectItem value="accepted">{language === 'ar' ? 'مقبول' : 'Accepted'}</SelectItem>
+                    <SelectItem value="rejected">{language === 'ar' ? 'مرفوض' : 'Rejected'}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -366,13 +486,13 @@ export default function AdminDocumentListPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold">
-                      {documentType === 'all' 
-                        ? documents.length 
-                        : documents.filter(d => d.documentType === documentType).length
-                      }
+                      {documents.length}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {language === 'ar' ? 'المستندات المفلترة' : 'Filtered Documents'}
+                      {activeFiltersCount > 0 && (
+                        <span className="ms-1">({activeFiltersCount} {language === 'ar' ? 'فلتر' : 'filters'})</span>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
