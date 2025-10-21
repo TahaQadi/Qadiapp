@@ -51,9 +51,6 @@ import fs from "fs";
 
 import { generateSitemap } from "./sitemap";
 
-// Helper function for logging (replace with your actual logger)
-const log = console.log;
-
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 
 const uploadStorage = multer.diskStorage({

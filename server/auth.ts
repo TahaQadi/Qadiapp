@@ -128,8 +128,6 @@ export function setupAuth(app: Express) {
         // Keep default 24 hour session
         req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
       }
-      
-      console.log(`Session configured: rememberMe=${rememberMe}, maxAge=${req.session.cookie.maxAge}`);
     }
     
     res.status(200).json(req.user);
