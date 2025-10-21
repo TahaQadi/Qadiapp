@@ -535,7 +535,9 @@ export const issueReports = pgTable("issue_reports", {
 export const insertIssueReportSchema = createInsertSchema(issueReports).omit({ 
   id: true, 
   createdAt: true, 
-  status: true 
+  status: true,
+  userId: true,
+  userType: true
 });
 
 // Micro Feedback table
@@ -551,7 +553,8 @@ export const microFeedback = pgTable("micro_feedback", {
 
 export const insertMicroFeedbackSchema = createInsertSchema(microFeedback).omit({ 
   id: true, 
-  createdAt: true 
+  createdAt: true,
+  userId: true
 });
 
 // Types

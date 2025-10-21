@@ -5,12 +5,11 @@ import { requireAuth } from './auth';
 import { orderFeedback, issueReports, microFeedback, orders, clients } from '../shared/schema';
 import { insertOrderFeedbackSchema, insertIssueReportSchema, insertMicroFeedbackSchema } from '../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import type { AuthenticatedHandler } from './types';
 
 const router = Router();
 
 // Submit order feedback
-router.post('/feedback/order', requireAuth, async (req, res) => {
+router.post('/feedback/order', requireAuth, async (req: any, res) => {
   try {
     const bodyData = insertOrderFeedbackSchema.parse(req.body);
     
@@ -69,7 +68,7 @@ router.post('/feedback/order', requireAuth, async (req, res) => {
 });
 
 // Get feedback for an order (client can check their own, admin can check all)
-router.get('/feedback/order/:orderId', requireAuth, async (req, res) => {
+router.get('/feedback/order/:orderId', requireAuth, async (req: any, res) => {
   try {
     const { orderId } = req.params;
 
@@ -100,7 +99,7 @@ router.get('/feedback/order/:orderId', requireAuth, async (req, res) => {
 });
 
 // Submit issue report
-router.post('/feedback/issue', requireAuth, async (req, res) => {
+router.post('/feedback/issue', requireAuth, async (req: any, res) => {
   try {
     const data = insertIssueReportSchema.parse(req.body);
     
@@ -131,7 +130,7 @@ router.post('/feedback/issue', requireAuth, async (req, res) => {
 });
 
 // Submit micro feedback
-router.post('/feedback/micro', requireAuth, async (req, res) => {
+router.post('/feedback/micro', requireAuth, async (req: any, res) => {
   try {
     const data = insertMicroFeedbackSchema.parse(req.body);
     
@@ -154,7 +153,7 @@ router.post('/feedback/micro', requireAuth, async (req, res) => {
 });
 
 // Get all feedback (admin only)
-router.get('/feedback/all', requireAuth, async (req, res) => {
+router.get('/feedback/all', requireAuth, async (req: any, res) => {
   try {
     if (!req.client!.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
