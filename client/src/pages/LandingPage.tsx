@@ -174,7 +174,7 @@ export default function LandingPage() {
               variant="outline"
               size="sm"
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className="border-2 border-[#d4af37]/50 bg-black/50 text-[#d4af37] hover:bg-[#d4af37]/10 hover:border-[#d4af37] hover:text-[#f9c800] backdrop-blur-sm transition-all duration-300 text-xs sm:text-sm font-semibold"
+              className="border-2 border-primary/50 bg-black/50 text-primary hover:bg-primary/10 hover:border-primary hover:text-primary backdrop-blur-sm transition-all duration-300 text-sm font-sans font-semibold"
             >
               {language === 'en' ? 'العربية' : 'English'}
             </Button>
