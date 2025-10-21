@@ -332,7 +332,7 @@ SESSION_SECRET=...      # Session encryption
 ### Support
 - **Issues**: Report in project tracker
 - **Questions**: Team development channel
-- **Feedback**: workflows@yourcompany.com
+- **Feedback**: Contact project lead
 
 ---
 
