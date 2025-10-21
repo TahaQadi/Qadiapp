@@ -42,7 +42,7 @@ interface Template {
 
 export default function AdminDocumentListPage() {
   const { toast } = useToast();
-  const { i18n } = useLanguage();
+  const { language } = useLanguage();
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -136,29 +136,29 @@ export default function AdminDocumentListPage() {
     return count;
   }, [searchQuery, selectedType, selectedClient, selectedTemplate, dateFrom, dateTo]);
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (doc: Document) => {
     try {
-      const response = await fetch(document.fileUrl);
+      const response = await fetch(doc.fileUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = url;
-      a.download = document.fileName;
-      document.body.appendChild(a);
+      a.download = doc.fileName;
+      window.document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
 
       toast({
-        title: i18n.language === 'ar' ? 'تم التنزيل' : 'Downloaded',
-        description: i18n.language === 'ar' 
+        title: language === 'ar' ? 'تم التنزيل' : 'Downloaded',
+        description: language === 'ar' 
           ? 'تم تنزيل المستند بنجاح' 
           : 'Document downloaded successfully',
       });
     } catch (error) {
       toast({
-        title: i18n.language === 'ar' ? 'خطأ' : 'Error',
-        description: i18n.language === 'ar' 
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' 
           ? 'فشل تنزيل المستند' 
           : 'Failed to download document',
         variant: 'destructive',
@@ -174,7 +174,7 @@ export default function AdminDocumentListPage() {
       contract: { en: 'Contract', ar: 'عقد' },
       lta_document: { en: 'LTA Document', ar: 'وثيقة اتفاقية' },
     };
-    return i18n.language === 'ar' ? labels[type]?.ar : labels[type]?.en;
+    return language === 'ar' ? labels[type]?.ar : labels[type]?.en;
   };
 
   const getDocumentTypeColor = (type: string) => {
@@ -204,7 +204,7 @@ export default function AdminDocumentListPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">
-            {i18n.language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
           </p>
         </div>
       </div>
@@ -217,10 +217,10 @@ export default function AdminDocumentListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
-            {i18n.language === 'ar' ? 'المستندات المُنشأة' : 'Generated Documents'}
+            {language === 'ar' ? 'المستندات المُنشأة' : 'Generated Documents'}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {i18n.language === 'ar' 
+            {language === 'ar' 
               ? `${filteredDocuments.length} من ${documents.length} مستند` 
               : `${filteredDocuments.length} of ${documents.length} documents`}
           </p>
@@ -231,7 +231,7 @@ export default function AdminDocumentListPage() {
           className="gap-2"
         >
           <Filter className="h-4 w-4" />
-          {i18n.language === 'ar' ? 'الفلاتر' : 'Filters'}
+          {language === 'ar' ? 'الفلاتر' : 'Filters'}
           {activeFiltersCount > 0 && (
             <Badge variant="secondary" className="ml-1">
               {activeFiltersCount}
@@ -246,12 +246,12 @@ export default function AdminDocumentListPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
-                {i18n.language === 'ar' ? 'تصفية المستندات' : 'Filter Documents'}
+                {language === 'ar' ? 'تصفية المستندات' : 'Filter Documents'}
               </CardTitle>
               {activeFiltersCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
                   <X className="h-4 w-4" />
-                  {i18n.language === 'ar' ? 'مسح الكل' : 'Clear All'}
+                  {language === 'ar' ? 'مسح الكل' : 'Clear All'}
                 </Button>
               )}
             </div>
@@ -261,10 +261,10 @@ export default function AdminDocumentListPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Search className="h-4 w-4" />
-                {i18n.language === 'ar' ? 'البحث' : 'Search'}
+                {language === 'ar' ? 'البحث' : 'Search'}
               </Label>
               <Input
-                placeholder={i18n.language === 'ar' ? 'اسم الملف أو العميل...' : 'Filename or client...'}
+                placeholder={language === 'ar' ? 'اسم الملف أو العميل...' : 'Filename or client...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -274,7 +274,7 @@ export default function AdminDocumentListPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                {i18n.language === 'ar' ? 'نوع المستند' : 'Document Type'}
+                {language === 'ar' ? 'نوع المستند' : 'Document Type'}
               </Label>
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger>
@@ -282,7 +282,7 @@ export default function AdminDocumentListPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    {i18n.language === 'ar' ? 'جميع الأنواع' : 'All Types'}
+                    {language === 'ar' ? 'جميع الأنواع' : 'All Types'}
                   </SelectItem>
                   <SelectItem value="price_offer">{getDocumentTypeLabel('price_offer')}</SelectItem>
                   <SelectItem value="order">{getDocumentTypeLabel('order')}</SelectItem>
@@ -297,7 +297,7 @@ export default function AdminDocumentListPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                {i18n.language === 'ar' ? 'العميل' : 'Client'}
+                {language === 'ar' ? 'العميل' : 'Client'}
               </Label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
                 <SelectTrigger>
@@ -305,7 +305,7 @@ export default function AdminDocumentListPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    {i18n.language === 'ar' ? 'جميع العملاء' : 'All Clients'}
+                    {language === 'ar' ? 'جميع العملاء' : 'All Clients'}
                   </SelectItem>
                   {uniqueClients.map(client => (
                     <SelectItem key={client.id} value={client.id}>
@@ -320,7 +320,7 @@ export default function AdminDocumentListPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <FileCode className="h-4 w-4" />
-                {i18n.language === 'ar' ? 'القالب' : 'Template'}
+                {language === 'ar' ? 'القالب' : 'Template'}
               </Label>
               <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                 <SelectTrigger>
@@ -328,11 +328,11 @@ export default function AdminDocumentListPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    {i18n.language === 'ar' ? 'جميع القوالب' : 'All Templates'}
+                    {language === 'ar' ? 'جميع القوالب' : 'All Templates'}
                   </SelectItem>
                   {templates.map(template => (
                     <SelectItem key={template.id} value={template.id}>
-                      {i18n.language === 'ar' ? template.nameAr : template.name}
+                      {language === 'ar' ? template.nameAr : template.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -343,7 +343,7 @@ export default function AdminDocumentListPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4" />
-                {i18n.language === 'ar' ? 'من تاريخ' : 'From Date'}
+                {language === 'ar' ? 'من تاريخ' : 'From Date'}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -356,7 +356,7 @@ export default function AdminDocumentListPage() {
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {dateFrom ? format(dateFrom, 'PPP') : (
-                      <span>{i18n.language === 'ar' ? 'اختر التاريخ' : 'Pick a date'}</span>
+                      <span>{language === 'ar' ? 'اختر التاريخ' : 'Pick a date'}</span>
                     )}
                   </Button>
                 </PopoverTrigger>
@@ -375,7 +375,7 @@ export default function AdminDocumentListPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4" />
-                {i18n.language === 'ar' ? 'إلى تاريخ' : 'To Date'}
+                {language === 'ar' ? 'إلى تاريخ' : 'To Date'}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -388,7 +388,7 @@ export default function AdminDocumentListPage() {
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {dateTo ? format(dateTo, 'PPP') : (
-                      <span>{i18n.language === 'ar' ? 'اختر التاريخ' : 'Pick a date'}</span>
+                      <span>{language === 'ar' ? 'اختر التاريخ' : 'Pick a date'}</span>
                     )}
                   </Button>
                 </PopoverTrigger>
@@ -412,12 +412,12 @@ export default function AdminDocumentListPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-lg font-medium">
-              {i18n.language === 'ar' ? 'لا توجد مستندات' : 'No documents found'}
+              {language === 'ar' ? 'لا توجد مستندات' : 'No documents found'}
             </p>
             <p className="text-muted-foreground mt-1">
               {activeFiltersCount > 0
-                ? (i18n.language === 'ar' ? 'جرب تعديل الفلاتر' : 'Try adjusting your filters')
-                : (i18n.language === 'ar' ? 'لم يتم إنشاء أي مستندات بعد' : 'No documents have been generated yet')}
+                ? (language === 'ar' ? 'جرب تعديل الفلاتر' : 'Try adjusting your filters')
+                : (language === 'ar' ? 'لم يتم إنشاء أي مستندات بعد' : 'No documents have been generated yet')}
             </p>
           </CardContent>
         </Card>
@@ -457,7 +457,7 @@ export default function AdminDocumentListPage() {
                   )}
                   <div className="flex items-center justify-between text-muted-foreground">
                     <span>{formatFileSize(document.fileSize)}</span>
-                    <span>{document.viewCount} {i18n.language === 'ar' ? 'مشاهدة' : 'views'}</span>
+                    <span>{document.viewCount} {language === 'ar' ? 'مشاهدة' : 'views'}</span>
                   </div>
                 </div>
 
@@ -467,7 +467,7 @@ export default function AdminDocumentListPage() {
                   className="w-full gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  {i18n.language === 'ar' ? 'تنزيل' : 'Download'}
+                  {language === 'ar' ? 'تنزيل' : 'Download'}
                 </Button>
               </CardContent>
             </Card>
