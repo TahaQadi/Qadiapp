@@ -156,17 +156,17 @@ export default function AdminOrdersPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string; labelAr: string }> = {
-      pending: { variant: 'secondary', label: 'Pending', labelAr: 'قيد الانتظار' },
-      confirmed: { variant: 'default', label: 'Confirmed', labelAr: 'مؤكد' },
-      shipped: { variant: 'default', label: 'Shipped', labelAr: 'تم الشحن' },
-      delivered: { variant: 'default', label: 'Delivered', labelAr: 'تم التسليم' },
-      cancelled: { variant: 'destructive', label: 'Cancelled', labelAr: 'ملغي' },
+    const statusConfig: Record<string, { className: string; label: string; labelAr: string }> = {
+      pending: { className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800', label: 'Pending', labelAr: 'قيد الانتظار' },
+      confirmed: { className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-300 dark:border-blue-800', label: 'Confirmed', labelAr: 'مؤكد' },
+      shipped: { className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-300 dark:border-purple-800', label: 'Shipped', labelAr: 'تم الشحن' },
+      delivered: { className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-800', label: 'Delivered', labelAr: 'تم التسليم' },
+      cancelled: { className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-300 dark:border-red-800', label: 'Cancelled', labelAr: 'ملغي' },
     };
 
-    const config = statusConfig[status] || { variant: 'outline' as const, label: status, labelAr: status };
+    const config = statusConfig[status] || { className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-300 dark:border-gray-800', label: status, labelAr: status };
     return (
-      <Badge variant={config.variant} data-testid={`badge-status-${status}`}>
+      <Badge variant="outline" className={config.className} data-testid={`badge-status-${status}`}>
         {language === 'ar' ? config.labelAr : config.label}
       </Badge>
     );
