@@ -1448,9 +1448,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { daysToKeep } = req.query;
       const days = daysToKeep ? parseInt(daysToKeep as string) : 30;
-      
+
       const deleted = await errorLogger.clearOldLogs(days);
-      
+
       errorLogger.logInfo('Error logs cleared', {
         route: '/api/admin/error-logs/clear',
         userId: req.client.id,
@@ -2201,13 +2201,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
-      
+
       errorLogger.logError(error as Error, {
         route: '/api/client/orders',
         userId: req.client?.id,
         requestBody: req.body
       });
-      
+
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إنشاء الطلب",

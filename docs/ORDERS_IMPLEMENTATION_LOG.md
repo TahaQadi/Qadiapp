@@ -271,6 +271,41 @@ Each entry includes:
 
 ---
 
+### 2025-01-20
+
+**Phase**: Phase 2: Enhanced Order Management Features
+**Task**: 2.1 Order Cancellation Feature ✅
+**Status:** Completed
+**Date:** 2025-01-20
+
+**Implementation:**
+- Added cancellation form in OrderDetailsDialog
+- Implemented cancellation reason requirement
+- Added backend validation for cancellation eligibility
+- Created cancellation tracking (cancelledAt, cancelledBy, cancellationReason)
+- Added admin notifications for cancelled orders
+- Prevented cancellation of delivered orders
+- Added error logging for cancellation operations
+
+**Files Modified:**
+- `client/src/components/OrderDetailsDialog.tsx` - Added cancellation UI
+- `server/routes.ts` - Added POST /api/orders/:id/cancel endpoint
+
+**Features:**
+- ✅ Cancel button appears for eligible orders (not cancelled/delivered)
+- ✅ Required cancellation reason with textarea
+- ✅ Permission checks (client can only cancel own orders)
+- ✅ Status validation before cancellation
+- ✅ Audit trail with timestamp and user
+- ✅ Admin notifications
+- ✅ Bilingual support (EN/AR)
+
+## Next Steps
+
+Continue with Phase 2.2: Order Status Tracking & Timeline
+
+---
+
 ### Template for Future Entries
 
 ```markdown
@@ -326,8 +361,8 @@ Each entry includes:
 - [x] 1.5 Error Logging System
 
 ### Phase 2: High-Priority Features ⏳
-- [ ] 2.1 Order Timeline/Tracking View
-- [ ] 2.2 Reorder Functionality
+- [x] 2.1 Order Cancellation Feature
+- [ ] 2.2 Order Timeline/Tracking View
 - [ ] 2.3 Advanced Filtering & Search
 - [ ] 2.4 Bulk Operations (Admin)
 - [ ] 2.5 Order Export (Excel/CSV)

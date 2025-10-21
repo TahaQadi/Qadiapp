@@ -1,17 +1,24 @@
-
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { safeJsonParse } from '@/lib/safeJson';
 import { formatDateLocalized } from '@/lib/dateUtils';
-import { Package, Calendar, CreditCard, FileText, TrendingUp } from 'lucide-react';
+import { Package, Calendar, CreditCard, FileText, TrendingUp, XCircle, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useState } from 'react';
 
 interface OrderItem {
   productId: string;
@@ -29,7 +36,7 @@ interface OrderDetailsDialogProps {
     id: string;
     items: string;
     totalAmount: string;
-    status: 'pending' | 'confirmed' | 'shipped' | 'delivered';
+    status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
     createdAt: Date;
     currency: string;
     pipefyCardId?: string;
@@ -39,6 +46,54 @@ interface OrderDetailsDialogProps {
 export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDialogProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+
+  const cancelMutation = useMutation({
+    mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
+      const res = await apiRequest("POST", `/api/orders/${orderId}/cancel`, { reason });
+      if (!res.ok) throw new Error("Failed to cancel order");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === "ar" ? "تم إلغاء الطلب" : "Order Cancelled",
+        description: language === "ar"
+          ? "تم إلغاء طلبك بنجاح"
+          : "Your order has been cancelled successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setShowCancelForm(false);
+      setCancellationReason("");
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar"
+          ? "فشل إلغاء الطلب"
+          : "Failed to cancel order",
+      });
+    },
+  });
+
+  const handleCancelOrder = () => {
+    if (!order || !cancellationReason.trim()) {
+      toast({
+        variant: "destructive",
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar"
+          ? "يرجى إدخال سبب الإلغاء"
+          : "Please enter a cancellation reason",
+      });
+      return;
+    }
+    cancelMutation.mutate({ orderId: order.id, reason: cancellationReason });
+  };
+
 
   if (!order) return null;
 
@@ -49,6 +104,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
     confirmed: { variant: 'default' as const, color: 'text-blue-600 dark:text-blue-400' },
     shipped: { variant: 'default' as const, color: 'text-purple-600 dark:text-purple-400' },
     delivered: { variant: 'default' as const, color: 'text-green-600 dark:text-green-400' },
+    cancelled: { variant: 'destructive' as const, color: 'text-red-600 dark:text-red-400' },
   };
 
 
@@ -162,7 +218,74 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
+
+      {!showCancelForm && order.status !== "cancelled" && order.status !== "delivered" && (
+        <DialogFooter className="mt-6">
+          <Button
+            variant="destructive"
+            onClick={() => setShowCancelForm(true)}
+            className="gap-2"
+          >
+            <XCircle className="h-4 w-4" />
+            {language === "ar" ? "إلغاء الطلب" : "Cancel Order"}
+          </Button>
+        </DialogFooter>
+      )}
+
+      {showCancelForm && (
+        <div className="mt-6 space-y-4 border-t pt-4">
+          <div className="flex items-center gap-2 text-amber-600">
+            <AlertTriangle className="h-5 w-5" />
+            <h3 className="font-semibold">
+              {language === "ar" ? "إلغاء الطلب" : "Cancel Order"}
+            </h3>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cancellation-reason">
+              {language === "ar" ? "سبب الإلغاء" : "Cancellation Reason"}
+            </Label>
+            <Textarea
+              id="cancellation-reason"
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              placeholder={language === "ar"
+                ? "يرجى إدخال سبب إلغاء هذا الطلب..."
+                : "Please enter the reason for cancelling this order..."}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelForm(false);
+                setCancellationReason("");
+              }}
+            >
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelOrder}
+              disabled={!cancellationReason.trim() || cancelMutation.isPending}
+              className="gap-2"
+            >
+              {cancelMutation.isPending ? (
+                language === "ar" ? "جاري الإلغاء..." : "Cancelling..."
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4" />
+                  {language === "ar" ? "تأكيد الإلغاء" : "Confirm Cancellation"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </div>
+      )}
+    </DialogContent>
+  </Dialog>
+);
 }
