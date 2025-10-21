@@ -1,0 +1,195 @@
+
+{
+  "nameEn": "Arabic Invoice",
+  "nameAr": "فاتورة ضريبية",
+  "descriptionEn": "Professional Arabic tax invoice template",
+  "descriptionAr": "قالب فاتورة ضريبية احترافية باللغة العربية",
+  "category": "invoice",
+  "language": "ar",
+  "sections": [
+    {
+      "type": "header",
+      "order": 0,
+      "content": {
+        "showLogo": true,
+        "titleAr": "فاتورة ضريبية",
+        "subtitleAr": "Tax Invoice",
+        "companyInfoAr": {
+          "name": "شركة القاضي التجارية",
+          "address": "الرياض، المملكة العربية السعودية",
+          "phone": "هاتف: {{companyPhone}}",
+          "email": "{{companyEmail}}",
+          "taxNumber": "الرقم الضريبي: {{taxNumber}}",
+          "commercialRegister": "السجل التجاري: {{commercialRegister}}"
+        }
+      }
+    },
+    {
+      "type": "divider",
+      "order": 1,
+      "content": {}
+    },
+    {
+      "type": "body",
+      "order": 2,
+      "content": {
+        "textAr": "رقم الفاتورة: {{invoiceNumber}}\nتاريخ الفاتورة: {{invoiceDate}}\nمرجع الطلب: {{orderReference}}\nتاريخ الاستحقاق: {{dueDate}}"
+      }
+    },
+    {
+      "type": "spacer",
+      "order": 3,
+      "content": {
+        "height": 20
+      }
+    },
+    {
+      "type": "body",
+      "order": 4,
+      "content": {
+        "textAr": "بيانات العميل:\nالاسم: {{clientNameAr}}\nالعنوان: {{clientAddressAr}}\nالرقم الضريبي: {{clientTaxNumber}}"
+      }
+    },
+    {
+      "type": "spacer",
+      "order": 5,
+      "content": {
+        "height": 25
+      }
+    },
+    {
+      "type": "table",
+      "order": 6,
+      "content": {
+        "columnsAr": ["م", "رمز الصنف", "الوصف", "الكمية", "سعر الوحدة", "الإجمالي (قبل الضريبة)", "الضريبة 15%", "الإجمالي"],
+        "rows": "{{items}}",
+        "showBorders": true,
+        "headerColor": "#1a365d",
+        "alternateRows": true
+      }
+    },
+    {
+      "type": "spacer",
+      "order": 7,
+      "content": {
+        "height": 20
+      }
+    },
+    {
+      "type": "body",
+      "order": 8,
+      "content": {
+        "textAr": "المجموع الفرعي (قبل الضريبة): {{subtotal}} ريال سعودي\nضريبة القيمة المضافة (15%): {{vatAmount}} ريال سعودي\nالمبلغ الإجمالي المستحق: {{totalAmount}} ريال سعودي"
+      }
+    },
+    {
+      "type": "spacer",
+      "order": 9,
+      "content": {
+        "height": 25
+      }
+    },
+    {
+      "type": "body",
+      "order": 10,
+      "content": {
+        "textAr": "المبلغ بالكتابة: {{amountInWords}}"
+      }
+    },
+    {
+      "type": "spacer",
+      "order": 11,
+      "content": {
+        "height": 30
+      }
+    },
+    {
+      "type": "terms",
+      "order": 12,
+      "content": {
+        "titleAr": "شروط الدفع",
+        "itemsAr": [
+          "يرجى سداد المبلغ المستحق خلال {{paymentDays}} يوماً من تاريخ الفاتورة",
+          "التحويل البنكي إلى الحساب التالي:",
+          "البنك: {{bankName}}",
+          "رقم الحساب: {{accountNumber}}",
+          "رقم الآيبان: {{ibanNumber}}",
+          "يرجى كتابة رقم الفاتورة في مرجع التحويل",
+          "التأخر في السداد قد يترتب عليه رسوم إضافية"
+        ]
+      }
+    },
+    {
+      "type": "spacer",
+      "order": 13,
+      "content": {
+        "height": 30
+      }
+    },
+    {
+      "type": "signature",
+      "order": 14,
+      "content": {
+        "signatories": [
+          {
+            "nameAr": "المدير المالي",
+            "titleAr": "شركة القاضي التجارية",
+            "showStamp": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "footer",
+      "order": 15,
+      "content": {
+        "textAr": "هذه فاتورة ضريبية صادرة إلكترونياً ولا تحتاج إلى توقيع",
+        "pageNumbers": true,
+        "pageNumberFormatAr": "صفحة {{page}} من {{total}}",
+        "qrCode": true
+      }
+    }
+  ],
+  "variables": [
+    "companyPhone",
+    "companyEmail",
+    "taxNumber",
+    "commercialRegister",
+    "invoiceNumber",
+    "invoiceDate",
+    "orderReference",
+    "dueDate",
+    "clientNameAr",
+    "clientAddressAr",
+    "clientTaxNumber",
+    "items",
+    "subtotal",
+    "vatAmount",
+    "totalAmount",
+    "amountInWords",
+    "paymentDays",
+    "bankName",
+    "accountNumber",
+    "ibanNumber"
+  ],
+  "styles": {
+    "primaryColor": "#1a365d",
+    "secondaryColor": "#2d3748",
+    "accentColor": "#d4af37",
+    "fontSize": 10,
+    "fontFamily": "Noto Sans Arabic",
+    "headerHeight": 150,
+    "footerHeight": 90,
+    "margins": {
+      "top": 170,
+      "bottom": 110,
+      "left": 50,
+      "right": 50
+    },
+    "rtl": true,
+    "alignment": "right"
+  },
+  "isActive": true,
+  "version": 1,
+  "tags": ["arabic", "invoice", "tax_invoice", "vat", "professional"]
+}
