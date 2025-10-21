@@ -1,17 +1,12 @@
 
-import { db } from '../db';
-import { errorLogs } from '../../shared/schema';
-import { desc } from 'drizzle-orm';
+import { errorLogger } from '../error-logger';
 
 async function viewErrorLogs() {
   try {
     console.log('📋 Fetching recent error logs from database...\n');
     
-    const logs = await db
-      .select()
-      .from(errorLogs)
-      .orderBy(desc(errorLogs.timestamp))
-      .limit(50);
+    const logs = await errorLogger.getRecentErrors(50);
+    const stats = await errorLogger.getErrorStats();
 
     if (logs.length === 0) {
       console.log('✅ No errors found! Your application is running smoothly.\n');
@@ -23,7 +18,7 @@ async function viewErrorLogs() {
 
     logs.forEach((log, index) => {
       const timestamp = new Date(log.timestamp).toLocaleString();
-      const severity = log.severity.toUpperCase();
+      const severity = log.level.toUpperCase();
       const severityEmoji = severity === 'ERROR' ? '🔴' : severity === 'WARNING' ? '🟡' : '🔵';
       
       console.log(`\n${severityEmoji} Error #${index + 1} [${severity}]`);
@@ -38,28 +33,24 @@ async function viewErrorLogs() {
         console.log(`🔍 Context: ${JSON.stringify(log.context, null, 2)}`);
       }
       
-      if (log.userId) {
-        console.log(`👤 User ID: ${log.userId}`);
-      }
-      
       console.log('─'.repeat(80));
     });
 
     console.log(`\n📊 Summary:`);
-    console.log(`   Total errors: ${logs.length}`);
+    console.log(`   Total errors: ${stats.total}`);
     
-    const errorCount = logs.filter(l => l.severity === 'error').length;
-    const warningCount = logs.filter(l => l.severity === 'warning').length;
-    const infoCount = logs.filter(l => l.severity === 'info').length;
-    
-    if (errorCount > 0) console.log(`   🔴 Errors: ${errorCount}`);
-    if (warningCount > 0) console.log(`   🟡 Warnings: ${warningCount}`);
-    if (infoCount > 0) console.log(`   🔵 Info: ${infoCount}`);
+    if (stats.byLevel.error > 0) console.log(`   🔴 Errors: ${stats.byLevel.error}`);
+    if (stats.byLevel.warning > 0) console.log(`   🟡 Warnings: ${stats.byLevel.warning}`);
+    if (stats.byLevel.info > 0) console.log(`   🔵 Info: ${stats.byLevel.info}`);
+    console.log(`   📅 Last 24h: ${stats.recentCount24h}`);
     
     console.log('\n💡 Tip: Review recent errors to identify patterns and fix issues.\n');
     
+    process.exit(0);
   } catch (error) {
     console.error('❌ Failed to fetch error logs:', error);
+    console.error('\n💡 Make sure your DATABASE_URL is set and the error_logs table exists.');
+    console.error('   Run "DB - Migrate" workflow first if needed.\n');
     process.exit(1);
   }
 }
