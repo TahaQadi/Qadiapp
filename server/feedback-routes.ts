@@ -10,12 +10,16 @@ const router = Router();
 // Submit order feedback
 router.post('/feedback/order', requireAuth, async (req, res) => {
   try {
-    const data = insertOrderFeedbackSchema.parse(req.body);
+    // Parse without clientId - we'll get it from req.user
+    const bodyData = insertOrderFeedbackSchema.omit({ clientId: true }).parse(req.body);
+    
+    // Get the company ID from the authenticated user
+    const clientId = req.user!.companyId || req.user!.id;
     
     // Verify order belongs to user and is delivered
     const order = await db.prepare(
       'SELECT * FROM orders WHERE id = ? AND client_id = ? AND status = ?'
-    ).get(data.orderId, req.user!.id, 'delivered');
+    ).get(bodyData.orderId, clientId, 'delivered');
 
     if (!order) {
       return res.status(403).json({ error: 'Order not found or not eligible for feedback' });
@@ -24,7 +28,7 @@ router.post('/feedback/order', requireAuth, async (req, res) => {
     // Check if feedback already exists
     const existing = await db.prepare(
       'SELECT id FROM order_feedback WHERE order_id = ?'
-    ).get(data.orderId);
+    ).get(bodyData.orderId);
 
     if (existing) {
       return res.status(400).json({ error: 'Feedback already submitted for this order' });
@@ -39,15 +43,15 @@ router.post('/feedback/order', requireAuth, async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
-      data.orderId,
-      req.user!.id,
-      data.rating,
-      data.orderingProcessRating || null,
-      data.productQualityRating || null,
-      data.deliverySpeedRating || null,
-      data.communicationRating || null,
-      data.comments || null,
-      data.wouldRecommend ? 1 : 0
+      bodyData.orderId,
+      clientId,
+      bodyData.rating,
+      bodyData.orderingProcessRating || null,
+      bodyData.productQualityRating || null,
+      bodyData.deliverySpeedRating || null,
+      bodyData.communicationRating || null,
+      bodyData.comments || null,
+      bodyData.wouldRecommend ? 1 : 0
     );
 
     res.json({ success: true, id });
