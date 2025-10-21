@@ -1427,24 +1427,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req: any, res) => {
+  // Update order status (admin only)
+  app.patch('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
     try {
+      const { id } = req.params;
       const { status } = req.body;
-      const order = await storage.updateOrderStatus(req.params.id, status);
 
-      if (!order) {
-        return res.status(404).json({
-          message: "Order not found",
-          messageAr: "الطلب غير موجود"
-        });
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
       }
 
-      res.json(order);
-    } catch (error) {
-      res.status(500).json({
-        message: "Error updating order status",
-        messageAr: "خطأ في تحديث حالة الطلب"
-      });
+      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+
+      // Get the order to retrieve client ID and previous status
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      const previousStatus = order.status;
+
+      // Update order status
+      await storage.updateOrderStatus(id, status);
+
+      // Create notification for the client
+      const statusMessages: Record<string, { titleEn: string; titleAr: string; messageEn: string; messageAr: string }> = {
+        confirmed: {
+          titleEn: 'Order Confirmed',
+          titleAr: 'تم تأكيد الطلب',
+          messageEn: `Your order #${id.substring(0, 8)} has been confirmed and is being processed`,
+          messageAr: `تم تأكيد طلبك #${id.substring(0, 8)} وجاري معالجته`
+        },
+        processing: {
+          titleEn: 'Order Processing',
+          titleAr: 'جاري معالجة الطلب',
+          messageEn: `Your order #${id.substring(0, 8)} is now being processed`,
+          messageAr: `طلبك #${id.substring(0, 8)} قيد المعالجة الآن`
+        },
+        shipped: {
+          titleEn: 'Order Shipped',
+          titleAr: 'تم شحن الطلب',
+          messageEn: `Your order #${id.substring(0, 8)} has been shipped and is on its way`,
+          messageAr: `تم شحن طلبك #${id.substring(0, 8)} وهو في الطريق إليك`
+        },
+        delivered: {
+          titleEn: 'Order Delivered',
+          titleAr: 'تم تسليم الطلب',
+          messageEn: `Your order #${id.substring(0, 8)} has been delivered successfully`,
+          messageAr: `تم تسليم طلبك #${id.substring(0, 8)} بنجاح`
+        },
+        cancelled: {
+          titleEn: 'Order Cancelled',
+          titleAr: 'تم إلغاء الطلب',
+          messageEn: `Your order #${id.substring(0, 8)} has been cancelled`,
+          messageAr: `تم إلغاء طلبك #${id.substring(0, 8)}`
+        },
+        pending: {
+          titleEn: 'Order Status Updated',
+          titleAr: 'تم تحديث حالة الطلب',
+          messageEn: `Your order #${id.substring(0, 8)} status has been updated to pending`,
+          messageAr: `تم تحديث حالة طلبك #${id.substring(0, 8)} إلى قيد الانتظار`
+        }
+      };
+
+      const notificationData = statusMessages[status];
+
+      if (notificationData) {
+        await storage.createNotification({
+          clientId: order.clientId,
+          type: 'order_status_changed',
+          titleEn: notificationData.titleEn,
+          titleAr: notificationData.titleAr,
+          messageEn: notificationData.messageEn,
+          messageAr: notificationData.messageAr,
+          metadata: JSON.stringify({
+            orderId: id,
+            status,
+            previousStatus,
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        // Send push notification if user has subscriptions
+        const subscriptions = await storage.getPushSubscriptions(order.clientId);
+        if (subscriptions && subscriptions.length > 0) {
+          const webpush = await import('web-push');
+          const payload = JSON.stringify({
+            title: notificationData.titleEn,
+            body: notificationData.messageEn,
+            url: '/orders',
+            tag: `order-${id}`,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            data: { orderId: id, status }
+          });
+
+          // Send to all subscriptions
+          await Promise.allSettled(
+            subscriptions.map(async (sub: any) => {
+              try {
+                await webpush.sendNotification({
+                  endpoint: sub.endpoint,
+                  keys: sub.keys
+                }, payload);
+              } catch (error: any) {
+                // If subscription is invalid or expired, remove it
+                if (error.statusCode === 410 || error.statusCode === 404) {
+                  await storage.deletePushSubscription(sub.endpoint);
+                }
+              }
+            })
+          );
+        }
+      }
+
+      res.json({ message: 'Order status updated successfully' });
+    } catch (error: any) {
+      console.error('Error updating order status:', error);
+      res.status(500).json({ message: error.message || 'Failed to update order status' });
     }
   });
 

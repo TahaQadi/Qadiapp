@@ -289,6 +289,36 @@ router.post('/admin/order-modifications/:modificationId/review', isAuthenticated
       metadata: JSON.stringify({ orderId: modification.orderId, modificationId })
     });
 
+    // Send push notification
+    const subscriptions = await storage.getPushSubscriptions(modification.requestedBy);
+    if (subscriptions && subscriptions.length > 0) {
+      const webpush = await import('web-push');
+      const payload = JSON.stringify({
+        title: status === 'approved' ? 'Modification Approved' : 'Modification Rejected',
+        body: `Your modification request for order #${modification.orderId.substring(0, 8)} has been ${status}`,
+        url: '/orders',
+        tag: `modification-${modificationId}`,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        data: { orderId: modification.orderId, modificationId, status }
+      });
+
+      await Promise.allSettled(
+        subscriptions.map(async (sub: any) => {
+          try {
+            await webpush.sendNotification({
+              endpoint: sub.endpoint,
+              keys: sub.keys
+            }, payload);
+          } catch (error: any) {
+            if (error.statusCode === 410 || error.statusCode === 404) {
+              await storage.deletePushSubscription(sub.endpoint);
+            }
+          }
+        })
+      );
+    }
+
     res.json({
       success: true,
       message: `Modification ${status} successfully / تم ${status === 'approved' ? 'الموافقة' : 'الرفض'} على التعديل بنجاح`,
