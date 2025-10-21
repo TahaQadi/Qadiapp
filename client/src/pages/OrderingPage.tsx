@@ -8,6 +8,7 @@ import { SaveTemplateDialog } from '@/components/SaveTemplateDialog';
 import { OrderTemplateCard } from '@/components/OrderTemplateCard';
 import { OrderHistoryTable } from '@/components/OrderHistoryTable';
 import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
+import { OrderConfirmationDialog } from '@/components/OrderConfirmationDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
@@ -98,6 +99,7 @@ export default function OrderingPage() {
   const [quickViewProduct, setQuickViewProduct] = useState<ProductWithLtaPrice | null>(null);
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
+  const [orderConfirmationOpen, setOrderConfirmationOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
@@ -320,6 +322,12 @@ export default function OrderingPage() {
       return;
     }
 
+    // Show confirmation dialog instead of submitting directly
+    setOrderConfirmationOpen(true);
+    setCartOpen(false);
+  }, [cart, toast, language]);
+
+  const handleConfirmOrder = useCallback(() => {
     const total = cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
     const items = cart.map(item => ({
       productId: item.productId,
@@ -334,7 +342,8 @@ export default function OrderingPage() {
       totalAmount: total.toFixed(2),
       currency: cart[0]?.currency || 'USD',
     });
-  }, [cart, toast, language, submitOrderMutation]);
+    setOrderConfirmationOpen(false);
+  }, [cart, submitOrderMutation]);
 
   const handleSaveTemplate = (nameEn: string, nameAr: string) => {
     const items = cart.map(item => ({
@@ -1499,6 +1508,33 @@ export default function OrderingPage() {
             ...selectedOrder,
             createdAt: new Date(selectedOrder.createdAt)
           } : null}
+        />
+
+        {/* Order Confirmation Dialog */}
+        <OrderConfirmationDialog
+          open={orderConfirmationOpen}
+          onOpenChange={setOrderConfirmationOpen}
+          items={cart.map(item => ({
+            productId: item.productId,
+            nameEn: item.productNameEn,
+            nameAr: item.productNameAr,
+            sku: item.productSku,
+            quantity: item.quantity,
+            price: item.price,
+          }))}
+          totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) * 1.15}
+          currency={cart[0]?.currency || 'USD'}
+          ltaName={clientLtas.find(lta => lta.id === activeLtaId)
+            ? (language === 'ar' 
+              ? clientLtas.find(lta => lta.id === activeLtaId)?.nameAr 
+              : clientLtas.find(lta => lta.id === activeLtaId)?.nameEn)
+            : undefined}
+          onConfirm={handleConfirmOrder}
+          onEdit={() => {
+            setOrderConfirmationOpen(false);
+            setCartOpen(true);
+          }}
+          isSubmitting={submitOrderMutation.isPending}
         />
 
         {/* Price Request Dialog */}
