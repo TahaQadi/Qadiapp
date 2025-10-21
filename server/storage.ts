@@ -886,11 +886,13 @@ export class MemStorage implements IStorage {
   }
 
   async getOrderHistory(orderId: string): Promise<OrderHistory[]> {
-    return await this.db
+    const history = await this.db
       .select()
       .from(orderHistory)
       .where(eq(orderHistory.orderId, orderId))
-      .orderBy(desc(orderHistory.timestamp));
+      .orderBy(orderHistory.changedAt);
+
+    return history.reverse(); // Reverse to get newest first
   }
 
   // LTA Management
