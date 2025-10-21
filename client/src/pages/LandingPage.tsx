@@ -171,10 +171,10 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
           >
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className="text-white hover:text-[#d4af37] transition-colors text-xs sm:text-sm"
+              className="border-2 border-[#d4af37]/50 bg-black/50 text-[#d4af37] hover:bg-[#d4af37]/10 hover:border-[#d4af37] hover:text-[#f9c800] backdrop-blur-sm transition-all duration-300 text-xs sm:text-sm font-semibold"
             >
               {language === 'en' ? 'العربية' : 'English'}
             </Button>
