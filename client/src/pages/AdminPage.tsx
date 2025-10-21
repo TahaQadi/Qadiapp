@@ -113,18 +113,6 @@ export default function AdminPage() {
       gradient: 'from-teal-500/20 to-cyan-500/10',
       hoverGradient: 'from-teal-500/30 to-cyan-500/20',
       testId: 'card-templates'
-    },
-    {
-      id: 'documents',
-      path: '/admin/documents',
-      icon: FileText,
-      titleEn: 'Generated Documents',
-      titleAr: 'المستندات المنشأة',
-      descEn: 'View and manage all generated PDF documents',
-      descAr: 'عرض وإدارة جميع مستندات PDF المنشأة',
-      gradient: 'from-indigo-500/20 to-purple-500/10',
-      hoverGradient: 'from-indigo-500/30 to-purple-500/20',
-      testId: 'card-documents'
     }
   ];
 
