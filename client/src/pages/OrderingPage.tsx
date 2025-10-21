@@ -180,6 +180,7 @@ export default function OrderingPage() {
       setActiveLtaId(null);
       setCartOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/client/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
     },
   });
 
