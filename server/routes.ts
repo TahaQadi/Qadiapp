@@ -7,10 +7,11 @@ import { errorLogger } from "./error-logger";
 import { setupAuth, isAuthenticated } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
 import passwordResetRoutes from "./password-reset-routes";
-import orderModificationRoutes from "./order-modification-routes";
-import pushRoutes from "./push-routes";
-import analyticsRoutes from "./analytics-routes";
-import demoRequestRoutes from "./demo-request-routes";
+import orderModificationRoutes from './order-modification-routes';
+import pushRoutes from './push-routes';
+import analyticsRoutes from './analytics-routes';
+import demoRequestRoutes from './demo-request-routes';
+import feedbackRoutes from './feedback-routes';
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -175,6 +176,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Demo request routes
   app.use('/api', demoRequestRoutes); // Register demo request routes
+
+  // Feedback routes
+  app.use('/api', feedbackRoutes);
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
@@ -1412,7 +1416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply search filter (search in order ID)
       if (search) {
         const searchLower = search.toString().toLowerCase();
-        orders = orders.filter(order => 
+        orders = orders.filter(order =>
           order.id.toLowerCase().includes(searchLower)
         );
       }
