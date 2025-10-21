@@ -22,6 +22,8 @@ import { TemplateEditor } from '@/components/TemplateEditor';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { PaginationControls } from '@/components/PaginationControls';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function AdminTemplatesPage() {
   const { language } = useLanguage();
