@@ -87,6 +87,8 @@ export default function AdminDocumentsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [previewTemplate, setPreviewTemplate] = useState<any>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   // Documents queries
   const { data, isLoading } = useQuery<{ documents: Document[] }>({
@@ -709,6 +711,19 @@ export default function AdminDocumentsPage() {
                             variant="outline"
                             className="flex-1 min-h-[44px]"
                             onClick={() => {
+                              setPreviewTemplate(template);
+                              setPreviewDialogOpen(true);
+                            }}
+                            data-testid={`button-preview-${template.id}`}
+                          >
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{language === 'ar' ? 'معاينة' : 'Preview'}</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 min-h-[44px]"
+                            onClick={() => {
                               setEditingTemplate(template);
                               setCreateDialogOpen(true);
                             }}
@@ -717,6 +732,8 @@ export default function AdminDocumentsPage() {
                             <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
                             <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
                           </Button>
+                        </div>
+                        <div className="flex gap-1 sm:gap-2">
                           <Button
                             size="sm"
                             variant="outline"
@@ -854,6 +871,134 @@ export default function AdminDocumentsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAccessLogsDialogOpen(false)}>
               {language === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'معاينة القالب' : 'Template Preview'}
+            </DialogTitle>
+            <DialogDescription>
+              {previewTemplate && (language === 'ar' ? previewTemplate.nameAr : previewTemplate.nameEn)}
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewTemplate && (
+            <div className="space-y-6">
+              {/* Template Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">
+                    {language === 'ar' ? 'معلومات أساسية' : 'Basic Information'}
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الاسم (EN):' : 'Name (EN):'}</span>
+                      <span className="font-medium">{previewTemplate.nameEn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الاسم (AR):' : 'Name (AR):'}</span>
+                      <span className="font-medium">{previewTemplate.nameAr}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'التصنيف:' : 'Category:'}</span>
+                      <Badge variant="outline">{previewTemplate.category}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'اللغة:' : 'Language:'}</span>
+                      <Badge variant="outline">
+                        {previewTemplate.language === 'both' 
+                          ? (language === 'ar' ? 'ثنائي اللغة' : 'Bilingual')
+                          : previewTemplate.language === 'ar' ? 'عربي' : 'English'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الحالة:' : 'Status:'}</span>
+                      <Badge variant={previewTemplate.isActive ? 'default' : 'secondary'}>
+                        {previewTemplate.isActive
+                          ? (language === 'ar' ? 'نشط' : 'Active')
+                          : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium mb-2">
+                    {language === 'ar' ? 'التفاصيل' : 'Details'}
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الوصف (EN):' : 'Description (EN):'}</span>
+                      <p className="text-sm mt-1">{previewTemplate.descriptionEn}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الوصف (AR):' : 'Description (AR):'}</span>
+                      <p className="text-sm mt-1">{previewTemplate.descriptionAr}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Template Structure */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">
+                  {language === 'ar' ? 'بنية القالب' : 'Template Structure'}
+                </h4>
+                <Card className="bg-muted/50">
+                  <CardContent className="p-4">
+                    <pre className="text-xs overflow-auto max-h-[400px]">
+                      {JSON.stringify(previewTemplate.structure, null, 2)}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Template Styles */}
+              {previewTemplate.styles && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">
+                    {language === 'ar' ? 'التنسيقات' : 'Styles'}
+                  </h4>
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <pre className="text-xs overflow-auto max-h-[200px]">
+                        {JSON.stringify(
+                          typeof previewTemplate.styles === 'string'
+                            ? JSON.parse(previewTemplate.styles)
+                            : previewTemplate.styles,
+                          null,
+                          2
+                        )}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPreviewDialogOpen(false)}
+            >
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button
+              onClick={() => {
+                setPreviewDialogOpen(false);
+                setEditingTemplate(previewTemplate);
+                setCreateDialogOpen(true);
+              }}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {language === 'ar' ? 'تعديل القالب' : 'Edit Template'}
             </Button>
           </DialogFooter>
         </DialogContent>
