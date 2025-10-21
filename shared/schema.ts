@@ -508,7 +508,7 @@ export const insertOrderFeedbackSchema = createInsertSchema(orderFeedback, {
   deliverySpeedRating: z.number().min(1).max(5).optional(),
   communicationRating: z.number().min(1).max(5).optional(),
   wouldRecommend: z.boolean(),
-}).omit({ id: true, createdAt: true });
+}).omit({ id: true, createdAt: true, clientId: true });
 
 // Issue Reports table
 export const issueReports = pgTable("issue_reports", {
