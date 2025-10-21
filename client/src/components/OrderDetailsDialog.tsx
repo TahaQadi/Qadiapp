@@ -15,12 +15,13 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { safeJsonParse } from '@/lib/safeJson';
 import { formatDateLocalized } from '@/lib/dateUtils';
-import { Package, Calendar, CreditCard, FileText, TrendingUp, XCircle, AlertTriangle } from 'lucide-react';
+import { Package, Calendar, CreditCard, FileText, TrendingUp, XCircle, AlertTriangle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
 import { OrderTimeline } from './OrderTimeline';
+import OrderFeedbackDialog from './OrderFeedbackDialog';
 
 interface OrderItem {
   productId: string;
@@ -52,6 +53,13 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
   const queryClient = useQueryClient();
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  // Check if feedback has been submitted for this order
+  const { data: feedbackData } = useQuery({
+    queryKey: [`/api/feedback/order/${order?.id}`],
+    enabled: !!order && order.status === 'delivered',
+  });
 
   // Fetch order history
   const { data: orderHistory = [] } = useQuery({
@@ -316,7 +324,31 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
           </DialogFooter>
         </div>
       )}
-    </DialogContent>
-  </Dialog>
-);
+
+            {/* Feedback Button - Show for delivered orders without feedback */}
+            {order.status === 'delivered' && !feedbackData && (
+              <Button
+                onClick={() => setShowFeedback(true)}
+                className="w-full"
+                variant="outline"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                {language === 'ar' ? 'تقييم الطلب' : 'Rate This Order'}
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+
+        {/* Feedback Dialog */}
+        {order && (
+          <OrderFeedbackDialog
+            orderId={order.id}
+            orderReference={order.id.substring(0, 8)}
+            open={showFeedback}
+            onOpenChange={setShowFeedback}
+          />
+        )}
+      </Dialog>
+    </>
+  );
 }

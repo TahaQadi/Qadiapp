@@ -57,16 +57,25 @@ router.post('/feedback/order', requireAuth, async (req, res) => {
   }
 });
 
-// Get feedback for an order (admin only)
+// Get feedback for an order (client can check their own, admin can check all)
 router.get('/feedback/order/:orderId', requireAuth, async (req, res) => {
   try {
+    const { orderId } = req.params;
+
+    // Verify order belongs to user (unless admin)
     if (req.user!.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
+      const order = await db.prepare(
+        'SELECT client_id FROM orders WHERE id = ?'
+      ).get(orderId);
+
+      if (!order || order.client_id !== req.user!.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
     }
 
     const feedback = await db.prepare(
       'SELECT * FROM order_feedback WHERE order_id = ?'
-    ).get(req.params.orderId);
+    ).get(orderId);
 
     res.json(feedback);
   } catch (error) {
