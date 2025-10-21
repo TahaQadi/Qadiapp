@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogOut, Loader2, CheckCircle2 } from 'lucide-react';
+import { queryClient } from '@/lib/queryClient';
 
 export default function LogoutPage() {
   const { language } = useLanguage();
@@ -24,15 +25,25 @@ export default function LogoutPage() {
 
         setStatus('success');
 
-        // Clear any cached data
+        // Preserve user preferences before clearing storage
+        const theme = localStorage.getItem('theme');
+        const userLanguage = localStorage.getItem('language');
+        
+        // Clear all cached data
         localStorage.clear();
         sessionStorage.clear();
+        
+        // Restore user preferences
+        if (theme) localStorage.setItem('theme', theme);
+        if (userLanguage) localStorage.setItem('language', userLanguage);
+
+        // Clear React Query cache
+        queryClient.clear();
 
         // Redirect to login after showing success message
         await new Promise(resolve => setTimeout(resolve, 1500));
         setLocation('/login');
       } catch (error) {
-        console.error('Logout error:', error);
         // Even on error, redirect to login
         setLocation('/login');
       }
