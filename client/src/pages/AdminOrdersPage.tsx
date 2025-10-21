@@ -462,7 +462,7 @@ export default function AdminOrdersPage() {
   };
 
   // Filter and search orders
-  const filteredOrders = orders.filter((order: Order) => {
+  const filteredOrders = (orders || []).filter((order: Order) => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     const matchesSearch = searchQuery === '' ||
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
