@@ -1392,8 +1392,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Orders Management
   app.get("/api/admin/orders", requireAdmin, async (req: any, res) => {
     try {
-      const orders = await storage.getOrders();
-      res.json(orders);
+      const { page, pageSize, status, search, all } = req.query;
+      
+      // If 'all' parameter is present, return all orders without pagination
+      if (all === 'true') {
+        const orders = await storage.getOrders();
+        res.json({ orders });
+        return;
+      }
+      
+      // Get all orders first
+      let orders = await storage.getOrders();
+      
+      // Apply status filter
+      if (status && status !== 'all') {
+        orders = orders.filter(order => order.status === status);
+      }
+      
+      // Apply search filter (search in order ID)
+      if (search) {
+        const searchLower = search.toString().toLowerCase();
+        orders = orders.filter(order => 
+          order.id.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply pagination
+      const pageNum = parseInt(page as string) || 1;
+      const pageSizeNum = parseInt(pageSize as string) || 10;
+      const startIndex = (pageNum - 1) * pageSizeNum;
+      const endIndex = startIndex + pageSizeNum;
+      const paginatedOrders = orders.slice(startIndex, endIndex);
+      const totalPages = Math.ceil(orders.length / pageSizeNum);
+      
+      res.json({
+        orders: paginatedOrders,
+        totalPages,
+        totalCount: orders.length,
+        currentPage: pageNum
+      });
     } catch (error) {
       res.status(500).json({
         message: "Error fetching orders",
