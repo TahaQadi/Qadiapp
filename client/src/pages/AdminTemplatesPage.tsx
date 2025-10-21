@@ -368,27 +368,29 @@ export default function AdminTemplatesPage() {
           <div className="flex items-center gap-2">
             <LanguageToggle />
             <ThemeToggle />
-            <Button
-              onClick={() => setImportDialogOpen(true)}
-              size={isMobile ? "sm" : "default"}
-              variant="outline"
-              className="shrink-0"
-            >
-              <Upload className="h-4 w-4 sm:mr-2" />
-              {!isMobile && (language === 'ar' ? 'استيراد' : 'Import')}
-            </Button>
-            <Button
-              onClick={() => {
-                setEditingTemplate(null);
-                resetForm();
-                setCreateDialogOpen(true);
-              }}
-              size={isMobile ? "sm" : "default"}
-              className="shrink-0 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
-            >
-              <Plus className="h-4 w-4 sm:mr-2" />
-              {!isMobile && (language === 'ar' ? 'قالب جديد' : 'New Template')}
-            </Button>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                onClick={() => setImportDialogOpen(true)}
+                size={isMobile ? "sm" : "default"}
+                variant="outline"
+                className="shrink-0 border-primary/50 hover:border-primary dark:border-[#d4af37]/50 dark:hover:border-[#d4af37]"
+              >
+                <Upload className="h-4 w-4 sm:mr-2" />
+                {!isMobile && (language === 'ar' ? 'استيراد' : 'Import')}
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingTemplate(null);
+                  resetForm();
+                  setCreateDialogOpen(true);
+                }}
+                size={isMobile ? "sm" : "default"}
+                className="shrink-0 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800]"
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                {!isMobile && (language === 'ar' ? 'قالب جديد' : 'New Template')}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
