@@ -66,6 +66,7 @@ export default function AdminOrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const itemsPerPage = 10;
   const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
+  const [hideDoneAndCancelled, setHideDoneAndCancelled] = useState(false);
   const queryClient = useQueryClient();
 
 
@@ -468,8 +469,11 @@ export default function AdminOrdersPage() {
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(order.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.pipefyCardId?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Hide done (delivered) and cancelled if toggle is on
+    const shouldShow = !hideDoneAndCancelled || (order.status !== 'delivered' && order.status !== 'cancelled');
 
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesSearch && shouldShow;
   });
 
   // Pagination
@@ -659,13 +663,23 @@ export default function AdminOrdersPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="virtual-scroll"
-                    checked={useVirtualScrolling}
-                    onCheckedChange={setUseVirtualScrolling}
-                  />
-                  <Label htmlFor="virtual-scroll">{language === 'ar' ? 'التمرير الافتراضي' : 'Virtual Scrolling'}</Label>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="virtual-scroll"
+                      checked={useVirtualScrolling}
+                      onCheckedChange={setUseVirtualScrolling}
+                    />
+                    <Label htmlFor="virtual-scroll">{language === 'ar' ? 'التمرير الافتراضي' : 'Virtual Scrolling'}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="hide-done"
+                      checked={hideDoneAndCancelled}
+                      onCheckedChange={setHideDoneAndCancelled}
+                    />
+                    <Label htmlFor="hide-done">{language === 'ar' ? 'إخفاء المكتمل والملغي' : 'Hide Done & Cancelled'}</Label>
+                  </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {language === 'ar'
