@@ -97,8 +97,8 @@ export default function AdminOrdersPage() {
     placeholderData: (previousData: any) => previousData,
   });
 
-  const orders = useVirtualScrolling ? allOrdersData?.orders || [] : ordersData.orders;
-  const totalPages = useVirtualScrolling ? 1 : ordersData.totalPages;
+  const orders = useVirtualScrolling ? allOrdersData?.orders || [] : ordersData?.orders || [];
+  const totalPages = useVirtualScrolling ? 1 : ordersData?.totalPages || 1;
 
 
   const { data: clients = [] } = useQuery<Client[]>({
