@@ -88,21 +88,7 @@ export default function AdminPage() {
       descAr: 'عرض الطلبات وإدارة التعديلات والإلغاءات',
       gradient: 'from-indigo-500/20 to-blue-500/10',
       hoverGradient: 'from-indigo-500/30 to-blue-500/20',
-      testId: 'card-orders',
-      subItems: [
-        {
-          path: '/admin/orders',
-          titleEn: 'All Orders',
-          titleAr: 'جميع الطلبات',
-          icon: ShoppingCart
-        },
-        {
-          path: '/admin/order-modifications',
-          titleEn: 'Modification Requests',
-          titleAr: 'طلبات التعديل',
-          icon: Edit
-        }
-      ]
+      testId: 'card-orders'
     },
     {
       id: 'reports',
