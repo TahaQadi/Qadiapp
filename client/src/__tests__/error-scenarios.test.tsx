@@ -1,24 +1,10 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, waitFor } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import OrderingPage from '@/pages/OrderingPage';
-
-// Mock auth hook
-vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { id: '1', nameEn: 'Test User', isAdmin: false },
-    isAuthenticated: true,
-    isLoading: false,
-  }),
-}));
-
-// Mock wouter
-vi.mock('wouter', () => ({
-  useLocation: () => ['/', vi.fn()],
-  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
-}));
+import { render } from './test-utils';
 
 describe('Error Boundary Scenarios', () => {
   let queryClient: QueryClient;
@@ -45,11 +31,10 @@ describe('Error Boundary Scenarios', () => {
     global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as any;
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-          <OrderingPage />
-        </ErrorBoundary>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <OrderingPage />
+      </ErrorBoundary>,
+      { queryClient }
     );
 
     // Component should render without crashing
@@ -68,11 +53,10 @@ describe('Error Boundary Scenarios', () => {
     ) as any;
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-          <OrderingPage />
-        </ErrorBoundary>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <OrderingPage />
+      </ErrorBoundary>,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -90,11 +74,10 @@ describe('Error Boundary Scenarios', () => {
     ) as any;
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-          <OrderingPage />
-        </ErrorBoundary>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <OrderingPage />
+      </ErrorBoundary>,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -111,11 +94,10 @@ describe('Error Boundary Scenarios', () => {
     ) as any;
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-          <OrderingPage />
-        </ErrorBoundary>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <OrderingPage />
+      </ErrorBoundary>,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -157,9 +139,8 @@ describe('Optimistic Update Error Recovery', () => {
     }) as any;
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <OrderingPage />
-      </QueryClientProvider>
+      <OrderingPage />,
+      { queryClient }
     );
 
     await waitFor(() => {

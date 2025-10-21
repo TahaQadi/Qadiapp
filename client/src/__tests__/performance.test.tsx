@@ -1,24 +1,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, waitFor } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
 import AdminProductsPage from '@/pages/AdminProductsPage';
-
-// Mock auth hook
-vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { id: 'admin-1', nameEn: 'Admin User', isAdmin: true },
-    isAuthenticated: true,
-    isLoading: false,
-  }),
-}));
-
-// Mock wouter
-vi.mock('wouter', () => ({
-  useLocation: () => ['/', vi.fn()],
-  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
-  useRoute: () => [false, {}],
-}));
+import { render } from './test-utils';
 
 describe('Performance Tests', () => {
   let queryClient: QueryClient;
@@ -59,9 +44,8 @@ describe('Performance Tests', () => {
     const startTime = performance.now();
     
     render(
-      <QueryClientProvider client={queryClient}>
-        <AdminProductsPage />
-      </QueryClientProvider>
+      <AdminProductsPage />,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -91,9 +75,8 @@ describe('Performance Tests', () => {
     }) as any;
 
     const { unmount } = render(
-      <QueryClientProvider client={queryClient}>
-        <AdminProductsPage />
-      </QueryClientProvider>
+      <AdminProductsPage />,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -105,9 +88,8 @@ describe('Performance Tests', () => {
     // Remount same component
     unmount();
     render(
-      <QueryClientProvider client={queryClient}>
-        <AdminProductsPage />
-      </QueryClientProvider>
+      <AdminProductsPage />,
+      { queryClient }
     );
 
     await waitFor(() => {

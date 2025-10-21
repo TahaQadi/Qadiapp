@@ -1,5 +1,5 @@
 
-import { expect, afterEach } from 'vitest';
+import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
@@ -36,3 +36,29 @@ global.IntersectionObserver = class IntersectionObserver {
   }
   unobserve() {}
 } as any;
+
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+} as any;
+
+// Mock window.scrollTo
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: vi.fn(),
+});
+
+// Mock window.alert
+Object.defineProperty(window, 'alert', {
+  writable: true,
+  value: vi.fn(),
+});
+
+// Mock window.confirm
+Object.defineProperty(window, 'confirm', {
+  writable: true,
+  value: vi.fn(),
+});
