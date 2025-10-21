@@ -1,0 +1,329 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: {isAllowListed: false, isProtectionEnabled: true, isScamsProtectionEnabled: true}
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: {isAllowListed: false, isProtectionEnabled: true, isScamsProtectionEnabled: true}
+chunk-SXRIVT2P.js?v=d9c6ca45:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+main.tsx:10 ✅ Service Worker registered successfully
+ordering:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+securityAudit.ts:126 🔒 Security Audit Report
+securityAudit.ts:127 Score: 50%
+securityAudit.ts:128 ---
+securityAudit.ts:133 ✅ HTTPS : Site is using HTTPS
+securityAudit.ts:133 ❌ Content Security Policy [MEDIUM]: No CSP meta tag found
+securityAudit.ts:133 ✅ Cookie Security : Cookies are properly secured
+securityAudit.ts:133 ❌ XSS Protection [MEDIUM]: 3 inline scripts detected
+securityAudit.ts:133 ❌ Clickjacking Protection [MEDIUM]: No X-Frame-Options protection
+securityAudit.ts:133 ✅ Mixed Content : No mixed content detected
+queryClient.ts:15  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/history 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+queryFn @ OrderDetailsDialog.tsx:69
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:15  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/history 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+queryFn @ OrderDetailsDialog.tsx:69
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:15  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/history 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+queryFn @ OrderDetailsDialog.tsx:69
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/feedback/order/c6b4259f-79f3-4094-9978-e0cea4e89c5d 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:15  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/orders/c6b4259f-79f3-4094-9978-e0cea4e89c5d/history 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+queryFn @ OrderDetailsDialog.tsx:69
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/feedback/order/c6b4259f-79f3-4094-9978-e0cea4e89c5d 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:15  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/orders/c6b4259f-79f3-4094-9978-e0cea4e89c5d/history 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+queryFn @ OrderDetailsDialog.tsx:69
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/feedback/order/c6b4259f-79f3-4094-9978-e0cea4e89c5d 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+queryClient.ts:15  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/orders/c6b4259f-79f3-4094-9978-e0cea4e89c5d/history 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+queryFn @ OrderDetailsDialog.tsx:69
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:818
+Promise.catch
+run @ @tanstack_react-query.js?v=d9c6ca45:801
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+setOptions @ @tanstack_react-query.js?v=d9c6ca45:1394
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3313
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19469
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+OrderFeedbackDialog.tsx:44  POST https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/feedback/order 500 (Internal Server Error)
+mutationFn @ OrderFeedbackDialog.tsx:44
+fn @ @tanstack_react-query.js?v=d9c6ca45:2003
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+execute @ @tanstack_react-query.js?v=d9c6ca45:2044
+await in execute
+mutate @ @tanstack_react-query.js?v=d9c6ca45:2383
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3573
+handleSubmit @ OrderFeedbackDialog.tsx:103
+callCallback2 @ chunk-SXRIVT2P.js?v=d9c6ca45:3680
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-SXRIVT2P.js?v=d9c6ca45:3742
+executeDispatch @ chunk-SXRIVT2P.js?v=d9c6ca45:7046
+processDispatchQueueItemsInOrder @ chunk-SXRIVT2P.js?v=d9c6ca45:7066
+processDispatchQueue @ chunk-SXRIVT2P.js?v=d9c6ca45:7075
+dispatchEventsForPlugins @ chunk-SXRIVT2P.js?v=d9c6ca45:7083
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:7206
+batchedUpdates$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:18966
+batchedUpdates @ chunk-SXRIVT2P.js?v=d9c6ca45:3585
+dispatchEventForPluginEventSystem @ chunk-SXRIVT2P.js?v=d9c6ca45:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-SXRIVT2P.js?v=d9c6ca45:5484
+dispatchEvent @ chunk-SXRIVT2P.js?v=d9c6ca45:5478
+dispatchDiscreteEvent @ chunk-SXRIVT2P.js?v=d9c6ca45:5455
+OrderFeedbackDialog.tsx:44  POST https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/feedback/order 500 (Internal Server Error)
+mutationFn @ OrderFeedbackDialog.tsx:44
+fn @ @tanstack_react-query.js?v=d9c6ca45:2003
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+execute @ @tanstack_react-query.js?v=d9c6ca45:2044
+await in execute
+mutate @ @tanstack_react-query.js?v=d9c6ca45:2383
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3573
+handleSubmit @ OrderFeedbackDialog.tsx:103
+callCallback2 @ chunk-SXRIVT2P.js?v=d9c6ca45:3680
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-SXRIVT2P.js?v=d9c6ca45:3742
+executeDispatch @ chunk-SXRIVT2P.js?v=d9c6ca45:7046
+processDispatchQueueItemsInOrder @ chunk-SXRIVT2P.js?v=d9c6ca45:7066
+processDispatchQueue @ chunk-SXRIVT2P.js?v=d9c6ca45:7075
+dispatchEventsForPlugins @ chunk-SXRIVT2P.js?v=d9c6ca45:7083
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:7206
+batchedUpdates$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:18966
+batchedUpdates @ chunk-SXRIVT2P.js?v=d9c6ca45:3585
+dispatchEventForPluginEventSystem @ chunk-SXRIVT2P.js?v=d9c6ca45:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-SXRIVT2P.js?v=d9c6ca45:5484
+dispatchEvent @ chunk-SXRIVT2P.js?v=d9c6ca45:5478
+dispatchDiscreteEvent @ chunk-SXRIVT2P.js?v=d9c6ca45:5455
+OrderFeedbackDialog.tsx:44  POST https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/feedback/order 500 (Internal Server Error)
+mutationFn @ OrderFeedbackDialog.tsx:44
+fn @ @tanstack_react-query.js?v=d9c6ca45:2003
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+execute @ @tanstack_react-query.js?v=d9c6ca45:2044
+await in execute
+mutate @ @tanstack_react-query.js?v=d9c6ca45:2383
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3573
+handleSubmit @ OrderFeedbackDialog.tsx:103
+callCallback2 @ chunk-SXRIVT2P.js?v=d9c6ca45:3680
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-SXRIVT2P.js?v=d9c6ca45:3742
+executeDispatch @ chunk-SXRIVT2P.js?v=d9c6ca45:7046
+processDispatchQueueItemsInOrder @ chunk-SXRIVT2P.js?v=d9c6ca45:7066
+processDispatchQueue @ chunk-SXRIVT2P.js?v=d9c6ca45:7075
+dispatchEventsForPlugins @ chunk-SXRIVT2P.js?v=d9c6ca45:7083
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:7206
+batchedUpdates$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:18966
+batchedUpdates @ chunk-SXRIVT2P.js?v=d9c6ca45:3585
+dispatchEventForPluginEventSystem @ chunk-SXRIVT2P.js?v=d9c6ca45:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-SXRIVT2P.js?v=d9c6ca45:5484
+dispatchEvent @ chunk-SXRIVT2P.js?v=d9c6ca45:5478
+dispatchDiscreteEvent @ chunk-SXRIVT2P.js?v=d9c6ca45:5455
