@@ -498,8 +498,8 @@ Continue with Phase 2.3: Add filtering to Admin Orders page and URL parameter pe
 
 ### Phase 2: High-Priority Features ⏳
 - [x] 2.1 Order Cancellation Feature
-- [ ] 2.2 Order Timeline/Tracking View
-- [ ] 2.3 Advanced Filtering & Search
+- [x] 2.2 Order Timeline/Tracking View
+- [x] 2.3 Advanced Filtering & Search
 - [ ] 2.4 Bulk Operations (Admin)
 - [ ] 2.5 Order Export (Excel/CSV)
 
