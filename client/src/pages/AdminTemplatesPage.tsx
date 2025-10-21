@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Plus, FileText, Edit, Trash2, Copy, ArrowLeft, Loader2
+  Plus, FileText, Edit, Trash2, Copy, ArrowLeft, Loader2, Upload, Download
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -30,6 +30,9 @@ export default function AdminTemplatesPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResults, setImportResults] = useState<any>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,6 +137,111 @@ export default function AdminTemplatesPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
     },
   });
+
+  const importMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/admin/templates/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Import failed');
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setImportResults(data);
+      toast({
+        title: language === 'ar' ? 'تم الاستيراد' : 'Import Completed',
+        description: language === 'ar'
+          ? `تم استيراد ${data.success} قالب بنجاح`
+          : `Successfully imported ${data.success} template(s)`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
+  const downloadTemplateStructure = () => {
+    const sampleTemplate = {
+      nameEn: 'Sample Template',
+      nameAr: 'قالب نموذجي',
+      descriptionEn: 'Sample template description',
+      descriptionAr: 'وصف القالب النموذجي',
+      category: 'price_offer',
+      language: 'both',
+      sections: [
+        {
+          type: 'header',
+          order: 0,
+          content: {
+            showLogo: true,
+            titleAr: 'عنوان المستند',
+            titleEn: 'Document Title',
+            companyInfoAr: {
+              name: '{{companyName}}',
+              address: '{{companyAddress}}',
+              phone: '{{companyPhone}}',
+              email: '{{companyEmail}}'
+            }
+          }
+        },
+        {
+          type: 'body',
+          order: 1,
+          content: {
+            textAr: 'محتوى المستند هنا',
+            textEn: 'Document content here'
+          }
+        }
+      ],
+      variables: ['companyName', 'companyAddress', 'companyPhone', 'companyEmail'],
+      styles: {
+        primaryColor: '#1a365d',
+        secondaryColor: '#2d3748',
+        accentColor: '#d4af37',
+        fontSize: 11,
+        fontFamily: 'Noto Sans Arabic',
+        headerHeight: 140,
+        footerHeight: 80,
+        margins: { top: 160, bottom: 100, left: 50, right: 50 }
+      },
+      isActive: true,
+      version: 1,
+      tags: ['sample']
+    };
+
+    const blob = new Blob([JSON.stringify(sampleTemplate, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'template-structure-sample.json';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const handleImport = () => {
+    if (!importFile) {
+      toast({
+        variant: 'destructive',
+        description: language === 'ar' ? 'يرجى اختيار ملف' : 'Please select a file',
+      });
+      return;
+    }
+    importMutation.mutate(importFile);
+  };
 
   const resetForm = () => {
     setFormData({
@@ -258,6 +366,15 @@ export default function AdminTemplatesPage() {
           <div className="flex items-center gap-2">
             <LanguageToggle />
             <ThemeToggle />
+            <Button
+              onClick={() => setImportDialogOpen(true)}
+              size={isMobile ? "sm" : "default"}
+              variant="outline"
+              className="shrink-0"
+            >
+              <Upload className="h-4 w-4 sm:mr-2" />
+              {!isMobile && (language === 'ar' ? 'استيراد' : 'Import')}
+            </Button>
             <Button
               onClick={() => {
                 setEditingTemplate(null);
@@ -419,6 +536,119 @@ export default function AdminTemplatesPage() {
           )}
         </Tabs>
       </div>
+
+      {/* Import Templates Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={(open) => {
+        setImportDialogOpen(open);
+        if (!open) {
+          setImportFile(null);
+          setImportResults(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'استيراد القوالب' : 'Import Templates'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'ar'
+                ? 'قم بتحميل ملف JSON يحتوي على بيانات القالب'
+                : 'Upload a JSON file containing template data'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Download Structure Button */}
+            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
+              <div>
+                <h4 className="font-medium mb-1">
+                  {language === 'ar' ? 'تنزيل هيكل القالب' : 'Download Template Structure'}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar'
+                    ? 'احصل على ملف نموذجي يوضح البنية المطلوبة للقالب'
+                    : 'Get a sample file showing the required template structure'}
+                </p>
+              </div>
+              <Button variant="outline" onClick={downloadTemplateStructure}>
+                <Download className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'تنزيل' : 'Download'}
+              </Button>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label>{language === 'ar' ? 'اختر ملف JSON' : 'Select JSON File'}</Label>
+              <Input
+                type="file"
+                accept=".json"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+              />
+              {importFile && (
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'الملف المحدد: ' : 'Selected file: '}
+                  {importFile.name}
+                </p>
+              )}
+            </div>
+
+            {/* Import Results */}
+            {importResults && (
+              <div className="p-4 rounded-md bg-muted space-y-2">
+                <h4 className="font-medium">
+                  {language === 'ar' ? 'نتائج الاستيراد' : 'Import Results'}
+                </h4>
+                <div className="text-sm">
+                  <p className="text-green-600">
+                    ✓ {language === 'ar' ? 'نجح: ' : 'Success: '}{importResults.success}
+                  </p>
+                  {importResults.errors?.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-red-600 mb-1">
+                        ✗ {language === 'ar' ? 'أخطاء: ' : 'Errors: '}{importResults.errors.length}
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                        {importResults.errors.map((error: string, i: number) => (
+                          <li key={i}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImportDialogOpen(false);
+                setImportFile(null);
+                setImportResults(null);
+              }}
+            >
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!importFile || importMutation.isPending}
+            >
+              {importMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {language === 'ar' ? 'جاري الاستيراد...' : 'Importing...'}
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  {language === 'ar' ? 'استيراد' : 'Import'}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create/Edit Template Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={(open) => {

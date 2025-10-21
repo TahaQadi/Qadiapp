@@ -1899,15 +1899,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/templates/:id/duplicate", requireAdmin, async (req, res) => {
+  // Template duplicate
+  app.post("/api/admin/templates/:id/duplicate", requireAdmin, async (req: any, res) => {
     try {
+      const { id } = req.params;
       const { name } = req.body;
-      const duplicate = await TemplateStorage.duplicateTemplate(req.params.id, name);
+
+      const duplicate = await TemplateStorage.duplicateTemplate(id, name);
       res.json(duplicate);
-    } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    } catch (error: any) {
+      log("Template duplication error:", error);
+      res.status(500).json({
+        message: "Failed to duplicate template",
+        messageAr: "فشل نسخ القالب"
+      });
     }
   });
+
+  // Template import
+  app.post("/api/admin/templates/import", requireAdmin, uploadMemory.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No file uploaded",
+          messageAr: "لم يتم تحميل أي ملف",
+        });
+      }
+
+      const fileContent = req.file.buffer.toString('utf-8');
+      let templateData;
+
+      try {
+        templateData = JSON.parse(fileContent);
+      } catch (parseError) {
+        return res.status(400).json({
+          message: "Invalid JSON format",
+          messageAr: "تنسيق JSON غير صالح",
+        });
+      }
+
+      // Handle both single template and array of templates
+      const templates = Array.isArray(templateData) ? templateData : [templateData];
+      const results = { success: 0, errors: [] as string[] };
+
+      for (const template of templates) {
+        try {
+          // Validate template structure
+          const validated = createTemplateSchema.parse(template);
+          await TemplateStorage.createTemplate(validated);
+          results.success++;
+        } catch (error: any) {
+          const errorMsg = `Template "${template.nameEn || 'unknown'}": ${error.message}`;
+          results.errors.push(errorMsg);
+          log("Template import error:", errorMsg);
+        }
+      }
+
+      res.json(results);
+    } catch (error: any) {
+      log("Template import error:", error);
+      res.status(500).json({
+        message: error.message || "Failed to import templates",
+        messageAr: "فشل استيراد القوالب",
+      });
+    }
+  });
+
 
   // Order Templates Routes (User cart templates)
   app.get("/api/client/templates", requireAuth, async (req: any, res) => {
