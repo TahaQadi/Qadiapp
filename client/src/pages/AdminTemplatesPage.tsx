@@ -1,23 +1,21 @@
-import { useState } from 'react';
+
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Plus, FileText, Edit, Trash2, Copy, ArrowLeft, Loader2, Upload, Download
+  Plus, FileText, Edit, Trash2, Copy, ArrowLeft, Loader2, Upload, Download,
+  Search, Filter, Eye, BarChart3, Globe, FileCheck, Power
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { TemplatePreview } from '@/components/TemplatePreview';
 import { TemplateEditor } from '@/components/TemplateEditor';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -25,38 +23,59 @@ import { PaginationControls } from '@/components/PaginationControls';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
+interface Template {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  category: string;
+  language: string;
+  sections: any[];
+  variables: string[];
+  styles: any;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface CategoryConfig {
+  value: string;
+  labelEn: string;
+  labelAr: string;
+  color: string;
+  icon: typeof FileText;
+}
+
+const CATEGORIES: CategoryConfig[] = [
+  { value: 'all', labelEn: 'All Templates', labelAr: 'جميع القوالب', color: 'bg-slate-500', icon: FileText },
+  { value: 'price_offer', labelEn: 'Price Offers', labelAr: 'عروض الأسعار', color: 'bg-blue-500', icon: FileText },
+  { value: 'order', labelEn: 'Orders', labelAr: 'الطلبات', color: 'bg-green-500', icon: FileText },
+  { value: 'invoice', labelEn: 'Invoices', labelAr: 'الفواتير', color: 'bg-orange-500', icon: FileText },
+  { value: 'contract', labelEn: 'Contracts', labelAr: 'العقود', color: 'bg-purple-500', icon: FileText },
+  { value: 'report', labelEn: 'Reports', labelAr: 'التقارير', color: 'bg-pink-500', icon: FileText },
+  { value: 'other', labelEn: 'Other', labelAr: 'أخرى', color: 'bg-gray-500', icon: FileText },
+];
+
 export default function AdminTemplatesPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+
+  // State management
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importResults, setImportResults] = useState<any>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
-
-  // Form states
-  const [formData, setFormData] = useState({
-    nameEn: '',
-    nameAr: '',
-    descriptionEn: '',
-    descriptionAr: '',
-    category: 'price_offer',
-    language: 'both',
-    primaryColor: '#1a365d',
-    secondaryColor: '#2d3748',
-    accentColor: '#d4af37',
-    fontSize: 10,
-    fontFamily: 'Helvetica',
-    isDefault: false,
-  });
-
-  const { data: templates = [], isLoading } = useQuery({
+  // Fetch templates
+  const { data: templates = [], isLoading } = useQuery<Template[]>({
     queryKey: ['/api/admin/templates', selectedCategory],
     queryFn: async () => {
       const url = selectedCategory === 'all'
@@ -67,12 +86,38 @@ export default function AdminTemplatesPage() {
     },
   });
 
-  const totalPages = Math.ceil(templates.length / itemsPerPage);
-  const paginatedTemplates = templates.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Computed values with useMemo for performance
+  const stats = useMemo(() => ({
+    total: templates.length,
+    active: templates.filter(t => t.isActive).length,
+    inactive: templates.filter(t => !t.isActive).length,
+    bilingual: templates.filter(t => t.language === 'both').length,
+    byCategory: CATEGORIES.reduce((acc, cat) => {
+      if (cat.value !== 'all') {
+        acc[cat.value] = templates.filter(t => t.category === cat.value).length;
+      }
+      return acc;
+    }, {} as Record<string, number>)
+  }), [templates]);
 
+  // Filter and paginate templates
+  const filteredTemplates = useMemo(() => {
+    return templates.filter(template => {
+      const matchesSearch = searchTerm === '' || 
+        template.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.nameAr.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+  }, [templates, searchTerm]);
+
+  const paginatedTemplates = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredTemplates.slice(start, start + itemsPerPage);
+  }, [filteredTemplates, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage);
+
+  // Mutations
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/admin/templates', data);
@@ -84,7 +129,7 @@ export default function AdminTemplatesPage() {
         description: language === 'ar' ? 'تم إنشاء القالب بنجاح' : 'Template created successfully',
       });
       setCreateDialogOpen(false);
-      resetForm();
+      setEditingTemplate(null);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
     },
     onError: (error: any) => {
@@ -107,7 +152,7 @@ export default function AdminTemplatesPage() {
         description: language === 'ar' ? 'تم تحديث القالب بنجاح' : 'Template updated successfully',
       });
       setEditingTemplate(null);
-      resetForm();
+      setCreateDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
     },
   });
@@ -174,6 +219,16 @@ export default function AdminTemplatesPage() {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const res = await apiRequest('PUT', `/api/admin/templates/${id}`, { isActive });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
+  });
+
   const downloadTemplateStructure = () => {
     const sampleTemplate = {
       nameEn: 'Sample Template',
@@ -196,14 +251,6 @@ export default function AdminTemplatesPage() {
               phone: '{{companyPhone}}',
               email: '{{companyEmail}}'
             }
-          }
-        },
-        {
-          type: 'body',
-          order: 1,
-          content: {
-            textAr: 'محتوى المستند هنا',
-            textEn: 'Document content here'
           }
         }
       ],
@@ -245,302 +292,269 @@ export default function AdminTemplatesPage() {
     importMutation.mutate(importFile);
   };
 
-  const resetForm = () => {
-    setFormData({
-      nameEn: '',
-      nameAr: '',
-      descriptionEn: '',
-      descriptionAr: '',
-      category: 'price_offer',
-      language: 'both',
-      primaryColor: '#1a365d',
-      secondaryColor: '#2d3748',
-      accentColor: '#d4af37',
-      fontSize: 10,
-      fontFamily: 'Helvetica',
-      isDefault: false,
-    });
-  };
-
-  const handleSave = () => {
-    const templateData = {
-      nameEn: formData.nameEn,
-      nameAr: formData.nameAr,
-      descriptionEn: formData.descriptionEn || undefined,
-      descriptionAr: formData.descriptionAr || undefined,
-      category: formData.category,
-      language: formData.language,
-      sections: [
-        {
-          type: 'header',
-          content: {
-            companyName: '{{company_name}}',
-            address: '{{company_address}}',
-            contact: '{{company_contact}}',
-          },
-        },
-        {
-          type: 'body',
-          content: {
-            text: '{{body_content}}',
-            align: 'justify',
-          },
-        },
-        {
-          type: 'footer',
-          content: {
-            text: '{{footer_text}}',
-          },
-        },
-      ],
-      variables: [
-        'company_name',
-        'company_address',
-        'company_contact',
-        'body_content',
-        'footer_text',
-      ],
-      styles: {
-        primaryColor: formData.primaryColor,
-        secondaryColor: formData.secondaryColor,
-        accentColor: formData.accentColor,
-        fontSize: formData.fontSize,
-      },
-      isActive: true,
-    };
-
-    if (editingTemplate) {
-      updateMutation.mutate({ id: editingTemplate.id, data: templateData });
-    } else {
-      createMutation.mutate(templateData);
-    }
-  };
-
-  const categories = [
-    { value: 'all', labelEn: 'All Templates', labelAr: 'جميع القوالب' },
-    { value: 'price_offer', labelEn: 'Price Offers', labelAr: 'عروض الأسعار' },
-    { value: 'order', labelEn: 'Orders', labelAr: 'الطلبات' },
-    { value: 'invoice', labelEn: 'Invoices', labelAr: 'الفواتير' },
-    { value: 'contract', labelEn: 'Contracts', labelAr: 'العقود' },
-    { value: 'report', labelEn: 'Reports', labelAr: 'التقارير' },
-    { value: 'other', labelEn: 'Other', labelAr: 'أخرى' },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Animated background particles for dark mode */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none dark:block hidden">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 right-1/3 w-3 h-3 bg-primary/15 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-            >
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild>
               <Link href="/admin">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
-            <img
-              src="/logo.png"
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
-            />
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'إدارة القوالب' : 'Template Management'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar'
-                  ? 'إنشاء وإدارة قوالب المستندات'
-                  : 'Create and manage document templates'}
-              </p>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold">
+                  {language === 'ar' ? 'إدارة القوالب' : 'Template Management'}
+                </h1>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  {language === 'ar' ? 'تصميم وإدارة قوالب المستندات' : 'Design and manage document templates'}
+                </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
-              <ThemeToggle />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setImportDialogOpen(true)}
-                className="gap-2"
-                data-testid="button-import-template"
-              >
-                <Upload className="h-4 w-4" />
-                <span>{language === 'ar' ? 'استيراد' : 'Import'}</span>
-              </Button>
-              <Button 
-                onClick={() => setCreateDialogOpen(true)} 
-                className="gap-2"
-                data-testid="button-new-template"
-              >
-                <Plus className="h-4 w-4" />
-                {language === 'ar' ? 'قالب جديد' : 'New Template'}
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportDialogOpen(true)}
+              className="hidden sm:flex"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {language === 'ar' ? 'استيراد' : 'Import'}
+            </Button>
+            <Button 
+              onClick={() => {
+                setEditingTemplate(null);
+                setCreateDialogOpen(true);
+              }}
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {language === 'ar' ? 'قالب جديد' : 'New Template'}
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 relative z-10">
-        {/* Welcome Section */}
-        <div className="mb-6 sm:mb-8 animate-slide-down">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-            {language === 'ar' ? 'لوحة إدارة القوالب' : 'Template Management Dashboard'}
-          </h2>
-          <p className="text-muted-foreground">
-            {language === 'ar' 
-              ? 'تصميم وتخصيص قوالب المستندات الاحترافية' 
-              : 'Design and customize professional document templates'}
-          </p>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-xs">
+                {language === 'ar' ? 'إجمالي القوالب' : 'Total Templates'}
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold">{stats.total}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-xs">
+                {language === 'ar' ? 'نشطة' : 'Active'}
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-green-600">{stats.active}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-xs">
+                {language === 'ar' ? 'غير نشطة' : 'Inactive'}
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-orange-600">{stats.inactive}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-xs">
+                {language === 'ar' ? 'ثنائية اللغة' : 'Bilingual'}
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-blue-600">{stats.bilingual}</CardTitle>
+            </CardHeader>
+          </Card>
         </div>
 
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4 sm:space-y-6">
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-muted/50 dark:bg-[#222222]/50 border border-border/50 dark:border-[#d4af37]/20">
-            {categories.map(cat => (
+        {/* Search and Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={language === 'ar' ? 'بحث في القوالب...' : 'Search templates...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setImportDialogOpen(true)}
+                className="sm:hidden"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'استيراد' : 'Import'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category Tabs */}
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-muted/50">
+            {CATEGORIES.map(cat => (
               <TabsTrigger
                 key={cat.value}
                 value={cat.value}
-                className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-primary dark:data-[state=active]:bg-[#d4af37] data-[state=active]:text-primary-foreground min-h-[44px] px-3 sm:px-4"
+                className="flex items-center gap-2 whitespace-nowrap"
               >
-                {language === 'ar' ? cat.labelAr : cat.labelEn}
+                <cat.icon className="h-4 w-4" />
+                <span>{language === 'ar' ? cat.labelAr : cat.labelEn}</span>
+                {cat.value !== 'all' && stats.byCategory[cat.value] > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {stats.byCategory[cat.value]}
+                  </Badge>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <LoadingSkeleton key={i} type="card" />
-              ))}
-            </div>
-          ) : paginatedTemplates.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title="No templates found"
-              description="Create a new template to get started"
-            />
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {paginatedTemplates.map((template: any, index: number) => (
-                  <Card
-                    key={template.id}
-                    className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 group animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
-                              <FileText className="h-4 w-4 text-primary dark:text-[#d4af37] shrink-0" />
-                            </div>
-                            <CardTitle className="text-sm sm:text-base truncate font-semibold">
-                              {language === 'ar' ? template.nameAr : template.nameEn}
-                            </CardTitle>
-                          </div>
-                          <CardDescription className="text-xs line-clamp-2 mt-1">
-                            {language === 'ar' ? template.descriptionAr : template.descriptionEn}
-                          </CardDescription>
-                        </div>
-                        <Badge
-                          variant={template.isActive ? 'default' : 'secondary'}
-                          className="shrink-0 text-xs"
-                        >
-                          {template.isActive
-                            ? (language === 'ar' ? 'نشط' : 'Active')
-                            : (language === 'ar' ? 'غير نشط' : 'Inactive')}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex gap-1 sm:gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
-                          onClick={() => {
-                            setEditingTemplate(template);
-                            const styles = typeof template.styles === 'string'
-                              ? JSON.parse(template.styles)
-                              : template.styles;
-                            setFormData({
-                              nameEn: template.nameEn,
-                              nameAr: template.nameAr,
-                              descriptionEn: template.descriptionEn || '',
-                              descriptionAr: template.descriptionAr || '',
-                              category: template.category,
-                              language: template.language,
-                              primaryColor: styles.primaryColor,
-                              secondaryColor: styles.secondaryColor,
-                              accentColor: styles.accentColor,
-                              fontSize: styles.fontSize,
-                              fontFamily: styles.fontFamily || 'Helvetica',
-                              isDefault: false,
-                            });
-                            setCreateDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                          <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 hover:bg-primary dark:hover:bg-[#d4af37] hover:text-primary-foreground min-h-[44px] transition-colors"
-                          onClick={() => {
-                            const newName = {
-                              en: `${template.nameEn} (Copy)`,
-                              ar: `${template.nameAr} (نسخة)`,
-                            };
-                            duplicateMutation.mutate({ id: template.id, name: newName });
-                          }}
-                        >
-                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                          <span className="hidden sm:inline">{language === 'ar' ? 'نسخ' : 'Copy'}</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="min-h-[44px] min-w-[44px] hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                          onClick={() => deleteMutation.mutate(template.id)}
-                        >
-                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+          <TabsContent value={selectedCategory} className="mt-6">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <LoadingSkeleton key={i} type="card" />
                 ))}
               </div>
-
-              <PaginationControls
-                currentPage={currentPage}
-                totalPages={totalPages}
-                itemsPerPage={itemsPerPage}
-                totalItems={templates.length}
-                onPageChange={setCurrentPage}
-                onItemsPerPageChange={setItemsPerPage}
+            ) : paginatedTemplates.length === 0 ? (
+              <EmptyState
+                icon={FileText}
+                title={language === 'ar' ? 'لا توجد قوالب' : 'No templates found'}
+                description={language === 'ar' 
+                  ? 'قم بإنشاء قالب جديد للبدء' 
+                  : 'Create a new template to get started'}
+                action={
+                  <Button onClick={() => setCreateDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {language === 'ar' ? 'إنشاء قالب' : 'Create Template'}
+                  </Button>
+                }
               />
-            </>
-          )}
-        </Tabs>
-      </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginatedTemplates.map((template) => {
+                    const categoryConfig = CATEGORIES.find(c => c.value === template.category);
+                    return (
+                      <Card
+                        key={template.id}
+                        className="group hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50"
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <div className={`p-2 rounded-lg ${categoryConfig?.color || 'bg-gray-500'} bg-opacity-10`}>
+                                <FileText className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-base truncate">
+                                  {language === 'ar' ? template.nameAr : template.nameEn}
+                                </CardTitle>
+                                <CardDescription className="text-xs truncate mt-1">
+                                  {language === 'ar' ? template.descriptionAr : template.descriptionEn}
+                                </CardDescription>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => toggleActiveMutation.mutate({ 
+                                id: template.id, 
+                                isActive: !template.isActive 
+                              })}
+                              className={template.isActive ? 'text-green-600' : 'text-gray-400'}
+                            >
+                              <Power className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            <Badge variant={template.isActive ? 'default' : 'secondary'} className="text-xs">
+                              {template.isActive
+                                ? (language === 'ar' ? 'نشط' : 'Active')
+                                : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {template.language === 'both' 
+                                ? (language === 'ar' ? 'ثنائي اللغة' : 'Bilingual')
+                                : template.language === 'ar' ? 'عربي' : 'English'}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => {
+                                setEditingTemplate(template);
+                                setCreateDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              {language === 'ar' ? 'تعديل' : 'Edit'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const newName = {
+                                  en: `${template.nameEn} (Copy)`,
+                                  ar: `${template.nameAr} (نسخة)`,
+                                };
+                                duplicateMutation.mutate({ id: template.id, name: newName });
+                              }}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => deleteMutation.mutate(template.id)}
+                              className="hover:bg-destructive hover:text-destructive-foreground"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
 
-      {/* Import Templates Dialog */}
+                {totalPages > 1 && (
+                  <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={filteredTemplates.length}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                  />
+                )}
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Import Dialog */}
       <Dialog open={importDialogOpen} onOpenChange={(open) => {
         setImportDialogOpen(open);
         if (!open) {
@@ -561,27 +575,26 @@ export default function AdminTemplatesPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Download Structure Button */}
-            <div className="flex items-center justify-between p-4 bg-muted rounded-md">
-              <div>
-                <h4 className="font-medium mb-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">
                   {language === 'ar' ? 'تنزيل هيكل القالب' : 'Download Template Structure'}
-                </h4>
-                <p className="text-sm text-muted-foreground">
+                </CardTitle>
+                <CardDescription>
                   {language === 'ar'
                     ? 'احصل على ملف نموذجي يوضح البنية المطلوبة للقالب'
                     : 'Get a sample file showing the required template structure'}
-                </p>
-              </div>
-              <Button variant="outline" onClick={downloadTemplateStructure}>
-                <Download className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'تنزيل' : 'Download'}
-              </Button>
-            </div>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" onClick={downloadTemplateStructure} className="w-full">
+                  <Download className="h-4 w-4 mr-2" />
+                  {language === 'ar' ? 'تنزيل النموذج' : 'Download Sample'}
+                </Button>
+              </CardContent>
+            </Card>
 
-            {/* File Upload */}
             <div className="space-y-2">
-              <Label>{language === 'ar' ? 'اختر ملف JSON' : 'Select JSON File'}</Label>
               <Input
                 type="file"
                 accept=".json"
@@ -595,34 +608,35 @@ export default function AdminTemplatesPage() {
               )}
             </div>
 
-            {/* Import Results */}
             {importResults && (
-              <div className="p-4 rounded-md bg-muted space-y-2">
-                <h4 className="font-medium">
-                  {language === 'ar' ? 'نتائج الاستيراد' : 'Import Results'}
-                </h4>
-                <div className="text-sm">
-                  <p className="text-green-600">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    {language === 'ar' ? 'نتائج الاستيراد' : 'Import Results'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-green-600">
                     ✓ {language === 'ar' ? 'نجح: ' : 'Success: '}{importResults.success}
                   </p>
                   {importResults.errors?.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-red-600 mb-1">
+                    <div>
+                      <p className="text-sm text-red-600 mb-1">
                         ✗ {language === 'ar' ? 'أخطاء: ' : 'Errors: '}{importResults.errors.length}
                       </p>
-                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
                         {importResults.errors.map((error: string, i: number) => (
                           <li key={i}>{error}</li>
                         ))}
                       </ul>
                     </div>
                   )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -649,7 +663,7 @@ export default function AdminTemplatesPage() {
                 </>
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -658,7 +672,6 @@ export default function AdminTemplatesPage() {
         setCreateDialogOpen(open);
         if (!open) {
           setEditingTemplate(null);
-          resetForm();
         }
       }}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -688,38 +701,12 @@ export default function AdminTemplatesPage() {
               } else {
                 createMutation.mutate(templateData);
               }
-              setCreateDialogOpen(false);
-              setEditingTemplate(null); // Reset editing template after save
             }}
             onCancel={() => {
               setCreateDialogOpen(false);
-              setEditingTemplate(null); // Reset editing template on cancel
+              setEditingTemplate(null);
             }}
           />
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setCreateDialogOpen(false);
-                setEditingTemplate(null);
-                resetForm();
-              }}
-              className="flex-1 sm:flex-none"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={() => {
-                // This button is a fallback, the actual save is handled by TemplateEditor's onSave
-                // However, we need to trigger the save in TemplateEditor if it has a save button
-                // For now, we assume TemplateEditor handles its own save and close logic
-              }}
-              className="flex-1 sm:flex-none hidden" // Hidden as TemplateEditor will handle saving
-            >
-              {language === 'ar' ? 'حفظ' : 'Save'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
