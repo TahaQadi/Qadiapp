@@ -107,9 +107,9 @@ export default function AdminPage() {
       path: '/admin/templates/documents',
       icon: Edit,
       titleEn: 'Document Templates',
-      titleAr: 'قوالب المستندات',
+      titleAr: 'مكتبة المستندات',
       descEn: 'Design and manage document templates',
-      descAr: 'تصميم وإدارة قوالب المستندات',
+      descAr: 'إدارة المستندات والقوالب',
       gradient: 'from-teal-500/20 to-cyan-500/10',
       hoverGradient: 'from-teal-500/30 to-cyan-500/20',
       testId: 'card-templates'
