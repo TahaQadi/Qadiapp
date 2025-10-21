@@ -46,6 +46,7 @@ import {
   orderTemplates,
   orders,
   orderModifications,
+  orderHistory, // Added orderHistory
   ltas,
   ltaProducts,
   ltaClients,
@@ -142,6 +143,10 @@ export interface IStorage {
   getOrderModifications(orderId: string): Promise<OrderModification[]>;
   getAllOrderModifications(): Promise<OrderModification[]>;
   updateOrderModificationStatus(id: string, updates: { status: string; adminResponse: string | null; reviewedBy: string; reviewedAt: Date }): Promise<OrderModification | undefined>;
+
+  // Order History
+  createOrderHistory(history: InsertOrderHistory): Promise<OrderHistory>;
+  getOrderHistory(orderId: string): Promise<OrderHistory[]>;
 
   // Product Management
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
@@ -280,6 +285,7 @@ export class MemStorage implements IStorage {
   private clientPricing: Map<string, ClientPricing>;
   private orderTemplates: Map<string, OrderTemplate>;
   private orders: Map<string, Order>;
+  private orderHistories: Map<string, OrderHistory> = new Map(); // Added for order history
 
   private ltas: Map<string, Lta> = new Map();
   private ltaProducts: Map<string, LtaProduct> = new Map();
@@ -297,6 +303,7 @@ export class MemStorage implements IStorage {
     this.clientPricing = new Map();
     this.orderTemplates = new Map();
     this.orders = new Map();
+    this.orderHistories = new Map(); // Initialize order history map
     this.ltas = new Map();
     this.ltaProducts = new Map();
     this.ltaClients = new Map();
@@ -869,6 +876,23 @@ export class MemStorage implements IStorage {
     return result[0];
   }
 
+  // Order History
+  async createOrderHistory(history: InsertOrderHistory): Promise<OrderHistory> {
+    const inserted = await this.db
+      .insert(orderHistory)
+      .values(history)
+      .returning();
+    return inserted[0];
+  }
+
+  async getOrderHistory(orderId: string): Promise<OrderHistory[]> {
+    return await this.db
+      .select()
+      .from(orderHistory)
+      .where(eq(orderHistory.orderId, orderId))
+      .orderBy(desc(orderHistory.timestamp));
+  }
+
   // LTA Management
   async createLta(insertLta: InsertLta): Promise<Lta> {
     const inserted = await this.db
@@ -1137,9 +1161,9 @@ export class MemStorage implements IStorage {
         results.success++;
       } catch (error) {
         console.error('Bulk assignment error:', error);
-        results.failed.push({ 
-          sku: item.sku, 
-          error: error instanceof Error ? error.message : 'Assignment failed' 
+        results.failed.push({
+          sku: item.sku,
+          error: error instanceof Error ? error.message : 'Assignment failed'
         });
       }
     }
@@ -1357,9 +1381,9 @@ export class MemStorage implements IStorage {
 
     // Get all offers that are expired but not yet marked as such
     const allOffers = await this.getAllPriceOffers();
-    const expiredOffers = allOffers.filter(offer => 
-      new Date(offer.validUntil) < now && 
-      offer.status !== 'accepted' && 
+    const expiredOffers = allOffers.filter(offer =>
+      new Date(offer.validUntil) < now &&
+      offer.status !== 'accepted' &&
       offer.status !== 'rejected' &&
       offer.status !== 'expired' &&
       offer.status !== 'revoked'
@@ -1583,7 +1607,7 @@ export class MemStorage implements IStorage {
 
   async incrementDocumentViewCount(documentId: string): Promise<void> {
     await this.db.execute(sql`
-      UPDATE documents 
+      UPDATE documents
       SET view_count = view_count + 1, last_viewed_at = NOW()
       WHERE id = ${documentId}
     `);

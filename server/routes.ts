@@ -1475,6 +1475,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get order history (authenticated users)
+  app.get('/api/orders/:id/history', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify order access
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Non-admin users can only view their own orders
+      if (!req.client.isAdmin && order.clientId !== req.client.id) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      const history = await storage.getOrderHistory(id);
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching order history:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   // Export order to PDF (admin only)
   app.post('/api/admin/orders/export-pdf', requireAdmin, async (req: any, res) => {
     try {
@@ -1505,7 +1529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, notes } = req.body;
 
       if (!status) {
         return res.status(400).json({ message: 'Status is required' });
@@ -1524,8 +1548,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const previousStatus = order.status;
 
-      // Update order status
-      await storage.updateOrderStatus(id, status);
+      // Don't create history if status hasn't changed
+      if (previousStatus !== status) {
+        // Update order status
+        await storage.updateOrderStatus(id, status);
+
+        // Create history entry
+        await storage.createOrderHistory({
+          orderId: id,
+          status,
+          changedBy: req.client.id,
+          notes: notes || null,
+          isAdminNote: !!notes,
+        });
+      }
 
       // Create notification for the client
       const statusMessages: Record<string, { titleEn: string; titleAr: string; messageEn: string; messageAr: string }> = {

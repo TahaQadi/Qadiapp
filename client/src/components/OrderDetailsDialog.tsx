@@ -16,9 +16,10 @@ import { safeJsonParse } from '@/lib/safeJson';
 import { formatDateLocalized } from '@/lib/dateUtils';
 import { Package, Calendar, CreditCard, FileText, TrendingUp, XCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
+import { OrderTimeline } from './OrderTimeline';
 
 interface OrderItem {
   productId: string;
@@ -51,6 +52,18 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
 
+  // Fetch order history
+  const { data: orderHistory = [] } = useQuery({
+    queryKey: ['/api/orders', order?.id, 'history'],
+    queryFn: async () => {
+      if (!order?.id) return [];
+      const res = await apiRequest('GET', `/api/orders/${order.id}/history`);
+      if (!res.ok) throw new Error('Failed to fetch order history');
+      return res.json();
+    },
+    enabled: !!order?.id && open,
+  });
+
   const cancelMutation = useMutation({
     mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
       const res = await apiRequest("POST", `/api/orders/${orderId}/cancel`, { reason });
@@ -65,6 +78,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
           : "Your order has been cancelled successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders', order?.id, 'history'] });
       setShowCancelForm(false);
       setCancellationReason("");
       onOpenChange(false);
@@ -193,6 +207,17 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
           </div>
 
           <Separator />
+
+          {/* Order Timeline */}
+          {orderHistory.length > 0 && (
+            <>
+              <OrderTimeline 
+                history={orderHistory} 
+                currentStatus={order.status}
+              />
+              <Separator />
+            </>
+          )}
 
           {/* Total Section */}
           <div className="space-y-3">

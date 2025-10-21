@@ -339,6 +339,7 @@ export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id:
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true, lastViewedAt: true, viewCount: true, versionNumber: true });
 export const insertDocumentAccessLogSchema = createInsertSchema(documentAccessLogs).omit({ id: true, accessedAt: true });
+export const insertOrderHistorySchema = createInsertSchema(orderHistory).omit({ id: true, changedAt: true });
 
 // Login schema
 export const loginSchema = z.object({
@@ -498,6 +499,7 @@ export type PriceOffer = typeof priceOffers.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type DocumentAccessLog = typeof documentAccessLogs.$inferSelect;
+export type OrderHistory = typeof orderHistory.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type InsertCompanyUser = z.infer<typeof insertCompanyUserSchema>;
@@ -519,6 +521,7 @@ export type InsertPriceOffer = z.infer<typeof insertPriceOfferSchema>;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertDocumentAccessLog = z.infer<typeof insertDocumentAccessLogSchema>;
+export type InsertOrderHistory = z.infer<typeof insertOrderHistorySchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;
@@ -564,4 +567,15 @@ export const demoRequests = pgTable("demo_requests", {
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
+});
+
+// Order History table for tracking status changes
+export const orderHistory = pgTable("order_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  status: text("status").notNull(),
+  changedBy: varchar("changed_by").notNull(),
+  changedAt: timestamp("changed_at").defaultNow().notNull(),
+  notes: text("notes"),
+  isAdminNote: boolean("is_admin_note").default(false).notNull(),
 });
