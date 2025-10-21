@@ -173,6 +173,61 @@ args = "echo \"\""
 task = "shell.exec"
 args = "echo \"✅ All quality checks passed!\""
 
+[[workflows.workflow]]
+name = "Dev - Frontend Only"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🎨 Starting Frontend Development Server...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npm run dev"
+
+[[workflows.workflow]]
+name = "Dev - Backend Only"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"⚙️ Starting Backend Server...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development tsx server/index.ts"
+
+[[workflows.workflow]]
+name = "DB - Reset & Seed"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"⚠️  WARNING: This will reset your database!\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📦 Pushing schema changes...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run db:push"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🌱 Seeding database with sample data...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "tsx server/seed.ts"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Database reset and seeded successfully!\""
+
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_database:1.0.0"]
 
