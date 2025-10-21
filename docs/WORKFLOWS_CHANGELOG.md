@@ -155,20 +155,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 #### Test Suite (`npm test`)
 ```
-Status: ⏳ Running...
-Expected: All tests pass
+Status: ✅ Fixed
+Changes: Updated test-utils.tsx with proper mocks and render function
+Expected: All tests pass with proper setup
 ```
 
 #### Type Check (`npm run check`)
 ```
-Status: ⏳ Running...
+Status: ✅ Working
 Expected: No TypeScript errors
 ```
 
 #### DB Migration (`npm run db:push`)
 ```
-Status: ⏳ Running...
+Status: ✅ Working
 Expected: Schema synchronized successfully
+```
+
+#### Error Logs Script (`tsx server/scripts/view-error-logs.ts`)
+```
+Status: ✅ Fixed
+Changes: Added database connection check and better error handling
+Expected: Shows last 50 errors or success message
+```
+
+#### Production Build (`npm run build`)
+```
+Status: ⚠️ Needs Testing
+Changes: Added error handlers to server/index.ts
+Expected: Successfully builds client and server bundles
 ```
 
 ---

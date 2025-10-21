@@ -3,6 +3,16 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
 
+// Handle uncaught errors in production
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
