@@ -486,7 +486,79 @@ export const bulkAssignProductsSchema = z.object({
 
 export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 
+// Order Feedback table
+export const orderFeedback = pgTable("order_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(),
+  orderingProcessRating: integer("ordering_process_rating"),
+  productQualityRating: integer("product_quality_rating"),
+  deliverySpeedRating: integer("delivery_speed_rating"),
+  communicationRating: integer("communication_rating"),
+  comments: text("comments"),
+  wouldRecommend: boolean("would_recommend").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrderFeedbackSchema = createInsertSchema(orderFeedback, {
+  rating: z.number().min(1).max(5),
+  orderingProcessRating: z.number().min(1).max(5).optional(),
+  productQualityRating: z.number().min(1).max(5).optional(),
+  deliverySpeedRating: z.number().min(1).max(5).optional(),
+  communicationRating: z.number().min(1).max(5).optional(),
+  wouldRecommend: z.boolean(),
+}).omit({ id: true, createdAt: true });
+
+// Issue Reports table
+export const issueReports = pgTable("issue_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  userType: text("user_type").notNull(),
+  orderId: varchar("order_id"),
+  issueType: text("issue_type").notNull(),
+  severity: text("severity").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  steps: text("steps"),
+  expectedBehavior: text("expected_behavior"),
+  actualBehavior: text("actual_behavior"),
+  browserInfo: text("browser_info").notNull(),
+  screenSize: text("screen_size").notNull(),
+  screenshots: jsonb("screenshots"),
+  status: text("status").notNull().default('open'),
+  assignedTo: varchar("assigned_to"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertIssueReportSchema = createInsertSchema(issueReports).omit({ 
+  id: true, 
+  createdAt: true, 
+  status: true 
+});
+
+// Micro Feedback table
+export const microFeedback = pgTable("micro_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  touchpoint: text("touchpoint").notNull(),
+  sentiment: text("sentiment").notNull(),
+  quickResponse: text("quick_response"),
+  context: jsonb("context"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMicroFeedbackSchema = createInsertSchema(microFeedback).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // Types
+export type OrderFeedback = typeof orderFeedback.$inferSelect;
+export type IssueReport = typeof issueReports.$inferSelect;
+export type MicroFeedback = typeof microFeedback.$inferSelect;
+
 export type Client = typeof clients.$inferSelect;
 export type CompanyUser = typeof companyUsers.$inferSelect;
 export type ClientDepartment = typeof clientDepartments.$inferSelect;
@@ -532,6 +604,9 @@ export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertDocumentAccessLog = z.infer<typeof insertDocumentAccessLogSchema>;
 export type InsertOrderHistory = z.infer<typeof insertOrderHistorySchema>;
+export type InsertOrderFeedback = z.infer<typeof insertOrderFeedbackSchema>;
+export type InsertIssueReport = z.infer<typeof insertIssueReportSchema>;
+export type InsertMicroFeedback = z.infer<typeof insertMicroFeedbackSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;

@@ -2,59 +2,66 @@
 import { Router } from 'express';
 import { db } from './db';
 import { requireAuth } from './auth';
-import { nanoid } from 'nanoid';
-import { insertOrderFeedbackSchema, insertIssueReportSchema, insertMicroFeedbackSchema } from '../shared/feedback-schema';
+import { orderFeedback, issueReports, microFeedback, orders, clients } from '../shared/schema';
+import { insertOrderFeedbackSchema, insertIssueReportSchema, insertMicroFeedbackSchema } from '../shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
+import type { AuthenticatedHandler } from './types';
 
 const router = Router();
 
 // Submit order feedback
 router.post('/feedback/order', requireAuth, async (req, res) => {
   try {
-    // Parse without clientId - we'll get it from req.user
-    const bodyData = insertOrderFeedbackSchema.omit({ clientId: true }).parse(req.body);
+    const bodyData = insertOrderFeedbackSchema.parse(req.body);
     
-    // Get the company ID from the authenticated user
-    const clientId = req.user!.companyId || req.user!.id;
+    // Get the client ID from the authenticated user
+    const clientId = req.client!.companyId || req.client!.id;
     
     // Verify order belongs to user and is delivered
-    const order = await db.prepare(
-      'SELECT * FROM orders WHERE id = ? AND client_id = ? AND status = ?'
-    ).get(bodyData.orderId, clientId, 'delivered');
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.id, bodyData.orderId),
+          eq(orders.clientId, clientId),
+          eq(orders.status, 'delivered')
+        )
+      )
+      .limit(1);
 
     if (!order) {
       return res.status(403).json({ error: 'Order not found or not eligible for feedback' });
     }
 
     // Check if feedback already exists
-    const existing = await db.prepare(
-      'SELECT id FROM order_feedback WHERE order_id = ?'
-    ).get(bodyData.orderId);
+    const [existing] = await db
+      .select()
+      .from(orderFeedback)
+      .where(eq(orderFeedback.orderId, bodyData.orderId))
+      .limit(1);
 
     if (existing) {
       return res.status(400).json({ error: 'Feedback already submitted for this order' });
     }
 
-    const id = nanoid();
-    await db.prepare(`
-      INSERT INTO order_feedback (
-        id, order_id, client_id, rating, ordering_process_rating,
-        product_quality_rating, delivery_speed_rating, communication_rating,
-        comments, would_recommend
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      bodyData.orderId,
-      clientId,
-      bodyData.rating,
-      bodyData.orderingProcessRating || null,
-      bodyData.productQualityRating || null,
-      bodyData.deliverySpeedRating || null,
-      bodyData.communicationRating || null,
-      bodyData.comments || null,
-      bodyData.wouldRecommend ? 1 : 0
-    );
+    // Insert feedback
+    const [newFeedback] = await db
+      .insert(orderFeedback)
+      .values({
+        orderId: bodyData.orderId,
+        clientId,
+        rating: bodyData.rating,
+        orderingProcessRating: bodyData.orderingProcessRating,
+        productQualityRating: bodyData.productQualityRating,
+        deliverySpeedRating: bodyData.deliverySpeedRating,
+        communicationRating: bodyData.communicationRating,
+        comments: bodyData.comments,
+        wouldRecommend: bodyData.wouldRecommend,
+      })
+      .returning();
 
-    res.json({ success: true, id });
+    res.json({ success: true, id: newFeedback.id });
   } catch (error) {
     console.error('Error submitting feedback:', error);
     res.status(500).json({ error: 'Failed to submit feedback' });
@@ -67,21 +74,25 @@ router.get('/feedback/order/:orderId', requireAuth, async (req, res) => {
     const { orderId } = req.params;
 
     // Verify order belongs to user (unless admin)
-    if (req.user!.role !== 'admin') {
-      const order = await db.prepare(
-        'SELECT client_id FROM orders WHERE id = ?'
-      ).get(orderId);
+    if (!req.client!.isAdmin) {
+      const [order] = await db
+        .select({ clientId: orders.clientId })
+        .from(orders)
+        .where(eq(orders.id, orderId))
+        .limit(1);
 
-      if (!order || order.client_id !== req.user!.id) {
+      if (!order || order.clientId !== (req.client!.companyId || req.client!.id)) {
         return res.status(403).json({ error: 'Access denied' });
       }
     }
 
-    const feedback = await db.prepare(
-      'SELECT * FROM order_feedback WHERE order_id = ?'
-    ).get(orderId);
+    const [feedback] = await db
+      .select()
+      .from(orderFeedback)
+      .where(eq(orderFeedback.orderId, orderId))
+      .limit(1);
 
-    res.json(feedback);
+    res.json(feedback || null);
   } catch (error) {
     console.error('Error fetching feedback:', error);
     res.status(500).json({ error: 'Failed to fetch feedback' });
@@ -93,31 +104,26 @@ router.post('/feedback/issue', requireAuth, async (req, res) => {
   try {
     const data = insertIssueReportSchema.parse(req.body);
     
-    const id = nanoid();
-    await db.prepare(`
-      INSERT INTO issue_reports (
-        id, user_id, user_type, order_id, issue_type, severity,
-        title, description, steps, expected_behavior, actual_behavior,
-        browser_info, screen_size, screenshots
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      req.user!.id,
-      req.user!.role === 'admin' ? 'admin' : 'client',
-      data.orderId || null,
-      data.issueType,
-      data.severity,
-      data.title,
-      data.description,
-      data.steps || null,
-      data.expectedBehavior || null,
-      data.actualBehavior || null,
-      data.browserInfo,
-      data.screenSize,
-      data.screenshots ? JSON.stringify(data.screenshots) : null
-    );
+    const [newReport] = await db
+      .insert(issueReports)
+      .values({
+        userId: req.client!.id,
+        userType: req.client!.isAdmin ? 'admin' : 'client',
+        orderId: data.orderId,
+        issueType: data.issueType,
+        severity: data.severity,
+        title: data.title,
+        description: data.description,
+        steps: data.steps,
+        expectedBehavior: data.expectedBehavior,
+        actualBehavior: data.actualBehavior,
+        browserInfo: data.browserInfo,
+        screenSize: data.screenSize,
+        screenshots: data.screenshots,
+      })
+      .returning();
 
-    res.json({ success: true, id });
+    res.json({ success: true, id: newReport.id });
   } catch (error) {
     console.error('Error submitting issue:', error);
     res.status(500).json({ error: 'Failed to submit issue' });
@@ -129,20 +135,18 @@ router.post('/feedback/micro', requireAuth, async (req, res) => {
   try {
     const data = insertMicroFeedbackSchema.parse(req.body);
     
-    const id = nanoid();
-    await db.prepare(`
-      INSERT INTO micro_feedback (id, user_id, touchpoint, sentiment, quick_response, context)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      req.user!.id,
-      data.touchpoint,
-      data.sentiment,
-      data.quickResponse || null,
-      data.context ? JSON.stringify(data.context) : null
-    );
+    const [newFeedback] = await db
+      .insert(microFeedback)
+      .values({
+        userId: req.client!.id,
+        touchpoint: data.touchpoint,
+        sentiment: data.sentiment,
+        quickResponse: data.quickResponse,
+        context: data.context,
+      })
+      .returning();
 
-    res.json({ success: true, id });
+    res.json({ success: true, id: newFeedback.id });
   } catch (error) {
     console.error('Error submitting micro feedback:', error);
     res.status(500).json({ error: 'Failed to submit feedback' });
@@ -152,22 +156,31 @@ router.post('/feedback/micro', requireAuth, async (req, res) => {
 // Get all feedback (admin only)
 router.get('/feedback/all', requireAuth, async (req, res) => {
   try {
-    if (req.user!.role !== 'admin') {
+    if (!req.client!.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const feedback = await db.prepare(`
-      SELECT 
-        of.*,
-        o.reference_number,
-        u.company_name
-      FROM order_feedback of
-      JOIN orders o ON of.order_id = o.id
-      JOIN users u ON of.client_id = u.id
-      ORDER BY of.created_at DESC
-    `).all();
+    const allFeedback = await db
+      .select({
+        id: orderFeedback.id,
+        orderId: orderFeedback.orderId,
+        clientId: orderFeedback.clientId,
+        rating: orderFeedback.rating,
+        orderingProcessRating: orderFeedback.orderingProcessRating,
+        productQualityRating: orderFeedback.productQualityRating,
+        deliverySpeedRating: orderFeedback.deliverySpeedRating,
+        communicationRating: orderFeedback.communicationRating,
+        comments: orderFeedback.comments,
+        wouldRecommend: orderFeedback.wouldRecommend,
+        createdAt: orderFeedback.createdAt,
+        companyName: clients.nameEn,
+      })
+      .from(orderFeedback)
+      .innerJoin(orders, eq(orderFeedback.orderId, orders.id))
+      .innerJoin(clients, eq(orderFeedback.clientId, clients.id))
+      .orderBy(desc(orderFeedback.createdAt));
 
-    res.json(feedback);
+    res.json(allFeedback);
   } catch (error) {
     console.error('Error fetching feedback:', error);
     res.status(500).json({ error: 'Failed to fetch feedback' });
