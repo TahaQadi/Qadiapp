@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { OrderFilters, OrderFilterState } from "@/components/OrderFilters";
 
 export default function OrdersPage() {
   const { t, i18n } = useTranslation();
@@ -25,10 +26,107 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [modifyOpen, setModifyOpen] = useState(false);
+  const [filters, setFilters] = useState<OrderFilterState>({
+    searchTerm: "",
+    status: "all",
+    ltaId: "all",
+    dateFrom: undefined,
+    dateTo: undefined,
+    minAmount: "",
+    maxAmount: "",
+    sortBy: "date",
+    sortOrder: "desc",
+  });
 
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  const { data: ordersData, isLoading } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
   });
+
+  // Get unique LTAs for filter
+  const availableLTAs = useMemo(() => {
+    if (!ordersData) return [];
+    const ltaMap = new Map();
+    ordersData.forEach(order => {
+      if (order.ltaId && !ltaMap.has(order.ltaId)) {
+        ltaMap.set(order.ltaId, {
+          id: order.ltaId,
+          ltaNumber: order.ltaNumber || order.ltaId,
+        });
+      }
+    });
+    return Array.from(ltaMap.values());
+  }, [ordersData]);
+
+  // Apply filters and sorting
+  const orders = useMemo(() => {
+    if (!ordersData) return [];
+
+    let filtered = [...ordersData];
+
+    // Search filter
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(order => 
+        order.id.toLowerCase().includes(searchLower) ||
+        order.ltaNumber?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Status filter
+    if (filters.status !== "all") {
+      filtered = filtered.filter(order => order.status === filters.status);
+    }
+
+    // LTA filter
+    if (filters.ltaId !== "all") {
+      filtered = filtered.filter(order => order.ltaId === filters.ltaId);
+    }
+
+    // Date range filter
+    if (filters.dateFrom) {
+      filtered = filtered.filter(order => 
+        new Date(order.createdAt) >= filters.dateFrom!
+      );
+    }
+    if (filters.dateTo) {
+      const endOfDay = new Date(filters.dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(order => 
+        new Date(order.createdAt) <= endOfDay
+      );
+    }
+
+    // Amount range filter
+    if (filters.minAmount) {
+      const min = parseFloat(filters.minAmount);
+      filtered = filtered.filter(order => order.totalAmount >= min);
+    }
+    if (filters.maxAmount) {
+      const max = parseFloat(filters.maxAmount);
+      filtered = filtered.filter(order => order.totalAmount <= max);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+
+      switch (filters.sortBy) {
+        case "date":
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case "amount":
+          comparison = a.totalAmount - b.totalAmount;
+          break;
+        case "status":
+          comparison = a.status.localeCompare(b.status);
+          break;
+      }
+
+      return filters.sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [ordersData, filters]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: any; label: string }> = {
@@ -147,6 +245,13 @@ export default function OrdersPage() {
           <p className="text-muted-foreground" data-testid="text-description">
             {i18n.language === 'ar' ? 'عرض وإدارة طلباتك' : 'View and manage your orders'}
           </p>
+        </div>
+
+        <div className="mb-6">
+          <OrderFilters 
+            onFilterChange={setFilters}
+            availableLTAs={availableLTAs}
+          />
         </div>
 
       {orders.length === 0 ? (
