@@ -1,3 +1,4 @@
+
 # Document Strategy Implementation - Changelog
 
 All notable changes to the document management system implementation.
