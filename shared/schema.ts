@@ -312,6 +312,16 @@ export const priceOffers = pgTable("price_offers", {
   responseNote: text("response_note"),
 });
 
+// Order History table for tracking status changes
+export const orderHistory = pgTable("order_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  status: text("status").notNull(),
+  changedBy: varchar("changed_by").notNull(),
+  changedAt: timestamp("changed_at").defaultNow().notNull(),
+  notes: text("notes"),
+  isAdminNote: boolean("is_admin_note").default(false).notNull(),
+});
 
 // Insert schemas
 // Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
