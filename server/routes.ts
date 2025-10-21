@@ -10,7 +10,6 @@ import orderModificationRoutes from "./order-modification-routes";
 import pushRoutes from "./push-routes";
 import analyticsRoutes from "./analytics-routes";
 import demoRequestRoutes from "./demo-request-routes";
-import demoRequestRoutes from './demo-request-routes'; // Import demo request routes
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
