@@ -436,9 +436,61 @@ Each entry includes:
 
 ---
 
+### 2025-01-21
+
+**Phase**: Phase 2: Enhanced Order Management Features  
+**Task**: 2.4 Bulk Operations - Hide Completed Orders Feature  
+**Developer**: System Implementation  
+**Status**: ✅ Completed
+
+**Work Performed**:
+1. Added toggle to hide completed and cancelled orders
+   - New state variable `hideDoneAndCancelled`
+   - Filter logic integrated into existing filter chain
+   - Persists during session
+
+2. Updated UI with new toggle control
+   - Added Switch component for hiding done/cancelled
+   - Positioned alongside Virtual Scrolling toggle
+   - Bilingual labels (Arabic/English)
+   - Responsive layout for mobile
+
+**Files Changed**:
+- `client/src/pages/AdminOrdersPage.tsx` (modified)
+
+**Features Implemented**:
+- ✅ Toggle to hide delivered orders
+- ✅ Toggle to hide cancelled orders
+- ✅ Filter integration with existing filters
+- ✅ Bilingual support
+- ✅ Clean UI integration
+- ✅ Works with search and status filters
+
+**Technical Details**:
+```typescript
+// Filter logic update
+const shouldShow = !hideDoneAndCancelled || 
+  (order.status !== 'delivered' && order.status !== 'cancelled');
+```
+
+**UI Implementation**:
+- Switch control with proper label association
+- Positioned in filter controls area
+- Grouped with other view options (Virtual Scrolling)
+- Mobile-responsive layout
+
+**Next Steps**:
+- Continue with bulk selection improvements
+- Add bulk status update functionality
+- Implement bulk export features
+
+**Time Spent**: 30 minutes
+
+---
+
 ## Next Steps
 
-Continue with Phase 2.3: Add filtering to Admin Orders page and URL parameter persistence
+Continue with Phase 2.4 - Complete bulk operations implementation: Add filtering to Admin Orders page and URL parameter persistence
 
 ---
 
