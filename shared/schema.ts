@@ -578,14 +578,3 @@ export const demoRequests = pgTable("demo_requests", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
 });
-
-// Order History table for tracking status changes
-export const orderHistory = pgTable("order_history", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
-  status: text("status").notNull(),
-  changedBy: varchar("changed_by").notNull(),
-  changedAt: timestamp("changed_at").defaultNow().notNull(),
-  notes: text("notes"),
-  isAdminNote: boolean("is_admin_note").default(false).notNull(),
-});
