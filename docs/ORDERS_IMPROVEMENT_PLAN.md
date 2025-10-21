@@ -25,7 +25,6 @@
 - Show order summary with all items
 - Display total amount prominently
 - Confirm LTA selection
-- Add terms acceptance checkbox
 - Provide edit option to go back
 ```
 
