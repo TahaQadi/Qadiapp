@@ -228,6 +228,150 @@ args = "tsx server/seed.ts"
 task = "shell.exec"
 args = "echo \"✅ Database reset and seeded successfully!\""
 
+[[workflows.workflow]]
+name = "Quality - Lint & Format"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔍 Running linter...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"💅 Formatting code...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run format"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Code quality checks completed!\""
+
+[[workflows.workflow]]
+name = "Quality - Type Check"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔷 Running TypeScript compiler...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Type checking completed!\""
+
+[[workflows.workflow]]
+name = "Deploy - Pre-Deploy Check"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔍 Running pre-deployment checks...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 1: Type checking...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 2: Running tests...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm test -- --silent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 3: Building application...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Pre-deployment checks passed!\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📦 Ready for deployment\""
+
+[[workflows.workflow]]
+name = "Deploy - Build Production"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🏗️  Building for production...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📊 Build statistics:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "ls -lh dist/"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Production build completed!\""
+
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_database:1.0.0"]
 
