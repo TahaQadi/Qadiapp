@@ -144,16 +144,12 @@ function Router() {
       <AdminRoute path="/admin/price-offers" component={AdminPriceOffersPage} />
       <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={OrderModificationsPage} />
-      <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
-      <AdminRoute path="/admin/documents/list" component={AdminDocumentListPage} />
+      <AdminRoute path="/admin/templates/documents" component={AdminDocumentsPage} />
+      <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <AdminRoute path="/admin/reports" component={AdminReportsPage} />
       <AdminRoute path="/admin/demo-requests" component={AdminDemoRequestsPage} />
-      {/* Redirect old templates route */}
-      <Route path="/admin/templates">
-        <Redirect to="/admin/documents" />
-      </Route>
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />
