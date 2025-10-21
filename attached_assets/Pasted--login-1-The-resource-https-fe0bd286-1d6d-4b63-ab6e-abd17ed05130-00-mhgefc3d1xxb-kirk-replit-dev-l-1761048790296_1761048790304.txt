@@ -1,0 +1,19 @@
+/login:1 The resource https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/logo.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.Understand this warning
+chunk-D2QSPZZS.js?v=d9c6ca45:340 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-D2QSPZZS.js?v=d9c6ca45:340Understand this warning
+chunk-D2QSPZZS.js?v=d9c6ca45:326 `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+(anonymous) @ chunk-D2QSPZZS.js?v=d9c6ca45:326Understand this error
+chunk-D2QSPZZS.js?v=d9c6ca45:340 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-D2QSPZZS.js?v=d9c6ca45:340Understand this warning
+/api/admin/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/7021d615-68db-4b94-8ebd-60a64d6b4a20/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/a2ba0fa8-4dfc-41f1-8e0f-4106dc6c532e/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/c6b4259f-79f3-4094-9978-e0cea4e89c5d/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+/api/admin/orders/2a326c46-bea7-4f48-b81f-8ca897aafa41/status:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
