@@ -87,12 +87,15 @@
 ### Phase 4: Document Library Optimization ⏳ IN PROGRESS
 **Target**: AdminDocumentListPage.tsx (`/admin/documents`)
 
-- [ ] **Advanced Filtering System**
-  - [ ] Filter by document type (dropdown)
-  - [ ] Filter by date range (date picker)
-  - [ ] Filter by client (searchable select)
-  - [ ] Filter by template used
-  - [ ] Clear all filters button
+- [x] **Advanced Filtering System** ✅
+  - [x] Filter by document type (dropdown)
+  - [x] Filter by date range (date picker)
+  - [x] Filter by client (searchable select)
+  - [x] Filter by template used
+  - [x] Clear all filters button
+  - [x] Search by filename or client name
+  - [x] Active filter count badge
+  - [x] Collapsible filter panel
   
 - [ ] **Enhanced Metadata Display**
   - [ ] Show creation timestamp with relative time
