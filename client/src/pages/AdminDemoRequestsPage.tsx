@@ -129,15 +129,15 @@ export default function AdminDemoRequestsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {requests.map((request) => (
-              <Card key={request.id} className="hover-elevate">
+              <Card key={request.id} className="hover-elevate transition-all">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        {request.company}
+                        <Building2 className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{request.company}</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">{request.name}</p>
+                      <p className="text-sm text-muted-foreground mt-1 truncate">{request.name}</p>
                     </div>
                     {getStatusBadge(request.status)}
                   </div>

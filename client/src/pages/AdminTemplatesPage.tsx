@@ -365,30 +365,31 @@ export default function AdminTemplatesPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-            <Button
-              onClick={() => setImportDialogOpen(true)}
-              size="default"
-              variant="outline"
-              className="shrink-0 border-primary/50 hover:border-primary dark:border-[#d4af37]/50 dark:hover:border-[#d4af37] min-h-[44px]"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              <span>{language === 'ar' ? 'استيراد' : 'Import'}</span>
-            </Button>
-            <Button
-              onClick={() => {
-                setEditingTemplate(null);
-                resetForm();
-                setCreateDialogOpen(true);
-              }}
-              size="default"
-              className="shrink-0 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#f9c800] min-h-[44px]"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              <span>{language === 'ar' ? 'قالب جديد' : 'New Template'}</span>
-            </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+                className="gap-2"
+                data-testid="button-import-template"
+              >
+                <Upload className="h-4 w-4" />
+                <span>{language === 'ar' ? 'استيراد' : 'Import'}</span>
+              </Button>
+              <Button 
+                onClick={() => setCreateDialogOpen(true)} 
+                className="gap-2"
+                data-testid="button-new-template"
+              >
+                <Plus className="h-4 w-4" />
+                {language === 'ar' ? 'قالب جديد' : 'New Template'}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
