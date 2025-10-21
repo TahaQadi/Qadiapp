@@ -516,7 +516,21 @@ export default function AdminOrdersPage() {
               {getClientName(order.clientId)}
             </p>
           </div>
-          {getStatusBadge(order.status)}
+          <Select
+            value={order.status}
+            onValueChange={(value) => handleStatusChange(order.id, value)}
+          >
+            <SelectTrigger className="w-auto border-border/30 dark:border-[#d4af37]/10">
+              {getStatusBadge(order.status)}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">{language === 'ar' ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+              <SelectItem value="confirmed">{language === 'ar' ? 'مؤكد' : 'Confirmed'}</SelectItem>
+              <SelectItem value="shipped">{language === 'ar' ? 'تم الشحن' : 'Shipped'}</SelectItem>
+              <SelectItem value="delivered">{language === 'ar' ? 'تم التسليم' : 'Delivered'}</SelectItem>
+              <SelectItem value="cancelled">{language === 'ar' ? 'ملغي' : 'Cancelled'}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
