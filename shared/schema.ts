@@ -3,7 +3,7 @@ import { pgTable, text, varchar, integer, decimal, timestamp, boolean, uuid, uni
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Replit Auth: Session storage table (required for Replit Auth)
+// Session storage table for express-session with connect-pg-simple
 export const sessions = pgTable(
   "sessions",
   {
@@ -14,7 +14,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Replit Auth: User storage table (required for Replit Auth)
+// User storage table (reserved for future multi-tenancy features)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -28,7 +28,7 @@ export const users = pgTable("users", {
 // Business logic: Clients table (companies/organizations)
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").unique(), // Link to Replit Auth user
+  userId: varchar("user_id").unique(), // Reserved for future use
   nameEn: text("name_en").notNull(),
   nameAr: text("name_ar").notNull(),
   username: text("username").notNull().unique(),
