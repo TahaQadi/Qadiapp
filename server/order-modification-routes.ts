@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { storage } from './storage';
+import { errorLogger } from './error-logger';
 import { isAuthenticated } from './auth';
 import { z } from 'zod';
 
@@ -130,10 +131,17 @@ router.post('/orders/:orderId/modify', isAuthenticated, async (req, res) => {
       messageAr: 'تم إرسال طلب التعديل بنجاح'
     });
   } catch (error) {
-    console.error('Request order modification error:', error);
+    errorLogger.logError(error as Error, {
+      route: '/api/client/orders/:orderId/modifications',
+      userId: (req as any).client?.id,
+      orderId: req.params.orderId,
+      requestBody: req.body
+    });
+
+    console.error('Order modification error:', error);
     res.status(500).json({
-      message: error instanceof Error ? error.message : 'Failed to request modification',
-      messageAr: 'فشل طلب التعديل',
+      message: error instanceof Error ? error.message : 'Failed to create modification request',
+      messageAr: 'فشل إنشاء طلب التعديل'
     });
   }
 });
@@ -152,6 +160,10 @@ router.get('/admin/order-modifications', isAuthenticated, async (req, res) => {
     const modifications = await storage.getAllOrderModifications();
     res.json(modifications);
   } catch (error) {
+    errorLogger.logError(error as Error, {
+      route: '/api/client/admin/order-modifications',
+      userId: (req as any).client?.id,
+    });
     console.error('Get order modifications error:', error);
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Failed to fetch modifications',
@@ -185,6 +197,11 @@ router.get('/orders/:orderId/modifications', isAuthenticated, async (req, res) =
     const modifications = await storage.getOrderModifications(orderId);
     res.json(modifications);
   } catch (error) {
+    errorLogger.logError(error as Error, {
+      route: '/api/client/orders/:orderId/modifications',
+      userId: (req as any).client?.id,
+      orderId: req.params.orderId,
+    });
     console.error('Get order modifications error:', error);
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Failed to fetch modifications',
@@ -325,6 +342,11 @@ router.post('/admin/order-modifications/:modificationId/review', isAuthenticated
       messageAr: `تم ${status === 'approved' ? 'الموافقة' : 'الرفض'} على التعديل بنجاح`
     });
   } catch (error) {
+    errorLogger.logError(error as Error, {
+      route: '/api/client/admin/order-modifications/:modificationId/review',
+      userId: (req as any).client?.id,
+      modificationId: req.params.modificationId,
+    });
     console.error('Review modification error:', error);
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Failed to review modification',
@@ -406,6 +428,12 @@ router.post('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
       messageAr: 'تم إلغاء الطلب بنجاح'
     });
   } catch (error) {
+    errorLogger.logError(error as Error, {
+      route: '/api/client/orders/:orderId/cancel',
+      userId: (req as any).client?.id,
+      orderId: req.params.orderId,
+      requestBody: req.body
+    });
     console.error('Cancel order error:', error);
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Failed to cancel order',

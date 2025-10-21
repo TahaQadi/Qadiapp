@@ -3,6 +3,7 @@ import { renderToString } from 'react-dom/server';
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { errorLogger } from "./error-logger";
 import { setupAuth, isAuthenticated } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
 import passwordResetRoutes from "./password-reset-routes";
@@ -1401,6 +1402,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Error Logs Endpoints
+  app.get("/api/admin/error-logs", requireAdmin, async (req: any, res) => {
+    try {
+      const { level, limit } = req.query;
+      const limitNum = limit ? parseInt(limit as string) : 50;
+
+      let logs;
+      if (level) {
+        logs = await errorLogger.getErrorsByLevel(level as any, limitNum);
+      } else {
+        logs = await errorLogger.getRecentErrors(limitNum);
+      }
+
+      res.json(logs);
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/admin/error-logs',
+        userId: req.client.id
+      });
+      res.status(500).json({
+        message: "Error fetching error logs",
+        messageAr: "خطأ في جلب سجلات الأخطاء"
+      });
+    }
+  });
+
+  app.get("/api/admin/error-logs/stats", requireAdmin, async (req: any, res) => {
+    try {
+      const stats = await errorLogger.getErrorStats();
+      res.json(stats);
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/admin/error-logs/stats',
+        userId: req.client.id
+      });
+      res.status(500).json({
+        message: "Error fetching error stats",
+        messageAr: "خطأ في جلب إحصائيات الأخطاء"
+      });
+    }
+  });
+
+  app.delete("/api/admin/error-logs/clear", requireAdmin, async (req: any, res) => {
+    try {
+      const { daysToKeep } = req.query;
+      const days = daysToKeep ? parseInt(daysToKeep as string) : 30;
+      
+      const deleted = await errorLogger.clearOldLogs(days);
+      
+      errorLogger.logInfo('Error logs cleared', {
+        route: '/api/admin/error-logs/clear',
+        userId: req.client.id,
+        deletedCount: deleted,
+        daysToKeep: days
+      });
+
+      res.json({
+        message: `Cleared ${deleted} old error logs`,
+        messageAr: `تم مسح ${deleted} سجلات أخطاء قديمة`,
+        deleted
+      });
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/admin/error-logs/clear',
+        userId: req.client.id
+      });
+      res.status(500).json({
+        message: "Error clearing error logs",
+        messageAr: "خطأ في مسح سجلات الأخطاء"
+      });
+    }
+  });
+
   // Export order to PDF (admin only)
   app.post('/api/admin/orders/export-pdf', requireAdmin, async (req: any, res) => {
     try {
@@ -1954,6 +2028,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Step 1: Extract and validate ltaId from items
       const ltaIds = Array.from(new Set(validatedData.items.map(item => item.ltaId)));
       if (ltaIds.length === 0) {
+        errorLogger.logWarning('Order creation attempted without LTA', {
+          route: '/api/client/orders',
+          userId: req.client.id,
+          requestBody: { itemCount: validatedData.items.length }
+        });
         return res.status(400).json({
           message: 'Order must include LTA information',
           messageAr: 'يجب أن يتضمن الطلب معلومات الاتفاقية',
@@ -2112,11 +2191,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(finalOrder);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        errorLogger.logWarning('Order validation failed', {
+          route: '/api/client/orders',
+          userId: req.client?.id,
+          validationErrors: error.errors
+        });
         return res.status(400).json({
           message: error.errors[0]?.message || "Validation error",
           messageAr: error.errors[0]?.message || "خطأ في التحقق",
         });
       }
+      
+      errorLogger.logError(error as Error, {
+        route: '/api/client/orders',
+        userId: req.client?.id,
+        requestBody: req.body
+      });
+      
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إنشاء الطلب",
