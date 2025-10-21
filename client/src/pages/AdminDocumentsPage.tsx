@@ -888,28 +888,29 @@ export default function AdminDocumentsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {previewTemplate && (
+          {previewTemplate ? (
             <div className="space-y-6">
               {/* Template Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
                     {language === 'ar' ? 'معلومات أساسية' : 'Basic Information'}
                   </h4>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center py-1 border-b">
                       <span className="text-muted-foreground">{language === 'ar' ? 'الاسم (EN):' : 'Name (EN):'}</span>
-                      <span className="font-medium">{previewTemplate.nameEn}</span>
+                      <span className="font-medium">{previewTemplate.nameEn || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center py-1 border-b">
                       <span className="text-muted-foreground">{language === 'ar' ? 'الاسم (AR):' : 'Name (AR):'}</span>
-                      <span className="font-medium">{previewTemplate.nameAr}</span>
+                      <span className="font-medium">{previewTemplate.nameAr || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center py-1 border-b">
                       <span className="text-muted-foreground">{language === 'ar' ? 'التصنيف:' : 'Category:'}</span>
-                      <Badge variant="outline">{previewTemplate.category}</Badge>
+                      <Badge variant="outline">{previewTemplate.category || 'N/A'}</Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center py-1 border-b">
                       <span className="text-muted-foreground">{language === 'ar' ? 'اللغة:' : 'Language:'}</span>
                       <Badge variant="outline">
                         {previewTemplate.language === 'both' 
@@ -917,7 +918,7 @@ export default function AdminDocumentsPage() {
                           : previewTemplate.language === 'ar' ? 'عربي' : 'English'}
                       </Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center py-1">
                       <span className="text-muted-foreground">{language === 'ar' ? 'الحالة:' : 'Status:'}</span>
                       <Badge variant={previewTemplate.isActive ? 'default' : 'secondary'}>
                         {previewTemplate.isActive
@@ -926,48 +927,67 @@ export default function AdminDocumentsPage() {
                       </Badge>
                     </div>
                   </div>
-                </div>
+                </Card>
 
-                <div>
-                  <h4 className="text-sm font-medium mb-2">
-                    {language === 'ar' ? 'التفاصيل' : 'Details'}
+                <Card className="p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    {language === 'ar' ? 'الوصف' : 'Description'}
                   </h4>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-3 text-sm">
                     <div>
-                      <span className="text-muted-foreground">{language === 'ar' ? 'الوصف (EN):' : 'Description (EN):'}</span>
-                      <p className="text-sm mt-1">{previewTemplate.descriptionEn}</p>
+                      <span className="text-muted-foreground font-medium block mb-1">
+                        {language === 'ar' ? 'الوصف (EN):' : 'Description (EN):'}
+                      </span>
+                      <p className="text-sm bg-muted/50 p-2 rounded">
+                        {previewTemplate.descriptionEn || 'No description'}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{language === 'ar' ? 'الوصف (AR):' : 'Description (AR):'}</span>
-                      <p className="text-sm mt-1">{previewTemplate.descriptionAr}</p>
+                      <span className="text-muted-foreground font-medium block mb-1">
+                        {language === 'ar' ? 'الوصف (AR):' : 'Description (AR):'}
+                      </span>
+                      <p className="text-sm bg-muted/50 p-2 rounded">
+                        {previewTemplate.descriptionAr || 'لا يوجد وصف'}
+                      </p>
                     </div>
                   </div>
-                </div>
+                </Card>
               </div>
 
               {/* Template Structure */}
-              <div>
-                <h4 className="text-sm font-medium mb-2">
-                  {language === 'ar' ? 'بنية القالب' : 'Template Structure'}
-                </h4>
-                <Card className="bg-muted/50">
-                  <CardContent className="p-4">
-                    <pre className="text-xs overflow-auto max-h-[400px]">
-                      {JSON.stringify(previewTemplate.structure, null, 2)}
-                    </pre>
-                  </CardContent>
-                </Card>
-              </div>
+              {previewTemplate.structure && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    {language === 'ar' ? 'بنية القالب' : 'Template Structure'}
+                  </h4>
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <pre className="text-xs overflow-auto max-h-[400px] bg-background p-3 rounded border">
+                        {JSON.stringify(
+                          typeof previewTemplate.structure === 'string'
+                            ? JSON.parse(previewTemplate.structure)
+                            : previewTemplate.structure,
+                          null,
+                          2
+                        )}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
               {/* Template Styles */}
               {previewTemplate.styles && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
                     {language === 'ar' ? 'التنسيقات' : 'Styles'}
                   </h4>
                   <Card className="bg-muted/50">
                     <CardContent className="p-4">
-                      <pre className="text-xs overflow-auto max-h-[200px]">
+                      <pre className="text-xs overflow-auto max-h-[200px] bg-background p-3 rounded border">
                         {JSON.stringify(
                           typeof previewTemplate.styles === 'string'
                             ? JSON.parse(previewTemplate.styles)
@@ -981,6 +1001,10 @@ export default function AdminDocumentsPage() {
                 </div>
               )}
             </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              {language === 'ar' ? 'لا توجد بيانات للمعاينة' : 'No preview data available'}
+            </div>
           )}
 
           <DialogFooter className="flex gap-2">
@@ -990,16 +1014,18 @@ export default function AdminDocumentsPage() {
             >
               {language === 'ar' ? 'إغلاق' : 'Close'}
             </Button>
-            <Button
-              onClick={() => {
-                setPreviewDialogOpen(false);
-                setEditingTemplate(previewTemplate);
-                setCreateDialogOpen(true);
-              }}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              {language === 'ar' ? 'تعديل القالب' : 'Edit Template'}
-            </Button>
+            {previewTemplate && (
+              <Button
+                onClick={() => {
+                  setPreviewDialogOpen(false);
+                  setEditingTemplate(previewTemplate);
+                  setCreateDialogOpen(true);
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'تعديل القالب' : 'Edit Template'}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
