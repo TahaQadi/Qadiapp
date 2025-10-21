@@ -28,7 +28,7 @@ export default function OrderFeedbackDialog({
   open,
   onOpenChange,
 }: OrderFeedbackDialogProps) {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const { toast } = useToast();
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
