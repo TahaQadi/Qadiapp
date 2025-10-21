@@ -1,0 +1,194 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: {isAllowListed: false, isProtectionEnabled: true, isScamsProtectionEnabled: true}
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: {isAllowListed: false, isProtectionEnabled: true, isScamsProtectionEnabled: true}
+chunk-SXRIVT2P.js?v=d9c6ca45:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/auth/user 401 (Unauthorized)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=d9c6ca45:1099
+run @ @tanstack_react-query.js?v=d9c6ca45:797
+start @ @tanstack_react-query.js?v=d9c6ca45:840
+fetch @ @tanstack_react-query.js?v=d9c6ca45:1146
+executeFetch_fn @ @tanstack_react-query.js?v=d9c6ca45:1644
+onSubscribe @ @tanstack_react-query.js?v=d9c6ca45:1337
+subscribe @ @tanstack_react-query.js?v=d9c6ca45:24
+(anonymous) @ @tanstack_react-query.js?v=d9c6ca45:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=d9c6ca45:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=d9c6ca45:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:19381
+workLoop @ chunk-SXRIVT2P.js?v=d9c6ca45:197
+flushWork @ chunk-SXRIVT2P.js?v=d9c6ca45:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=d9c6ca45:384
+login:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+main.tsx:10 ✅ Service Worker registered successfully
+securityAudit.ts:126 🔒 Security Audit Report
+securityAudit.ts:127 Score: 50%
+securityAudit.ts:128 ---
+securityAudit.ts:133 ✅ HTTPS : Site is using HTTPS
+securityAudit.ts:133 ❌ Content Security Policy [MEDIUM]: No CSP meta tag found
+securityAudit.ts:133 ✅ Cookie Security : Cookies are properly secured
+securityAudit.ts:133 ❌ XSS Protection [MEDIUM]: 3 inline scripts detected
+securityAudit.ts:133 ❌ Clickjacking Protection [MEDIUM]: No X-Frame-Options protection
+securityAudit.ts:133 ✅ Mixed Content : No mixed content detected
+login:1 The resource https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/logo.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+errorMonitoring.ts:56 [Error Monitoring] ReferenceError: t is not defined
+    at OrderFeedbackDialog (OrderFeedbackDialog.tsx:230:14)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=d9c6ca45:11596:26)
+    at mountIndeterminateComponent (chunk-SXRIVT2P.js?v=d9c6ca45:14974:21)
+    at beginWork (chunk-SXRIVT2P.js?v=d9c6ca45:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-SXRIVT2P.js?v=d9c6ca45:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-SXRIVT2P.js?v=d9c6ca45:3705:24)
+    at invokeGuardedCallback (chunk-SXRIVT2P.js?v=d9c6ca45:3739:39)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=d9c6ca45:19818:15)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=d9c6ca45:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=d9c6ca45:19190:13) {component: 'global', action: 'window.error', metadata: {…}}
+captureError @ errorMonitoring.ts:56
+(anonymous) @ errorMonitoring.ts:30
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+beginWork$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:19818
+performUnitOfWork @ chunk-SXRIVT2P.js?v=d9c6ca45:19251
+workLoopSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19190
+renderRootSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19169
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18927
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+OrderFeedbackDialog.tsx:230 Uncaught ReferenceError: t is not defined
+    at OrderFeedbackDialog (OrderFeedbackDialog.tsx:230:14)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=d9c6ca45:11596:26)
+    at mountIndeterminateComponent (chunk-SXRIVT2P.js?v=d9c6ca45:14974:21)
+    at beginWork (chunk-SXRIVT2P.js?v=d9c6ca45:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-SXRIVT2P.js?v=d9c6ca45:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-SXRIVT2P.js?v=d9c6ca45:3705:24)
+    at invokeGuardedCallback (chunk-SXRIVT2P.js?v=d9c6ca45:3739:39)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=d9c6ca45:19818:15)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=d9c6ca45:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=d9c6ca45:19190:13)
+OrderFeedbackDialog @ OrderFeedbackDialog.tsx:230
+renderWithHooks @ chunk-SXRIVT2P.js?v=d9c6ca45:11596
+mountIndeterminateComponent @ chunk-SXRIVT2P.js?v=d9c6ca45:14974
+beginWork @ chunk-SXRIVT2P.js?v=d9c6ca45:15962
+callCallback2 @ chunk-SXRIVT2P.js?v=d9c6ca45:3680
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+beginWork$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:19818
+performUnitOfWork @ chunk-SXRIVT2P.js?v=d9c6ca45:19251
+workLoopSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19190
+renderRootSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19169
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18927
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+errorMonitoring.ts:56 [Error Monitoring] ReferenceError: t is not defined
+    at OrderFeedbackDialog (OrderFeedbackDialog.tsx:230:14)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=d9c6ca45:11596:26)
+    at mountIndeterminateComponent (chunk-SXRIVT2P.js?v=d9c6ca45:14974:21)
+    at beginWork (chunk-SXRIVT2P.js?v=d9c6ca45:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-SXRIVT2P.js?v=d9c6ca45:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-SXRIVT2P.js?v=d9c6ca45:3705:24)
+    at invokeGuardedCallback (chunk-SXRIVT2P.js?v=d9c6ca45:3739:39)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=d9c6ca45:19818:15)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=d9c6ca45:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=d9c6ca45:19190:13) {component: 'global', action: 'window.error', metadata: {…}}
+captureError @ errorMonitoring.ts:56
+(anonymous) @ errorMonitoring.ts:30
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+beginWork$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:19818
+performUnitOfWork @ chunk-SXRIVT2P.js?v=d9c6ca45:19251
+workLoopSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19190
+renderRootSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19169
+recoverFromConcurrentError @ chunk-SXRIVT2P.js?v=d9c6ca45:18786
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18932
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+OrderFeedbackDialog.tsx:230 Uncaught ReferenceError: t is not defined
+    at OrderFeedbackDialog (OrderFeedbackDialog.tsx:230:14)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=d9c6ca45:11596:26)
+    at mountIndeterminateComponent (chunk-SXRIVT2P.js?v=d9c6ca45:14974:21)
+    at beginWork (chunk-SXRIVT2P.js?v=d9c6ca45:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-SXRIVT2P.js?v=d9c6ca45:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-SXRIVT2P.js?v=d9c6ca45:3705:24)
+    at invokeGuardedCallback (chunk-SXRIVT2P.js?v=d9c6ca45:3739:39)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=d9c6ca45:19818:15)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=d9c6ca45:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=d9c6ca45:19190:13)
+OrderFeedbackDialog @ OrderFeedbackDialog.tsx:230
+renderWithHooks @ chunk-SXRIVT2P.js?v=d9c6ca45:11596
+mountIndeterminateComponent @ chunk-SXRIVT2P.js?v=d9c6ca45:14974
+beginWork @ chunk-SXRIVT2P.js?v=d9c6ca45:15962
+callCallback2 @ chunk-SXRIVT2P.js?v=d9c6ca45:3680
+invokeGuardedCallbackDev @ chunk-SXRIVT2P.js?v=d9c6ca45:3705
+invokeGuardedCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:3739
+beginWork$1 @ chunk-SXRIVT2P.js?v=d9c6ca45:19818
+performUnitOfWork @ chunk-SXRIVT2P.js?v=d9c6ca45:19251
+workLoopSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19190
+renderRootSync @ chunk-SXRIVT2P.js?v=d9c6ca45:19169
+recoverFromConcurrentError @ chunk-SXRIVT2P.js?v=d9c6ca45:18786
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18932
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+chunk-SXRIVT2P.js?v=d9c6ca45:14080 The above error occurred in the <OrderFeedbackDialog> component:
+
+    at OrderFeedbackDialog (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/OrderFeedbackDialog.tsx:34:3)
+    at Provider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d9c6ca45:38:15)
+    at Dialog (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D2QSPZZS.js?v=d9c6ca45:52:5)
+    at OrderDetailsDialog (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/OrderDetailsDialog.tsx:42:38)
+    at div
+    at OrderingPage (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/pages/OrderingPage.tsx:55:20)
+    at Route (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=d9c6ca45:280:16)
+    at ProtectedRoute (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=d9c6ca45:336:17)
+    at Router (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=IuPAOVuRTZyWWFO8Ihuez:133:48)
+    at ErrorBoundary (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at AppContent (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=IuPAOVuRTZyWWFO8Ihuez:331:31)
+    at Provider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=d9c6ca45:38:15)
+    at TooltipProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=d9c6ca45:64:5)
+    at LanguageProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/LanguageProvider.tsx:21:36)
+    at ThemeProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at _a (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-helmet-async.js?v=d9c6ca45:624:5)
+    at AppWithProviders (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=IuPAOVuRTZyWWFO8Ihuez:375:42)
+    at QueryClientProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d9c6ca45:3086:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+logCapturedError @ chunk-SXRIVT2P.js?v=d9c6ca45:14080
+callback @ chunk-SXRIVT2P.js?v=d9c6ca45:14126
+callCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:11296
+commitUpdateQueue @ chunk-SXRIVT2P.js?v=d9c6ca45:11313
+commitLayoutEffectOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:17123
+commitLayoutMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18030
+commitLayoutEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18019
+commitLayoutEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:17970
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19406
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677
+ErrorBoundary.tsx:29 Error boundary caught error: ReferenceError: t is not defined
+    at OrderFeedbackDialog (OrderFeedbackDialog.tsx:230:14)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=d9c6ca45:11596:26)
+    at mountIndeterminateComponent (chunk-SXRIVT2P.js?v=d9c6ca45:14974:21)
+    at beginWork (chunk-SXRIVT2P.js?v=d9c6ca45:15962:22)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=d9c6ca45:19806:22)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=d9c6ca45:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=d9c6ca45:19190:13)
+    at renderRootSync (chunk-SXRIVT2P.js?v=d9c6ca45:19169:15)
+    at recoverFromConcurrentError (chunk-SXRIVT2P.js?v=d9c6ca45:18786:28)
+    at performSyncWorkOnRoot (chunk-SXRIVT2P.js?v=d9c6ca45:18932:28) {componentStack: '\n    at OrderFeedbackDialog (https://fe0bd286-1d6d…tack_react-query.js?v=d9c6ca45:3086:3)\n    at App'}
+componentDidCatch @ ErrorBoundary.tsx:29
+callback @ chunk-SXRIVT2P.js?v=d9c6ca45:14132
+callCallback @ chunk-SXRIVT2P.js?v=d9c6ca45:11296
+commitUpdateQueue @ chunk-SXRIVT2P.js?v=d9c6ca45:11313
+commitLayoutEffectOnFiber @ chunk-SXRIVT2P.js?v=d9c6ca45:17123
+commitLayoutMountEffects_complete @ chunk-SXRIVT2P.js?v=d9c6ca45:18030
+commitLayoutEffects_begin @ chunk-SXRIVT2P.js?v=d9c6ca45:18019
+commitLayoutEffects @ chunk-SXRIVT2P.js?v=d9c6ca45:17970
+commitRootImpl @ chunk-SXRIVT2P.js?v=d9c6ca45:19406
+commitRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=d9c6ca45:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=d9c6ca45:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=d9c6ca45:18677

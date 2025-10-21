@@ -56,16 +56,16 @@ export default function OrderFeedbackDialog({
     },
     onSuccess: () => {
       toast({
-        title: t.feedbackSubmitted || 'Feedback Submitted',
-        description: t.feedbackThankYou || 'Thank you for your feedback!',
+        title: language === 'ar' ? 'تم إرسال التقييم' : 'Feedback Submitted',
+        description: language === 'ar' ? 'شكرا لك على ملاحظاتك!' : 'Thank you for your feedback!',
       });
       onOpenChange(false);
       resetForm();
     },
     onError: () => {
       toast({
-        title: t.error || 'Error',
-        description: t.feedbackError || 'Failed to submit feedback',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'فشل في إرسال التقييم' : 'Failed to submit feedback',
         variant: 'destructive',
       });
     },
@@ -84,7 +84,7 @@ export default function OrderFeedbackDialog({
   const handleSubmit = () => {
     if (rating === 0) {
       toast({
-        title: t.error || 'Error',
+        title: language === 'ar' ? 'خطأ' : 'Error',
         description: language === 'ar' ? 'يرجى تقييم التجربة الإجمالية' : 'Please rate your overall experience',
         variant: 'destructive',
       });
@@ -93,7 +93,7 @@ export default function OrderFeedbackDialog({
 
     if (wouldRecommend === null) {
       toast({
-        title: t.error || 'Error',
+        title: language === 'ar' ? 'خطأ' : 'Error',
         description: language === 'ar' ? 'يرجى اختيار ما إذا كنت توصي بنا' : 'Please indicate if you would recommend us',
         variant: 'destructive',
       });
@@ -227,7 +227,7 @@ export default function OrderFeedbackDialog({
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t.cancel || 'Cancel'}
+            {language === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
           <Button onClick={handleSubmit} disabled={submitFeedback.isPending}>
             {submitFeedback.isPending
