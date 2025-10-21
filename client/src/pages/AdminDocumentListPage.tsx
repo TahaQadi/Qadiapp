@@ -54,9 +54,17 @@ export default function AdminDocumentListPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch documents
-  const { data: documents = [], isLoading: loadingDocuments } = useQuery<Document[]>({
+  const { data: documentsResponse, isLoading: loadingDocuments } = useQuery<{ documents: Document[] }>({
     queryKey: ['/api/documents'],
+    queryFn: async () => {
+      const response = await fetch('/api/documents', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch documents');
+      return response.json();
+    }
   });
+  const documents = documentsResponse?.documents || [];
 
   // Fetch templates for filter
   const { data: templates = [] } = useQuery<Template[]>({
