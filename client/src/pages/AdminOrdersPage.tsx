@@ -94,7 +94,7 @@ export default function AdminOrdersPage() {
       return res.json();
     },
     enabled: !useVirtualScrolling,
-    keepPreviousData: true,
+    placeholderData: (previousData: any) => previousData,
   });
 
   const orders = useVirtualScrolling ? allOrdersData?.orders || [] : ordersData.orders;
@@ -103,10 +103,24 @@ export default function AdminOrdersPage() {
 
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['/api/admin/clients'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/clients', {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch clients');
+      return res.json();
+    },
   });
 
   const { data: ltas = [] } = useQuery<LTA[]>({
     queryKey: ['/api/admin/ltas'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/ltas', {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch LTAs');
+      return res.json();
+    },
   });
 
   const updateStatusMutation = useMutation({
@@ -429,26 +443,26 @@ export default function AdminOrdersPage() {
     if (selectedOrders.size === orders.length) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(orders.map(o => o.id)));
+      setSelectedOrders(new Set(orders.map((o: Order) => o.id)));
     }
   };
 
   const handleBulkPrint = () => {
     selectedOrders.forEach(orderId => {
-      const order = orders.find(o => o.id === orderId);
+      const order = orders.find((o: Order) => o.id === orderId);
       if (order) handlePrintOrder(order);
     });
   };
 
   const handleBulkExportPDF = async () => {
     for (const orderId of Array.from(selectedOrders)) {
-      const order = orders.find(o => o.id === orderId);
+      const order = orders.find((o: Order) => o.id === orderId);
       if (order) await handleExportPDF(order);
     }
   };
 
   // Filter and search orders
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order: Order) => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     const matchesSearch = searchQuery === '' ||
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -714,7 +728,7 @@ export default function AdminOrdersPage() {
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-3">
-                  {paginatedOrders.map((order) => renderOrderCard(order))}
+                  {paginatedOrders.map((order: Order) => renderOrderCard(order))}
                 </div>
 
                 {/* Desktop Table View */}
@@ -740,7 +754,7 @@ export default function AdminOrdersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedOrders.map((order) => (
+                      {paginatedOrders.map((order: Order) => (
                         <TableRow
                           key={order.id}
                           data-testid={`row-order-${order.id}`}
