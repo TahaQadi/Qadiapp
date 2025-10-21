@@ -551,11 +551,63 @@ export default function AdminDocumentsPage() {
                   setCreateDialogOpen(true);
                 }}
                 size={isMobile ? "sm" : "default"}
+                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 data-testid="button-new-template"
               >
                 <Plus className="h-4 w-4 sm:mr-2" />
                 {!isMobile && (language === 'ar' ? 'قالب جديد' : 'New Template')}
               </Button>
+            </div>
+
+            {/* Template Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold" data-testid="text-total-templates">
+                    {templates?.length || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'إجمالي القوالب' : 'Total Templates'}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold" data-testid="text-active-templates">
+                    {templates?.filter((t: any) => t.isActive).length || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'قوالب نشطة' : 'Active Templates'}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold" data-testid="text-category-count">
+                    {selectedCategory === 'all' 
+                      ? categories.length - 1 
+                      : templates?.filter((t: any) => t.category === selectedCategory).length || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedCategory === 'all' 
+                      ? (language === 'ar' ? 'التصنيفات' : 'Categories')
+                      : (language === 'ar' ? 'في هذا التصنيف' : 'In Category')}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold" data-testid="text-bilingual-templates">
+                    {templates?.filter((t: any) => t.language === 'both').length || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'ثنائية اللغة' : 'Bilingual'}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4">
@@ -568,20 +620,51 @@ export default function AdminDocumentsPage() {
                     data-testid={`tab-category-${cat.value}`}
                   >
                     {language === 'ar' ? cat.labelAr : cat.labelEn}
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {cat.value === 'all' 
+                        ? templates?.length || 0
+                        : templates?.filter((t: any) => t.category === cat.value).length || 0}
+                    </Badge>
                   </TabsTrigger>
                 ))}
               </TabsList>
 
               {isLoadingTemplates ? (
                 <div className="flex items-center justify-center min-h-[400px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      {language === 'ar' ? 'جاري تحميل القوالب...' : 'Loading templates...'}
+                    </p>
+                  </div>
                 </div>
+              ) : !templates || templates.length === 0 ? (
+                <EmptyState
+                  icon={FileText}
+                  title={language === 'ar' ? 'لا توجد قوالب' : 'No templates found'}
+                  description={
+                    language === 'ar'
+                      ? 'ابدأ بإنشاء قالب جديد لمستنداتك'
+                      : 'Start by creating a new template for your documents'
+                  }
+                  action={
+                    <Button
+                      onClick={() => {
+                        setEditingTemplate(null);
+                        setCreateDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {language === 'ar' ? 'إنشاء قالب' : 'Create Template'}
+                    </Button>
+                  }
+                />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {templates?.map((template: any, index: number) => (
                     <Card
                       key={template.id}
-                      className="hover:shadow-lg transition-all duration-300"
+                      className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50"
                       data-testid={`card-template-${template.id}`}
                     >
                       <CardHeader className="pb-3">
@@ -598,18 +681,28 @@ export default function AdminDocumentsPage() {
                             <CardDescription className="text-xs line-clamp-2 mt-1">
                               {language === 'ar' ? template.descriptionAr : template.descriptionEn}
                             </CardDescription>
+                            {/* Template metadata */}
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              <Badge
+                                variant={template.isActive ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {template.isActive
+                                  ? (language === 'ar' ? 'نشط' : 'Active')
+                                  : (language === 'ar' ? 'غير نشط' : 'Inactive')}
+                              </Badge>
+                              {template.language && (
+                                <Badge variant="outline" className="text-xs">
+                                  {template.language === 'both' 
+                                    ? (language === 'ar' ? 'ثنائي اللغة' : 'Bilingual')
+                                    : template.language === 'ar' ? 'عربي' : 'English'}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <Badge
-                            variant={template.isActive ? 'default' : 'secondary'}
-                            className="shrink-0 text-xs"
-                          >
-                            {template.isActive
-                              ? (language === 'ar' ? 'نشط' : 'Active')
-                              : (language === 'ar' ? 'غير نشط' : 'Inactive')}
-                          </Badge>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-0 space-y-2">
                         <div className="flex gap-1 sm:gap-2">
                           <Button
                             size="sm"
