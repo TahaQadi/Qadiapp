@@ -342,16 +342,63 @@
 - `client/src/lib/bundleOptimization.ts` - Enhanced with performance metrics
 - `client/src/main.tsx` - Bundle monitoring
 
-### Week 5: Advanced Features
-**Dates**: February 13-19, 2025  
-**Status**: ⏳ Planned
+### Week 5: Advanced Features ✅ COMPLETED
+**Dates**: January 22-29, 2025  
+**Status**: ✅ Completed
 
-**Planned Tasks**:
-- [ ] Implement pull-to-refresh
-- [ ] Add swipe actions
-- [ ] Build bottom sheet modals
-- [ ] Optimize service worker
-- [ ] Offline functionality
+**Completed Tasks**:
+- [x] Implement pull-to-refresh
+- [x] Add swipe actions
+- [x] Build bottom sheet modals
+- [x] Optimize service worker
+- [x] Offline functionality
+
+**Completed**: January 22, 2025
+
+**Files Created**:
+- `client/src/components/PullToRefresh.tsx` - Pull-to-refresh component with physics
+- `client/src/components/SwipeActions.tsx` - Swipeable list items with customizable actions
+- `client/src/components/BottomSheet.tsx` - Native-like bottom sheet modal
+- `client/src/hooks/useOfflineStorage.ts` - IndexedDB-based offline queue
+- Enhanced `public/sw.js` - Advanced caching strategies
+
+**Features Implemented**:
+1. **Pull-to-Refresh**: Natural pull gesture with rotation animation and resistance
+2. **Swipe Actions**: Left/right swipe gestures with customizable actions and colors
+3. **Bottom Sheet**: Draggable modal with multiple snap points
+4. **Service Worker**: Network-first for API, cache-first for assets, offline fallback
+5. **Offline Storage**: IndexedDB queue with automatic sync when online
+
+**Usage Examples**:
+```tsx
+// Pull to Refresh
+<PullToRefresh onRefresh={async () => await refetch()}>
+  <ProductList />
+</PullToRefresh>
+
+// Swipe Actions
+<SwipeActions
+  rightActions={[
+    commonSwipeActions.delete(handleDelete),
+    commonSwipeActions.edit(handleEdit),
+  ]}
+>
+  <OrderCard order={order} />
+</SwipeActions>
+
+// Bottom Sheet
+<BottomSheet
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Filter Options"
+  snapPoints={[0.3, 0.6, 0.9]}
+>
+  <FilterForm />
+</BottomSheet>
+
+// Offline Storage
+const { isOnline, pendingCount, addToQueue } = useOfflineStorage();
+```
 
 ### Week 6: Testing & Polish
 **Dates**: February 20-26, 2025  
