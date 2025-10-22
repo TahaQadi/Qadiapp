@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,8 @@ import { OrderConfirmationDialog } from '@/components/OrderConfirmationDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
-import { ProductGrid } from '@/components/ProductGrid';
+// Lazy load ProductGrid and other heavy components
+const ProductGrid = lazy(() => import('@/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -24,7 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -36,6 +37,9 @@ import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
 import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
 import { Calendar, Check, Save, AlertTriangle } from 'lucide-react'; // Added Calendar, Check, Save, AlertTriangle
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton'; // Import LoadingSkeleton
+import { VirtualList } from '@/components/VirtualList'; // Import VirtualList
+
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -111,6 +115,7 @@ export default function OrderingPage() {
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('lta-products'); // Default to 'lta-products'
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // State for view mode
 
   // Ref to store scroll position for restoration after cart updates
   const scrollPositionRef = useRef<number | null>(null);
@@ -685,6 +690,7 @@ export default function OrderingPage() {
                 alt={primaryName}
                 className="w-full h-full object-cover"
                 data-testid={`img-product-${product.id}`}
+                loading="lazy" // Added lazy loading
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -1361,27 +1367,7 @@ export default function OrderingPage() {
               </div>
 
               {productsLoading ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>
-                      {language === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <Card key={i} className="flex flex-col">
-                        <Skeleton className="w-full aspect-square" />
-                        <CardContent className="p-4 space-y-3">
-                          <Skeleton className="h-6 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-8 w-1/3 mt-2" />
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                <LoadingSkeleton variant="grid" count={12} />
               ) : filteredProducts.length === 0 ? (
                 <Card className="p-12 text-center border-2 border-dashed">
                   <div className="max-w-md mx-auto space-y-4">
@@ -1416,13 +1402,39 @@ export default function OrderingPage() {
                       <span className="font-semibold text-foreground">{filteredProducts.length}</span>{' '}
                       {language === 'ar' ? 'منتج' : 'products'}
                     </p>
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("rounded-md", viewMode === 'grid' && "bg-primary text-primary-foreground")}
+                        onClick={() => setViewMode('grid')}
+                        data-testid="button-view-grid"
+                      >
+                        <Grid3x3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("rounded-md", viewMode === 'list' && "bg-primary text-primary-foreground")}
+                        onClick={() => setViewMode('list')}
+                        data-testid="button-view-list"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
-                    {filteredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
+                  {/* Use VirtualList for efficient rendering of large lists */}
+                  <VirtualList
+                    data={filteredProducts}
+                    itemHeight={viewMode === 'grid' ? 480 : 160} // Adjust itemHeight based on viewMode
+                    renderItem={(product) => (
+                      <div className={viewMode === 'grid' ? 'p-2 lg:p-3' : 'p-2 lg:p-3'}>
+                        <ProductCard key={product.id} product={product} />
+                      </div>
+                    )}
+                  />
                 </div>
               )}
             </TabsContent>

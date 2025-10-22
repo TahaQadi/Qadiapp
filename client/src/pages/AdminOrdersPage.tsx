@@ -474,7 +474,7 @@ export default function AdminOrdersPage() {
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(order.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.pipefyCardId?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Hide done (delivered) and cancelled if toggle is on
     const shouldShow = !hideDoneAndCancelled || (order.status !== 'delivered' && order.status !== 'cancelled');
 
@@ -501,7 +501,7 @@ export default function AdminOrdersPage() {
   };
 
   const renderOrderCard = (order: Order) => (
-    <Card key={order.id} 
+    <Card key={order.id}
       className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group"
     >
       <CardContent className="p-4 space-y-4">
@@ -764,17 +764,19 @@ export default function AdminOrdersPage() {
             ) : (
               <>
                 {/* Mobile Card View */}
-                <div className="lg:hidden space-y-3">
+                <div className="lg:hidden">
                   {useVirtualScrolling ? (
                     <VirtualList
                       items={filteredOrders}
-                      renderItem={(order: Order, index: number) => renderOrderCard(order)}
                       estimateSize={200}
                       height="calc(100vh - 300px)"
+                      renderItem={(order: Order, index: number) => renderOrderCard(order)}
                       keyExtractor={(order: Order) => order.id}
                     />
                   ) : (
-                    paginatedOrders.map((order: Order) => renderOrderCard(order))
+                    <div className="grid grid-cols-1 gap-4">
+                      {paginatedOrders.map((order: Order) => renderOrderCard(order))}
+                    </div>
                   )}
                 </div>
 

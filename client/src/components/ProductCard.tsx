@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { cn } from '@/lib/utils'; // Assuming cn is available for conditional class names
 import { useIsMobile } from '@/hooks/useIsMobile'; // Assuming a hook for mobile detection exists
+import { useState, useEffect, useRef } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface ProductCardProps {
   id: string;
@@ -33,22 +35,61 @@ export function ProductCard({
   const { t } = useTranslation();
   const { language } = useLanguage();
   const isMobile = useIsMobile();
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Placeholder for useOptimizedImage hook if it's not directly available in this context
+  // In a real scenario, this would fetch optimized image URLs.
+  // For now, we'll simulate its behavior or assume it's handled by getOptimizedImageUrl.
+  const isLoading = false; // Simulate no loading for simplicity here
 
   const name = language === 'ar' ? nameAr : nameEn;
   const description = language === 'ar' ? descriptionAr : descriptionEn;
 
-  return (
-    <Card className={cn(
-      "group relative overflow-hidden transition-all duration-200",
-      isMobile ? "touch-manipulation" : "hover-lift animate-fade-in"
-    )} data-testid={`card-product-${sku}`}>
-      {imageUrl && (
-        <div className="aspect-square bg-muted rounded-md overflow-hidden">
-          <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
-        </div>
-      )}
+  // Lazy load images when card becomes visible
+  useEffect(() => {
+    if (!cardRef.current) return;
 
-      <div className="flex-1 flex flex-col gap-2">
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: '100px', threshold: 0.01 }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <Card
+      ref={cardRef}
+      className={cn(
+        "group relative overflow-hidden transition-all duration-200",
+        isMobile ? "touch-manipulation" : "hover-lift animate-fade-in"
+      )} data-testid={`card-product-${sku}`}>
+      
+      <div className={cn("relative overflow-hidden", isMobile ? "w-full h-48" : "aspect-square")}>
+          {!isVisible || isLoading ? (
+            <div className="w-full h-full bg-muted animate-pulse" />
+          ) : (
+            <img
+              src={getOptimizedImageUrl(imageUrl || '/placeholder-product.png', { width: 300, height: 300, quality: 85 })}
+              alt={name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+      </div>
+
+      <div className="flex-1 flex flex-col gap-2 p-4">
         <div>
           <h3 className="font-medium text-sm leading-tight">{name}</h3>
         </div>
