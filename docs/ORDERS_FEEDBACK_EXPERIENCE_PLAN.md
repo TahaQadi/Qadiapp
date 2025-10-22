@@ -356,57 +356,89 @@ CREATE INDEX idx_micro_feedback_created_at ON micro_feedback(created_at DESC);
 
 ---
 
-### Phase 3: Feedback & Analytics Split (January 2025)
+### Phase 3: Complete Feedback & Issue Separation (January 2025)
 **Priority**: High
-**Goal**: Separate feedback system from issue reporting for better UX and management
+**Goal**: Completely separate feedback collection from issue reporting into two independent features
 
 **Implementation Date**: January 22, 2025
 
+**CRITICAL DESIGN DECISION**:
+- Feedback and Issue Reporting are **COMPLETELY SEPARATED** features
+- **TWO DISTINCT BUTTONS** in order history (not integrated into a single dialog)
+- **TWO INDEPENDENT WORKFLOWS** with different purposes and triggers
+
 **Changes Made**:
 
-1. **Admin Navigation Update**
-   - Removed combined "Feedback & Analytics" button
-   - Added separate "Feedback & Analytics" card (dedicated to customer feedback)
-   - Issue reports remain accessible through the Feedback page tabs
-   - Clear separation of concerns in admin interface
+1. **Order History UI Update** (`client/src/pages/OrdersPage.tsx`)
+   - **Mobile-responsive card layout** with stacked buttons
+   - **"Submit Feedback" button** (star icon):
+     - Only visible for delivered/cancelled orders
+     - Opens simple satisfaction survey
+     - 44px minimum height (proper touch target)
+   - **"Report Issue" button** (alert triangle icon):
+     - Visible for ALL order statuses
+     - Opens technical issue reporting form
+     - 44px minimum height (proper touch target)
+   - Full-width buttons stacked vertically on mobile
+   - Proper spacing (gap-2) between action buttons
 
 2. **Frontend Components**
-   - `OrderFeedbackDialog.tsx`: Kept integrated approach (feedback + optional issue reporting)
-   - `CustomerFeedbackPage.tsx`: Enhanced with three tabs (Analytics, Ratings, Issues)
-   - Better error handling and loading states
-   - Improved data visualization with charts
+   - `OrderFeedbackDialog.tsx`: **SIMPLE satisfaction survey ONLY**
+     - Star ratings (overall + aspects)
+     - Would recommend toggle
+     - Optional comments
+     - **NO issue reporting integration**
+   - `IssueReportDialog.tsx`: **TECHNICAL problem reporting ONLY**
+     - Issue type selection
+     - Title and description fields
+     - Auto-severity calculation
+     - **NO star ratings or satisfaction elements**
+   - `CustomerFeedbackPage.tsx`: Enhanced admin management
+     - Three tabs (Analytics, Ratings, Issues)
+     - **Fixed admin response UI** (individual state per feedback)
+     - Better error handling and loading states
+     - Improved data visualization with charts
 
 3. **Backend Routes**
-   - `feedback-routes.ts`: Handles both feedback and issues (consolidated approach)
-   - `feedback-analytics-routes.ts`: Dedicated analytics endpoint
-   - Proper error handling and validation
-   - Admin-only access controls
+   - `feedback-routes.ts`: Handles feedback and issue endpoints
+   - `POST /api/feedback/:id/respond`: Admin response system
+   - `PATCH /api/feedback/issues/:id/priority`: Priority management
+   - **CRITICAL FIX**: Notify ALL admins for EVERY issue (removed severity filtering)
+   - **Timing Update**: Feedback request sent 1 hour after delivery (not 24 hours)
 
 4. **Database Integration**
    - Existing schema supports both systems
-   - Issue reports linked to feedback via orderId
+   - Independent feedback and issue records
    - Proper indexes for performance
+   - Admin response tracking
 
 **Benefits Achieved**:
-- ✅ Clearer admin navigation structure
-- ✅ Better separation of feedback analytics from issue management
-- ✅ Improved error handling and user feedback
-- ✅ Comprehensive analytics dashboard with charts
-- ✅ Unified interface for managing both feedback and issues
+- ✅ Clear separation of feedback (satisfaction) vs. issues (problems)
+- ✅ Better user understanding: distinct purposes, distinct buttons
+- ✅ Mobile-optimized with proper touch targets (44px minimum)
+- ✅ Feedback only for completed orders; issues anytime
+- ✅ All admins notified for all issues (not just critical)
+- ✅ Automatic feedback requests 1 hour after delivery
+- ✅ Admin can respond to individual feedback items
+- ✅ Fixed state management bug in admin response UI
 
 **Testing Status**:
-- ✅ Admin can access feedback analytics
-- ✅ Admin can view and manage issues
-- ✅ Data visualization working correctly
-- ✅ Error handling tested and verified
-- ✅ Issue status updates functional
+- ✅ Two separate buttons render in order history
+- ✅ Feedback button only shows for delivered/cancelled
+- ✅ Issue button shows for all order statuses
+- ✅ Both dialogs function independently
+- ✅ Mobile layout: proper stacking and spacing
+- ✅ Touch targets meet 44px minimum
+- ✅ Admin notifications for all issues
+- ✅ Feedback timing: 1 hour after delivery
+- ✅ Admin response: individual state per item
 
-**Next Steps** (Future Enhancements):
-- [ ] Add standalone floating issue report button (available on all pages)
-- [ ] Add screenshot capture capability
-- [ ] Implement admin response system for feedback
-- [ ] Add email notifications for issue updates
-- [ ] Create dedicated analytics export feature workflow implemented
+**Future Enhancements**:
+- [ ] Screenshot capture for issue reporting
+- [ ] Bulk admin response to multiple feedbacks
+- [ ] Email notifications for issue status changes
+- [ ] Sentiment analysis on feedback comments
+- [ ] AI-powered issue categorization
 
 ---
 
