@@ -35,6 +35,7 @@ import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
 import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
+import { Calendar, Check, Save, AlertTriangle } from 'lucide-react'; // Added Calendar, Check, Save, AlertTriangle
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -66,7 +67,7 @@ interface Order {
   id: string;
   items: string;
   totalAmount: string;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered';
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   currency: string;
   pipefyCardId?: string;
@@ -107,6 +108,9 @@ export default function OrderingPage() {
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false); // Added for micro-feedback
+
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('lta-products'); // Default to 'lta-products'
 
   // Ref to store scroll position for restoration after cart updates
   const scrollPositionRef = useRef<number | null>(null);
@@ -987,176 +991,175 @@ export default function OrderingPage() {
         </div>
 
         {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-2 sm:px-4 lg:px-6 h-14 sm:h-16 lg:h-18 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Left Section - Logo & Title */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <img
-              src="/logo.png"
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
-            />
-            <div className="min-w-0 hidden xs:block">
-              <h1 className="text-sm sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
-              </h1>
-              <p className="text-[10px] sm:text-xs text-muted-foreground hidden md:block truncate">
-                {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
-              </p>
+        <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+          <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <img
+                src="/logo.png"
+                alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
+              />
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                  {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
+                </h1>
+                <p className="text-[10px] sm:text-xs text-muted-foreground hidden md:block truncate">
+                  {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Right Section - Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 flex-shrink-0">
-            {/* Price Request Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
-              onClick={() => setPriceRequestDialogOpen(true)}
-              data-testid="button-price-request"
-            >
-              <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-              {priceRequestList.length > 0 && (
-                <span
-                  className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-destructive text-destructive-foreground shadow-lg animate-pulse ring-2 ring-background"
-                  data-testid="badge-price-request-count"
-                >
-                  {priceRequestList.length > 9 ? '9+' : priceRequestList.length}
-                </span>
-              )}
-            </Button>
+            {/* Right Section - Action Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 flex-shrink-0">
+              {/* Price Request Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
+                onClick={() => setPriceRequestDialogOpen(true)}
+                data-testid="button-price-request"
+              >
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                {priceRequestList.length > 0 && (
+                  <span
+                    className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-destructive text-destructive-foreground shadow-lg animate-pulse ring-2 ring-background"
+                    data-testid="badge-price-request-count"
+                  >
+                    {priceRequestList.length > 9 ? '9+' : priceRequestList.length}
+                  </span>
+                )}
+              </Button>
 
-            {/* Cart Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
-              onClick={() => setCartOpen(true)}
-              data-testid="button-open-cart"
-            >
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-              {cartItemCount > 0 && (
-                <span
-                  className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-primary text-primary-foreground shadow-lg animate-pulse ring-2 ring-background"
-                  data-testid="badge-cart-count"
-                >
-                  {cartItemCount > 9 ? '9+' : cartItemCount}
-                </span>
-              )}
-            </Button>
+              {/* Cart Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
+                onClick={() => setCartOpen(true)}
+                data-testid="button-open-cart"
+              >
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+                {cartItemCount > 0 && (
+                  <span
+                    className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-primary text-primary-foreground shadow-lg animate-pulse ring-2 ring-background"
+                    data-testid="badge-cart-count"
+                  >
+                    {cartItemCount > 9 ? '9+' : cartItemCount}
+                  </span>
+                )}
+              </Button>
 
-            {/* Notifications */}
-            <NotificationCenter />
+              {/* Notifications */}
+              <NotificationCenter />
 
-            {/* Menu Button */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
-                >
-                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
-                <div className="flex flex-col h-full">
-                  {/* User Info Header */}
-                  <div className="flex items-center gap-3 pb-4 border-b">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="h-6 w-6 text-primary" />
+              {/* Menu Button */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
+                  >
+                    <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
+                  <div className="flex flex-col h-full">
+                    {/* User Info Header */}
+                    <div className="flex items-center gap-3 pb-4 border-b">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate text-sm">
+                          {language === 'ar' ? user?.nameAr : user?.nameEn}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user?.email}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate text-sm">
-                        {language === 'ar' ? user?.nameAr : user?.nameEn}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Navigation */}
-                  <nav className="flex-1 py-4 space-y-1">
-                    <Link href="/profile">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-3 h-11 text-sm"
-                        data-testid="sidebar-profile"
-                      >
-                        <User className="h-4 w-4" />
-                        <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
-                      </Button>
-                    </Link>
-
-                    {user?.isAdmin && (
-                      <Link href="/admin">
+                    {/* Navigation */}
+                    <nav className="flex-1 py-4 space-y-1">
+                      <Link href="/profile">
                         <Button
                           variant="ghost"
                           className="w-full justify-start gap-3 h-11 text-sm"
-                          data-testid="sidebar-admin"
+                          data-testid="sidebar-profile"
                         >
-                          <Settings className="h-4 w-4" />
-                          <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</span>
+                          <User className="h-4 w-4" />
+                          <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
                         </Button>
                       </Link>
-                    )}
 
-                    <div className="py-2">
-                      <Separator />
-                    </div>
+                      {user?.isAdmin && (
+                        <Link href="/admin">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3 h-11 text-sm"
+                            data-testid="sidebar-admin"
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</span>
+                          </Button>
+                        </Link>
+                      )}
 
-                    {/* Settings Section */}
-                    <div className="space-y-1">
-                      <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        {language === 'ar' ? 'الإعدادات' : 'Settings'}
-                      </p>
-
-                      <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="h-4 w-4 flex items-center justify-center text-base">
-                            🌐
-                          </div>
-                          <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
-                        </div>
-                        <LanguageToggle />
+                      <div className="py-2">
+                        <Separator />
                       </div>
 
-                      <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="h-4 w-4 flex items-center justify-center text-base">
-                            🎨
-                          </div>
-                          <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
-                        </div>
-                        <ThemeToggle />
-                      </div>
-                    </div>
-                  </nav>
+                      {/* Settings Section */}
+                      <div className="space-y-1">
+                        <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          {language === 'ar' ? 'الإعدادات' : 'Settings'}
+                        </p>
 
-                  {/* Logout Button */}
-                  <div className="pt-4 border-t">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      asChild
-                      className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-                    >
-                      <Link href="/logout">
-                        <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </Link>
-                    </Button>
+                        <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="h-4 w-4 flex items-center justify-center text-base">
+                              🌐
+                            </div>
+                            <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
+                          </div>
+                          <LanguageToggle />
+                        </div>
+
+                        <div className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="h-4 w-4 flex items-center justify-center text-base">
+                              🎨
+                            </div>
+                            <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
+                          </div>
+                          <ThemeToggle />
+                        </div>
+                      </div>
+                    </nav>
+
+                    {/* Logout Button */}
+                    <div className="pt-4 border-t">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+                      >
+                        <Link href="/logout">
+                          <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
         {/* Main Content */}
-        <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 relative z-10">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 relative z-10">
           {/* Welcome Section */}
           <div className="mb-8 animate-slide-down">
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">
@@ -1198,24 +1201,30 @@ export default function OrderingPage() {
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="lta-products" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6 sm:mb-8 h-11 sm:h-12" data-testid="tabs-list">
-              <TabsTrigger value="lta-products" className="text-sm sm:text-base" data-testid="tab-lta-products">
-                <Package className="h-4 w-4 me-1 sm:me-2" />
-                <span className="hidden xs:inline">{language === 'ar' ? 'اتفاقياتي' : 'My LTAs'}</span>
-                <span className="xs:hidden">{language === 'ar' ? 'اتفاقياتي' : 'LTAs'}</span>
-              </TabsTrigger>
-              <TabsTrigger value="templates" className="text-sm sm:text-base" data-testid="tab-templates">
-                <FileText className="h-4 w-4 me-1 sm:me-2" />
-                <span className="hidden xs:inline">{t('templates')}</span>
-                <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-sm sm:text-base" data-testid="tab-history">
-                <History className="h-4 w-4 me-1 sm:me-2" />
-                <span className="hidden xs:inline">{t('history')}</span>
-                <span className="xs:hidden">{language === 'ar' ? 'سجل' : 'Hist'}</span>
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+            <div className="sticky top-[56px] sm:top-[64px] z-40 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 bg-background/95 dark:bg-black/80 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/20">
+              <TabsList className="w-full justify-start overflow-x-auto bg-card/50 dark:bg-card/30 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/20 h-auto p-1">
+                <TabsTrigger
+                  value="lta-products"
+                  className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm"
+                  data-testid="tab-lta-products"
+                >
+                  <Package className="h-4 w-4 me-1 sm:me-2" />
+                  <span className="hidden xs:inline">{language === 'ar' ? 'اتفاقياتي' : 'My LTAs'}</span>
+                  <span className="xs:hidden">{language === 'ar' ? 'اتفاقياتي' : 'LTAs'}</span>
+                </TabsTrigger>
+                <TabsTrigger value="templates" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-templates">
+                  <FileText className="h-4 w-4 me-1 sm:me-2" />
+                  <span className="hidden xs:inline">{t('templates')}</span>
+                  <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
+                </TabsTrigger>
+                <TabsTrigger value="history" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-history">
+                  <History className="h-4 w-4 me-1 sm:me-2" />
+                  <span className="hidden xs:inline">{t('history')}</span>
+                  <span className="xs:hidden">{language === 'ar' ? 'سجل' : 'Hist'}</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* LTA Products Tab - Shows only LTA-filtered products */}
             <TabsContent value="lta-products" className="mt-0">
@@ -1352,7 +1361,7 @@ export default function OrderingPage() {
               </div>
 
               {productsLoading ? (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>
@@ -1419,27 +1428,21 @@ export default function OrderingPage() {
             </TabsContent>
 
             {/* Templates Tab */}
-            <TabsContent value="templates" className="mt-0">
-              {templatesLoading ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">
-                      {language === 'ar' ? 'جاري تحميل القوالب...' : 'Loading templates...'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[...Array(3)].map((_, i) => (
-                      <Card key={i} className="p-4">
-                        <Skeleton className="h-5 w-3/4 mb-3" />
-                        <Skeleton className="h-4 w-1/2 mb-2" />
-                        <Skeleton className="h-4 w-2/3" />
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              ) : formattedTemplates.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <TabsContent value="templates" className="space-y-4 sm:space-y-6">
+              {templates.length === 0 ? (
+                <Card className="border-border/50 dark:border-[#d4af37]/20">
+                  <CardContent className="py-8 sm:py-12">
+                    <EmptyState
+                      icon={FileText}
+                      title={isArabic ? 'لا توجد قوالب' : 'No Templates'}
+                      description={isArabic ? 'قم بإنشاء قالب من السلة لحفظ طلباتك المتكررة' : 'Create a template from your cart to save recurring orders'}
+                      actionLabel={isArabic ? 'العودة للسلة' : 'Back to Cart'}
+                      onAction={() => setActiveTab('cart')}
+                    />
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {formattedTemplates.map((template) => (
                     <OrderTemplateCard
                       key={template.id}
@@ -1453,40 +1456,114 @@ export default function OrderingPage() {
                     />
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">{t('noTemplates')}</p>
-                  <p className="text-sm text-muted-foreground mt-2">{t('createTemplate')}</p>
-                </div>
               )}
             </TabsContent>
 
             {/* History Tab */}
-            <TabsContent value="history" className="mt-0">
-              {ordersLoading ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">
-                      {language === 'ar' ? 'جاري تحميل الطلبات...' : 'Loading orders...'}
-                    </span>
-                  </div>
-                  <Card className="p-4">
-                    <div className="space-y-3">
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-16 w-full" />
-                      <Skeleton className="h-16 w-full" />
-                      <Skeleton className="h-16 w-full" />
-                    </div>
-                  </Card>
-                </div>
+            <TabsContent value="history" className="space-y-4 sm:space-y-6">
+              {orders.length === 0 ? (
+                <Card className="border-border/50 dark:border-[#d4af37]/20">
+                  <CardContent className="py-8 sm:py-12">
+                    <EmptyState
+                      icon={Package}
+                      title={isArabic ? 'لا توجد طلبات' : 'No Orders Yet'}
+                      description={isArabic ? 'ابدأ التسوق لإنشاء طلبك الأول' : 'Start shopping to create your first order'}
+                      actionLabel={isArabic ? 'تصفح المنتجات' : 'Browse Products'}
+                      onAction={() => window.location.href = '/catalog'}
+                    />
+                  </CardContent>
+                </Card>
               ) : (
-                <OrderHistoryTable
-                  orders={formattedOrders}
-                  onViewDetails={handleViewOrderDetails}
-                  onReorder={handleReorder}
-                />
+                <div className="space-y-3 sm:space-y-4">
+                  {formattedOrders.map((order) => {
+                    const items = safeJsonParse(order.items, []) as any[];
+                    const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+
+                    return (
+                      <Card
+                        key={order.id}
+                        className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm cursor-pointer group overflow-hidden"
+                        onClick={() => window.location.href = '/orders'}
+                      >
+                        {/* Status Bar */}
+                        <div className={`h-1 w-full ${
+                          order.status === 'delivered' ? 'bg-green-500' :
+                          order.status === 'shipped' ? 'bg-blue-500' :
+                          order.status === 'processing' ? 'bg-purple-500' :
+                          order.status === 'confirmed' ? 'bg-indigo-500' :
+                          order.status === 'cancelled' ? 'bg-red-500' :
+                          'bg-yellow-500'
+                        }`} />
+
+                        <CardHeader className="pb-3 sm:pb-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <CardTitle className="text-sm sm:text-lg flex items-center gap-2">
+                                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-primary/10 dark:bg-[#d4af37]/10 flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary dark:text-[#d4af37]" />
+                                </div>
+                                <span className="truncate">#{order.id.substring(0, 8)}</span>
+                              </CardTitle>
+                              <CardDescription className="flex items-center gap-1.5 text-xs sm:text-sm">
+                                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                                <span className="truncate">
+                                  {new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </CardDescription>
+                            </div>
+                            <Badge
+                              variant={
+                                order.status === 'delivered' ? 'default' :
+                                order.status === 'cancelled' ? 'destructive' :
+                                'secondary'
+                              }
+                              className="flex-shrink-0 text-xs"
+                            >
+                              {language === 'ar' ?
+                                (order.status === 'pending' ? 'قيد الانتظار' :
+                                 order.status === 'confirmed' ? 'مؤكد' :
+                                 order.status === 'processing' ? 'قيد المعالجة' :
+                                 order.status === 'shipped' ? 'تم الشحن' :
+                                 order.status === 'delivered' ? 'تم التوصيل' :
+                                 order.status === 'cancelled' ? 'ملغى' : order.status) :
+                                order.status.charAt(0).toUpperCase() + order.status.slice(1)
+                              }
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3 pt-0">
+                          <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-muted/50 dark:bg-muted/30">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                              <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
+                              <span className="text-xs sm:text-sm text-muted-foreground">
+                                {itemCount} {language === 'ar' ? 'عنصر' : 'items'}
+                              </span>
+                            </div>
+                            <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
+                              {order.totalAmount} {language === 'ar' ? 'ر.س' : 'SAR'}
+                            </span>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            className="w-full min-h-[44px] border-primary/20 dark:border-[#d4af37]/20 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300 group-hover:border-primary dark:group-hover:border-[#d4af37] text-sm sm:text-base"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = '/orders';
+                            }}
+                          >
+                            <ArrowRight className="me-2 h-4 w-4" />
+                            {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               )}
             </TabsContent>
           </Tabs>
