@@ -3,8 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
-import { cn } from '@/lib/utils'; // Assuming cn is available for conditional class names
-import { useIsMobile } from '@/hooks/useIsMobile'; // Assuming a hook for mobile detection exists
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useEffect, useRef } from 'react';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
