@@ -17,8 +17,12 @@ import { Separator } from './ui/separator'; // Assuming Separator is in ui/separ
 import { useQueryClient } from '@tanstack/react-query'; // Assuming useQueryClient is needed
 
 interface OrderFeedbackDialogProps {
-  orderId: string;
-  orderReference: string;
+  order: {
+    id: string;
+    totalAmount: string;
+    items: string;
+    createdAt: string;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -159,7 +163,7 @@ export default function OrderFeedbackDialog({
     }
 
     const feedbackData: any = {
-      orderId,
+      orderId: order.id,
       rating,
       orderingProcessRating: orderingProcessRating || undefined,
       productQualityRating: productQualityRating || undefined,
@@ -182,7 +186,7 @@ export default function OrderFeedbackDialog({
     }
 
     try {
-      const response = await fetch(`/api/feedback/order/${orderId}`, {
+      const response = await fetch(`/api/feedback/order/${order.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -255,11 +259,29 @@ export default function OrderFeedbackDialog({
           </DialogTitle>
           <DialogDescription>
             {language === 'ar'
-              ? `الطلب: ${orderReference}`
-              : `Order: ${orderReference}`
+              ? `الطلب: #${order.id.slice(0, 8)}`
+              : `Order: #${order.id.slice(0, 8)}`
             }
           </DialogDescription>
         </DialogHeader>
+
+        {/* Order Summary Card */}
+        <div className="bg-muted/30 dark:bg-muted/20 rounded-lg p-4 mb-4 border border-border/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              {language === 'ar' ? 'ملخص الطلب' : 'Order Summary'}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {language === 'ar' ? 'المبلغ الإجمالي' : 'Total Amount'}
+            </span>
+            <span className="text-lg font-bold">{order.totalAmount}</span>
+          </div>
+        </div>
 
         <div className="space-y-6 py-4">
           {/* Overall Rating */}

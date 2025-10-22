@@ -362,7 +362,12 @@ export default function OrdersPage() {
 
       {selectedOrder && (
         <OrderFeedbackDialog
-          order={selectedOrder}
+          order={{
+            id: selectedOrder.id,
+            totalAmount: selectedOrder.totalAmount,
+            items: selectedOrder.items,
+            createdAt: selectedOrder.createdAt
+          }}
           open={feedbackOpen}
           onOpenChange={setFeedbackOpen}
         />
