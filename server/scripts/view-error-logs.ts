@@ -1,56 +1,55 @@
-import { errorLogger } from '../error-logger';
+import { db } from '../db';
+import { sql } from 'drizzle-orm';
 
 async function viewErrorLogs() {
   try {
-    console.log('📋 Fetching recent error logs from database...\n');
+    // First check if the error_logs table exists
+    const tableCheck = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'error_logs'
+      );
+    `);
 
-    const logs = await errorLogger.getRecentErrors(50);
-    const stats = await errorLogger.getErrorStats();
+    const tableExists = tableCheck.rows[0]?.exists;
 
-    if (logs.length === 0) {
-      console.log('✅ No errors found! Your application is running smoothly.\n');
+    if (!tableExists) {
+      console.log('\n⚠️  Error logs table does not exist yet.');
+      console.log('💡 Run database migrations to create it: npm run db:push');
       return;
     }
 
-    console.log(`Found ${logs.length} error(s):\n`);
-    console.log('─'.repeat(80));
+    const logs = await db.execute(sql`
+      SELECT id, level, message, stack, context, timestamp
+      FROM error_logs
+      ORDER BY timestamp DESC
+      LIMIT 50
+    `);
 
-    logs.forEach((log, index) => {
-      const timestamp = new Date(log.timestamp).toLocaleString();
-      const severity = log.level.toUpperCase();
-      const severityEmoji = severity === 'ERROR' ? '🔴' : severity === 'WARNING' ? '🟡' : '🔵';
+    console.log('\n📋 Recent Error Logs:\n');
 
-      console.log(`\n${severityEmoji} Error #${index + 1} [${severity}]`);
-      console.log(`⏰ Time: ${timestamp}`);
-      console.log(`📝 Message: ${log.message}`);
+    if (logs.rows.length === 0) {
+      console.log('✅ No errors found!');
+      return;
+    }
 
-      if (log.stack) {
-        console.log(`📚 Stack trace:\n${log.stack.split('\n').slice(0, 5).join('\n')}`);
-      }
-
+    logs.rows.forEach((log: any, index: number) => {
+      console.log(`\n${index + 1}. [${log.level.toUpperCase()}] ${new Date(log.timestamp).toLocaleString()}`);
+      console.log(`   Message: ${log.message}`);
       if (log.context) {
-        console.log(`🔍 Context: ${JSON.stringify(log.context, null, 2)}`);
+        console.log(`   Context: ${JSON.stringify(log.context, null, 2)}`);
       }
-
-      console.log('─'.repeat(80));
+      if (log.stack) {
+        console.log(`   Stack: ${log.stack.substring(0, 200)}...`);
+      }
+      console.log('   ---');
     });
-
-    console.log(`\n📊 Summary:`);
-    console.log(`   Total errors: ${stats.total}`);
-
-    if (stats.byLevel.error > 0) console.log(`   🔴 Errors: ${stats.byLevel.error}`);
-    if (stats.byLevel.warning > 0) console.log(`   🟡 Warnings: ${stats.byLevel.warning}`);
-    if (stats.byLevel.info > 0) console.log(`   🔵 Info: ${stats.byLevel.info}`);
-    console.log(`   📅 Last 24h: ${stats.recentCount24h}`);
-
-    console.log('\n💡 Tip: Review recent errors to identify patterns and fix issues.\n');
-
-    process.exit(0);
   } catch (error) {
     console.error('❌ Failed to fetch error logs:', error);
-    console.error('\n💡 Make sure your DATABASE_URL is set and the error_logs table exists.');
-    console.error('   Run "DB - Migrate" workflow first if needed.\n');
-    process.exit(1);
+    console.log('\n💡 Try running: npm run db:push');
+  } finally {
+    process.exit(0);
   }
 }
 
