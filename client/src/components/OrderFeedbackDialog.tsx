@@ -22,7 +22,7 @@ interface OrderFeedbackDialogProps {
   orderId: string;
 }
 
-export function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialogProps) {
+function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialogProps) {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [rating, setRating] = useState(0);
@@ -287,3 +287,5 @@ export function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedba
     </Dialog>
   );
 }
+
+export default OrderFeedbackDialog;
