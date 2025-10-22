@@ -73,13 +73,18 @@ export default function FeedbackDashboardPage() {
   const { language } = useLanguage();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
-  const { data: stats, isLoading } = useQuery<FeedbackStats>({
+  const { data: stats, isLoading, error, refetch } = useQuery<FeedbackStats>({
     queryKey: ['/api/feedback/analytics', timeRange],
     queryFn: async () => {
       const response = await fetch(`/api/feedback/analytics?range=${timeRange}`);
-      if (!response.ok) throw new Error('Failed to fetch analytics');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || 'Failed to fetch analytics');
+      }
       return response.json();
-    }
+    },
+    retry: 2,
+    retryDelay: 1000
   });
 
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -125,7 +130,63 @@ export default function FeedbackDashboardPage() {
     );
   }
 
-  if (!stats) return null;
+  if (error) {
+    return (
+      <div className="container mx-auto p-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              {language === 'ar' ? 'خطأ في تحميل البيانات' : 'Error Loading Data'}
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              {language === 'ar' 
+                ? 'حدث خطأ أثناء تحميل تحليلات الملاحظات. يرجى المحاولة مرة أخرى.'
+                : 'An error occurred while loading feedback analytics. Please try again.'
+              }
+            </p>
+            <Button 
+              onClick={() => refetch()} 
+              variant="outline"
+            >
+              {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+            </Button>
+            {error && (
+              <details className="mt-4 text-left">
+                <summary className="cursor-pointer text-sm text-muted-foreground">
+                  {language === 'ar' ? 'تفاصيل الخطأ' : 'Error Details'}
+                </summary>
+                <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
+                  {error instanceof Error ? error.message : String(error)}
+                </pre>
+              </details>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="container mx-auto p-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              {language === 'ar' ? 'لا توجد بيانات' : 'No Data Available'}
+            </h2>
+            <p className="text-muted-foreground">
+              {language === 'ar' 
+                ? 'لا توجد ملاحظات متاحة للعرض حالياً.'
+                : 'No feedback data is available to display at the moment.'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getRatingTrend = () => {
     if (stats.trendData.length < 2) return 'neutral';
@@ -147,6 +208,16 @@ export default function FeedbackDashboardPage() {
           <p className="text-muted-foreground">
             {language === 'ar' ? 'رؤى شاملة حول تجربة العملاء' : 'Comprehensive insights into customer experience'}
           </p>
+          {stats.isEmpty && (
+            <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                {language === 'ar' 
+                  ? 'لا توجد ملاحظات في الفترة المحددة. جرب تغيير نطاق الوقت أو انتظر حتى يتم إرسال ملاحظات جديدة.'
+                  : 'No feedback data available for the selected time range. Try changing the time range or wait for new feedback to be submitted.'
+                }
+              </p>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
@@ -177,10 +248,12 @@ export default function FeedbackDashboardPage() {
             <Star className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageRating.toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalFeedback > 0 ? stats.averageRating.toFixed(2) : 'N/A'}
+            </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {ratingTrend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
-              {ratingTrend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+              {stats.totalFeedback > 0 && ratingTrend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+              {stats.totalFeedback > 0 && ratingTrend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
               <span>{language === 'ar' ? 'من 5.00' : 'out of 5.00'}</span>
             </div>
           </CardContent>
@@ -194,12 +267,18 @@ export default function FeedbackDashboardPage() {
             <BarChart3 className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.npsScore}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalFeedback > 0 ? stats.npsScore : 'N/A'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats.npsScore >= 50 ? (language === 'ar' ? 'ممتاز' : 'Excellent') :
-               stats.npsScore >= 30 ? (language === 'ar' ? 'جيد' : 'Good') :
-               stats.npsScore >= 0 ? (language === 'ar' ? 'مقبول' : 'Fair') :
-               (language === 'ar' ? 'يحتاج تحسين' : 'Needs Improvement')}
+              {stats.totalFeedback > 0 ? (
+                stats.npsScore >= 50 ? (language === 'ar' ? 'ممتاز' : 'Excellent') :
+                stats.npsScore >= 30 ? (language === 'ar' ? 'جيد' : 'Good') :
+                stats.npsScore >= 0 ? (language === 'ar' ? 'مقبول' : 'Fair') :
+                (language === 'ar' ? 'يحتاج تحسين' : 'Needs Improvement')
+              ) : (
+                language === 'ar' ? 'لا توجد بيانات' : 'No Data'
+              )}
             </p>
           </CardContent>
         </Card>
@@ -212,7 +291,9 @@ export default function FeedbackDashboardPage() {
             <Users className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.wouldRecommendPercent}%</div>
+            <div className="text-2xl font-bold">
+              {stats.totalFeedback > 0 ? `${stats.wouldRecommendPercent}%` : 'N/A'}
+            </div>
             <p className="text-xs text-muted-foreground">
               {language === 'ar' ? 'من العملاء' : 'of customers'}
             </p>
@@ -249,22 +330,28 @@ export default function FeedbackDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.trendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis domain={[0, 5]} />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="rating" 
-                  stroke="#10b981" 
-                  name={language === 'ar' ? 'التقييم' : 'Rating'}
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {stats.trendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={stats.trendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={[0, 5]} />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="rating" 
+                    stroke="#10b981" 
+                    name={language === 'ar' ? 'التقييم' : 'Rating'}
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                {language === 'ar' ? 'لا توجد بيانات للعرض' : 'No data to display'}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -280,20 +367,26 @@ export default function FeedbackDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.ratingDistribution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="rating" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar 
-                  dataKey="count" 
-                  fill="#3b82f6" 
-                  name={language === 'ar' ? 'العدد' : 'Count'}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {stats.ratingDistribution.some(r => r.count > 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.ratingDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="rating" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar 
+                    dataKey="count" 
+                    fill="#3b82f6" 
+                    name={language === 'ar' ? 'العدد' : 'Count'}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                {language === 'ar' ? 'لا توجد بيانات للعرض' : 'No data to display'}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

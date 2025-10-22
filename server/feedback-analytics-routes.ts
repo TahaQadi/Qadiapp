@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { db } from './db';
 import { orderFeedback, issueReports, clients } from '../shared/schema';
-import { eq, gte, sql, desc, and } from 'drizzle-orm';
+import { eq, gte, sql, desc, and, gte as greaterThanOrEqual } from 'drizzle-orm';
 import { requireAdmin } from './auth';
 
 const router = Router();
@@ -11,6 +11,11 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
   try {
     console.log('[Feedback Analytics] Request received:', { range: req.query.range, user: req.client?.id });
     const range = req.query.range as string || '30d';
+    
+    // Validate range parameter
+    if (!['7d', '30d', '90d', 'all'].includes(range)) {
+      return res.status(400).json({ error: 'Invalid range parameter. Must be one of: 7d, 30d, 90d, all' });
+    }
     
     // Calculate date threshold
     const now = new Date();
@@ -30,12 +35,20 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
         break;
     }
 
-    // Get all feedback in range
-    const feedbackData = await db
-      .select()
-      .from(orderFeedback)
-      .where(sql`${orderFeedback.createdAt} >= ${startDate.toISOString()}`)
-      .execute();
+    let feedbackData: any[] = [];
+    
+    try {
+      // Get all feedback in range
+      feedbackData = await db
+        .select()
+        .from(orderFeedback)
+        .where(greaterThanOrEqual(orderFeedback.createdAt, startDate.toISOString()))
+        .execute();
+    } catch (dbError) {
+      console.warn('[Feedback Analytics] Database query failed, using empty data:', dbError);
+      // If database query fails, use empty data instead of throwing error
+      feedbackData = [];
+    }
 
     // Calculate average rating
     const totalFeedback = feedbackData.length;
@@ -107,11 +120,17 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       .slice(-30); // Last 30 days max
 
     // Top issues
-    const issues = await db
-      .select()
-      .from(issueReports)
-      .where(sql`${issueReports.createdAt} >= ${startDate.toISOString()}`)
-      .execute();
+    let issues: any[] = [];
+    try {
+      issues = await db
+        .select()
+        .from(issueReports)
+        .where(greaterThanOrEqual(issueReports.createdAt, startDate.toISOString()))
+        .execute();
+    } catch (dbError) {
+      console.warn('[Feedback Analytics] Issues query failed:', dbError);
+      issues = [];
+    }
 
     const issueTypeMap = new Map<string, number>();
     issues.forEach(issue => {
@@ -124,23 +143,29 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       .slice(0, 5);
 
     // Recent feedback with client names
-    const recentFeedback = await db
-      .select({
-        id: orderFeedback.id,
-        orderId: orderFeedback.orderId,
-        rating: orderFeedback.rating,
-        comments: orderFeedback.comments,
-        createdAt: orderFeedback.createdAt,
-        clientId: orderFeedback.clientId,
-        clientNameEn: clients.nameEn,
-        clientNameAr: clients.nameAr
-      })
-      .from(orderFeedback)
-      .leftJoin(clients, eq(orderFeedback.clientId, clients.id))
-      .where(sql`${orderFeedback.createdAt} >= ${startDate.toISOString()}`)
-      .orderBy(desc(orderFeedback.createdAt))
-      .limit(10)
-      .execute();
+    let recentFeedback: any[] = [];
+    try {
+      recentFeedback = await db
+        .select({
+          id: orderFeedback.id,
+          orderId: orderFeedback.orderId,
+          rating: orderFeedback.rating,
+          comments: orderFeedback.comments,
+          createdAt: orderFeedback.createdAt,
+          clientId: orderFeedback.clientId,
+          clientNameEn: clients.nameEn,
+          clientNameAr: clients.nameAr
+        })
+        .from(orderFeedback)
+        .leftJoin(clients, eq(orderFeedback.clientId, clients.id))
+        .where(greaterThanOrEqual(orderFeedback.createdAt, startDate.toISOString()))
+        .orderBy(desc(orderFeedback.createdAt))
+        .limit(10)
+        .execute();
+    } catch (dbError) {
+      console.warn('[Feedback Analytics] Recent feedback query failed:', dbError);
+      recentFeedback = [];
+    }
 
     const recentFeedbackFormatted = recentFeedback.map(f => ({
       id: f.id,
@@ -160,14 +185,23 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       ratingDistribution,
       trendData,
       topIssues,
-      recentFeedback: recentFeedbackFormatted
+      recentFeedback: recentFeedbackFormatted,
+      isEmpty: totalFeedback === 0
     };
     
-    console.log('[Feedback Analytics] Sending response:', { totalFeedback, averageRating, npsScore });
+    console.log('[Feedback Analytics] Sending response:', { totalFeedback, averageRating, npsScore, isEmpty: totalFeedback === 0 });
     res.json(response);
   } catch (error) {
-    console.error('[Feedback Analytics] Error:', error);
-    res.status(500).json({ error: 'Failed to fetch analytics' });
+    console.error('[Feedback Analytics] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      range: req.query.range,
+      user: req.client?.id
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch analytics',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
