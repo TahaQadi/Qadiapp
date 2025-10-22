@@ -48,10 +48,10 @@ import { usePageTracking } from '@/lib/analytics';
 import { errorMonitoring } from '@/lib/errorMonitoring';
 import { performanceMonitoring } from '@/lib/performanceMonitoring';
 
-
 // Lazy load Admin components
 const AdminOrderModificationsPage = lazy(() => import('@/pages/admin/OrderModificationsPage'));
 const AdminErrorLogsPage = lazy(() => import('@/pages/admin/ErrorLogsPage'));
+const IssueReportsPage = lazy(() => import('@/pages/admin/IssueReportsPage'));
 
 
 function AdminRoute({
@@ -152,6 +152,7 @@ function Router() {
       <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={AdminOrderModificationsPage} />
       <AdminRoute path="/admin/error-logs" component={AdminErrorLogsPage} />
+      <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />
       <AdminRoute path="/admin/templates/documents" component={AdminDocumentsPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />

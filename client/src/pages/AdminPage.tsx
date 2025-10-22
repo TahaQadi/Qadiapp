@@ -113,6 +113,30 @@ export default function AdminPage() {
       gradient: 'from-teal-500/20 to-cyan-500/10',
       hoverGradient: 'from-teal-500/30 to-cyan-500/20',
       testId: 'card-templates'
+    },
+    {
+      id: 'error-logs',
+      path: '/admin/error-logs',
+      icon: AlertTriangle,
+      titleEn: 'Error Logs',
+      titleAr: 'سجلات الأخطاء',
+      descEn: 'View system error logs',
+      descAr: 'عرض سجلات أخطاء النظام',
+      gradient: 'from-red-500/20 to-orange-500/10',
+      hoverGradient: 'from-red-500/30 to-orange-500/20',
+      testId: 'card-error-logs'
+    },
+    {
+      id: 'issue-reports',
+      path: '/admin/issue-reports',
+      icon: AlertTriangle,
+      titleEn: 'Issue Reports',
+      titleAr: 'بلاغات المشاكل',
+      descEn: 'Manage customer-reported issues',
+      descAr: 'إدارة المشاكل المُبلغ عنها من العملاء',
+      gradient: 'from-red-500/20 to-orange-500/10',
+      hoverGradient: 'from-red-500/30 to-orange-500/20',
+      testId: 'card-issue-reports'
     }
   ];
 

@@ -151,6 +151,30 @@ router.post('/feedback/issue', requireAuth, async (req: any, res: any) => {
       })
       .returning();
 
+    // Notify admins if issue is high severity
+    if (data.severity === 'high' || data.severity === 'critical') {
+      const { storage } = await import('./storage');
+      const adminClients = await storage.getAdminClients();
+      const client = await storage.getClient(req.client!.id);
+
+      for (const admin of adminClients) {
+        await storage.createNotification({
+          clientId: admin.id,
+          type: 'system',
+          titleEn: `Critical Issue Reported`,
+          titleAr: 'تم الإبلاغ عن مشكلة حرجة',
+          messageEn: `${client?.nameEn || 'A client'} reported a ${data.severity} severity issue: ${data.title}`,
+          messageAr: `${client?.nameAr || 'عميل'} أبلغ عن مشكلة بدرجة ${data.severity === 'high' ? 'عالية' : 'حرجة'}: ${data.title}`,
+          metadata: JSON.stringify({ 
+            issueId: newReport.id,
+            severity: data.severity,
+            issueType: data.issueType,
+            orderId: data.orderId 
+          }),
+        });
+      }
+    }
+
     res.json({ success: true, id: newReport.id });
   } catch (error) {
     console.error('Error submitting issue:', error);
@@ -178,6 +202,84 @@ router.post('/feedback/micro', requireAuth, async (req: any, res: any) => {
   } catch (error) {
     console.error('Error submitting micro feedback:', error);
     res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
+// Update issue status (admin only)
+router.patch('/feedback/issues/:id/status', requireAuth, async (req: any, res: any) => {
+  try {
+    if (!req.client!.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { status } = req.body;
+    const validStatuses = ['open', 'in_progress', 'resolved', 'closed'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const [updatedIssue] = await db
+      .update(issueReports)
+      .set({ 
+        status,
+        resolvedAt: status === 'resolved' || status === 'closed' ? new Date() : undefined
+      })
+      .where(eq(issueReports.id, req.params.id))
+      .returning();
+
+    if (!updatedIssue) {
+      return res.status(404).json({ error: 'Issue not found' });
+    }
+
+    // Notify client of status change
+    const { storage } = await import('./storage');
+    await storage.createNotification({
+      clientId: updatedIssue.userId,
+      type: 'system',
+      titleEn: 'Issue Status Updated',
+      titleAr: 'تم تحديث حالة المشكلة',
+      messageEn: `Your issue "${updatedIssue.title}" status has been updated to: ${status}`,
+      messageAr: `تم تحديث حالة مشكلتك "${updatedIssue.title}" إلى: ${status}`,
+      metadata: JSON.stringify({ issueId: updatedIssue.id, status }),
+    });
+
+    res.json(updatedIssue);
+  } catch (error) {
+    console.error('Error updating issue status:', error);
+    res.status(500).json({ error: 'Failed to update issue status' });
+  }
+});
+
+// Get all issues (admin only)
+router.get('/feedback/issues', requireAuth, async (req: any, res: any) => {
+  try {
+    if (!req.client!.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const issues = await db
+      .select({
+        id: issueReports.id,
+        userId: issueReports.userId,
+        orderId: issueReports.orderId,
+        issueType: issueReports.issueType,
+        severity: issueReports.severity,
+        title: issueReports.title,
+        description: issueReports.description,
+        status: issueReports.status,
+        createdAt: issueReports.createdAt,
+        resolvedAt: issueReports.resolvedAt,
+        companyName: clients.nameEn,
+      })
+      .from(issueReports)
+      .leftJoin(clients, eq(issueReports.userId, clients.id))
+      .orderBy(desc(issueReports.createdAt));
+
+    res.json(issues);
+  } catch (error) {
+    console.error('Error fetching issues:', error);
+    res.status(500).json({ error: 'Failed to fetch issues' });
   }
 });
 
