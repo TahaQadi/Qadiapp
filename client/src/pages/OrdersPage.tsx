@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
 import { ModificationSheet } from "@/components/ModificationSheet";
-import OrderFeedbackDialog from "@/components/OrderFeedbackDialog";
+import { OrderFeedbackDialog } from "@/components/OrderFeedbackDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";

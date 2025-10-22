@@ -23,7 +23,7 @@ interface OrderFeedbackDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function OrderFeedbackDialog({
+export function OrderFeedbackDialog({
   orderId,
   orderReference,
   open,

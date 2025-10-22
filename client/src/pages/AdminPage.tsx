@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
