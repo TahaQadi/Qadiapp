@@ -1487,8 +1487,7 @@ export default function OrderingPage() {
                     return (
                       <Card
                         key={order.id}
-                        className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm cursor-pointer group overflow-hidden"
-                        onClick={() => window.location.href = '/orders'}
+                        className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group overflow-hidden"
                       >
                         {/* Status Bar */}
                         <div className={`h-1 w-full ${
@@ -1558,8 +1557,7 @@ export default function OrderingPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 const originalOrder = orders.find(o => o.id === order.id);
                                 if (originalOrder) {
                                   setSelectedOrder(originalOrder);
@@ -1577,8 +1575,7 @@ export default function OrderingPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 setSelectedOrderForIssue(order.id);
                                 setIssueReportDialogOpen(true);
                               }}
@@ -1594,8 +1591,7 @@ export default function OrderingPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => {
                                   setSelectedOrderForFeedback(order.id);
                                   setFeedbackDialogOpen(true);
                                 }}
