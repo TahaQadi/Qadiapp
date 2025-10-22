@@ -107,23 +107,6 @@ export default function AdminOrdersPage() {
   const orders = useVirtualScrolling ? allOrdersData?.orders || [] : ordersData?.orders || [];
   const totalPages = useVirtualScrolling ? 1 : ordersData?.totalPages || 1;
 
-  // Memoized filtered orders for performance
-  const filteredOrders = useMemo(() => {
-    if (!orders || orders.length === 0) return [];
-    
-    let result = [...orders];
-    
-    // Apply hide done/cancelled filter
-    if (hideDoneAndCancelled) {
-      result = result.filter(order => 
-        order.status !== 'delivered' && order.status !== 'cancelled'
-      );
-    }
-    
-    return result;
-  }, [orders, hideDoneAndCancelled]);
-
-
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['/api/admin/clients'],
     queryFn: async () => {
