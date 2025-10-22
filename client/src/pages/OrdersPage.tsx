@@ -80,7 +80,7 @@ export default function OrdersPage() {
       if (order.ltaId && !ltaMap.has(order.ltaId)) {
         ltaMap.set(order.ltaId, {
           id: order.ltaId,
-          ltaNumber: order.ltaNumber || order.ltaId,
+          ltaNumber: order.ltaId.slice(0, 8),
         });
       }
     });
@@ -98,7 +98,7 @@ export default function OrdersPage() {
       const searchLower = filters.searchTerm.toLowerCase();
       filtered = filtered.filter(order => 
         order.id.toLowerCase().includes(searchLower) ||
-        order.ltaNumber?.toLowerCase().includes(searchLower)
+        order.ltaId?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -129,11 +129,11 @@ export default function OrdersPage() {
     // Amount range filter
     if (filters.minAmount) {
       const min = parseFloat(filters.minAmount);
-      filtered = filtered.filter(order => order.totalAmount >= min);
+      filtered = filtered.filter(order => parseFloat(order.totalAmount) >= min);
     }
     if (filters.maxAmount) {
       const max = parseFloat(filters.maxAmount);
-      filtered = filtered.filter(order => order.totalAmount <= max);
+      filtered = filtered.filter(order => parseFloat(order.totalAmount) <= max);
     }
 
     // Sorting
@@ -145,7 +145,7 @@ export default function OrdersPage() {
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case "amount":
-          comparison = a.totalAmount - b.totalAmount;
+          comparison = parseFloat(a.totalAmount) - parseFloat(b.totalAmount);
           break;
         case "status":
           comparison = a.status.localeCompare(b.status);
@@ -343,10 +343,10 @@ export default function OrdersPage() {
                           <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {itemCount} {language === 'ar' ? 'عنصر' : 'items'}
                         </span>
-                        {order.ltaNumber && (
+                        {order.ltaId && (
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <span className="text-xs">LTA:</span>
-                            <span className="font-mono">{order.ltaNumber}</span>
+                            <span className="font-mono">{order.ltaId.slice(0, 8)}</span>
                           </span>
                         )}
                       </CardDescription>
