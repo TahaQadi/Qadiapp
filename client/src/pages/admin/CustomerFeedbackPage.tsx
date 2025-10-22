@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EmptyState } from '@/components/EmptyState';
 import { 
   Star, 
   TrendingUp, 
@@ -449,39 +450,50 @@ export default function CustomerFeedbackPage() {
               <CardTitle>{language === 'ar' ? 'جميع البلاغات' : 'All Reports'}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الأهمية' : 'Severity'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {issues.map((issue) => (
-                    <TableRow key={issue.id}>
-                      <TableCell>{issue.companyName}</TableCell>
-                      <TableCell>{issue.issueType}</TableCell>
-                      <TableCell>{getSeverityBadge(issue.severity)}</TableCell>
-                      <TableCell>{getStatusBadge(issue.status)}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedIssue(issue);
-                            setDetailsOpen(true);
-                          }}
-                        >
-                          {language === 'ar' ? 'عرض' : 'View'}
-                        </Button>
-                      </TableCell>
+              {issues.length === 0 ? (
+                <EmptyState
+                  icon={AlertTriangle}
+                  title={language === 'ar' ? 'لا توجد بلاغات حالياً' : 'No issue reports yet'}
+                  description={language === 'ar' 
+                    ? 'سيتم عرض البلاغات المُقدمة من العملاء هنا' 
+                    : 'Customer-reported issues will appear here'}
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'الأهمية' : 'Severity'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                      <TableHead>{language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {issues.map((issue) => (
+                      <TableRow key={issue.id}>
+                        <TableCell>{issue.companyName}</TableCell>
+                        <TableCell>{issue.issueType}</TableCell>
+                        <TableCell>{getSeverityBadge(issue.severity)}</TableCell>
+                        <TableCell>{getStatusBadge(issue.status)}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedIssue(issue);
+                              setDetailsOpen(true);
+                            }}
+                            data-testid={`button-view-feedback-issue-${issue.id}`}
+                          >
+                            {language === 'ar' ? 'عرض' : 'View'}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

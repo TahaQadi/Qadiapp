@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { EmptyState } from '@/components/EmptyState';
 import {
   Table,
   TableBody,
@@ -135,45 +136,56 @@ export default function IssueReportsPage() {
           <CardTitle>{i18n.language === 'ar' ? 'جميع البلاغات' : 'All Reports'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{i18n.language === 'ar' ? 'العميل' : 'Client'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'رقم الطلب' : 'Order ID'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'النوع' : 'Type'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'الأهمية' : 'Severity'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'العنوان' : 'Title'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
-                <TableHead>{i18n.language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {issues.map((issue) => (
-                <TableRow key={issue.id}>
-                  <TableCell>{issue.companyName}</TableCell>
-                  <TableCell className="font-mono text-xs">{issue.orderId.substring(0, 8)}</TableCell>
-                  <TableCell>{getIssueTypeLabel(issue.issueType)}</TableCell>
-                  <TableCell>{getSeverityBadge(issue.severity)}</TableCell>
-                  <TableCell className="max-w-xs truncate">{issue.title}</TableCell>
-                  <TableCell>{getStatusBadge(issue.status)}</TableCell>
-                  <TableCell>{new Date(issue.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedIssue(issue);
-                        setDetailsOpen(true);
-                      }}
-                    >
-                      {i18n.language === 'ar' ? 'عرض' : 'View'}
-                    </Button>
-                  </TableCell>
+          {issues.length === 0 ? (
+            <EmptyState
+              icon={AlertTriangle}
+              title={i18n.language === 'ar' ? 'لا توجد بلاغات حالياً' : 'No issue reports yet'}
+              description={i18n.language === 'ar' 
+                ? 'سيتم عرض البلاغات المُقدمة من العملاء هنا' 
+                : 'Customer-reported issues will appear here'}
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{i18n.language === 'ar' ? 'العميل' : 'Client'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'رقم الطلب' : 'Order ID'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'النوع' : 'Type'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'الأهمية' : 'Severity'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'العنوان' : 'Title'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'التاريخ' : 'Date'}</TableHead>
+                  <TableHead>{i18n.language === 'ar' ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {issues.map((issue) => (
+                  <TableRow key={issue.id}>
+                    <TableCell>{issue.companyName}</TableCell>
+                    <TableCell className="font-mono text-xs">{issue.orderId.substring(0, 8)}</TableCell>
+                    <TableCell>{getIssueTypeLabel(issue.issueType)}</TableCell>
+                    <TableCell>{getSeverityBadge(issue.severity)}</TableCell>
+                    <TableCell className="max-w-xs truncate">{issue.title}</TableCell>
+                    <TableCell>{getStatusBadge(issue.status)}</TableCell>
+                    <TableCell>{new Date(issue.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedIssue(issue);
+                          setDetailsOpen(true);
+                        }}
+                        data-testid={`button-view-issue-${issue.id}`}
+                      >
+                        {i18n.language === 'ar' ? 'عرض' : 'View'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
