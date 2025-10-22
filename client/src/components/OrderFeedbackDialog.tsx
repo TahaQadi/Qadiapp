@@ -405,3 +405,5 @@ export default function OrderFeedbackDialog({
     </Dialog>
   );
 }
+
+export { OrderFeedbackDialog };
