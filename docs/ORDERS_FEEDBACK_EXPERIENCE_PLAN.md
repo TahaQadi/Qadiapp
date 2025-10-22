@@ -352,7 +352,61 @@ CREATE INDEX idx_micro_feedback_created_at ON micro_feedback(created_at DESC);
 - ✅ In-app notifications for critical issues
 - ⏳ Email notifications (future enhancement)
 
-**Status**: ✅ Completed - Full issue reporting and management workflow implemented
+**Status**: ✅ Completed - Full issue reporting and management
+
+---
+
+### Phase 3: Feedback & Analytics Split (January 2025)
+**Priority**: High
+**Goal**: Separate feedback system from issue reporting for better UX and management
+
+**Implementation Date**: January 22, 2025
+
+**Changes Made**:
+
+1. **Admin Navigation Update**
+   - Removed combined "Feedback & Analytics" button
+   - Added separate "Feedback & Analytics" card (dedicated to customer feedback)
+   - Issue reports remain accessible through the Feedback page tabs
+   - Clear separation of concerns in admin interface
+
+2. **Frontend Components**
+   - `OrderFeedbackDialog.tsx`: Kept integrated approach (feedback + optional issue reporting)
+   - `CustomerFeedbackPage.tsx`: Enhanced with three tabs (Analytics, Ratings, Issues)
+   - Better error handling and loading states
+   - Improved data visualization with charts
+
+3. **Backend Routes**
+   - `feedback-routes.ts`: Handles both feedback and issues (consolidated approach)
+   - `feedback-analytics-routes.ts`: Dedicated analytics endpoint
+   - Proper error handling and validation
+   - Admin-only access controls
+
+4. **Database Integration**
+   - Existing schema supports both systems
+   - Issue reports linked to feedback via orderId
+   - Proper indexes for performance
+
+**Benefits Achieved**:
+- ✅ Clearer admin navigation structure
+- ✅ Better separation of feedback analytics from issue management
+- ✅ Improved error handling and user feedback
+- ✅ Comprehensive analytics dashboard with charts
+- ✅ Unified interface for managing both feedback and issues
+
+**Testing Status**:
+- ✅ Admin can access feedback analytics
+- ✅ Admin can view and manage issues
+- ✅ Data visualization working correctly
+- ✅ Error handling tested and verified
+- ✅ Issue status updates functional
+
+**Next Steps** (Future Enhancements):
+- [ ] Add standalone floating issue report button (available on all pages)
+- [ ] Add screenshot capture capability
+- [ ] Implement admin response system for feedback
+- [ ] Add email notifications for issue updates
+- [ ] Create dedicated analytics export feature workflow implemented
 
 ---
 
