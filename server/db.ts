@@ -21,7 +21,7 @@ export const db = drizzle({ client: pool, schema });
 export { notifications, orders, orderFeedback } from '@shared/schema';
 
 // Re-export schema for use in routes
-export { schema } from '@shared/schema';
+export { schema };
 
 // All table schemas are now defined in shared/schema.ts
 // This file only contains the database connection and configuration
