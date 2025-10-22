@@ -42,7 +42,11 @@ router.post('/feedback/order/:orderId', requireAuth, async (req: AuthenticatedRe
     console.log('Request body:', req.body);
     console.log('Client ID:', req.client.id);
 
-    const feedbackData = insertOrderFeedbackSchema.parse(req.body);
+    // Parse feedback data without orderId (it comes from URL params)
+    const feedbackData = insertOrderFeedbackSchema.parse({
+      ...req.body,
+      orderId // Add orderId from URL params
+    });
 
     // Verify order belongs to client
     const order = await storage.getOrder(orderId);
