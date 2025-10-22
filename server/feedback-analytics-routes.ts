@@ -42,7 +42,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       feedbackData = await db
         .select()
         .from(orderFeedback)
-        .where(greaterThanOrEqual(orderFeedback.createdAt, startDate.toISOString()))
+        .where(greaterThanOrEqual(orderFeedback.createdAt, startDate))
         .execute();
     } catch (dbError) {
       console.warn('[Feedback Analytics] Database query failed, using empty data:', dbError);
@@ -125,7 +125,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       issues = await db
         .select()
         .from(issueReports)
-        .where(greaterThanOrEqual(issueReports.createdAt, startDate.toISOString()))
+        .where(greaterThanOrEqual(issueReports.createdAt, startDate))
         .execute();
     } catch (dbError) {
       console.warn('[Feedback Analytics] Issues query failed:', dbError);
@@ -158,7 +158,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
         })
         .from(orderFeedback)
         .leftJoin(clients, eq(orderFeedback.clientId, clients.id))
-        .where(greaterThanOrEqual(orderFeedback.createdAt, startDate.toISOString()))
+        .where(greaterThanOrEqual(orderFeedback.createdAt, startDate))
         .orderBy(desc(orderFeedback.createdAt))
         .limit(10)
         .execute();
