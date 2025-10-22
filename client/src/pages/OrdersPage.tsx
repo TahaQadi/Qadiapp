@@ -395,26 +395,45 @@ export default function OrdersPage() {
                           setFeedbackDialogOpen(true);
                         }}
                         data-testid={`button-submit-feedback-${order.id}`}
-                        className="w-full min-h-[44px] justify-start border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950"
+                        className="w-full min-h-[44px] justify-start border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950 transition-all duration-200"
                       >
                         <Star className="h-4 w-4 me-2 text-yellow-500" />
                         {language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                       </Button>
                     )}
                     
-                    {/* Issue Report Button - Available for ALL order statuses */}
+                    {/* Issue Report Button - Prominent design for ALL order statuses */}
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={() => {
                         setSelectedOrderForIssue(order.id);
                         setIssueReportDialogOpen(true);
                       }}
                       data-testid={`button-report-issue-${order.id}`}
-                      className="w-full min-h-[44px] justify-start border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950"
+                      className="w-full min-h-[44px] justify-start bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 group"
                     >
-                      <AlertTriangle className="h-4 w-4 me-2 text-orange-500" />
-                      {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
+                      <div className="flex items-center gap-2 w-full">
+                        <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <AlertTriangle className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex flex-col items-start flex-1">
+                          <span className="font-semibold text-sm">
+                            {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report an Issue'}
+                          </span>
+                          <span className="text-xs text-white/80">
+                            {language === 'ar' ? 'نحن هنا للمساعدة' : 'We\'re here to help'}
+                          </span>
+                        </div>
+                        <svg 
+                          className="h-5 w-5 text-white/80 group-hover:translate-x-1 transition-transform duration-300" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </Button>
                   </div>
 
