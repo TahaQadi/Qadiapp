@@ -29,16 +29,16 @@ interface ShoppingCartProps {
   currency: string;
 }
 
-function CartItemCard({
-  item,
-  currency,
-  onUpdateQuantity,
-  onRemoveItem
-}: {
-  item: CartItem;
-  currency: string;
-  onUpdateQuantity: (id: string, qty: number) => void;
-  onRemoveItem: (id: string) => void;
+function CartItemCard({ 
+  item, 
+  currency, 
+  onUpdateQuantity, 
+  onRemoveItem 
+}: { 
+  item: CartItem; 
+  currency: string; 
+  onUpdateQuantity: (id: string, qty: number) => void; 
+  onRemoveItem: (id: string) => void; 
 }) {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -154,12 +154,10 @@ export function ShoppingCart({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
 
-  // Use mobile cart on small screens (< 1024px)
-  if (isMobile) {
-    return <MobileCart />;
-  }
+  const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+  const tax = subtotal * 0.15; // 15% tax
+  const total = subtotal + tax;
 
-  // Desktop cart sidebar (≥ 1024px)
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
@@ -251,17 +249,5 @@ export function ShoppingCart({
         )}
       </SheetContent>
     </Sheet>
-  );
-}
-
-// Dummy MobileCart component for illustration purposes.
-// In a real application, this would be imported and used.
-function MobileCart() {
-  return (
-    <div className="p-4">
-      <p className="text-center text-lg font-semibold">Mobile Cart View</p>
-      <p className="text-center text-sm text-muted-foreground">This is the mobile-specific cart layout.</p>
-      {/* Add mobile cart specific elements here */}
-    </div>
   );
 }

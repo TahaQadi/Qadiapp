@@ -469,14 +469,36 @@ export default function AdminLtaListPage() {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormControl>
-                        <MobileDatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          label={language === 'ar' ? 'تاريخ البداية' : 'Start Date'}
-                          placeholder={language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}
-                        />
-                      </FormControl>
+                      <FormLabel>{language === 'ar' ? 'تاريخ البداية' : 'Start Date'}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full ps-3 text-start font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="button-start-date"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: language === 'ar' ? ar : undefined })
+                              ) : (
+                                <span>{language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}</span>
+                              )}
+                              <CalendarIcon className="ms-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -486,14 +508,36 @@ export default function AdminLtaListPage() {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormControl>
-                        <MobileDatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          label={language === 'ar' ? 'تاريخ الانتهاء' : 'End Date'}
-                          placeholder={language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}
-                        />
-                      </FormControl>
+                      <FormLabel>{language === 'ar' ? 'تاريخ الانتهاء' : 'End Date'}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full ps-3 text-start font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="button-end-date"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: language === 'ar' ? ar : undefined })
+                              ) : (
+                                <span>{language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}</span>
+                              )}
+                              <CalendarIcon className="ms-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -604,14 +648,36 @@ export default function AdminLtaListPage() {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormControl>
-                        <MobileDatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          label={language === 'ar' ? 'تاريخ البداية' : 'Start Date'}
-                          placeholder={language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}
-                        />
-                      </FormControl>
+                      <FormLabel>{language === 'ar' ? 'تاريخ البداية' : 'Start Date'}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full ps-3 text-start font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="button-edit-start-date"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: language === 'ar' ? ar : undefined })
+                              ) : (
+                                <span>{language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}</span>
+                              )}
+                              <CalendarIcon className="ms-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -621,14 +687,36 @@ export default function AdminLtaListPage() {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormControl>
-                        <MobileDatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          label={language === 'ar' ? 'تاريخ الانتهاء' : 'End Date'}
-                          placeholder={language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}
-                        />
-                      </FormControl>
+                      <FormLabel>{language === 'ar' ? 'تاريخ الانتهاء' : 'End Date'}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full ps-3 text-start font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="button-edit-end-date"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: language === 'ar' ? ar : undefined })
+                              ) : (
+                                <span>{language === 'ar' ? 'اختر تاريخ' : 'Pick a date'}</span>
+                              )}
+                              <CalendarIcon className="ms-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}

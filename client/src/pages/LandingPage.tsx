@@ -1,17 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { SEO } from "@/components/SEO";
 import { DemoRequestDialog } from "@/components/DemoRequestDialog";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function LandingPage() {
   const { language, setLanguage } = useLanguage();
   const isArabic = language === 'ar';
-  const isMobile = useIsMobile();
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   const structuredData = {
@@ -225,7 +223,7 @@ export default function LandingPage() {
                 : 'Manage your contracts, submit orders, and track execution with ease and clarity'}
             </p>
 
-            <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-4 max-w-lg sm:max-w-none mx-auto ${isMobile ? 'flex-col' : ''}`}>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-4 max-w-lg sm:max-w-none mx-auto">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -362,7 +360,7 @@ export default function LandingPage() {
                       <CheckCircle className="h-5 w-5 text-green-500" />
                     </div>
                   )}
-
+                  
                   <div className="mb-4 inline-flex p-4 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#f9c800]/20 group-hover:from-[#d4af37]/30 group-hover:to-[#f9c800]/30 transition-all duration-300">
                     <Icon className="h-8 w-8 text-[#d4af37]" />
                   </div>
@@ -433,7 +431,7 @@ export default function LandingPage() {
                       {isArabic ? 'قريباً' : 'Soon'}
                     </span>
                   </div>
-
+                  
                   <div className="mb-4 inline-flex p-4 rounded-xl bg-gradient-to-br from-[#d4af37]/10 to-[#f9c800]/10 transition-all duration-300">
                     <Icon className="h-8 w-8 text-[#d4af37]/70" />
                   </div>
@@ -441,7 +439,7 @@ export default function LandingPage() {
                   <h3 className="font-bold text-xl text-white mb-2">
                     {isArabic ? feature.titleAr : feature.titleEn}
                   </h3>
-
+                  
                   <p className="text-gray-400 text-sm">
                     {isArabic ? feature.descAr : feature.descEn}
                   </p>
@@ -504,7 +502,7 @@ export default function LandingPage() {
             <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-white px-4" dir={isArabic ? 'rtl' : 'ltr'}>
               {isArabic ? 'ابدأ الآن وجرّب الراحة في إدارة مشترياتك' : 'Start Now and Experience Easy Procurement Management'}
             </h3>
-            <div className={`flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center mt-8 max-w-lg sm:max-w-none mx-auto px-4 ${isMobile ? 'flex-col' : ''}`}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center mt-8 max-w-lg sm:max-w-none mx-auto px-4">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
                 <Button 
                   size="lg" 

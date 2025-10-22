@@ -3,7 +3,6 @@ import { Home, ShoppingCart, ClipboardList, User, Menu } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { useLanguage } from './LanguageProvider';
-import { useTranslation } from 'react-i18next';
 import { Badge } from './ui/badge';
 
 interface MobileNavProps {
@@ -13,14 +12,13 @@ interface MobileNavProps {
 
 export function MobileNav({ cartItemCount = 0, onMenuClick }: MobileNavProps) {
   const [location, setLocation] = useLocation();
-  const { language } = useLanguage();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
 
   const navItems = [
-    { icon: Home, label: language === 'ar' ? 'الرئيسية' : 'Home', path: '/' },
-    { icon: ShoppingCart, label: language === 'ar' ? 'السلة' : 'Cart', path: '/ordering', badge: cartItemCount },
-    { icon: ClipboardList, label: language === 'ar' ? 'الطلبات' : 'Orders', path: '/orders' },
-    { icon: User, label: language === 'ar' ? 'الملف الشخصي' : 'Profile', path: '/profile' },
+    { icon: Home, label: t('nav.home'), path: '/' },
+    { icon: ShoppingCart, label: t('nav.cart'), path: '/ordering', badge: cartItemCount },
+    { icon: ClipboardList, label: t('nav.orders'), path: '/orders' },
+    { icon: User, label: t('nav.profile'), path: '/profile' },
   ];
 
   return (
@@ -41,7 +39,7 @@ export function MobileNav({ cartItemCount = 0, onMenuClick }: MobileNavProps) {
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
-                {item.badge !== undefined && item.badge > 0 && (
+                {item.badge > 0 && (
                   <Badge 
                     className="absolute -top-2 -right-2 h-4 min-w-4 p-0 flex items-center justify-center text-xs"
                     variant="destructive"
@@ -60,7 +58,7 @@ export function MobileNav({ cartItemCount = 0, onMenuClick }: MobileNavProps) {
           className="touch-target flex flex-col items-center justify-center gap-1 text-muted-foreground"
         >
           <Menu className="h-5 w-5" />
-          <span className="text-mobile-xs font-medium">{language === 'ar' ? 'المزيد' : 'More'}</span>
+          <span className="text-mobile-xs font-medium">{t('nav.more')}</span>
         </button>
       </div>
     </nav>

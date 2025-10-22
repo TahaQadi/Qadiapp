@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -9,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, Mail, Lock } from 'lucide-react';
 import { Link } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
-import { Checkbox } from '@/components/ui/checkbox'; // Assuming Checkbox is imported from ui/checkbox
 
 export default function LoginPage() {
   const { language } = useLanguage();
@@ -20,22 +20,14 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mocking useTranslation for the sake of example, replace with actual import if available
-  const t = (key: string, defaultValue: string, arabicValue: string) => {
-    if (language === 'ar') {
-      return arabicValue;
-    }
-    return defaultValue;
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!email || !password) {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar'
-          ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور'
+        description: language === 'ar' 
+          ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' 
           : 'Please enter email and password',
         variant: 'destructive',
       });
@@ -43,7 +35,7 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-
+    
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -58,15 +50,15 @@ export default function LoginPage() {
       }
 
       const userData = await res.json();
-
+      
       // Invalidate auth query to refresh user data
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-
+      
       toast({
         title: language === 'ar' ? 'نجح تسجيل الدخول' : 'Login successful',
         description: language === 'ar' ? 'مرحباً بك!' : 'Welcome back!',
       });
-
+      
       // Redirect based on user role
       if (userData.isAdmin) {
         setLocation('/admin');
@@ -76,8 +68,8 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar'
-          ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+        description: language === 'ar' 
+          ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' 
           : 'Invalid email or password',
         variant: 'destructive',
       });
@@ -112,12 +104,12 @@ export default function LoginPage() {
               </CardTitle>
             </div>
             <CardDescription className="text-center">
-              {language === 'ar'
-                ? 'أدخل بريدك الإلكتروني وكلمة المرور للدخول'
+              {language === 'ar' 
+                ? 'أدخل بريدك الإلكتروني وكلمة المرور للدخول' 
                 : 'Enter your email and password to login'}
             </CardDescription>
           </CardHeader>
-
+          
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Email field */}
@@ -140,7 +132,7 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-
+              
               {/* Password field */}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
@@ -172,8 +164,8 @@ export default function LoginPage() {
                   disabled={isLoading}
                   data-testid="checkbox-remember-me"
                 />
-                <Label
-                  htmlFor="rememberMe"
+                <Label 
+                  htmlFor="rememberMe" 
                   className="text-sm font-normal cursor-pointer select-none"
                 >
                   {language === 'ar' ? 'تذكرني' : 'Remember me'}
@@ -181,9 +173,9 @@ export default function LoginPage() {
               </div>
 
               {/* Login button */}
-              <Button
-                type="submit"
-                className="w-full h-11 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black font-medium shadow-sm hover:shadow-md transition-all"
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black font-medium shadow-sm hover:shadow-md transition-all" 
                 disabled={isLoading}
                 data-testid="button-login"
               >
@@ -203,9 +195,9 @@ export default function LoginPage() {
               {/* Sign up link */}
               <div className="text-center text-sm text-muted-foreground pt-2">
                 {language === 'ar' ? 'ليس لديك حساب؟' : "Don't have an account?"}{' '}
-                <Link
-                  href="/onboarding"
-                  className="text-primary dark:text-[#d4af37] hover:underline font-medium transition-colors"
+                <Link 
+                  href="/onboarding" 
+                  className="text-primary dark:text-[#d4af37] hover:underline font-medium transition-colors" 
                   data-testid="link-signup"
                 >
                   {language === 'ar' ? 'إنشاء حساب جديد' : 'Sign up'}

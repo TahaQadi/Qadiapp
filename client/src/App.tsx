@@ -8,7 +8,6 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, lazy, Suspense } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import NotFoundPage from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import OnboardingPage from "@/pages/OnboardingPage";
@@ -48,7 +47,6 @@ import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { usePageTracking } from '@/lib/analytics';
 import { errorMonitoring } from '@/lib/errorMonitoring';
 import { performanceMonitoring } from '@/lib/performanceMonitoring';
-import { MobileNav } from '@/components/MobileNav';
 
 // Lazy load Admin components with preload capability
 const AdminOrderModificationsPage = lazy(() => import('@/pages/admin/OrderModificationsPage'));
@@ -63,7 +61,7 @@ function AdminRoute({
   component: Component,
 }: {
   path: string;
-  component: React.ComponentType<any>;
+  component: () => React.JSX.Element;
 }) {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -104,18 +102,11 @@ function AdminRoute({
     );
   }
 
-  return (
-    <Route path={path}>
-      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-border" /></div>}>
-        <Component />
-      </Suspense>
-    </Route>
-  );
+  return <Route path={path} component={Component} />;
 }
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const isMobile = useIsMobile();
 
   return (
     <Switch>
@@ -183,8 +174,6 @@ function Router() {
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
-  const isMobile = useIsMobile();
-
 
   // Redirect to onboarding if user needs it
   useEffect(() => {
@@ -201,7 +190,6 @@ function AppContent() {
       <Toaster />
       <InstallPrompt />
       <NotificationPermission />
-      {isMobile && <MobileNav />}
     </>
   );
 }

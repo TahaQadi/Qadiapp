@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -36,10 +36,6 @@ import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
 import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
 import { Calendar, Check, Save, AlertTriangle } from 'lucide-react'; // Added Calendar, Check, Save, AlertTriangle
-import { LoadingSkeleton } from '@/components/ui/loading-skeleton'; // Import LoadingSkeleton
-import { VirtualList } from '@/components/VirtualList'; // Import VirtualList
-import { motion } from 'framer-motion'; // Import framer-motion
-
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -115,7 +111,6 @@ export default function OrderingPage() {
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('lta-products'); // Default to 'lta-products'
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // State for view mode
 
   // Ref to store scroll position for restoration after cart updates
   const scrollPositionRef = useRef<number | null>(null);
@@ -625,169 +620,191 @@ export default function OrderingPage() {
   })), [cart]);
 
   function ProductCard({ product }: { product: ProductWithLtaPrice }) {
-    const [selectedProduct, setSelectedProduct] = useState<ProductWithLtaPrice | null>(null);
-    const [showQuickView, setShowQuickView] = useState(false);
-
-    // Handle card click to open quick view
-    const handleCardClick = (e: React.MouseEvent) => {
-      // Don't open quick view if clicking on buttons
-      if ((e.target as HTMLElement).closest('button')) {
-        return;
-      }
-      setSelectedProduct(product);
-      setShowQuickView(true);
-    };
-
     const primaryName = language === 'ar' ? product.nameAr : product.nameEn;
     const secondaryName = language === 'ar' ? product.nameEn : product.nameAr;
+    const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
+    const cartItem = cart.find(item => item.productId === product.id);
+    const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
+    const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
+    const [, setLocation] = useLocation();
+    const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
+    // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
+
+    const productSlug = product.nameEn?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
+    const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
+    const productUrl = `/products/${categorySlug}/${productSlug}`;
+
+    const handleCardClick = () => {
+      setLocation(productUrl);
+    };
+
+    // Function to handle quantity changes directly from the card
+    const handleQuantityChange = (change: number) => {
+      handleAddToCart(product, change);
+    };
+
+    // Calculate final quantity based on type
+    const getFinalQuantity = (qty: number) => {
+      if (quantityType === 'box' && product.unitPerBox) {
+        return qty * parseInt(product.unitPerBox);
+      }
+      return qty;
+    };
+
+    const handleAddWithQuantity = () => {
+      const finalQty = getFinalQuantity(customQuantity);
+      handleAddToCart(product, finalQty);
+      setCustomQuantity(1); // Reset after adding
+    };
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-        className="h-full"
+      <Card
+        className={cn(
+          "group flex flex-col overflow-hidden transition-all duration-500 ease-out " +
+          "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm " +
+          "border-border/50 dark:border-[#d4af37]/20 " +
+          "hover:border-primary dark:hover:border-[#d4af37] " +
+          "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 " +
+          "animate-fade-in",
+          isDifferentLta && "opacity-50 pointer-events-none"
+        )}
+        data-testid={`card-product-${product.id}`}
       >
-        <Card
-          className={cn(
-            "group relative overflow-hidden cursor-pointer",
-            "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm",
-            "border-border/50 dark:border-[#d4af37]/20",
-            "hover:border-primary dark:hover:border-[#d4af37]",
-            "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20",
-            "h-full",
-            isDifferentLta && "opacity-50 pointer-events-none"
-          )}
-          onClick={handleCardClick}
-          data-testid={`card-product-${product.id}`}
-        >
-          {/* Shimmer Effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
+        {/* Shimmer Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
 
-          {/* Product Image */}
-          <div
-            className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer"
-          >
+        {/* Product Image */}
+        <div
+          className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={handleCardClick}
+        >
+          <div className="w-full h-full">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={primaryName}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                className="w-full h-full object-cover"
                 data-testid={`img-product-${product.id}`}
-                loading="lazy"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-16 h-16 text-muted-foreground/40" />
+                <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
               </div>
             )}
+          </div>
+        </div>
 
-            {/* Badges */}
-            <div className="absolute top-2 end-2 flex flex-col gap-2">
-              {cartItem && (
-                <Badge
-                  className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm"
-                  data-testid={`badge-in-cart-${product.id}`}
-                >
-                  {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
-                </Badge>
-              )}
-              {product.category && (
-                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
-                  {product.category}
-                </Badge>
-              )}
-            </div>
+          {/* Badges */}
+          <div className="absolute top-2 end-2 flex flex-col gap-2">
+            {cartItem && (
+              <Badge
+                className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm"
+                data-testid={`badge-in-cart-${product.id}`}
+              >
+                {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+              </Badge>
+            )}
+            {product.category && (
+              <Badge
+                variant="secondary"
+                className="bg-background/80 backdrop-blur-sm text-xs"
+              >
+                {product.category}
+              </Badge>
+            )}
           </div>
 
-          {/* Product Info */}
-          <CardContent className="p-4 flex-1 flex flex-col">
-            <div className="mb-2">
-              <h3 className="font-bold text-base leading-tight line-clamp-2 group-hover:text-primary dark:group-hover:text-[#d4af37] transition-colors">
-                {primaryName}
-              </h3>
-              {secondaryName && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{secondaryName}</p>
-              )}
-            </div>
-
-            {product.category && (
-              <p className="text-xs text-muted-foreground mb-2">
-                {product.category}
-              </p>
+        {/* Product Info */}
+        <CardContent className="flex-1 p-4 space-y-3 relative z-10">
+          <div>
+            <h3
+              className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary transition-colors cursor-pointer"
+              data-testid={`text-product-name-${product.id}`}
+              onClick={handleCardClick}
+            >
+              {primaryName}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+              {secondaryName}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
+            {product.unitPerBox && (
+              <Badge variant="outline" className="text-xs">
+                📦 {product.unitPerBox} {language === 'ar' ? 'قطع/صندوق' : 'pcs/box'}
+              </Badge>
             )}
+          </div>
 
-            <div className="text-xs text-muted-foreground mb-2">
-              {t('sku')}: <span className="font-mono">{product.sku}</span>
-            </div>
+          {description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+              {description}
+            </p>
+          )}
 
-            {/* Product Description */}
-            {(product.descriptionEn || product.descriptionAr) && (
-              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                {language === 'ar' ? product.descriptionAr : product.descriptionEn}
-              </p>
-            )}
-
-            {/* Product Details */}
-            <div className="pt-2 border-t border-border/50 flex-grow flex flex-col justify-end">
-              {product.hasPrice && product.contractPrice ? (
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
-                    {product.contractPrice} <span className="text-sm font-normal">{product.currency}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <DollarSign className="w-3 h-3" />
-                    {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
-                  </p>
-                </div>
-              ) : product.sellingPricePiece ? (
-                <div className="space-y-1">
-                  <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                    {product.sellingPricePiece} <span className="text-sm font-normal">ILS</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {language === 'ar' ? 'سعر مرجعي' : 'Reference Price'}
-                  </p>
-                </div>
-              ) : (
+          {/* Pricing Section */}
+          <div className="pt-2 border-t border-border/50">
+            {product.hasPrice && product.contractPrice ? (
+              <div className="space-y-1">
+                <p className="text-2xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
+                  {product.contractPrice} <span className="text-sm font-normal">{product.currency}</span>
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
+                </p>
+              </div>
+            ) : product.sellingPricePiece ? (
+              <div className="space-y-1">
+                <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
+                  {product.sellingPricePiece} <span className="text-sm font-normal">{language === 'ar' ? 'ش' : 'ILS'}</span>
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Reference Price'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
                 </p>
-              )}
-            </div>
-          </CardContent>
+              </div>
+            )}
+          </div>
+        </CardContent>
 
-          {/* Actions */}
-          <CardFooter className="p-4 pt-0 flex-col gap-2">
-            {product.hasPrice && product.contractPrice ? (
-              cartItem ? (
-                <div className="flex items-center justify-between gap-2 w-full">
+        {/* Action Buttons */}
+        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
+          {product.hasPrice ? (
+            <>
+              {cartItem ? (
+                <div className="flex items-center gap-2 w-full">
                   <Button
                     size="icon"
                     variant="outline"
-                    className="h-9 w-9"
+                    className="rounded-full h-8 w-8 flex-shrink-0"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      handleAddToCart(product, -1);
+                      handleQuantityChange(-1);
                     }}
                     disabled={isDifferentLta}
                     data-testid={`button-decrement-cart-${product.id}`}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="font-semibold text-center flex-1">
-                    {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
-                  </span>
+                  <span className="font-semibold text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}</span>
                   <Button
                     size="icon"
                     variant="outline"
-                    className="h-9 w-9"
+                    className="rounded-full h-8 w-8 flex-shrink-0"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      handleAddToCart(product, 1);
+                      handleQuantityChange(1);
                     }}
                     disabled={isDifferentLta}
                     data-testid={`button-increment-cart-${product.id}`}
@@ -796,50 +813,140 @@ export default function OrderingPage() {
                   </Button>
                 </div>
               ) : (
-                <Button
-                  variant="default"
-                  className="w-full bg-[#d4af37] hover:bg-[#b8961f] text-black font-semibold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
-                      toast({
-                        variant: 'destructive',
-                        title: language === 'ar' ? 'خطأ' : 'Error',
-                        description: language === 'ar'
-                          ? 'هذا المنتج غير متوفر للطلب'
-                          : 'This product is not available for ordering'
-                      });
-                      return;
-                    }
-                    handleAddToCart(product, 1);
-                  }}
-                  disabled={isDifferentLta || !product.hasPrice || !product.contractPrice}
-                  data-testid={`button-add-to-cart-${product.id}`}
-                >
-                  <ShoppingCart className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
-                </Button>
-              )
-            ) : (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddToPriceRequest(product);
-                }}
-                variant={inPriceRequest ? 'secondary' : 'outline'}
-                className="w-full"
-                data-testid={`button-add-to-price-request-${product.id}`}
-              >
-                <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
+                <div className="w-full space-y-2">
+                  {/* Quantity Type Selector (only if product has unitPerBox) */}
+                  {product.unitPerBox && (
+                    <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuantityType('pcs');
+                        }}
+                        className={cn(
+                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          quantityType === 'pcs'
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        data-testid={`button-select-pcs-${product.id}`}
+                      >
+                        {language === 'ar' ? 'قطع' : 'Pieces'}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuantityType('box');
+                        }}
+                        className={cn(
+                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          quantityType === 'box'
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                        data-testid={`button-select-box-${product.id}`}
+                      >
+                        📦 {language === 'ar' ? 'صناديق' : 'Boxes'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Quantity Selector and Add Button */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center border rounded-lg flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCustomQuantity(Math.max(1, customQuantity - 1));
+                        }}
+                        className="p-2 hover:bg-muted transition-colors"
+                        data-testid={`button-decrease-qty-${product.id}`}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={customQuantity}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const val = parseInt(e.target.value) || 1;
+                          setCustomQuantity(Math.max(1, val));
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-12 text-center border-x bg-transparent focus:outline-none font-semibold"
+                        data-testid={`input-quantity-${product.id}`}
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCustomQuantity(customQuantity + 1);
+                        }}
+                        className="p-2 hover:bg-muted transition-colors"
+                        data-testid={`button-increase-qty-${product.id}`}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddWithQuantity();
+                      }}
+                      disabled={isDifferentLta}
+                      className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md"
+                      data-testid={`button-add-to-cart-${product.id}`}
+                    >
+                      <ShoppingCart className="w-4 h-4 me-2" />
+                      <span className="truncate">
+                        {isDifferentLta
+                          ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                          : (language === 'ar' ? 'أضف' : 'Add')
+                        }
+                      </span>
+                    </Button>
+                  </div>
+
+                  {/* Show total pieces when box is selected */}
+                  {quantityType === 'box' && product.unitPerBox && customQuantity > 0 && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      = {getFinalQuantity(customQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddToPriceRequest(product);
+              }}
+              variant={inPriceRequest
+                ? 'secondary'
+                : 'outline'
+              }
+              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
+              size="lg"
+              data-testid={`button-add-to-price-request-${product.id}`}
+            >
+              <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
+              <span>
                 {inPriceRequest
                   ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
                   : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
                 }
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
-      </motion.div>
+              </span>
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
     );
   }
 
@@ -1254,7 +1361,27 @@ export default function OrderingPage() {
               </div>
 
               {productsLoading ? (
-                <LoadingSkeleton variant="grid" count={12} />
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>
+                      {language === 'ar' ? 'جاري تحميل المنتجات...' : 'Loading products...'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <Card key={i} className="flex flex-col">
+                        <Skeleton className="w-full aspect-square" />
+                        <CardContent className="p-4 space-y-3">
+                          <Skeleton className="h-6 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-8 w-1/3 mt-2" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               ) : filteredProducts.length === 0 ? (
                 <Card className="p-12 text-center border-2 border-dashed">
                   <div className="max-w-md mx-auto space-y-4">
@@ -1291,10 +1418,11 @@ export default function OrderingPage() {
                     </p>
                   </div>
 
-                  <ProductGrid
-                    products={filteredProducts}
-                    onAddToCart={handleAddToCart}
-                  />
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
                 </div>
               )}
             </TabsContent>
@@ -1348,8 +1476,8 @@ export default function OrderingPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {formattedOrders.map((order) => {
-                    const orderItems = safeJsonParse(order.items, []) as any[];
-                    const itemCount = orderItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+                    const items = safeJsonParse(order.items, []) as any[];
+                    const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
                     return (
                       <Card

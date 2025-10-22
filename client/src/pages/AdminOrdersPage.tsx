@@ -474,7 +474,7 @@ export default function AdminOrdersPage() {
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(order.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.pipefyCardId?.toLowerCase().includes(searchQuery.toLowerCase());
-
+    
     // Hide done (delivered) and cancelled if toggle is on
     const shouldShow = !hideDoneAndCancelled || (order.status !== 'delivered' && order.status !== 'cancelled');
 
@@ -501,7 +501,7 @@ export default function AdminOrdersPage() {
   };
 
   const renderOrderCard = (order: Order) => (
-    <Card key={order.id}
+    <Card key={order.id} 
       className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group"
     >
       <CardContent className="p-4 space-y-4">
@@ -645,7 +645,7 @@ export default function AdminOrdersPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto py-4 md:py-6 space-y-4 md:space-y-6 px-4 md:px-0 relative z-10">
+      <main className="container mx-auto px-4 py-6 relative z-10">
         <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-xl bg-card/50 dark:bg-card/30 backdrop-blur-sm">
           <CardHeader className="pb-4 space-y-1">
             <CardTitle className="flex items-center gap-2 text-2xl">
@@ -764,19 +764,17 @@ export default function AdminOrdersPage() {
             ) : (
               <>
                 {/* Mobile Card View */}
-                <div className="lg:hidden">
+                <div className="lg:hidden space-y-3">
                   {useVirtualScrolling ? (
                     <VirtualList
                       items={filteredOrders}
+                      renderItem={(order: Order, index: number) => renderOrderCard(order)}
                       estimateSize={200}
                       height="calc(100vh - 300px)"
-                      renderItem={(order: Order, index: number) => renderOrderCard(order)}
                       keyExtractor={(order: Order) => order.id}
                     />
                   ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                      {paginatedOrders.map((order: Order) => renderOrderCard(order))}
-                    </div>
+                    paginatedOrders.map((order: Order) => renderOrderCard(order))
                   )}
                 </div>
 

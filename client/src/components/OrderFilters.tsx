@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useLanguage } from "./LanguageProvider";
-import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -11,8 +10,6 @@ import { Calendar } from "./ui/calendar";
 import { CalendarIcon, FilterX, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { MobileDatePicker } from "./MobileDatePicker";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OrderFiltersProps {
   onFilterChange: (filters: OrderFilterState) => void;
@@ -33,9 +30,7 @@ export interface OrderFilterState {
 }
 
 export function OrderFilters({ onFilterChange, showClientFilter = false, availableLTAs = [] }: OrderFiltersProps) {
-  const { i18n } = useTranslation();
-  const { language, dir } = useLanguage();
-  const isRTL = dir === 'rtl';
+  const { t, isRTL } = useLanguage();
   
   const [filters, setFilters] = useState<OrderFilterState>({
     searchTerm: "",
@@ -84,7 +79,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
     <div className="space-y-4 p-4 bg-card rounded-lg border">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">
-          {language === 'ar' ? 'المرشحات' : 'Filters'}
+          {t("filters", "Filters", "المرشحات")}
         </h3>
         {hasActiveFilters && (
           <Button
@@ -94,7 +89,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
             className="gap-2"
           >
             <FilterX className="h-4 w-4" />
-            {language === 'ar' ? 'مسح المرشحات' : 'Clear Filters'}
+            {t("clearFilters", "Clear Filters", "مسح المرشحات")}
           </Button>
         )}
       </div>
@@ -102,14 +97,14 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Search */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'بحث' : 'Search'}</Label>
+          <Label>{t("search", "Search", "بحث")}</Label>
           <div className="relative">
             <Search className={cn(
               "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground",
               isRTL ? "right-3" : "left-3"
             )} />
             <Input
-              placeholder={language === 'ar' ? 'البحث في الطلبات...' : 'Search orders...'}
+              placeholder={t("searchOrders", "Search orders...", "البحث في الطلبات...")}
               value={filters.searchTerm}
               onChange={(e) => updateFilter("searchTerm", e.target.value)}
               className={cn(isRTL ? "pr-10" : "pl-10")}
@@ -119,19 +114,19 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
 
         {/* Status Filter */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'الحالة' : 'Status'}</Label>
+          <Label>{t("status", "Status", "الحالة")}</Label>
           <Select value={filters.status} onValueChange={(value) => updateFilter("status", value)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{language === 'ar' ? 'جميع الحالات' : 'All Statuses'}</SelectItem>
-              <SelectItem value="pending">{language === 'ar' ? 'قيد الانتظار' : 'Pending'}</SelectItem>
-              <SelectItem value="confirmed">{language === 'ar' ? 'مؤكد' : 'Confirmed'}</SelectItem>
-              <SelectItem value="processing">{language === 'ar' ? 'قيد المعالجة' : 'Processing'}</SelectItem>
-              <SelectItem value="shipped">{language === 'ar' ? 'تم الشحن' : 'Shipped'}</SelectItem>
-              <SelectItem value="delivered">{language === 'ar' ? 'تم التسليم' : 'Delivered'}</SelectItem>
-              <SelectItem value="cancelled">{language === 'ar' ? 'ملغي' : 'Cancelled'}</SelectItem>
+              <SelectItem value="all">{t("allStatuses", "All Statuses", "جميع الحالات")}</SelectItem>
+              <SelectItem value="pending">{t("pending", "Pending", "قيد الانتظار")}</SelectItem>
+              <SelectItem value="confirmed">{t("confirmed", "Confirmed", "مؤكد")}</SelectItem>
+              <SelectItem value="processing">{t("processing", "Processing", "قيد المعالجة")}</SelectItem>
+              <SelectItem value="shipped">{t("shipped", "Shipped", "تم الشحن")}</SelectItem>
+              <SelectItem value="delivered">{t("delivered", "Delivered", "تم التسليم")}</SelectItem>
+              <SelectItem value="cancelled">{t("cancelled", "Cancelled", "ملغي")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -139,13 +134,13 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
         {/* LTA Filter */}
         {availableLTAs.length > 0 && (
           <div className="space-y-2">
-            <Label>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</Label>
+            <Label>{t("lta", "LTA", "الاتفاقية")}</Label>
             <Select value={filters.ltaId} onValueChange={(value) => updateFilter("ltaId", value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{language === 'ar' ? 'جميع الاتفاقيات' : 'All LTAs'}</SelectItem>
+                <SelectItem value="all">{t("allLTAs", "All LTAs", "جميع الاتفاقيات")}</SelectItem>
                 {availableLTAs.map((lta) => (
                   <SelectItem key={lta.id} value={lta.id}>
                     {lta.ltaNumber}
@@ -158,7 +153,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
 
         {/* Date From */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'من تاريخ' : 'Date From'}</Label>
+          <Label>{t("dateFrom", "Date From", "من تاريخ")}</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -169,7 +164,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.dateFrom ? format(filters.dateFrom, "PPP") : (language === 'ar' ? 'اختر تاريخ' : 'Pick a date')}
+                {filters.dateFrom ? format(filters.dateFrom, "PPP") : t("pickDate", "Pick a date", "اختر تاريخ")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -185,7 +180,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
 
         {/* Date To */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'إلى تاريخ' : 'Date To'}</Label>
+          <Label>{t("dateTo", "Date To", "إلى تاريخ")}</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -196,7 +191,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.dateTo ? format(filters.dateTo, "PPP") : (language === 'ar' ? 'اختر تاريخ' : 'Pick a date')}
+                {filters.dateTo ? format(filters.dateTo, "PPP") : t("pickDate", "Pick a date", "اختر تاريخ")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -212,7 +207,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
 
         {/* Min Amount */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'الحد الأدنى' : 'Min Amount'}</Label>
+          <Label>{t("minAmount", "Min Amount", "الحد الأدنى")}</Label>
           <Input
             type="number"
             placeholder="0.00"
@@ -223,7 +218,7 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
 
         {/* Max Amount */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'الحد الأقصى' : 'Max Amount'}</Label>
+          <Label>{t("maxAmount", "Max Amount", "الحد الأقصى")}</Label>
           <Input
             type="number"
             placeholder="0.00"
@@ -234,15 +229,15 @@ export function OrderFilters({ onFilterChange, showClientFilter = false, availab
 
         {/* Sort By */}
         <div className="space-y-2">
-          <Label>{language === 'ar' ? 'ترتيب حسب' : 'Sort By'}</Label>
+          <Label>{t("sortBy", "Sort By", "ترتيب حسب")}</Label>
           <Select value={filters.sortBy} onValueChange={(value) => updateFilter("sortBy", value)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="date">{language === 'ar' ? 'التاريخ' : 'Date'}</SelectItem>
-              <SelectItem value="amount">{language === 'ar' ? 'المبلغ' : 'Amount'}</SelectItem>
-              <SelectItem value="status">{language === 'ar' ? 'الحالة' : 'Status'}</SelectItem>
+              <SelectItem value="date">{t("date", "Date", "التاريخ")}</SelectItem>
+              <SelectItem value="amount">{t("amount", "Amount", "المبلغ")}</SelectItem>
+              <SelectItem value="status">{t("status", "Status", "الحالة")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
