@@ -10,6 +10,8 @@ import { Calendar } from "./ui/calendar";
 import { CalendarIcon, FilterX, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { MobileDatePicker } from "./MobileDatePicker";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OrderFiltersProps {
   onFilterChange: (filters: OrderFilterState) => void;
