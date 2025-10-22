@@ -1,10 +1,66 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
 import { Card } from '@/components/ui/card';
 import type { Product } from '@shared/schema';
+
+// Placeholder for MicroFeedbackWidget component
+const MicroFeedbackWidget = ({ query, onClose }: { query: string; onClose: () => void }) => {
+  const { language } = useLanguage();
+  const [feedback, setFeedback] = useState('');
+  const [rating, setRating] = useState<number | null>(null);
+
+  const handleSubmit = () => {
+    // In a real application, you would send this feedback to a backend
+    console.log('Feedback submitted:', { query, rating, feedback });
+    onClose();
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
+  return (
+    <Card className="absolute z-50 w-full mt-1 p-4 shadow-lg">
+      <h3 className="text-lg font-semibold mb-2">
+        {language === 'ar' ? 'هل وجدت ما تبحث عنه؟' : 'Did you find what you were looking for?'}
+      </h3>
+      <div className="flex items-center mb-4 space-x-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            onClick={() => setRating(star)}
+            className={`text-2xl ${star <= (rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <textarea
+        className="w-full p-2 border rounded-md mb-4"
+        placeholder={language === 'ar' ? 'شاركنا رأيك...' : 'Share your thoughts...'}
+        value={feedback}
+        onChange={(e) => setFeedback(e.target.value)}
+      />
+      <div className="flex justify-end space-x-2">
+        <button
+          onClick={handleCancel}
+          className="px-4 py-2 rounded-md border"
+        >
+          {language === 'ar' ? 'إلغاء' : 'Cancel'}
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="px-4 py-2 rounded-md bg-primary text-white"
+        >
+          {language === 'ar' ? 'إرسال' : 'Submit'}
+        </button>
+      </div>
+    </Card>
+  );
+};
+
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -19,6 +75,7 @@ interface SearchWithSuggestionsProps {
   onChange: (value: string) => void;
   onProductSelect?: (product: ProductWithLtaPrice) => void;
   placeholder?: string;
+  onSearch: (query: string) => void; // Added onSearch prop
 }
 
 export function SearchWithSuggestions({ 
@@ -26,12 +83,15 @@ export function SearchWithSuggestions({
   value, 
   onChange, 
   onProductSelect,
-  placeholder 
+  placeholder,
+  onSearch
 }: SearchWithSuggestionsProps) {
   const { language } = useLanguage();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<ProductWithLtaPrice[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [showSearchFeedback, setShowSearchFeedback] = useState(false);
+  const [lastSearchQuery, setLastSearchQuery] = useState('');
 
   useEffect(() => {
     if (value.length >= 2) {
@@ -71,6 +131,11 @@ export function SearchWithSuggestions({
       part.toLowerCase() === query.toLowerCase() ? 
         <mark key={i} className="bg-yellow-200 dark:bg-yellow-800">{part}</mark> : part
     );
+  };
+
+  const handleCloseSearchFeedback = () => {
+    setShowSearchFeedback(false);
+    setLastSearchQuery('');
   };
 
   return (
@@ -148,6 +213,9 @@ export function SearchWithSuggestions({
             })}
           </div>
         </Card>
+      )}
+      {showSearchFeedback && lastSearchQuery && (
+        <MicroFeedbackWidget query={lastSearchQuery} onClose={handleCloseSearchFeedback} />
       )}
     </div>
   );

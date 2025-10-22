@@ -34,6 +34,7 @@ import { safeJsonParse } from '@/lib/safeJson';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
+import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -105,6 +106,7 @@ export default function OrderingPage() {
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
+  const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false); // Added for micro-feedback
 
   // Ref to store scroll position for restoration after cart updates
   const scrollPositionRef = useRef<number | null>(null);
@@ -172,13 +174,22 @@ export default function OrderingPage() {
       const res = await apiRequest('POST', '/api/client/orders', orderData);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (newOrder) => { // Changed to capture newOrder
       toast({
-        title: t('orderSubmitted'),
+        title: language === 'ar' ? 'تم إنشاء الطلب بنجاح' : 'Order created successfully',
+        description: language === 'ar'
+          ? `رقم الطلب: ${newOrder.id}`
+          : `Order ID: ${newOrder.id}`,
       });
-      setCart([]);
-      setActiveLtaId(null);
-      setCartOpen(false);
+
+      // Show micro-feedback after 3 seconds
+      setTimeout(() => {
+        setShowOrderPlacementFeedback(true);
+      }, 3000);
+
+      setCart([]); // Clear cart here
+      setActiveLtaId(null); // Clear active LTA ID
+      setCartOpen(false); // Close cart
       queryClient.invalidateQueries({ queryKey: ['/api/client/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
     },
@@ -1525,11 +1536,7 @@ export default function OrderingPage() {
           }))}
           totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) * 1.15}
           currency={cart[0]?.currency || 'USD'}
-          ltaName={clientLtas.find(lta => lta.id === activeLtaId)
-            ? (language === 'ar' 
-              ? clientLtas.find(lta => lta.id === activeLtaId)?.nameAr 
-              : clientLtas.find(lta => lta.id === activeLtaId)?.nameEn)
-            : undefined}
+          ltaContract={clientLtas.find(lta => lta.id === activeLtaId)}
           onConfirm={handleConfirmOrder}
           onEdit={() => {
             setOrderConfirmationOpen(false);
@@ -1627,6 +1634,16 @@ export default function OrderingPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {showOrderPlacementFeedback && (
+          <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 z-50 animate-slide-up">
+            <MicroFeedbackWidget
+              touchpoint="order_placement"
+              context={{ hasLta: !!activeLtaId }}
+              onDismiss={() => setShowOrderPlacementFeedback(false)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
