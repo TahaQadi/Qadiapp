@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle, Calendar, Check, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -37,7 +37,6 @@ import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
 import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
-import { Calendar, Check, Save, AlertTriangle } from 'lucide-react'; // Added Calendar, Check, Save, AlertTriangle
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
