@@ -17,9 +17,8 @@ if (!process.env.DATABASE_URL) {
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });
 
-// Re-export schema and commonly used tables for convenience
-export { schema };
-export { notifications, orders } from '@shared/schema';
+// Re-export commonly used tables for convenience
+export { notifications, orders, orderFeedback } from '@shared/schema';
 
 // All table schemas are now defined in shared/schema.ts
 // This file only contains the database connection and configuration

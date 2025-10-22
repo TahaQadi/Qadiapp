@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
 import { ModificationSheet } from "@/components/ModificationSheet";
+import { OrderFeedbackDialog } from "@/components/OrderFeedbackDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -26,6 +27,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [modifyOpen, setModifyOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [filters, setFilters] = useState<OrderFilterState>({
     searchTerm: "",
     status: "all",
@@ -41,6 +43,22 @@ export default function OrdersPage() {
   const { data: ordersData, isLoading } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
   });
+
+  // Handle feedback URL parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const feedbackOrderId = params.get('feedback');
+    
+    if (feedbackOrderId && ordersData) {
+      const order = ordersData.find(o => o.id === feedbackOrderId);
+      if (order) {
+        setSelectedOrder(order);
+        setFeedbackOpen(true);
+        // Clear the URL parameter
+        window.history.replaceState({}, '', '/orders');
+      }
+    }
+  }, [ordersData]);
 
   // Get unique LTAs for filter
   const availableLTAs = useMemo(() => {
@@ -341,6 +359,14 @@ export default function OrdersPage() {
           open={modifyOpen}
           onOpenChange={setModifyOpen}
         />
+
+      {selectedOrder && (
+        <OrderFeedbackDialog
+          order={selectedOrder}
+          open={feedbackOpen}
+          onOpenChange={setFeedbackOpen}
+        />
+      )}
       </div>
     </div>
   );

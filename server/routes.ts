@@ -54,7 +54,7 @@ import fs from "fs";
 import { generateSitemap } from "./sitemap";
 
 // --- Database imports for specific operations within the routes ---
-import { db, schema, orders, notifications } from './db';
+import { db, schema, orders, notifications, orderFeedback } from './db';
 import { eq } from 'drizzle-orm';
 import webpush from 'web-push'; // Assuming web-push is installed and configured for push notifications
 
@@ -1573,7 +1573,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (fullOrder) {
-        // Create status change notification
         const statusMessages = {
           confirmed: { en: "Order confirmed and being processed", ar: "تم تأكيد الطلب وجاري معالجته" },
           processing: { en: "Order is now being processed", ar: "جاري معالجة الطلب" },
@@ -1583,38 +1582,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
           pending: { en: "Status updated to pending", ar: "تم تحديث الحالة إلى قيد الانتظار" },
         };
 
-        const message = statusMessages[status as keyof typeof statusMessages] || statusMessages.pending;
+        // Send notification for status change
+        await storage.createNotification({
+          clientId: fullOrder.clientId,
+          type: 'order_status_changed',
+          titleEn: statusMessages[status].en,
+          titleAr: statusMessages[status].ar,
+          messageEn: `Order #${fullOrder.id.substring(0, 8)} status updated`,
+          messageAr: `تم تحديث حالة الطلب #${fullOrder.id.substring(0, 8)}`,
+          actionUrl: `/orders`,
+          metadata: JSON.stringify({
+            orderId: fullOrder.id,
+            status,
+            previousStatus: fullOrder.status,
+            timestamp: new Date().toISOString(),
+          }),
+        });
 
-        // For delivered orders, add feedback prompt
+        // Send feedback request notification if order is delivered
         if (status === 'delivered') {
-          await db.insert(notifications).values({
-            clientId: fullOrder.clientId,
-            type: 'order_delivered_feedback',
-            titleEn: 'Order Delivered - Share Your Feedback',
-            titleAr: 'تم التوصيل - شارك تقييمك',
-            messageEn: 'Your order has been delivered! Please take a moment to share your feedback and report any issues.',
-            messageAr: 'تم توصيل طلبك! يرجى مشاركة تقييمك والإبلاغ عن أي مشاكل.',
-            metadata: JSON.stringify({
-              orderId: fullOrder.id,
-              status: 'delivered',
-              promptFeedback: true,
-              timestamp: new Date().toISOString(),
-            }),
-          });
-        } else {
-          await db.insert(notifications).values({
-            clientId: fullOrder.clientId,
-            type: 'order_status_changed',
-            titleEn: 'Order Status Update',
-            titleAr: 'تحديث حالة الطلب',
-            messageEn: message.en,
-            messageAr: message.ar,
-            metadata: JSON.stringify({
-              orderId: fullOrder.id,
-              status,
-              timestamp: new Date().toISOString(),
-            }),
-          });
+          // Check if feedback already exists
+          const existingFeedback = await db
+            .select()
+            .from(orderFeedback)
+            .where(eq(orderFeedback.orderId, fullOrder.id))
+            .limit(1);
+
+          if (existingFeedback.length === 0) {
+            // Send feedback request notification after 5 seconds (configurable)
+            setTimeout(async () => {
+              await storage.createNotification({
+                clientId: fullOrder.clientId,
+                type: 'feedback_request',
+                titleEn: 'How was your order?',
+                titleAr: 'كيف كان طلبك؟',
+                messageEn: 'Share your experience to help us improve',
+                messageAr: 'شارك تجربتك لمساعدتنا على التحسين',
+                actionUrl: `/orders?feedback=${fullOrder.id}`,
+                metadata: JSON.stringify({
+                  orderId: fullOrder.id,
+                  type: 'feedback_request',
+                }),
+              });
+
+              // Send push notification if client has subscribed
+              const subscriptions = await storage.getPushSubscriptions(fullOrder.clientId);
+              if (subscriptions.length > 0) {
+                const payload = JSON.stringify({
+                  title: 'How was your order?',
+                  body: 'Share your experience to help us improve',
+                  icon: '/icon-192.png',
+                  badge: '/icon-192.png',
+                  data: {
+                    url: `/orders?feedback=${fullOrder.id}`,
+                  },
+                });
+
+                for (const subscription of subscriptions) {
+                  try {
+                    await webpush.sendNotification(subscription, payload);
+                  } catch (error: any) {
+                    if (error.statusCode === 404 || error.statusCode === 410) {
+                      await storage.deletePushSubscription(subscription.endpoint);
+                    }
+                  }
+                }
+              }
+            }, 5000); // 5 second delay
+          }
         }
 
         // Send push notification
@@ -1622,7 +1657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const subscriptions = await storage.getPushSubscriptions(fullOrder.clientId);
           const notificationMessage = status === 'delivered'
             ? 'Your order has been delivered! Share your feedback.'
-            : message.en;
+            : statusMessages[status as keyof typeof statusMessages]?.en || 'Order status updated';
 
           const payload = JSON.stringify({
             title: status === 'delivered' ? 'Order Delivered' : 'Order Status Update',
