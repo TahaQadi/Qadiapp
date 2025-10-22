@@ -38,6 +38,7 @@ import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
 import { Calendar, Check, Save, AlertTriangle } from 'lucide-react'; // Added Calendar, Check, Save, AlertTriangle
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton'; // Import LoadingSkeleton
 import { VirtualList } from '@/components/VirtualList'; // Import VirtualList
+import { motion } from 'framer-motion'; // Import framer-motion
 
 
 export interface ProductWithLtaPrice extends Product {
@@ -624,304 +625,221 @@ export default function OrderingPage() {
   })), [cart]);
 
   function ProductCard({ product }: { product: ProductWithLtaPrice }) {
+    const [selectedProduct, setSelectedProduct] = useState<ProductWithLtaPrice | null>(null);
+    const [showQuickView, setShowQuickView] = useState(false);
+
+    // Handle card click to open quick view
+    const handleCardClick = (e: React.MouseEvent) => {
+      // Don't open quick view if clicking on buttons
+      if ((e.target as HTMLElement).closest('button')) {
+        return;
+      }
+      setSelectedProduct(product);
+      setShowQuickView(true);
+    };
+
     const primaryName = language === 'ar' ? product.nameAr : product.nameEn;
     const secondaryName = language === 'ar' ? product.nameEn : product.nameAr;
-    const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
-    const cartItem = cart.find(item => item.productId === product.id);
-    const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-    const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
-    const [, setLocation] = useLocation();
-    const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
-    const [localQuantity, setLocalQuantity] = useState(1);
-
-    const productSlug = product.nameEn?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
-    const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
-    const productUrl = `/products/${categorySlug}/${productSlug}`;
-
-    const handleCardClick = () => {
-      setLocation(productUrl);
-    };
-
-    // Calculate final quantity based on type
-    const getFinalQuantity = (qty: number) => {
-      if (quantityType === 'box' && product.unitPerBox) {
-        return qty * parseInt(product.unitPerBox);
-      }
-      return qty;
-    };
-
-    const handleAddToCartClick = () => {
-      const finalQty = getFinalQuantity(localQuantity);
-      handleAddToCart(product, finalQty);
-      setLocalQuantity(1);
-    };
 
     return (
-      <Card
-        className={cn(
-          "group flex flex-col overflow-hidden transition-all duration-300",
-          "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm",
-          "border-border/50 dark:border-[#d4af37]/20",
-          "hover:border-primary dark:hover:border-[#d4af37]",
-          "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20",
-          "h-full",
-          isDifferentLta && "opacity-50 pointer-events-none"
-        )}
-        data-testid={`card-product-${product.id}`}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="h-full"
       >
-        {/* Shimmer Effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
-
-        {/* Product Image */}
-        <div
-          className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer"
+        <Card
+          className={cn(
+            "group relative overflow-hidden cursor-pointer",
+            "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm",
+            "border-border/50 dark:border-[#d4af37]/20",
+            "hover:border-primary dark:hover:border-[#d4af37]",
+            "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20",
+            "h-full",
+            isDifferentLta && "opacity-50 pointer-events-none"
+          )}
           onClick={handleCardClick}
+          data-testid={`card-product-${product.id}`}
         >
-          {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={primaryName}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              data-testid={`img-product-${product.id}`}
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-16 h-16 text-muted-foreground/40" />
-            </div>
-          )}
+          {/* Shimmer Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
 
-          {/* Badges */}
-          <div className="absolute top-2 end-2 flex flex-col gap-2">
-            {cartItem && (
-              <Badge
-                className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm"
-                data-testid={`badge-in-cart-${product.id}`}
-              >
-                {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
-              </Badge>
-            )}
-            {product.category && (
-              <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
-                {product.category}
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        {/* Product Info */}
-        <CardContent className="flex-1 p-4 space-y-3">
-          <div>
-            <h3
-              className="font-semibold text-base line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-              data-testid={`text-product-name-${product.id}`}
-              onClick={handleCardClick}
-            >
-              {primaryName}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-              {secondaryName}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
-            {product.unitPerBox && (
-              <Badge variant="outline" className="text-xs">
-                📦 {product.unitPerBox} {language === 'ar' ? 'قطع/علبة' : 'pcs/box'}
-              </Badge>
-            )}
-          </div>
-
-          {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {description}
-            </p>
-          )}
-
-          {/* Pricing */}
-          <div className="pt-2 border-t border-border/50">
-            {product.hasPrice && product.contractPrice ? (
-              <div className="space-y-1">
-                <p className="text-2xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
-                  {product.contractPrice} <span className="text-sm font-normal">{product.currency}</span>
-                </p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" />
-                  {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
-                </p>
-              </div>
-            ) : product.sellingPricePiece ? (
-              <div className="space-y-1">
-                <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                  {product.sellingPricePiece} <span className="text-sm font-normal">ILS</span>
-                </p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {language === 'ar' ? 'سعر مرجعي' : 'Reference Price'}
-                </p>
-              </div>
+          {/* Product Image */}
+          <div
+            className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer"
+          >
+            {product.imageUrl ? (
+              <img
+                src={product.imageUrl}
+                alt={primaryName}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                data-testid={`img-product-${product.id}`}
+                loading="lazy"
+              />
             ) : (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
+              <div className="w-full h-full flex items-center justify-center">
+                <Package className="w-16 h-16 text-muted-foreground/40" />
+              </div>
+            )}
+
+            {/* Badges */}
+            <div className="absolute top-2 end-2 flex flex-col gap-2">
+              {cartItem && (
+                <Badge
+                  className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm"
+                  data-testid={`badge-in-cart-${product.id}`}
+                >
+                  {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+                </Badge>
+              )}
+              {product.category && (
+                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
+                  {product.category}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Product Info */}
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <div className="mb-2">
+              <h3 className="font-bold text-base leading-tight line-clamp-2 group-hover:text-primary dark:group-hover:text-[#d4af37] transition-colors">
+                {primaryName}
+              </h3>
+              {secondaryName && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{secondaryName}</p>
+              )}
+            </div>
+
+            {product.category && (
+              <p className="text-xs text-muted-foreground mb-2">
+                {product.category}
               </p>
             )}
-          </div>
-        </CardContent>
 
-        {/* Actions */}
-        <CardFooter className="p-4 pt-0 flex-col gap-2">
-          {product.hasPrice && product.contractPrice ? (
-            cartItem ? (
-              <div className="flex items-center justify-between gap-2 w-full">
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-9 w-9"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddToCart(product, -1);
-                  }}
-                  disabled={isDifferentLta}
-                  data-testid={`button-decrement-cart-${product.id}`}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="font-semibold text-center flex-1">
-                  {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
-                </span>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-9 w-9"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddToCart(product, 1);
-                  }}
-                  disabled={isDifferentLta}
-                  data-testid={`button-increment-cart-${product.id}`}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="w-full space-y-2">
-                {/* Box/Pcs Selector */}
-                {product.unitPerBox && (
-                  <div className="flex gap-1 p-1 bg-muted rounded-lg">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuantityType('pcs');
-                      }}
-                      className={cn(
-                        "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        quantityType === 'pcs'
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                      data-testid={`button-select-pcs-${product.id}`}
-                    >
-                      {language === 'ar' ? 'قطع' : 'Pieces'}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuantityType('box');
-                      }}
-                      className={cn(
-                        "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        quantityType === 'box'
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                      data-testid={`button-select-box-${product.id}`}
-                    >
-                      📦 {language === 'ar' ? 'صناديق' : 'Boxes'}
-                    </button>
-                  </div>
-                )}
+            <div className="text-xs text-muted-foreground mb-2">
+              {t('sku')}: <span className="font-mono">{product.sku}</span>
+            </div>
 
-                {/* Quantity Counter + Add Button */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center border rounded-lg overflow-hidden">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLocalQuantity(Math.max(1, localQuantity - 1));
-                      }}
-                      className="px-3 py-2 hover:bg-muted transition-colors"
-                      data-testid={`button-decrease-qty-${product.id}`}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      value={localQuantity}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        const val = parseInt(e.target.value) || 1;
-                        setLocalQuantity(Math.max(1, val));
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-14 text-center border-x bg-transparent focus:outline-none font-semibold text-sm"
-                      data-testid={`input-quantity-${product.id}`}
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLocalQuantity(localQuantity + 1);
-                      }}
-                      className="px-3 py-2 hover:bg-muted transition-colors"
-                      data-testid={`button-increase-qty-${product.id}`}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
+            {/* Product Description */}
+            {(product.descriptionEn || product.descriptionAr) && (
+              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                {language === 'ar' ? product.descriptionAr : product.descriptionEn}
+              </p>
+            )}
 
+            {/* Product Details */}
+            <div className="pt-2 border-t border-border/50 flex-grow flex flex-col justify-end">
+              {product.hasPrice && product.contractPrice ? (
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
+                    {product.contractPrice} <span className="text-sm font-normal">{product.currency}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
+                  </p>
+                </div>
+              ) : product.sellingPricePiece ? (
+                <div className="space-y-1">
+                  <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
+                    {product.sellingPricePiece} <span className="text-sm font-normal">ILS</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {language === 'ar' ? 'سعر مرجعي' : 'Reference Price'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
+                </p>
+              )}
+            </div>
+          </CardContent>
+
+          {/* Actions */}
+          <CardFooter className="p-4 pt-0 flex-col gap-2">
+            {product.hasPrice && product.contractPrice ? (
+              cartItem ? (
+                <div className="flex items-center justify-between gap-2 w-full">
                   <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-9 w-9"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToCartClick();
+                      handleAddToCart(product, -1);
                     }}
                     disabled={isDifferentLta}
-                    className="flex-1"
-                    data-testid={`button-add-to-cart-${product.id}`}
+                    data-testid={`button-decrement-cart-${product.id}`}
                   >
-                    <ShoppingCart className="w-4 h-4 me-2" />
-                    {language === 'ar' ? 'أضف' : 'Add'}
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="font-semibold text-center flex-1">
+                    {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-9 w-9"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product, 1);
+                    }}
+                    disabled={isDifferentLta}
+                    data-testid={`button-increment-cart-${product.id}`}
+                  >
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {/* Show total pieces for boxes */}
-                {quantityType === 'box' && product.unitPerBox && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    = {getFinalQuantity(localQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
-                  </p>
-                )}
-              </div>
-            )
-          ) : (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToPriceRequest(product);
-              }}
-              variant={inPriceRequest ? 'secondary' : 'outline'}
-              className="w-full"
-              data-testid={`button-add-to-price-request-${product.id}`}
-            >
-              <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
-              {inPriceRequest
-                ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
-                : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
-              }
-            </Button>
-          )}
-        </CardFooter>
-      </Card>
+              ) : (
+                <Button
+                  variant="default"
+                  className="w-full bg-[#d4af37] hover:bg-[#b8961f] text-black font-semibold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
+                      toast({
+                        variant: 'destructive',
+                        title: language === 'ar' ? 'خطأ' : 'Error',
+                        description: language === 'ar'
+                          ? 'هذا المنتج غير متوفر للطلب'
+                          : 'This product is not available for ordering'
+                      });
+                      return;
+                    }
+                    handleAddToCart(product, 1);
+                  }}
+                  disabled={isDifferentLta || !product.hasPrice || !product.contractPrice}
+                  data-testid={`button-add-to-cart-${product.id}`}
+                >
+                  <ShoppingCart className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
+                </Button>
+              )
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToPriceRequest(product);
+                }}
+                variant={inPriceRequest ? 'secondary' : 'outline'}
+                className="w-full"
+                data-testid={`button-add-to-price-request-${product.id}`}
+              >
+                <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
+                {inPriceRequest
+                  ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
+                  : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
+                }
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      </motion.div>
     );
   }
 
