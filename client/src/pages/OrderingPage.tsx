@@ -12,8 +12,7 @@ import { OrderConfirmationDialog } from '@/components/OrderConfirmationDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
-// Lazy load ProductGrid and other heavy components
-const ProductGrid = lazy(() => import('@/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
+import { ProductGrid } from '@/components/ProductGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -1402,38 +1401,11 @@ export default function OrderingPage() {
                       <span className="font-semibold text-foreground">{filteredProducts.length}</span>{' '}
                       {language === 'ar' ? 'منتج' : 'products'}
                     </p>
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn("rounded-md", viewMode === 'grid' && "bg-primary text-primary-foreground")}
-                        onClick={() => setViewMode('grid')}
-                        data-testid="button-view-grid"
-                      >
-                        <Grid3x3 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn("rounded-md", viewMode === 'list' && "bg-primary text-primary-foreground")}
-                        onClick={() => setViewMode('list')}
-                        data-testid="button-view-list"
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
 
-                  {/* Use VirtualList for efficient rendering of large lists */}
-                  <VirtualList
-                    data={filteredProducts}
-                    itemHeight={viewMode === 'grid' ? 480 : 160} // Adjust itemHeight based on viewMode
-                    renderItem={(product) => (
-                      <div className={viewMode === 'grid' ? 'p-2 lg:p-3' : 'p-2 lg:p-3'}>
-                        <ProductCard key={product.id} product={product} />
-                      </div>
-                    )}
+                  <ProductGrid
+                    products={filteredProducts}
+                    onAddToCart={handleAddToCart}
                   />
                 </div>
               )}

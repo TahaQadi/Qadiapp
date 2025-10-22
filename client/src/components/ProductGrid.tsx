@@ -1,4 +1,3 @@
-
 import { memo } from 'react';
 import { ProductWithLtaPrice } from '@/pages/OrderingPage';
 import { ProductCard } from './ProductCard';
