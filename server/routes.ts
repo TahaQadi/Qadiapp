@@ -1648,7 +1648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
               }
-            }, 5000); // 5 second delay
+            }, 3600000); // 1 hour delay (production-ready timing)
           }
         }
 

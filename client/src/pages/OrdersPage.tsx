@@ -171,7 +171,7 @@ export default function OrdersPage() {
     setModifyOpen(true);
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="space-y-6 container mx-auto px-4 py-8">
         <div className="space-y-2">
