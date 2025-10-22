@@ -31,7 +31,7 @@ if ('serviceWorker' in navigator) {
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <React.StrictMode>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider>
         <LanguageProvider>
           <ErrorBoundary>
             <App />

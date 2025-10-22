@@ -63,7 +63,7 @@ function AdminRoute({
   component: Component,
 }: {
   path: string;
-  component: () => React.JSX.Element;
+  component: React.ComponentType<any>;
 }) {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -104,7 +104,13 @@ function AdminRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-border" /></div>}>
+        <Component />
+      </Suspense>
+    </Route>
+  );
 }
 
 function Router() {
