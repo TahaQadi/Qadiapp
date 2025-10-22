@@ -1,13 +1,13 @@
 
 import { Router } from 'express';
 import { db } from './db';
-import { orderFeedback, issueReports, users } from '../shared/schema';
+import { orderFeedback, issueReports, clients } from '../shared/schema';
 import { eq, gte, sql, desc, and } from 'drizzle-orm';
 import { requireAdmin } from './auth';
 
 const router = Router();
 
-router.get('/analytics', requireAdmin, async (req: any, res) => {
+router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
   try {
     console.log('[Feedback Analytics] Request received:', { range: req.query.range, user: req.client?.id });
     const range = req.query.range as string || '30d';
@@ -132,11 +132,11 @@ router.get('/analytics', requireAdmin, async (req: any, res) => {
         comments: orderFeedback.comments,
         createdAt: orderFeedback.createdAt,
         clientId: orderFeedback.clientId,
-        clientNameEn: users.nameEn,
-        clientNameAr: users.nameAr
+        clientNameEn: clients.nameEn,
+        clientNameAr: clients.nameAr
       })
       .from(orderFeedback)
-      .leftJoin(users, eq(orderFeedback.clientId, users.id))
+      .leftJoin(clients, eq(orderFeedback.clientId, clients.id))
       .where(gte(orderFeedback.createdAt, startDate.toISOString()))
       .orderBy(desc(orderFeedback.createdAt))
       .limit(10)
