@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { db } from './db';
 import { requireAuth } from './auth';
@@ -11,11 +10,12 @@ const router = Router();
 // Submit order feedback
 router.post('/feedback/order', requireAuth, async (req: any, res) => {
   try {
-    const bodyData = insertOrderFeedbackSchema.parse(req.body);
-    
-    // Get the client ID from the authenticated user
+    // Parse without clientId - we'll get it from req.user
+    const bodyData = insertOrderFeedbackSchema.omit({ clientId: true }).parse(req.body);
+
+    // Get the company ID from the authenticated user
     const clientId = req.client!.companyId || req.client!.id;
-    
+
     // Verify order belongs to user and is delivered
     const [order] = await db
       .select()
@@ -60,6 +60,49 @@ router.post('/feedback/order', requireAuth, async (req: any, res) => {
       })
       .returning();
 
+    // Handle issue report if included
+    if (req.body.issueReport) {
+      const issueData = req.body.issueReport;
+      await db.insert(issueReports).values({
+        userId: clientId,
+        userType: 'client',
+        orderId: bodyData.orderId,
+        issueType: issueData.issueType,
+        severity: issueData.severity || 'medium',
+        title: issueData.title,
+        description: issueData.description,
+        steps: issueData.steps,
+        expectedBehavior: issueData.expectedBehavior,
+        actualBehavior: issueData.actualBehavior,
+        browserInfo: issueData.browserInfo || 'N/A',
+        screenSize: issueData.screenSize || 'N/A',
+        screenshots: issueData.screenshots,
+      });
+
+      // Notify admin about the issue
+      const adminUsers = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.isAdmin, true))
+        .limit(1);
+
+      if (adminUsers.length > 0) {
+        await db.insert(notifications).values({
+          clientId: adminUsers[0].id,
+          type: 'order_issue_reported',
+          titleEn: 'Order Issue Reported',
+          titleAr: 'تم الإبلاغ عن مشكلة في الطلب',
+          messageEn: `Issue reported for order #${bodyData.orderId.substring(0, 8)}: ${issueData.title}`,
+          messageAr: `تم الإبلاغ عن مشكلة للطلب #${bodyData.orderId.substring(0, 8)}: ${issueData.title}`,
+          metadata: {
+            orderId: bodyData.orderId,
+            issueType: issueData.issueType,
+            severity: issueData.severity || 'medium',
+          },
+        });
+      }
+    }
+
     res.json({ success: true, id: newFeedback.id });
   } catch (error) {
     console.error('Error submitting feedback:', error);
@@ -102,7 +145,7 @@ router.get('/feedback/order/:orderId', requireAuth, async (req: any, res) => {
 router.post('/feedback/issue', requireAuth, async (req: any, res) => {
   try {
     const data = insertIssueReportSchema.parse(req.body);
-    
+
     const [newReport] = await db
       .insert(issueReports)
       .values({
@@ -133,7 +176,7 @@ router.post('/feedback/issue', requireAuth, async (req: any, res) => {
 router.post('/feedback/micro', requireAuth, async (req: any, res) => {
   try {
     const data = insertMicroFeedbackSchema.parse(req.body);
-    
+
     const [newFeedback] = await db
       .insert(microFeedback)
       .values({

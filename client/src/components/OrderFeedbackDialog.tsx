@@ -38,6 +38,10 @@ export default function OrderFeedbackDialog({
   const [communicationRating, setCommunicationRating] = useState(0);
   const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
   const [comments, setComments] = useState('');
+  const [hasIssue, setHasIssue] = useState(false);
+  const [issueType, setIssueType] = useState('');
+  const [issueTitle, setIssueTitle] = useState('');
+  const [issueDescription, setIssueDescription] = useState('');
 
   const submitFeedback = useMutation({
     mutationFn: async (data: any) => {
@@ -100,7 +104,7 @@ export default function OrderFeedbackDialog({
       return;
     }
 
-    submitFeedback.mutate({
+    const feedbackData: any = {
       orderId,
       rating,
       orderingProcessRating: orderingProcessRating || undefined,
@@ -109,7 +113,21 @@ export default function OrderFeedbackDialog({
       communicationRating: communicationRating || undefined,
       wouldRecommend,
       comments: comments || undefined,
-    });
+    };
+
+    // Add issue report if user selected to report an issue
+    if (hasIssue && issueType && issueTitle && issueDescription) {
+      feedbackData.issueReport = {
+        issueType,
+        severity: rating <= 2 ? 'high' : rating <= 3 ? 'medium' : 'low',
+        title: issueTitle,
+        description: issueDescription,
+        browserInfo: navigator.userAgent,
+        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+      };
+    }
+
+    submitFeedback.mutate(feedbackData);
   };
 
   const StarRating = ({ value, onChange, label }: { value: number; onChange: (val: number) => void; label: string }) => {
@@ -222,6 +240,66 @@ export default function OrderFeedbackDialog({
               placeholder={language === 'ar' ? 'أخبرنا المزيد عن تجربتك...' : 'Tell us more about your experience...'}
               rows={4}
             />
+          </div>
+
+          <Separator />
+
+          {/* Issue Reporting Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="hasIssue"
+                checked={hasIssue}
+                onChange={(e) => setHasIssue(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="hasIssue" className="cursor-pointer">
+                {language === 'ar' ? 'الإبلاغ عن مشكلة في الطلب' : 'Report an issue with this order'}
+              </Label>
+            </div>
+
+            {hasIssue && (
+              <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                <div className="space-y-2">
+                  <Label>{language === 'ar' ? 'نوع المشكلة' : 'Issue Type'}</Label>
+                  <select
+                    value={issueType}
+                    onChange={(e) => setIssueType(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="">{language === 'ar' ? 'اختر نوع المشكلة' : 'Select issue type'}</option>
+                    <option value="missing_items">{language === 'ar' ? 'عناصر مفقودة' : 'Missing Items'}</option>
+                    <option value="wrong_items">{language === 'ar' ? 'عناصر خاطئة' : 'Wrong Items'}</option>
+                    <option value="damaged_items">{language === 'ar' ? 'عناصر تالفة' : 'Damaged Items'}</option>
+                    <option value="quality_issue">{language === 'ar' ? 'مشكلة في الجودة' : 'Quality Issue'}</option>
+                    <option value="quantity_mismatch">{language === 'ar' ? 'عدم تطابق الكمية' : 'Quantity Mismatch'}</option>
+                    <option value="other">{language === 'ar' ? 'أخرى' : 'Other'}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{language === 'ar' ? 'عنوان المشكلة' : 'Issue Title'}</Label>
+                  <input
+                    type="text"
+                    value={issueTitle}
+                    onChange={(e) => setIssueTitle(e.target.value)}
+                    placeholder={language === 'ar' ? 'مثال: نقص في الكمية المستلمة' : 'e.g., Received fewer items than ordered'}
+                    className="w-full p-2 border rounded-md"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{language === 'ar' ? 'وصف المشكلة' : 'Issue Description'}</Label>
+                  <Textarea
+                    value={issueDescription}
+                    onChange={(e) => setIssueDescription(e.target.value)}
+                    placeholder={language === 'ar' ? 'يرجى وصف المشكلة بالتفصيل...' : 'Please describe the issue in detail...'}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

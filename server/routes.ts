@@ -52,6 +52,20 @@ import fs from "fs";
 
 import { generateSitemap } from "./sitemap";
 
+// --- Database imports for specific operations within the routes ---
+import { db, schema, orders, notifications } from './db';
+import { eq } from 'drizzle-orm';
+import webpush from 'web-push'; // Assuming web-push is installed and configured for push notifications
+
+// Placeholder for web-push configuration (replace with your actual VAPID keys)
+// webpush.setVapidDetails(
+//   'mailto:your-email@example.com',
+//   process.env.VAPID_PUBLIC_KEY!,
+//   process.env.VAPID_PRIVATE_KEY!
+// );
+// -----------------------------------------------------------------
+
+
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 
 const uploadStorage = multer.diskStorage({
@@ -1530,52 +1544,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update order status (admin only)
-  app.patch('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
+  app.patch("/api/admin/orders/:id/status", requireAuth, async (req: any, res) => {
     try {
-      const { id } = req.params;
-      const { status, notes } = req.body;
-
-      if (!status) {
-        return res.status(400).json({ error: 'Status is required' });
+      if (!req.client.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
       }
 
-      const order = await storage.getOrder(id);
+      const { status } = req.body;
+      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const order = await storage.updateOrderStatus(req.params.id, status);
+
       if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
+        return res.status(404).json({ message: "Order not found" });
       }
 
-      // Only create history if status actually changed
-      if (order.status !== status) {
-        // Update the order status first
-        const updatedOrder = await storage.updateOrderStatus(id, status);
+      // Get the order details for notification
+      const fullOrder = await db.query.orders.findFirst({
+        where: eq(orders.id, req.params.id),
+      });
 
-        if (!updatedOrder) {
-          return res.status(500).json({ error: 'Failed to update order status' });
-        }
+      if (fullOrder) {
+        // Create status change notification
+        const statusMessages = {
+          confirmed: { en: "Order confirmed and being processed", ar: "تم تأكيد الطلب وجاري معالجته" },
+          processing: { en: "Order is now being processed", ar: "جاري معالجة الطلب" },
+          shipped: { en: "Order has been shipped", ar: "تم شحن الطلب" },
+          delivered: { en: "Order delivered successfully", ar: "تم توصيل الطلب بنجاح" },
+          cancelled: { en: "Order has been cancelled", ar: "تم إلغاء الطلب" },
+          pending: { en: "Status updated to pending", ar: "تم تحديث الحالة إلى قيد الانتظار" },
+        };
 
-        // Then create order history entry
-        try {
-          await storage.createOrderHistory({
-            orderId: id,
-            status,
-            changedBy: req.session.userId || 'admin',
-            changedAt: new Date(),
-            notes: notes || null,
-            isAdminNote: !!notes,
+        const message = statusMessages[status as keyof typeof statusMessages] || statusMessages.pending;
+
+        // For delivered orders, add feedback prompt
+        if (status === 'delivered') {
+          await db.insert(notifications).values({
+            clientId: fullOrder.clientId,
+            type: 'order_delivered_feedback',
+            titleEn: 'Order Delivered - Share Your Feedback',
+            titleAr: 'تم التوصيل - شارك تقييمك',
+            messageEn: 'Your order has been delivered! Please take a moment to share your feedback and report any issues.',
+            messageAr: 'تم توصيل طلبك! يرجى مشاركة تقييمك والإبلاغ عن أي مشاكل.',
+            metadata: {
+              orderId: fullOrder.id,
+              status: 'delivered',
+              promptFeedback: true,
+              timestamp: new Date().toISOString(),
+            },
           });
-        } catch (historyError: any) {
-          console.error('Error creating order history:', historyError);
-          // Don't fail the request if history creation fails
+        } else {
+          await db.insert(notifications).values({
+            clientId: fullOrder.clientId,
+            type: 'order_status_changed',
+            titleEn: 'Order Status Update',
+            titleAr: 'تحديث حالة الطلب',
+            messageEn: message.en,
+            messageAr: message.ar,
+            metadata: {
+              orderId: fullOrder.id,
+              status,
+              timestamp: new Date().toISOString(),
+            },
+          });
         }
 
-        res.json(updatedOrder);
-      } else {
-        // Status didn't change, just return the order
-        res.json(order);
+        // Send push notification
+        try {
+          const subscriptions = await storage.getPushSubscriptions(fullOrder.clientId);
+          const notificationMessage = status === 'delivered'
+            ? 'Your order has been delivered! Share your feedback.'
+            : message.en;
+
+          const payload = JSON.stringify({
+            title: status === 'delivered' ? 'Order Delivered' : 'Order Status Update',
+            body: notificationMessage,
+            url: '/orders',
+            tag: 'order-status',
+          });
+
+          await Promise.allSettled(
+            subscriptions.map(async (sub: PushSubscription) => {
+              try {
+                await webpush.sendNotification({
+                  endpoint: sub.endpoint,
+                  keys: sub.keys as { p256dh: string; auth: string },
+                }, payload);
+              } catch (error: any) {
+                if (error.statusCode === 410 || error.statusCode === 404) {
+                  await storage.deletePushSubscription(sub.endpoint);
+                }
+              }
+            })
+          );
+        } catch (error) {
+          console.error('Error sending push notification:', error);
+        }
       }
-    } catch (error: any) {
+
+      res.json(order);
+    } catch (error) {
       console.error('Error updating order status:', error);
-      res.status(500).json({ error: error.message || 'Failed to update order status' });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
