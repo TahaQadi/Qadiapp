@@ -3,6 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
+import { cn } from '@/lib/utils'; // Assuming cn is available for conditional class names
+import { useIsMobile } from '@/hooks/useIsMobile'; // Assuming a hook for mobile detection exists
 
 interface ProductCardProps {
   id: string;
@@ -30,12 +32,16 @@ export function ProductCard({
 }: ProductCardProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const isMobile = useIsMobile();
 
   const name = language === 'ar' ? nameAr : nameEn;
   const description = language === 'ar' ? descriptionAr : descriptionEn;
 
   return (
-    <Card className="group relative overflow-hidden hover-lift animate-fade-in" data-testid={`card-product-${sku}`}>
+    <Card className={cn(
+      "group relative overflow-hidden transition-all duration-200",
+      isMobile ? "touch-manipulation" : "hover-lift animate-fade-in"
+    )} data-testid={`card-product-${sku}`}>
       {imageUrl && (
         <div className="aspect-square bg-muted rounded-md overflow-hidden">
           <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
