@@ -105,7 +105,7 @@ export default function CustomerFeedbackPage() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [selectedIssue, setSelectedIssue] = useState<IssueReport | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [adminResponse, setAdminResponse] = useState('');
+  const [adminResponses, setAdminResponses] = useState<Record<string, string>>({});
 
   // Fetch analytics data with proper error handling
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<FeedbackStats>({
@@ -189,9 +189,14 @@ export default function CustomerFeedbackPage() {
     mutationFn: async ({ id, response }: { id: string; response: string }) => {
       return apiRequest('POST', `/api/feedback/${id}/respond`, { response });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
-      setAdminResponse('');
+      // Clear the specific feedback's response
+      setAdminResponses(prev => {
+        const updated = { ...prev };
+        delete updated[variables.id];
+        return updated;
+      });
       toast({
         title: language === 'ar' ? 'تم الإرسال' : 'Sent',
         description: language === 'ar' ? 'تم إرسال الرد للعميل' : 'Response sent to customer',
@@ -502,14 +507,14 @@ export default function CustomerFeedbackPage() {
                         <div className="space-y-2">
                           <Textarea
                             placeholder={language === 'ar' ? 'اكتب ردك هنا...' : 'Write your response here...'}
-                            value={adminResponse}
-                            onChange={(e) => setAdminResponse(e.target.value)}
+                            value={adminResponses[feedback.id] || ''}
+                            onChange={(e) => setAdminResponses(prev => ({ ...prev, [feedback.id]: e.target.value }))}
                             className="min-h-20"
                             data-testid={`textarea-admin-response-${feedback.id}`}
                           />
                           <Button
-                            onClick={() => submitResponseMutation.mutate({ id: feedback.id, response: adminResponse })}
-                            disabled={!adminResponse.trim() || submitResponseMutation.isPending}
+                            onClick={() => submitResponseMutation.mutate({ id: feedback.id, response: adminResponses[feedback.id] || '' })}
+                            disabled={!(adminResponses[feedback.id] || '').trim() || submitResponseMutation.isPending}
                             size="sm"
                             data-testid={`button-submit-response-${feedback.id}`}
                           >
