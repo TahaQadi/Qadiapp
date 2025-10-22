@@ -1,8 +1,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, waitFor } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
 import { userEvent } from '@testing-library/user-event';
+import { render } from './test-utils';
 import OrderingPage from '@/pages/OrderingPage';
 
 // Mock the auth hook

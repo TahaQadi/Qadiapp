@@ -38,16 +38,18 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
     },
     onSuccess: () => {
       toast({
-        title: 'تم إرسال البلاغ',
-        description: 'شكراً لك، سيتم مراجعة البلاغ والرد عليك قريباً',
+        title: language === 'ar' ? 'تم إرسال البلاغ' : 'Issue Reported',
+        description: language === 'ar' 
+          ? 'شكراً لك، سيتم مراجعة البلاغ والرد عليك قريباً'
+          : 'Thank you, we will review the issue and respond soon',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/feedback/issues'] });
       handleClose();
     },
     onError: (error: any) => {
       toast({
-        title: 'خطأ',
-        description: error?.message || 'فشل في إرسال البلاغ',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error?.message || (language === 'ar' ? 'فشل في إرسال البلاغ' : 'Failed to submit issue'),
         variant: 'destructive',
       });
     },
@@ -63,8 +65,8 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
   const handleSubmit = () => {
     if (!issueType || !title || !description) {
       toast({
-        title: 'خطأ',
-        description: 'يرجى ملء جميع الحقول المطلوبة',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields',
         variant: 'destructive',
       });
       return;

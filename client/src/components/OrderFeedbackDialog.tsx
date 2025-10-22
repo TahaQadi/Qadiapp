@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLanguage } from "./LanguageProvider";
 import { useToast } from "@/hooks/use-toast";
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,12 +38,11 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
 
     setSubmitting(true);
     try {
-      const response = await fetch('/api/feedback', {
+      const response = await fetch(`/api/feedback/order/${orderId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          orderId,
           rating,
           comment: comment.trim() || undefined,
         }),
@@ -140,9 +139,14 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
             {language === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting
-              ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...')
-              : (language === 'ar' ? 'إرسال' : 'Submit')}
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {language === 'ar' ? 'جاري الإرسال...' : 'Submitting...'}
+              </>
+            ) : (
+              language === 'ar' ? 'إرسال' : 'Submit'
+            )}
           </Button>
         </div>
       </DialogContent>
