@@ -70,6 +70,7 @@ export function ProductCard({
             size="sm"
             onClick={onAddToCart}
             data-testid={`button-add-to-cart-${sku}`}
+            className="min-h-[44px]"
           >
             <Plus className="h-4 w-4 me-1" />
             {t('addToCart')}

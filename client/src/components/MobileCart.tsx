@@ -1,4 +1,3 @@
-
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -31,7 +30,7 @@ export function MobileCart({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent 
+      <SheetContent
         side={isRTL ? 'left' : 'right'}
         className="w-full sm:max-w-md flex flex-col p-0 safe-top safe-bottom"
       >
@@ -89,7 +88,7 @@ export function MobileCart({
                         variant="ghost"
                         size="icon"
                         onClick={() => onUpdateQuantity(item.id, Math.max(0, item.quantity - 1))}
-                        className="touch-target h-10 w-10"
+                        className="h-11 w-11 min-h-[44px] min-w-[44px]"
                         disabled={item.quantity <= 1}
                       >
                         <Minus className="h-4 w-4" />
@@ -101,7 +100,7 @@ export function MobileCart({
                         variant="ghost"
                         size="icon"
                         onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                        className="touch-target h-10 w-10"
+                        className="h-11 w-11 min-h-[44px] min-w-[44px]"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
