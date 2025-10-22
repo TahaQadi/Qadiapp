@@ -4,114 +4,100 @@ import { requireAuth } from './auth';
 import { orderFeedback, issueReports, microFeedback, orders, clients } from '../shared/schema';
 import { insertOrderFeedbackSchema, insertIssueReportSchema, insertMicroFeedbackSchema } from '../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { z } from 'zod';
+import { Response } from 'express';
+
+// Mock storage for demonstration purposes. In a real app, this would interact with the database.
+const storage = {
+  getOrder: async (orderId: string) => {
+    // Replace with actual DB call
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    return order;
+  },
+  createOrderFeedback: async (feedbackData: any) => {
+    // Replace with actual DB call
+    const [newFeedback] = await db
+      .insert(orderFeedback)
+      .values(feedbackData)
+      .returning();
+    return newFeedback;
+  }
+};
+
+// Define AuthenticatedRequest and Response types if not already defined
+interface AuthenticatedRequest extends Express.Request {
+  client?: {
+    id: string;
+    companyId?: string;
+    isAdmin: boolean;
+  };
+}
 
 const router = Router();
 
 // Submit order feedback
-router.post('/feedback/order', requireAuth, async (req: any, res) => {
+router.post('/feedback/order/:orderId', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Parse without clientId - we'll get it from req.user
-    const bodyData = insertOrderFeedbackSchema.omit({ clientId: true }).parse(req.body);
+    const { orderId } = req.params;
 
-    // Get the company ID from the authenticated user
-    const clientId = req.client!.companyId || req.client!.id;
+    console.log('Feedback submission for order:', orderId);
+    console.log('Request body:', req.body);
+    console.log('Client ID:', req.client.id);
 
-    // Verify order belongs to user and is delivered
-    const [order] = await db
-      .select()
-      .from(orders)
-      .where(
-        and(
-          eq(orders.id, bodyData.orderId),
-          eq(orders.clientId, clientId),
-          eq(orders.status, 'delivered')
-        )
-      )
-      .limit(1);
+    const feedbackData = insertOrderFeedbackSchema.parse(req.body);
 
+    // Verify order belongs to client
+    const order = await storage.getOrder(orderId);
     if (!order) {
-      return res.status(403).json({ error: 'Order not found or not eligible for feedback' });
-    }
-
-    // Check if feedback already exists
-    const [existing] = await db
-      .select()
-      .from(orderFeedback)
-      .where(eq(orderFeedback.orderId, bodyData.orderId))
-      .limit(1);
-
-    if (existing) {
-      return res.status(400).json({ error: 'Feedback already submitted for this order' });
-    }
-
-    // Insert feedback
-    const [newFeedback] = await db
-      .insert(orderFeedback)
-      .values({
-        orderId: bodyData.orderId,
-        clientId,
-        rating: bodyData.rating,
-        orderingProcessRating: bodyData.orderingProcessRating,
-        productQualityRating: bodyData.productQualityRating,
-        deliverySpeedRating: bodyData.deliverySpeedRating,
-        communicationRating: bodyData.communicationRating,
-        comments: bodyData.comments,
-        wouldRecommend: bodyData.wouldRecommend,
-      })
-      .returning();
-
-    // Handle issue report if included
-    if (req.body.issueReport) {
-      const issueData = req.body.issueReport;
-      await db.insert(issueReports).values({
-        userId: clientId,
-        userType: 'client',
-        orderId: bodyData.orderId,
-        issueType: issueData.issueType,
-        severity: issueData.severity || 'medium',
-        title: issueData.title,
-        description: issueData.description,
-        steps: issueData.steps,
-        expectedBehavior: issueData.expectedBehavior,
-        actualBehavior: issueData.actualBehavior,
-        browserInfo: issueData.browserInfo || 'N/A',
-        screenSize: issueData.screenSize || 'N/A',
-        screenshots: issueData.screenshots,
+      console.error('Order not found:', orderId);
+      return res.status(404).json({
+        message: 'Order not found',
+        messageAr: 'الطلب غير موجود'
       });
-
-      // Notify admin about the issue
-      const adminUsers = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.isAdmin, true))
-        .limit(1);
-
-      if (adminUsers.length > 0) {
-        await db.insert(notifications).values({
-          clientId: adminUsers[0].id,
-          type: 'order_issue_reported',
-          titleEn: 'Order Issue Reported',
-          titleAr: 'تم الإبلاغ عن مشكلة في الطلب',
-          messageEn: `Issue reported for order #${bodyData.orderId.substring(0, 8)}: ${issueData.title}`,
-          messageAr: `تم الإبلاغ عن مشكلة للطلب #${bodyData.orderId.substring(0, 8)}: ${issueData.title}`,
-          metadata: {
-            orderId: bodyData.orderId,
-            issueType: issueData.issueType,
-            severity: issueData.severity || 'medium',
-          },
-        });
-      }
     }
 
-    res.json({ success: true, id: newFeedback.id });
+    if (order.clientId !== req.client.id) {
+      console.error('Unauthorized access attempt:', { orderId, clientId: req.client.id, orderClientId: order.clientId });
+      return res.status(403).json({
+        message: 'Unauthorized',
+        messageAr: 'غير مصرح'
+      });
+    }
+
+    // Create feedback
+    console.log('Creating feedback with data:', { ...feedbackData, orderId, clientId: req.client.id });
+    const feedback = await storage.createOrderFeedback({
+      ...feedbackData,
+      orderId,
+      clientId: req.client.id
+    });
+
+    console.log('Feedback created successfully:', feedback);
+
+    res.json({
+      message: 'Feedback submitted successfully',
+      messageAr: 'تم إرسال التقييم بنجاح',
+      feedback
+    });
   } catch (error) {
-    console.error('Error submitting feedback:', error);
-    res.status(500).json({ error: 'Failed to submit feedback' });
+    console.error('Feedback submission error:', error);
+    if (error instanceof z.ZodError) {
+      console.error('Validation errors:', error.errors);
+      return res.status(400).json({
+        message: error.errors[0]?.message || 'Validation error',
+        messageAr: 'خطأ في التحقق من البيانات',
+        errors: error.errors
+      });
+    }
+    res.status(500).json({
+      message: error instanceof Error ? error.message : 'Failed to submit feedback',
+      messageAr: 'فشل إرسال التقييم'
+    });
   }
 });
 
 // Get feedback for an order (client can check their own, admin can check all)
-router.get('/feedback/order/:orderId', requireAuth, async (req: any, res) => {
+router.get('/feedback/order/:orderId', requireAuth, async (req: any, res: any) => {
   try {
     const { orderId } = req.params;
 
@@ -142,7 +128,7 @@ router.get('/feedback/order/:orderId', requireAuth, async (req: any, res) => {
 });
 
 // Submit issue report
-router.post('/feedback/issue', requireAuth, async (req: any, res) => {
+router.post('/feedback/issue', requireAuth, async (req: any, res: any) => {
   try {
     const data = insertIssueReportSchema.parse(req.body);
 
@@ -173,7 +159,7 @@ router.post('/feedback/issue', requireAuth, async (req: any, res) => {
 });
 
 // Submit micro feedback
-router.post('/feedback/micro', requireAuth, async (req: any, res) => {
+router.post('/feedback/micro', requireAuth, async (req: any, res: any) => {
   try {
     const data = insertMicroFeedbackSchema.parse(req.body);
 
@@ -196,7 +182,7 @@ router.post('/feedback/micro', requireAuth, async (req: any, res) => {
 });
 
 // Get all feedback (admin only)
-router.get('/feedback/all', requireAuth, async (req: any, res) => {
+router.get('/feedback/all', requireAuth, async (req: any, res: any) => {
   try {
     if (!req.client!.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });

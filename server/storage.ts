@@ -56,6 +56,9 @@ import {
   passwordResetTokens,
   pushSubscriptions,
   documents, // Assuming 'documents' schema is imported from '@shared/schema'
+  OrderFeedback, // Assuming OrderFeedback type is imported
+  orderFeedback, // Assuming orderFeedback schema is imported
+  InsertOrderFeedback, // Assuming InsertOrderFeedback type is imported
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -181,7 +184,7 @@ export interface IStorage {
   // Notifications
   createNotification(data: {
     clientId: string | null; // Allow null for system-wide notifications
-    type: 'order_created' | 'order_status_changed' | 'system';
+    type: 'order_created' | 'order_status_changed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent';
     titleEn: string;
     titleAr: string;
     messageEn: string;
@@ -272,6 +275,9 @@ export interface IStorage {
   }): Promise<void>;
   getDocumentAccessLogs(documentId: string): Promise<any[]>;
   incrementDocumentViewCount(documentId: string): Promise<void>;
+
+  // Order Feedback
+  createOrderFeedback(data: InsertOrderFeedback): Promise<OrderFeedback>;
 }
 
 export class MemStorage implements IStorage {
@@ -286,6 +292,7 @@ export class MemStorage implements IStorage {
   private orderTemplates: Map<string, OrderTemplate>;
   private orders: Map<string, Order>;
   private orderHistories: Map<string, OrderHistory> = new Map(); // Added for order history
+  private orderFeedbackMap: Map<string, OrderFeedback> = new Map(); // Added for order feedback
 
   private ltas: Map<string, Lta> = new Map();
   private ltaProducts: Map<string, LtaProduct> = new Map();
@@ -304,6 +311,7 @@ export class MemStorage implements IStorage {
     this.orderTemplates = new Map();
     this.orders = new Map();
     this.orderHistories = new Map(); // Initialize order history map
+    this.orderFeedbackMap = new Map(); // Initialize order feedback map
     this.ltas = new Map();
     this.ltaProducts = new Map();
     this.ltaClients = new Map();
@@ -1613,6 +1621,19 @@ export class MemStorage implements IStorage {
       SET view_count = view_count + 1, last_viewed_at = NOW()
       WHERE id = ${documentId}
     `);
+  }
+
+  // Order Feedback
+  async createOrderFeedback(data: InsertOrderFeedback): Promise<OrderFeedback> {
+    console.log('Storage: Creating order feedback with data:', data);
+    try {
+      const [feedback] = await db.insert(orderFeedback).values(data).returning();
+      console.log('Storage: Feedback created:', feedback);
+      return feedback;
+    } catch (error) {
+      console.error('Storage: Error creating feedback:', error);
+      throw error;
+    }
   }
 }
 

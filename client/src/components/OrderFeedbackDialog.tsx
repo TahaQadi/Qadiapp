@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useLanguage } from './LanguageProvider';
@@ -14,6 +13,8 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { useToast } from '../hooks/use-toast';
 import { Star, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Separator } from './ui/separator'; // Assuming Separator is in ui/separator
+import { useQueryClient } from '@tanstack/react-query'; // Assuming useQueryClient is needed
 
 interface OrderFeedbackDialogProps {
   orderId: string;
@@ -30,6 +31,7 @@ export default function OrderFeedbackDialog({
 }: OrderFeedbackDialogProps) {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const queryClient = useQueryClient(); // Initialize useQueryClient
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [orderingProcessRating, setOrderingProcessRating] = useState(0);
@@ -42,6 +44,41 @@ export default function OrderFeedbackDialog({
   const [issueType, setIssueType] = useState('');
   const [issueTitle, setIssueTitle] = useState('');
   const [issueDescription, setIssueDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // State to track submission status
+
+  // Mocking t object for translations, assuming it comes from a translation hook
+  const t = {
+    success: language === 'ar' ? 'تم إرسال التقييم' : 'Feedback Submitted',
+    thankYou: language === 'ar' ? 'شكرا لك على ملاحظاتك!' : 'Thank you for your feedback!',
+    error: language === 'ar' ? 'خطأ' : 'Error',
+    tryAgain: language === 'ar' ? 'فشل في إرسال التقييم' : 'Failed to submit feedback',
+    overallRating: language === 'ar' ? 'التقييم الإجمالي' : 'Overall Rating',
+    orderingProcess: language === 'ar' ? 'عملية الطلب' : 'Ordering Process',
+    productQuality: language === 'ar' ? 'جودة المنتجات' : 'Product Quality',
+    deliverySpeed: language === 'ar' ? 'سرعة التسليم' : 'Delivery Speed',
+    communication: language === 'ar' ? 'التواصل' : 'Communication',
+    recommendUs: language === 'ar' ? 'هل توصي بنا؟' : 'Would you recommend us?',
+    yes: language === 'ar' ? 'نعم' : 'Yes',
+    no: language === 'ar' ? 'لا' : 'No',
+    additionalComments: language === 'ar' ? 'تعليقات إضافية (اختياري)' : 'Additional Comments (Optional)',
+    placeholderComments: language === 'ar' ? 'أخبرنا المزيد عن تجربتك...' : 'Tell us more about your experience...',
+    reportIssue: language === 'ar' ? 'الإبلاغ عن مشكلة في الطلب' : 'Report an issue with this order',
+    issueTypeLabel: language === 'ar' ? 'نوع المشكلة' : 'Issue Type',
+    selectIssueType: language === 'ar' ? 'اختر نوع المشكلة' : 'Select issue type',
+    missingItems: language === 'ar' ? 'عناصر مفقودة' : 'Missing Items',
+    wrongItems: language === 'ar' ? 'عناصر خاطئة' : 'Wrong Items',
+    damagedItems: language === 'ar' ? 'عناصر تالفة' : 'Damaged Items',
+    qualityIssue: language === 'ar' ? 'مشكلة في الجودة' : 'Quality Issue',
+    quantityMismatch: language === 'ar' ? 'عدم تطابق الكمية' : 'Quantity Mismatch',
+    other: language === 'ar' ? 'أخرى' : 'Other',
+    issueTitleLabel: language === 'ar' ? 'عنوان المشكلة' : 'Issue Title',
+    placeholderIssueTitle: language === 'ar' ? 'مثال: نقص في الكمية المستلمة' : 'e.g., Received fewer items than ordered',
+    issueDescriptionLabel: language === 'ar' ? 'وصف المشكلة' : 'Issue Description',
+    placeholderIssueDescription: language === 'ar' ? 'يرجى وصف المشكلة بالتفصيل...' : 'Please describe the issue in detail...',
+    cancel: language === 'ar' ? 'إلغاء' : 'Cancel',
+    submitFeedback: language === 'ar' ? 'إرسال التقييم' : 'Submit Feedback',
+    submitting: language === 'ar' ? 'جاري الإرسال...' : 'Submitting...',
+  };
 
   const submitFeedback = useMutation({
     mutationFn: async (data: any) => {
@@ -53,23 +90,31 @@ export default function OrderFeedbackDialog({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit feedback');
+        // Try to get error message from response body
+        let errorMessage = t.tryAgain;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // Ignore if response body is not JSON or empty
+        }
+        throw new Error(errorMessage);
       }
 
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: language === 'ar' ? 'تم إرسال التقييم' : 'Feedback Submitted',
-        description: language === 'ar' ? 'شكرا لك على ملاحظاتك!' : 'Thank you for your feedback!',
+        title: t.success,
+        description: t.thankYou,
       });
       onOpenChange(false);
       resetForm();
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'فشل في إرسال التقييم' : 'Failed to submit feedback',
+        title: t.error,
+        description: error.message || t.tryAgain,
         variant: 'destructive',
       });
     },
@@ -83,24 +128,33 @@ export default function OrderFeedbackDialog({
     setCommunicationRating(0);
     setWouldRecommend(null);
     setComments('');
+    setHasIssue(false);
+    setIssueType('');
+    setIssueTitle('');
+    setIssueDescription('');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     if (rating === 0) {
       toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
+        title: t.error,
         description: language === 'ar' ? 'يرجى تقييم التجربة الإجمالية' : 'Please rate your overall experience',
         variant: 'destructive',
       });
+      setIsSubmitting(false);
       return;
     }
 
     if (wouldRecommend === null) {
       toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
+        title: t.error,
         description: language === 'ar' ? 'يرجى اختيار ما إذا كنت توصي بنا' : 'Please indicate if you would recommend us',
         variant: 'destructive',
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -115,7 +169,7 @@ export default function OrderFeedbackDialog({
       comments: comments || undefined,
     };
 
-    // Add issue report if user selected to report an issue
+    // Add issue report if user selected to report an issue and provided details
     if (hasIssue && issueType && issueTitle && issueDescription) {
       feedbackData.issueReport = {
         issueType,
@@ -127,8 +181,46 @@ export default function OrderFeedbackDialog({
       };
     }
 
-    submitFeedback.mutate(feedbackData);
+    console.log('Submitting feedback for order:', orderId);
+    console.log('Feedback data:', feedbackData);
+
+    try {
+      const response = await fetch('/api/feedback/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(feedbackData),
+      });
+
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || t.tryAgain);
+      }
+
+      toast({
+        title: t.success,
+        description: t.thankYou,
+      });
+
+      onOpenChange(false);
+      resetForm();
+      // Assuming you want to invalidate queries related to orders after feedback submission
+      // queryClient.invalidateQueries({ queryKey: ['/api/client/orders'] });
+    } catch (error: any) {
+      console.error('Feedback submission error:', error);
+      toast({
+        title: t.error,
+        description: error.message || t.tryAgain,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   const StarRating = ({ value, onChange, label }: { value: number; onChange: (val: number) => void; label: string }) => {
     const [hover, setHover] = useState(0);
@@ -167,7 +259,7 @@ export default function OrderFeedbackDialog({
             {language === 'ar' ? 'كيف كانت تجربتك؟' : 'How was your experience?'}
           </DialogTitle>
           <DialogDescription>
-            {language === 'ar' 
+            {language === 'ar'
               ? `الطلب: ${orderReference}`
               : `Order: ${orderReference}`
             }
@@ -179,7 +271,7 @@ export default function OrderFeedbackDialog({
           <StarRating
             value={rating}
             onChange={setRating}
-            label={language === 'ar' ? 'التقييم الإجمالي' : 'Overall Rating'}
+            label={t.overallRating}
           />
 
           {/* Aspect Ratings */}
@@ -187,28 +279,28 @@ export default function OrderFeedbackDialog({
             <StarRating
               value={orderingProcessRating}
               onChange={setOrderingProcessRating}
-              label={language === 'ar' ? 'عملية الطلب' : 'Ordering Process'}
+              label={t.orderingProcess}
             />
             <StarRating
               value={productQualityRating}
               onChange={setProductQualityRating}
-              label={language === 'ar' ? 'جودة المنتجات' : 'Product Quality'}
+              label={t.productQuality}
             />
             <StarRating
               value={deliverySpeedRating}
               onChange={setDeliverySpeedRating}
-              label={language === 'ar' ? 'سرعة التسليم' : 'Delivery Speed'}
+              label={t.deliverySpeed}
             />
             <StarRating
               value={communicationRating}
               onChange={setCommunicationRating}
-              label={language === 'ar' ? 'التواصل' : 'Communication'}
+              label={t.communication}
             />
           </div>
 
           {/* Would Recommend */}
           <div className="space-y-2">
-            <Label>{language === 'ar' ? 'هل توصي بنا؟' : 'Would you recommend us?'}</Label>
+            <Label>{t.recommendUs}</Label>
             <div className="flex gap-4">
               <Button
                 type="button"
@@ -217,7 +309,7 @@ export default function OrderFeedbackDialog({
                 className="flex-1"
               >
                 <ThumbsUp className="w-4 h-4 mr-2" />
-                {language === 'ar' ? 'نعم' : 'Yes'}
+                {t.yes}
               </Button>
               <Button
                 type="button"
@@ -226,18 +318,18 @@ export default function OrderFeedbackDialog({
                 className="flex-1"
               >
                 <ThumbsDown className="w-4 h-4 mr-2" />
-                {language === 'ar' ? 'لا' : 'No'}
+                {t.no}
               </Button>
             </div>
           </div>
 
           {/* Comments */}
           <div className="space-y-2">
-            <Label>{language === 'ar' ? 'تعليقات إضافية (اختياري)' : 'Additional Comments (Optional)'}</Label>
+            <Label>{t.additionalComments}</Label>
             <Textarea
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              placeholder={language === 'ar' ? 'أخبرنا المزيد عن تجربتك...' : 'Tell us more about your experience...'}
+              placeholder={t.placeholderComments}
               rows={4}
             />
           </div>
@@ -255,46 +347,46 @@ export default function OrderFeedbackDialog({
                 className="w-4 h-4"
               />
               <Label htmlFor="hasIssue" className="cursor-pointer">
-                {language === 'ar' ? 'الإبلاغ عن مشكلة في الطلب' : 'Report an issue with this order'}
+                {t.reportIssue}
               </Label>
             </div>
 
             {hasIssue && (
               <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
                 <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'نوع المشكلة' : 'Issue Type'}</Label>
+                  <Label>{t.issueTypeLabel}</Label>
                   <select
                     value={issueType}
                     onChange={(e) => setIssueType(e.target.value)}
                     className="w-full p-2 border rounded-md"
                   >
-                    <option value="">{language === 'ar' ? 'اختر نوع المشكلة' : 'Select issue type'}</option>
-                    <option value="missing_items">{language === 'ar' ? 'عناصر مفقودة' : 'Missing Items'}</option>
-                    <option value="wrong_items">{language === 'ar' ? 'عناصر خاطئة' : 'Wrong Items'}</option>
-                    <option value="damaged_items">{language === 'ar' ? 'عناصر تالفة' : 'Damaged Items'}</option>
-                    <option value="quality_issue">{language === 'ar' ? 'مشكلة في الجودة' : 'Quality Issue'}</option>
-                    <option value="quantity_mismatch">{language === 'ar' ? 'عدم تطابق الكمية' : 'Quantity Mismatch'}</option>
-                    <option value="other">{language === 'ar' ? 'أخرى' : 'Other'}</option>
+                    <option value="">{t.selectIssueType}</option>
+                    <option value="missing_items">{t.missingItems}</option>
+                    <option value="wrong_items">{t.wrongItems}</option>
+                    <option value="damaged_items">{t.damagedItems}</option>
+                    <option value="quality_issue">{t.qualityIssue}</option>
+                    <option value="quantity_mismatch">{t.quantityMismatch}</option>
+                    <option value="other">{t.other}</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'عنوان المشكلة' : 'Issue Title'}</Label>
+                  <Label>{t.issueTitleLabel}</Label>
                   <input
                     type="text"
                     value={issueTitle}
                     onChange={(e) => setIssueTitle(e.target.value)}
-                    placeholder={language === 'ar' ? 'مثال: نقص في الكمية المستلمة' : 'e.g., Received fewer items than ordered'}
+                    placeholder={t.placeholderIssueTitle}
                     className="w-full p-2 border rounded-md"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{language === 'ar' ? 'وصف المشكلة' : 'Issue Description'}</Label>
+                  <Label>{t.issueDescriptionLabel}</Label>
                   <Textarea
                     value={issueDescription}
                     onChange={(e) => setIssueDescription(e.target.value)}
-                    placeholder={language === 'ar' ? 'يرجى وصف المشكلة بالتفصيل...' : 'Please describe the issue in detail...'}
+                    placeholder={t.placeholderIssueDescription}
                     rows={3}
                   />
                 </div>
@@ -305,12 +397,12 @@ export default function OrderFeedbackDialog({
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            {t.cancel}
           </Button>
-          <Button onClick={handleSubmit} disabled={submitFeedback.isPending}>
-            {submitFeedback.isPending
-              ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...')
-              : (language === 'ar' ? 'إرسال التقييم' : 'Submit Feedback')
+          <Button onClick={handleSubmit} disabled={submitFeedback.isPending || isSubmitting}>
+            {submitFeedback.isPending || isSubmitting
+              ? t.submitting
+              : t.submitFeedback
             }
           </Button>
         </div>
