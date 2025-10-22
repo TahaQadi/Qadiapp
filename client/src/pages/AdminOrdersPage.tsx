@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -59,6 +59,7 @@ interface OrderItem {
 export default function AdminOrdersPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -503,13 +504,17 @@ export default function AdminOrdersPage() {
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
 
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
+    startTransition(() => {
+      setSearchQuery(value);
+      setCurrentPage(1);
+    });
   };
 
   const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
+    startTransition(() => {
+      setStatusFilter(value);
+      setCurrentPage(1);
+    });
   };
 
   const renderOrderCard = (order: Order) => (
