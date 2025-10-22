@@ -2027,7 +2027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await TemplateStorage.createTemplate(validated);
           results.success++;
         } catch (error: any) {
-          const errorMsg = `Template "${template.nameEn || 'unknown')}": ${error.message}`;
+          const errorMsg = `Template "${template.nameEn || 'unknown'}": ${error.message}`;
           results.errors.push(errorMsg);
           log("Template import error:", errorMsg);
         }

@@ -181,20 +181,15 @@ export default function OrderFeedbackDialog({
       };
     }
 
-    console.log('Submitting feedback for order:', orderId);
-    console.log('Feedback data:', feedbackData);
-
     try {
-      const response = await fetch('/api/feedback/order', {
+      const response = await fetch(`/api/feedback/order/${orderId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(feedbackData),
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.message || t.tryAgain);
