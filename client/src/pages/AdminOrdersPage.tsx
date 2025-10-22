@@ -645,7 +645,7 @@ export default function AdminOrdersPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 relative z-10">
+      <main className="container mx-auto py-4 md:py-6 space-y-4 md:space-y-6 px-4 md:px-0 relative z-10">
         <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-xl bg-card/50 dark:bg-card/30 backdrop-blur-sm">
           <CardHeader className="pb-4 space-y-1">
             <CardTitle className="flex items-center gap-2 text-2xl">

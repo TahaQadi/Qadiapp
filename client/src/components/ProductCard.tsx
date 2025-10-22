@@ -67,14 +67,21 @@ export function ProductCard({
     return () => observer.disconnect();
   }, []);
 
+  // Simulate isInView for the animation effect, as the original code didn't provide it.
+  // In a real-world scenario, you'd use a hook like `useInView` from 'react-intersection-observer'.
+  const isInView = isVisible;
+
   return (
     <Card
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden transition-all duration-200",
-        isMobile ? "touch-manipulation" : "hover-lift animate-fade-in"
+        "group relative overflow-hidden transition-all duration-300",
+        "hover:shadow-lg hover:scale-[1.02]",
+        "touch-manipulation", // Improves touch responsiveness
+        "h-full flex flex-col", // Ensure consistent card heights
+        isInView && "animate-in fade-in-50 slide-in-from-bottom-4"
       )} data-testid={`card-product-${sku}`}>
-      
+
       <div className={cn("relative overflow-hidden", isMobile ? "w-full h-48" : "aspect-square")}>
           {!isVisible || isLoading ? (
             <div className="w-full h-full bg-muted animate-pulse" />

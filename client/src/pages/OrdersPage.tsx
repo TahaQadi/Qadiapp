@@ -401,7 +401,7 @@ export default function OrdersPage() {
                         {language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                       </Button>
                     )}
-                    
+
                     {/* Issue Report Button - Available for ALL order statuses */}
                     <Button
                       variant="outline"

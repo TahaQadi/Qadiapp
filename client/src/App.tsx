@@ -107,6 +107,7 @@ function AdminRoute({
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const isMobile = useIsMobile();
 
   return (
     <Switch>
@@ -174,6 +175,8 @@ function Router() {
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
+  const isMobile = useIsMobile();
+
 
   // Redirect to onboarding if user needs it
   useEffect(() => {
@@ -190,6 +193,7 @@ function AppContent() {
       <Toaster />
       <InstallPrompt />
       <NotificationPermission />
+      {isMobile && <MobileNav />}
     </>
   );
 }

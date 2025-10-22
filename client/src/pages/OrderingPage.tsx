@@ -1460,8 +1460,8 @@ export default function OrderingPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {formattedOrders.map((order) => {
-                    const items = safeJsonParse(order.items, []) as any[];
-                    const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+                    const orderItems = safeJsonParse(order.items, []) as any[];
+                    const itemCount = orderItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
                     return (
                       <Card
