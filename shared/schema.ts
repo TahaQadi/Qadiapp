@@ -490,7 +490,7 @@ export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 export const orderFeedback = pgTable("order_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
-  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   rating: integer("rating").notNull(),
   orderingProcessRating: integer("ordering_process_rating"),
   productQualityRating: integer("product_quality_rating"),
@@ -498,6 +498,9 @@ export const orderFeedback = pgTable("order_feedback", {
   communicationRating: integer("communication_rating"),
   comments: text("comments"),
   wouldRecommend: boolean("would_recommend").notNull(),
+  adminResponse: text("admin_response"),
+  adminResponseAt: timestamp("admin_response_at"),
+  respondedBy: varchar("responded_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -518,6 +521,7 @@ export const issueReports = pgTable("issue_reports", {
   orderId: varchar("order_id"),
   issueType: text("issue_type").notNull(),
   severity: text("severity").notNull(),
+  priority: text("priority", { enum: ["low", "medium", "high", "critical"] }).default('medium'),
   title: text("title").notNull(),
   description: text("description").notNull(),
   steps: text("steps"),
