@@ -151,28 +151,40 @@ router.post('/feedback/issue', requireAuth, async (req: any, res: any) => {
       })
       .returning();
 
-    // Notify admins if issue is high severity
-    if (data.severity === 'high' || data.severity === 'critical') {
-      const { storage } = await import('./storage');
-      const adminClients = await storage.getAdminClients();
-      const client = await storage.getClient(req.client!.id);
+    // Notify ALL admins for every issue report
+    const { storage } = await import('./storage');
+    const adminClients = await storage.getAdminClients();
+    const client = await storage.getClient(req.client!.id);
 
-      for (const admin of adminClients) {
-        await storage.createNotification({
-          clientId: admin.id,
-          type: 'system',
-          titleEn: `Critical Issue Reported`,
-          titleAr: 'تم الإبلاغ عن مشكلة حرجة',
-          messageEn: `${client?.nameEn || 'A client'} reported a ${data.severity} severity issue: ${data.title}`,
-          messageAr: `${client?.nameAr || 'عميل'} أبلغ عن مشكلة بدرجة ${data.severity === 'high' ? 'عالية' : 'حرجة'}: ${data.title}`,
-          metadata: JSON.stringify({ 
-            issueId: newReport.id,
-            severity: data.severity,
-            issueType: data.issueType,
-            orderId: data.orderId 
-          }),
-        });
-      }
+    const severityLabelsEn = {
+      low: 'Low',
+      medium: 'Medium',
+      high: 'High',
+      critical: 'Critical'
+    };
+
+    const severityLabelsAr = {
+      low: 'منخفضة',
+      medium: 'متوسطة',
+      high: 'عالية',
+      critical: 'حرجة'
+    };
+
+    for (const admin of adminClients) {
+      await storage.createNotification({
+        clientId: admin.id,
+        type: 'system',
+        titleEn: `New Issue Report`,
+        titleAr: 'بلاغ مشكلة جديد',
+        messageEn: `${client?.nameEn || 'A client'} reported a ${severityLabelsEn[data.severity as keyof typeof severityLabelsEn]} severity issue: ${data.title}`,
+        messageAr: `${client?.nameAr || 'عميل'} أبلغ عن مشكلة بدرجة ${severityLabelsAr[data.severity as keyof typeof severityLabelsAr]}: ${data.title}`,
+        metadata: JSON.stringify({ 
+          issueId: newReport.id,
+          severity: data.severity,
+          issueType: data.issueType,
+          orderId: data.orderId 
+        }),
+      });
     }
 
     res.json({ success: true, id: newReport.id });
