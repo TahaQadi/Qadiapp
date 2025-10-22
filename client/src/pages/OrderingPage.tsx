@@ -632,7 +632,7 @@ export default function OrderingPage() {
     const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
     const [, setLocation] = useLocation();
     const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
-    // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
+    const [localQuantity, setLocalQuantity] = useState(1);
 
     const productSlug = product.nameEn?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
     const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
@@ -640,11 +640,6 @@ export default function OrderingPage() {
 
     const handleCardClick = () => {
       setLocation(productUrl);
-    };
-
-    // Function to handle quantity changes directly from the card
-    const handleQuantityChange = (change: number) => {
-      handleAddToCart(product, change);
     };
 
     // Calculate final quantity based on type
@@ -655,21 +650,21 @@ export default function OrderingPage() {
       return qty;
     };
 
-    const handleAddWithQuantity = () => {
-      const finalQty = getFinalQuantity(customQuantity);
+    const handleAddToCartClick = () => {
+      const finalQty = getFinalQuantity(localQuantity);
       handleAddToCart(product, finalQty);
-      setCustomQuantity(1); // Reset after adding
+      setLocalQuantity(1);
     };
 
     return (
       <Card
         className={cn(
-          "group flex flex-col overflow-hidden transition-all duration-500 ease-out " +
-          "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm " +
-          "border-border/50 dark:border-[#d4af37]/20 " +
-          "hover:border-primary dark:hover:border-[#d4af37] " +
-          "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 " +
-          "animate-fade-in",
+          "group flex flex-col overflow-hidden transition-all duration-300",
+          "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm",
+          "border-border/50 dark:border-[#d4af37]/20",
+          "hover:border-primary dark:hover:border-[#d4af37]",
+          "hover:shadow-2xl dark:hover:shadow-[#d4af37]/20",
+          "h-full",
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
@@ -679,25 +674,22 @@ export default function OrderingPage() {
 
         {/* Product Image */}
         <div
-          className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+          className="relative w-full aspect-square bg-gradient-to-br from-muted/30 to-muted/60 overflow-hidden cursor-pointer"
           onClick={handleCardClick}
         >
-          <div className="w-full h-full">
-            {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={primaryName}
-                className="w-full h-full object-cover"
-                data-testid={`img-product-${product.id}`}
-                loading="lazy" // Added lazy loading
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
-              </div>
-            )}
-          </div>
-        </div>
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={primaryName}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              data-testid={`img-product-${product.id}`}
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Package className="w-16 h-16 text-muted-foreground/40" />
+            </div>
+          )}
 
           {/* Badges */}
           <div className="absolute top-2 end-2 flex flex-col gap-2">
@@ -710,20 +702,18 @@ export default function OrderingPage() {
               </Badge>
             )}
             {product.category && (
-              <Badge
-                variant="secondary"
-                className="bg-background/80 backdrop-blur-sm text-xs"
-              >
+              <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
                 {product.category}
               </Badge>
             )}
           </div>
+        </div>
 
         {/* Product Info */}
-        <CardContent className="flex-1 p-4 space-y-3 relative z-10">
+        <CardContent className="flex-1 p-4 space-y-3">
           <div>
             <h3
-              className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary transition-colors cursor-pointer"
+              className="font-semibold text-base line-clamp-2 cursor-pointer hover:text-primary transition-colors"
               data-testid={`text-product-name-${product.id}`}
               onClick={handleCardClick}
             >
@@ -733,22 +723,23 @@ export default function OrderingPage() {
               {secondaryName}
             </p>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+
+          <div className="flex items-center gap-2">
             <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
             {product.unitPerBox && (
               <Badge variant="outline" className="text-xs">
-                📦 {product.unitPerBox} {language === 'ar' ? 'قطع/صندوق' : 'pcs/box'}
+                📦 {product.unitPerBox} {language === 'ar' ? 'قطع/علبة' : 'pcs/box'}
               </Badge>
             )}
           </div>
 
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+            <p className="text-sm text-muted-foreground line-clamp-2">
               {description}
             </p>
           )}
 
-          {/* Pricing Section */}
+          {/* Pricing */}
           <div className="pt-2 border-t border-border/50">
             {product.hasPrice && product.contractPrice ? (
               <div className="space-y-1">
@@ -763,191 +754,170 @@ export default function OrderingPage() {
             ) : product.sellingPricePiece ? (
               <div className="space-y-1">
                 <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                  {product.sellingPricePiece} <span className="text-sm font-normal">{language === 'ar' ? 'ش' : 'ILS'}</span>
+                  {product.sellingPricePiece} <span className="text-sm font-normal">ILS</span>
                 </p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
-                  {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Reference Price'}
+                  {language === 'ar' ? 'سعر مرجعي' : 'Reference Price'}
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
+              </p>
             )}
           </div>
         </CardContent>
 
-        {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
-          {product.hasPrice ? (
-            <>
-              {cartItem ? (
-                <div className="flex items-center gap-2 w-full">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="rounded-full h-8 w-8 flex-shrink-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleQuantityChange(-1);
-                    }}
-                    disabled={isDifferentLta}
-                    data-testid={`button-decrement-cart-${product.id}`}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="font-semibold text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}</span>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="rounded-full h-8 w-8 flex-shrink-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleQuantityChange(1);
-                    }}
-                    disabled={isDifferentLta}
-                    data-testid={`button-increment-cart-${product.id}`}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="w-full space-y-2">
-                  {/* Quantity Type Selector (only if product has unitPerBox) */}
-                  {product.unitPerBox && (
-                    <div className="flex gap-1 p-1 bg-muted rounded-lg">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setQuantityType('pcs');
-                        }}
-                        className={cn(
-                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                          quantityType === 'pcs'
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                        data-testid={`button-select-pcs-${product.id}`}
-                      >
-                        {language === 'ar' ? 'قطع' : 'Pieces'}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setQuantityType('box');
-                        }}
-                        className={cn(
-                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                          quantityType === 'box'
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                        data-testid={`button-select-box-${product.id}`}
-                      >
-                        📦 {language === 'ar' ? 'صناديق' : 'Boxes'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Quantity Selector and Add Button */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center border rounded-lg flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setCustomQuantity(Math.max(1, customQuantity - 1));
-                        }}
-                        className="p-2 hover:bg-muted transition-colors"
-                        data-testid={`button-decrease-qty-${product.id}`}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <input
-                        type="number"
-                        min="1"
-                        value={customQuantity}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          const val = parseInt(e.target.value) || 1;
-                          setCustomQuantity(Math.max(1, val));
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-12 text-center border-x bg-transparent focus:outline-none font-semibold"
-                        data-testid={`input-quantity-${product.id}`}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setCustomQuantity(customQuantity + 1);
-                        }}
-                        className="p-2 hover:bg-muted transition-colors"
-                        data-testid={`button-increase-qty-${product.id}`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <Button
+        {/* Actions */}
+        <CardFooter className="p-4 pt-0 flex-col gap-2">
+          {product.hasPrice && product.contractPrice ? (
+            cartItem ? (
+              <div className="flex items-center justify-between gap-2 w-full">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(product, -1);
+                  }}
+                  disabled={isDifferentLta}
+                  data-testid={`button-decrement-cart-${product.id}`}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="font-semibold text-center flex-1">
+                  {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
+                </span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(product, 1);
+                  }}
+                  disabled={isDifferentLta}
+                  data-testid={`button-increment-cart-${product.id}`}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="w-full space-y-2">
+                {/* Box/Pcs Selector */}
+                {product.unitPerBox && (
+                  <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                    <button
                       onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
-                        handleAddWithQuantity();
+                        setQuantityType('pcs');
                       }}
-                      disabled={isDifferentLta}
-                      className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md"
-                      data-testid={`button-add-to-cart-${product.id}`}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        quantityType === 'pcs'
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      data-testid={`button-select-pcs-${product.id}`}
                     >
-                      <ShoppingCart className="w-4 h-4 me-2" />
-                      <span className="truncate">
-                        {isDifferentLta
-                          ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-                          : (language === 'ar' ? 'أضف' : 'Add')
-                        }
-                      </span>
-                    </Button>
+                      {language === 'ar' ? 'قطع' : 'Pieces'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuantityType('box');
+                      }}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        quantityType === 'box'
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      data-testid={`button-select-box-${product.id}`}
+                    >
+                      📦 {language === 'ar' ? 'صناديق' : 'Boxes'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Quantity Counter + Add Button */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center border rounded-lg overflow-hidden">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocalQuantity(Math.max(1, localQuantity - 1));
+                      }}
+                      className="px-3 py-2 hover:bg-muted transition-colors"
+                      data-testid={`button-decrease-qty-${product.id}`}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      value={localQuantity}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        const val = parseInt(e.target.value) || 1;
+                        setLocalQuantity(Math.max(1, val));
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-14 text-center border-x bg-transparent focus:outline-none font-semibold text-sm"
+                      data-testid={`input-quantity-${product.id}`}
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocalQuantity(localQuantity + 1);
+                      }}
+                      className="px-3 py-2 hover:bg-muted transition-colors"
+                      data-testid={`button-increase-qty-${product.id}`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
                   </div>
 
-                  {/* Show total pieces when box is selected */}
-                  {quantityType === 'box' && product.unitPerBox && customQuantity > 0 && (
-                    <p className="text-xs text-muted-foreground text-center">
-                      = {getFinalQuantity(customQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
-                    </p>
-                  )}
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCartClick();
+                    }}
+                    disabled={isDifferentLta}
+                    className="flex-1"
+                    data-testid={`button-add-to-cart-${product.id}`}
+                  >
+                    <ShoppingCart className="w-4 h-4 me-2" />
+                    {language === 'ar' ? 'أضف' : 'Add'}
+                  </Button>
                 </div>
-              )}
-            </>
+
+                {/* Show total pieces for boxes */}
+                {quantityType === 'box' && product.unitPerBox && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    = {getFinalQuantity(localQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
+                  </p>
+                )}
+              </div>
+            )
           ) : (
             <Button
               onClick={(e) => {
-                e.preventDefault();
                 e.stopPropagation();
                 handleAddToPriceRequest(product);
               }}
-              variant={inPriceRequest
-                ? 'secondary'
-                : 'outline'
-              }
-              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
-              size="lg"
+              variant={inPriceRequest ? 'secondary' : 'outline'}
+              className="w-full"
               data-testid={`button-add-to-price-request-${product.id}`}
             >
               <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
-              <span>
-                {inPriceRequest
-                  ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
-                  : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
-                }
-              </span>
+              {inPriceRequest
+                ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
+                : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
+              }
             </Button>
           )}
         </CardFooter>
