@@ -157,9 +157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Feedback routes
   app.use('/api', feedbackRoutes);
-
-  // Feedback Analytics routes
   app.use('/api', feedbackAnalyticsRoutes);
+  console.log('[Routes] Feedback routes registered successfully');
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
