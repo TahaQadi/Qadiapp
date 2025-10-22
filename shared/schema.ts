@@ -551,7 +551,10 @@ export const microFeedback = pgTable("micro_feedback", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Demo Requests table
+// ============================================
+// DEMO REQUESTS TABLE
+// ============================================
+
 export const demoRequests = pgTable("demo_requests", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -572,16 +575,40 @@ export const insertDemoRequestSchema = createInsertSchema(demoRequests).omit({
   status: true,
 });
 
-export const insertMicroFeedbackSchema = createInsertSchema(microFeedback).omit({ 
-  id: true, 
-  createdAt: true,
-  userId: true
-});
+// ============================================
+// SCHEMA EXPORTS
+// ============================================
+
+export const schema = {
+  sessions,
+  users,
+  clients,
+  companyUsers,
+  passwordResetTokens,
+  clientDepartments,
+  clientLocations,
+  vendors,
+  products,
+  ltas,
+  ltaProducts,
+  ltaClients,
+  clientPricing,
+  orderTemplates,
+  templates,
+  orders,
+  orderModifications,
+  notifications,
+  documents,
+  documentAccessLogs,
+  microFeedback,
+  demoRequests,
+};
 
 // Types
 export type OrderFeedback = typeof orderFeedback.$inferSelect;
 export type IssueReport = typeof issueReports.$inferSelect;
 export type MicroFeedback = typeof microFeedback.$inferSelect;
+export type DemoRequest = typeof demoRequests.$inferSelect;
 
 export type Client = typeof clients.$inferSelect;
 export type CompanyUser = typeof companyUsers.$inferSelect;
@@ -631,6 +658,7 @@ export type InsertOrderHistory = z.infer<typeof insertOrderHistorySchema>;
 export type InsertOrderFeedback = z.infer<typeof insertOrderFeedbackSchema>;
 export type InsertIssueReport = z.infer<typeof insertIssueReportSchema>;
 export type InsertMicroFeedback = z.infer<typeof insertMicroFeedbackSchema>;
+export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;
@@ -663,17 +691,3 @@ export interface AuthUser {
   companyNameEn?: string;
   companyNameAr?: string;
 }
-
-// Demo Request table schema
-export const demoRequests = pgTable("demo_requests", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
-  company: text("company").notNull(),
-  message: text("message"),
-  status: text("status").notNull().default('pending'), // pending, contacted, scheduled, completed, cancelled
-  notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at"),
-});
