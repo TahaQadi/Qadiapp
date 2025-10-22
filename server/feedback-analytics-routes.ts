@@ -3,11 +3,13 @@ import { Router } from 'express';
 import { db } from './db';
 import { orderFeedback, issueReports, users } from '../shared/schema';
 import { eq, gte, sql, desc, and } from 'drizzle-orm';
+import { requireAdmin } from './auth';
 
 const router = Router();
 
-router.get('/analytics', async (req, res) => {
+router.get('/analytics', requireAdmin, async (req: any, res) => {
   try {
+    console.log('[Feedback Analytics] Request received:', { range: req.query.range, user: req.client?.id });
     const range = req.query.range as string || '30d';
     
     // Calculate date threshold
@@ -149,7 +151,7 @@ router.get('/analytics', async (req, res) => {
       clientName: f.clientNameEn || 'Unknown Client'
     }));
 
-    res.json({
+    const response = {
       totalFeedback,
       averageRating,
       npsScore,
@@ -159,9 +161,12 @@ router.get('/analytics', async (req, res) => {
       trendData,
       topIssues,
       recentFeedback: recentFeedbackFormatted
-    });
+    };
+    
+    console.log('[Feedback Analytics] Sending response:', { totalFeedback, averageRating, npsScore });
+    res.json(response);
   } catch (error) {
-    console.error('Error fetching feedback analytics:', error);
+    console.error('[Feedback Analytics] Error:', error);
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });

@@ -103,6 +103,16 @@ export default function CustomerFeedbackPage() {
   // Fetch analytics data with proper error handling
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<FeedbackStats>({
     queryKey: ['/api/feedback/analytics', timeRange],
+    queryFn: async () => {
+      const response = await fetch(`/api/feedback/analytics?range=${timeRange}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Failed to fetch analytics' }));
+        throw new Error(error.message || 'Failed to fetch analytics');
+      }
+      return response.json();
+    },
     retry: 1,
     staleTime: 60000, // Cache for 1 minute
   });
@@ -110,6 +120,16 @@ export default function CustomerFeedbackPage() {
   // Fetch issues data with proper error handling
   const { data: issues = [], isLoading: issuesLoading, error: issuesError } = useQuery<IssueReport[]>({
     queryKey: ['/api/feedback/issues'],
+    queryFn: async () => {
+      const response = await fetch('/api/feedback/issues', {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Failed to fetch issues' }));
+        throw new Error(error.message || 'Failed to fetch issues');
+      }
+      return response.json();
+    },
     retry: 1,
     staleTime: 60000,
   });
