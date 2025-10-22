@@ -161,6 +161,7 @@ function Router() {
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <AdminRoute path="/admin/reports" component={AdminReportsPage} />
       <AdminRoute path="/admin/demo-requests" component={AdminDemoRequestsPage} />
+      <Route path="/admin/feedback" component={lazy(() => import("@/pages/admin/CustomerFeedbackPage"))} />
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />

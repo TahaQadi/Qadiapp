@@ -127,16 +127,16 @@ export default function AdminPage() {
       testId: 'card-error-logs'
     },
     {
-      id: 'customer-feedback',
-      path: '/admin/customer-feedback',
+      id: 'feedback-analytics',
+      path: '/admin/feedback',
       icon: TrendingUp,
-      titleEn: 'Customer Feedback',
-      titleAr: 'ملاحظات العملاء',
-      descEn: 'Analytics, ratings, and issue management',
-      descAr: 'التحليلات والتقييمات وإدارة المشاكل',
+      titleEn: 'Feedback & Analytics',
+      titleAr: 'الملاحظات والتحليلات',
+      descEn: 'Customer feedback, analytics, ratings & issue management',
+      descAr: 'ملاحظات العملاء والتحليلات والتقييمات وإدارة المشاكل',
       gradient: 'from-emerald-500/20 to-teal-500/10',
       hoverGradient: 'from-emerald-500/30 to-teal-500/20',
-      testId: 'card-customer-feedback'
+      testId: 'card-feedback-analytics'
     }
   ];
 

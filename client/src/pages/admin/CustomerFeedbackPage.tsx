@@ -17,7 +17,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Loader2
+  Loader2,
+  FileText
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -29,7 +30,10 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import {
   Dialog,
@@ -87,6 +91,8 @@ interface IssueReport {
   companyName: string;
 }
 
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+
 export default function CustomerFeedbackPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -94,16 +100,18 @@ export default function CustomerFeedbackPage() {
   const [selectedIssue, setSelectedIssue] = useState<IssueReport | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  // Fetch analytics data
+  // Fetch analytics data with proper error handling
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<FeedbackStats>({
     queryKey: ['/api/feedback/analytics', timeRange],
     retry: 1,
+    staleTime: 60000, // Cache for 1 minute
   });
 
-  // Fetch issues data
+  // Fetch issues data with proper error handling
   const { data: issues = [], isLoading: issuesLoading, error: issuesError } = useQuery<IssueReport[]>({
     queryKey: ['/api/feedback/issues'],
     retry: 1,
+    staleTime: 60000,
   });
 
   // Update issue status mutation
@@ -194,8 +202,9 @@ export default function CustomerFeedbackPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               {statsError && `Analytics: ${(statsError as any)?.message || 'Unknown error'}`}
+              <br />
               {issuesError && `Issues: ${(issuesError as any)?.message || 'Unknown error'}`}
             </p>
             <Button 
@@ -203,7 +212,6 @@ export default function CustomerFeedbackPage() {
                 queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
                 queryClient.invalidateQueries({ queryKey: ['/api/feedback/issues'] });
               }}
-              className="mt-4"
             >
               {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
             </Button>
@@ -219,7 +227,7 @@ export default function CustomerFeedbackPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">
-            {language === 'ar' ? 'ملاحظات العملاء' : 'Customer Feedback'}
+            {language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
           </h1>
           <p className="text-muted-foreground">
             {language === 'ar' ? 'التحليلات والتقييمات وإدارة المشاكل' : 'Analytics, ratings, and issue management'}
@@ -321,24 +329,54 @@ export default function CustomerFeedbackPage() {
                 </Card>
               </div>
 
-              {/* Trend Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{language === 'ar' ? 'اتجاه التقييم' : 'Rating Trend'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={stats.trendData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis domain={[0, 5]} />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="rating" stroke="#10b981" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              {/* Charts Row */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Trend Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{language === 'ar' ? 'اتجاه التقييم' : 'Rating Trend'}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={stats.trendData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis domain={[0, 5]} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="rating" stroke="#10b981" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Rating Distribution */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{language === 'ar' ? 'توزيع التقييمات' : 'Rating Distribution'}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={stats.ratingDistribution}
+                          dataKey="count"
+                          nameKey="rating"
+                          cx="50%"
+                          cy="50%"
+                          label
+                        >
+                          {stats.ratingDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
             </>
           )}
         </TabsContent>
@@ -346,43 +384,41 @@ export default function CustomerFeedbackPage() {
         {/* Ratings Tab */}
         <TabsContent value="ratings" className="space-y-4">
           {stats && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>{language === 'ar' ? 'أحدث الملاحظات' : 'Recent Feedback'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {stats.recentFeedback.map(feedback => (
-                      <div key={feedback.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-4 w-4 ${i < feedback.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
-                                  />
-                                ))}
-                              </div>
-                              <Badge variant="outline">{feedback.orderId.slice(0, 8)}</Badge>
+            <Card>
+              <CardHeader>
+                <CardTitle>{language === 'ar' ? 'أحدث الملاحظات' : 'Recent Feedback'}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {stats.recentFeedback.map(feedback => (
+                    <div key={feedback.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${i < feedback.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                                />
+                              ))}
                             </div>
-                            <p className="text-sm font-medium mb-1">{feedback.clientName}</p>
-                            {feedback.comments && (
-                              <p className="text-sm text-muted-foreground">{feedback.comments}</p>
-                            )}
+                            <Badge variant="outline">{feedback.orderId.slice(0, 8)}</Badge>
                           </div>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {new Date(feedback.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
-                          </span>
+                          <p className="text-sm font-medium mb-1">{feedback.clientName}</p>
+                          {feedback.comments && (
+                            <p className="text-sm text-muted-foreground">{feedback.comments}</p>
+                          )}
                         </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {new Date(feedback.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
