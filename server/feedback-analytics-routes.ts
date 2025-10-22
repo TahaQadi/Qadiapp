@@ -34,7 +34,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
     const feedbackData = await db
       .select()
       .from(orderFeedback)
-      .where(gte(orderFeedback.createdAt, startDate.toISOString()))
+      .where(sql`${orderFeedback.createdAt} >= ${startDate.toISOString()}`)
       .execute();
 
     // Calculate average rating
@@ -110,7 +110,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
     const issues = await db
       .select()
       .from(issueReports)
-      .where(gte(issueReports.createdAt, startDate.toISOString()))
+      .where(sql`${issueReports.createdAt} >= ${startDate.toISOString()}`)
       .execute();
 
     const issueTypeMap = new Map<string, number>();
@@ -137,7 +137,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       })
       .from(orderFeedback)
       .leftJoin(clients, eq(orderFeedback.clientId, clients.id))
-      .where(gte(orderFeedback.createdAt, startDate.toISOString()))
+      .where(sql`${orderFeedback.createdAt} >= ${startDate.toISOString()}`)
       .orderBy(desc(orderFeedback.createdAt))
       .limit(10)
       .execute();

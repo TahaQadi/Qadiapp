@@ -53,6 +53,7 @@ const AdminOrderModificationsPage = lazy(() => import('@/pages/admin/OrderModifi
 const AdminErrorLogsPage = lazy(() => import('@/pages/admin/ErrorLogsPage'));
 const IssueReportsPage = lazy(() => import('@/pages/admin/IssueReportsPage'));
 const FeedbackDashboardPage = lazy(() => import('@/pages/admin/FeedbackDashboardPage'));
+const CustomerFeedbackPage = lazy(() => import('@/pages/admin/CustomerFeedbackPage'));
 
 
 function AdminRoute({
@@ -153,7 +154,7 @@ function Router() {
       <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={AdminOrderModificationsPage} />
       <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />
-      <AdminRoute path="/admin/feedback" component={lazy(() => import("@/pages/admin/CustomerFeedbackPage"))} />
+      <AdminRoute path="/admin/feedback" component={CustomerFeedbackPage} />
       <AdminRoute path="/admin/error-logs" component={AdminErrorLogsPage} />
       <AdminRoute path="/admin/templates/documents" component={AdminTemplatesPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
