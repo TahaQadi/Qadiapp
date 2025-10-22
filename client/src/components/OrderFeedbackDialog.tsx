@@ -53,8 +53,8 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
 
       toast({
         title: language === 'ar' ? 'شكراً لك!' : 'Thank you!',
-        description: language === 'ar' 
-          ? 'تم إرسال ملاحظاتك بنجاح' 
+        description: language === 'ar'
+          ? 'تم إرسال ملاحظاتك بنجاح'
           : 'Your feedback has been submitted successfully',
       });
 
@@ -65,8 +65,8 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
       toast({
         variant: "destructive",
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' 
-          ? 'فشل إرسال الملاحظات' 
+        description: language === 'ar'
+          ? 'فشل إرسال الملاحظات'
           : 'Failed to submit feedback',
       });
     } finally {
@@ -82,8 +82,8 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
             {language === 'ar' ? 'تقييم الطلب' : 'Rate Your Order'}
           </DialogTitle>
           <DialogDescription>
-            {language === 'ar' 
-              ? 'كيف كانت تجربتك مع هذا الطلب؟' 
+            {language === 'ar'
+              ? 'كيف كانت تجربتك مع هذا الطلب؟'
               : 'How was your experience with this order?'}
           </DialogDescription>
         </DialogHeader>
