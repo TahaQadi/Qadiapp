@@ -77,6 +77,9 @@ interface FeedbackStats {
     comments: string;
     createdAt: string;
     clientName: string;
+    adminResponse?: string;
+    adminResponseAt?: string;
+    respondedBy?: string;
   }[];
 }
 
@@ -89,6 +92,7 @@ interface IssueReport {
   title: string;
   description: string;
   status: string;
+  priority?: string;
   createdAt: string;
   resolvedAt?: string;
   companyName: string;
@@ -176,6 +180,28 @@ export default function CustomerFeedbackPage() {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error?.message || (language === 'ar' ? 'فشل في تحديث الأولوية' : 'Failed to update priority'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Submit admin response mutation
+  const submitResponseMutation = useMutation({
+    mutationFn: async ({ id, response }: { id: string; response: string }) => {
+      return apiRequest('POST', `/api/feedback/${id}/respond`, { response });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
+      setAdminResponse('');
+      toast({
+        title: language === 'ar' ? 'تم الإرسال' : 'Sent',
+        description: language === 'ar' ? 'تم إرسال الرد للعميل' : 'Response sent to customer',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error?.message || (language === 'ar' ? 'فشل في إرسال الرد' : 'Failed to send response'),
         variant: 'destructive',
       });
     },
@@ -436,7 +462,7 @@ export default function CustomerFeedbackPage() {
               <CardContent>
                 <div className="space-y-4">
                   {stats.recentFeedback.map(feedback => (
-                    <div key={feedback.id} className="border rounded-lg p-4">
+                    <div key={feedback.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -459,6 +485,43 @@ export default function CustomerFeedbackPage() {
                           {new Date(feedback.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                         </span>
                       </div>
+                      
+                      {/* Admin Response Section */}
+                      {(feedback as any).adminResponse ? (
+                        <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-xs">
+                              {language === 'ar' ? 'رد الإدارة' : 'Admin Response'}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date((feedback as any).adminResponseAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                            </span>
+                          </div>
+                          <p className="text-sm">{(feedback as any).adminResponse}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Textarea
+                            placeholder={language === 'ar' ? 'اكتب ردك هنا...' : 'Write your response here...'}
+                            value={adminResponse}
+                            onChange={(e) => setAdminResponse(e.target.value)}
+                            className="min-h-20"
+                            data-testid={`textarea-admin-response-${feedback.id}`}
+                          />
+                          <Button
+                            onClick={() => submitResponseMutation.mutate({ id: feedback.id, response: adminResponse })}
+                            disabled={!adminResponse.trim() || submitResponseMutation.isPending}
+                            size="sm"
+                            data-testid={`button-submit-response-${feedback.id}`}
+                          >
+                            {submitResponseMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              language === 'ar' ? 'إرسال الرد' : 'Send Response'
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -546,8 +609,9 @@ export default function CustomerFeedbackPage() {
                 <Select
                   value={selectedIssue.priority || 'medium'}
                   onValueChange={(priority) => updatePriorityMutation.mutate({ id: selectedIssue.id, priority })}
+                  disabled={updatePriorityMutation.isPending}
                 >
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40" data-testid="select-issue-priority">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
