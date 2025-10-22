@@ -429,24 +429,6 @@ export default function OrdersPage() {
                       <Edit className="w-4 h-4 me-2" />
                       {language === 'ar' ? 'طلب تعديل' : 'Request Modification'}
                     </Button>
-                  )}</old_str>ta-testid={`button-issue-${order.id}`}
-                      className="w-full min-h-[44px]"
-                    >
-                      <AlertTriangle className="h-4 w-4 me-1" />
-                      {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
-                    </Button>
-                  </div>
-                  {/* Modification Button for specific statuses */}
-                  {['confirmed', 'processing'].includes(order.status) && (
-                    <Button
-                      variant="outline"
-                      className="w-full min-h-[44px] border-primary/20 dark:border-[#d4af37]/20 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300"
-                      onClick={() => handleRequestModification(order)}
-                      data-testid={`button-modify-${order.id}`}
-                    >
-                      <Edit className="w-4 h-4 me-2" />
-                      {language === 'ar' ? 'طلب تعديل' : 'Request Modification'}
-                    </Button>
                   )}
                 </CardContent>
               </Card>
