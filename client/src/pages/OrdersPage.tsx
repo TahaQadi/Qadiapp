@@ -384,8 +384,9 @@ export default function OrdersPage() {
                   )}
 
                   {/* Action Buttons */}
-                  {!['cancelled'].includes(order.status) && (
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    {/* Feedback Button - Only for delivered/cancelled orders */}
+                    {['delivered', 'cancelled'].includes(order.status) && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -394,26 +395,28 @@ export default function OrdersPage() {
                           setFeedbackDialogOpen(true);
                         }}
                         data-testid={`button-feedback-${order.id}`}
-                        className="flex-1 sm:flex-none"
+                        className="w-full min-h-[44px]"
                       >
                         <Star className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'تقييم' : 'Feedback'}
+                        {language === 'ar' ? 'تقييم الطلب' : 'Submit Feedback'}
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrderForIssue(order.id);
-                          setIssueReportDialogOpen(true);
-                        }}
-                        data-testid={`button-issue-${order.id}`}
-                        className="flex-1 sm:flex-none"
-                      >
-                        <AlertTriangle className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'بلاغ مشكلة' : 'Report Issue'}
-                      </Button>
-                    </div>
-                  )}
+                    )}
+                    
+                    {/* Issue Report Button - Available for ALL order statuses */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedOrderForIssue(order.id);
+                        setIssueReportDialogOpen(true);
+                      }}
+                      data-testid={`button-issue-${order.id}`}
+                      className="w-full min-h-[44px]"
+                    >
+                      <AlertTriangle className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
+                    </Button>
+                  </div>
                   {/* Modification Button for specific statuses */}
                   {['confirmed', 'processing'].includes(order.status) && (
                     <Button
