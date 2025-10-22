@@ -9,6 +9,8 @@ import { OrderTemplateCard } from '@/components/OrderTemplateCard';
 import { OrderHistoryTable } from '@/components/OrderHistoryTable';
 import { OrderDetailsDialog } from '@/components/OrderDetailsDialog';
 import { OrderConfirmationDialog } from '@/components/OrderConfirmationDialog';
+import { OrderFeedbackDialog } from '@/components/OrderFeedbackDialog';
+import { IssueReportDialog } from '@/components/IssueReportDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NotificationCenter } from '@/components/NotificationCenter';
@@ -24,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -103,6 +105,10 @@ export default function OrderingPage() {
   const [orderDetailsDialogOpen, setOrderDetailsDialogOpen] = useState(false);
   const [orderConfirmationOpen, setOrderConfirmationOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [issueReportDialogOpen, setIssueReportDialogOpen] = useState(false);
+  const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<string | null>(null);
+  const [selectedOrderForIssue, setSelectedOrderForIssue] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
@@ -1548,17 +1554,60 @@ export default function OrderingPage() {
                             </span>
                           </div>
 
-                          <Button
-                            variant="outline"
-                            className="w-full min-h-[44px] border-primary/20 dark:border-[#d4af37]/20 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300 group-hover:border-primary dark:group-hover:border-[#d4af37] text-sm sm:text-base"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.location.href = '/orders';
-                            }}
-                          >
-                            <ArrowRight className="me-2 h-4 w-4" />
-                            {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            {/* Details Button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const originalOrder = orders.find(o => o.id === order.id);
+                                if (originalOrder) {
+                                  setSelectedOrder(originalOrder);
+                                  setOrderDetailsDialogOpen(true);
+                                }
+                              }}
+                              className="flex-1 min-h-[36px] px-3 border-primary/20 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                              data-testid={`button-view-details-${order.id}`}
+                            >
+                              <FileText className="h-3.5 w-3.5 me-1.5" />
+                              {language === 'ar' ? 'التفاصيل' : 'Details'}
+                            </Button>
+
+                            {/* Issue Report Icon Button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrderForIssue(order.id);
+                                setIssueReportDialogOpen(true);
+                              }}
+                              data-testid={`button-report-issue-${order.id}`}
+                              className="min-h-[36px] px-3 border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950"
+                              title={language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
+                            >
+                              <AlertTriangle className="h-4 w-4 text-orange-500" />
+                            </Button>
+
+                            {/* Feedback Icon Button - Only for delivered/cancelled */}
+                            {['delivered', 'cancelled'].includes(order.status) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrderForFeedback(order.id);
+                                  setFeedbackDialogOpen(true);
+                                }}
+                                data-testid={`button-submit-feedback-${order.id}`}
+                                className="min-h-[36px] px-3 border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950"
+                                title={language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
+                              >
+                                <Star className="h-4 w-4 text-yellow-500" />
+                              </Button>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -1711,6 +1760,28 @@ export default function OrderingPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Feedback Dialog */}
+        {selectedOrderForFeedback && (
+          <OrderFeedbackDialog
+            orderId={selectedOrderForFeedback}
+            open={feedbackDialogOpen}
+            onOpenChange={(open) => {
+              setFeedbackDialogOpen(open);
+              if (!open) setSelectedOrderForFeedback(null);
+            }}
+          />
+        )}
+
+        {/* Issue Report Dialog */}
+        <IssueReportDialog
+          orderId={selectedOrderForIssue || undefined}
+          open={issueReportDialogOpen}
+          onOpenChange={(open) => {
+            setIssueReportDialogOpen(open);
+            if (!open) setSelectedOrderForIssue(null);
+          }}
+        />
 
         {showOrderPlacementFeedback && (
           <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 z-50 animate-slide-up">
