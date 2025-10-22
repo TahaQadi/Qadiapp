@@ -1,0 +1,86 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: Object
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: Object
+chunk-SXRIVT2P.js?v=65c0d24d:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+main.tsx:10 ✅ Service Worker registered successfully
+chunk-SXRIVT2P.js?v=65c0d24d:14080 The above error occurred in one of your React components:
+
+    at Lazy
+    at Route (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65c0d24d:280:16)
+    at AdminRoute (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:75:3)
+    at Switch (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65c0d24d:336:17)
+    at Router (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:139:48)
+    at ErrorBoundary (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at AppContent (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:347:31)
+    at Provider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=65c0d24d:38:15)
+    at TooltipProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=65c0d24d:64:5)
+    at LanguageProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/LanguageProvider.tsx:21:36)
+    at ThemeProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at _a (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-helmet-async.js?v=65c0d24d:624:5)
+    at AppWithProviders (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:391:42)
+    at QueryClientProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=65c0d24d:3086:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+logCapturedError @ chunk-SXRIVT2P.js?v=65c0d24d:14080
+ErrorBoundary.tsx:29 Error boundary caught error: Error: A component suspended while responding to synchronous input. This will cause the UI to be replaced with a loading indicator. To fix, updates that suspend should be wrapped with startTransition.
+    at throwException (chunk-SXRIVT2P.js?v=65c0d24d:14261:43)
+    at handleError (chunk-SXRIVT2P.js?v=65c0d24d:19087:15)
+    at renderRootSync (chunk-SXRIVT2P.js?v=65c0d24d:19172:15)
+    at recoverFromConcurrentError (chunk-SXRIVT2P.js?v=65c0d24d:18786:28)
+    at performSyncWorkOnRoot (chunk-SXRIVT2P.js?v=65c0d24d:18932:28)
+    at flushSyncCallbacks (chunk-SXRIVT2P.js?v=65c0d24d:9166:30)
+    at chunk-SXRIVT2P.js?v=65c0d24d:18677:21 Object
+componentDidCatch @ ErrorBoundary.tsx:29
+admin/feedback:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+securityAudit.ts:126 🔒 Security Audit Report
+securityAudit.ts:127 Score: 50%
+securityAudit.ts:128 ---
+securityAudit.ts:133 ✅ HTTPS : Site is using HTTPS
+securityAudit.ts:133 ❌ Content Security Policy [MEDIUM]: No CSP meta tag found
+securityAudit.ts:133 ✅ Cookie Security : Cookies are properly secured
+securityAudit.ts:133 ❌ XSS Protection [MEDIUM]: 3 inline scripts detected
+securityAudit.ts:133 ❌ Clickjacking Protection [MEDIUM]: No X-Frame-Options protection
+securityAudit.ts:133 ✅ Mixed Content : No mixed content detected
+admin/feedback:1 The resource https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/logo.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+admin/feedback:1 The resource https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/logo.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+api/feedback/analytics?range=30d:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/feedback/analytics?range=30d:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+admin/feedback:1 The resource https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/logo.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+chunk-64NBFEBI.js?v=65c0d24d:340 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-64NBFEBI.js?v=65c0d24d:340
+chunk-64NBFEBI.js?v=65c0d24d:326 `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+(anonymous) @ chunk-64NBFEBI.js?v=65c0d24d:326
+chunk-64NBFEBI.js?v=65c0d24d:340 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-64NBFEBI.js?v=65c0d24d:340
+chunk-SXRIVT2P.js?v=65c0d24d:14080 The above error occurred in the <Context.Provider> component:
+
+    at Route (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65c0d24d:280:16)
+    at AdminRoute (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:75:3)
+    at Switch (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65c0d24d:336:17)
+    at Router (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:139:48)
+    at ErrorBoundary (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at AppContent (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:347:31)
+    at Provider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=65c0d24d:38:15)
+    at TooltipProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=65c0d24d:64:5)
+    at LanguageProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/LanguageProvider.tsx:21:36)
+    at ThemeProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at _a (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-helmet-async.js?v=65c0d24d:624:5)
+    at AppWithProviders (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?t=1761132920238&v=t70JuXpO0t_v5UbUjZAIH:391:42)
+    at QueryClientProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=65c0d24d:3086:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+logCapturedError @ chunk-SXRIVT2P.js?v=65c0d24d:14080
+ErrorBoundary.tsx:29 Error boundary caught error: Error: A component suspended while responding to synchronous input. This will cause the UI to be replaced with a loading indicator. To fix, updates that suspend should be wrapped with startTransition.
+    at throwException (chunk-SXRIVT2P.js?v=65c0d24d:14261:43)
+    at handleError (chunk-SXRIVT2P.js?v=65c0d24d:19087:15)
+    at renderRootSync (chunk-SXRIVT2P.js?v=65c0d24d:19172:15)
+    at recoverFromConcurrentError (chunk-SXRIVT2P.js?v=65c0d24d:18786:28)
+    at performSyncWorkOnRoot (chunk-SXRIVT2P.js?v=65c0d24d:18932:28)
+    at flushSyncCallbacks (chunk-SXRIVT2P.js?v=65c0d24d:9166:30)
+    at chunk-SXRIVT2P.js?v=65c0d24d:18677:21 Object
+componentDidCatch @ ErrorBoundary.tsx:29
