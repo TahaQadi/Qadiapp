@@ -383,9 +383,9 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
+                  {/* Action Buttons - Completely Separated */}
                   <div className="space-y-2">
-                    {/* Feedback Button - Only for delivered/cancelled orders */}
+                    {/* Feedback Button - ONLY for delivered/cancelled orders */}
                     {['delivered', 'cancelled'].includes(order.status) && (
                       <Button
                         variant="outline"
@@ -394,10 +394,10 @@ export default function OrdersPage() {
                           setSelectedOrderForFeedback(order.id);
                           setFeedbackDialogOpen(true);
                         }}
-                        data-testid={`button-feedback-${order.id}`}
-                        className="w-full min-h-[44px] justify-start"
+                        data-testid={`button-submit-feedback-${order.id}`}
+                        className="w-full min-h-[44px] justify-start border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950"
                       >
-                        <Star className="h-4 w-4 me-2" />
+                        <Star className="h-4 w-4 me-2 text-yellow-500" />
                         {language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                       </Button>
                     )}
@@ -411,35 +411,24 @@ export default function OrdersPage() {
                         setIssueReportDialogOpen(true);
                       }}
                       data-testid={`button-report-issue-${order.id}`}
-                      className="w-full min-h-[44px] justify-start"
+                      className="w-full min-h-[44px] justify-start border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950"
                     >
-                      <AlertTriangle className="h-4 w-4 me-2" />
+                      <AlertTriangle className="h-4 w-4 me-2 text-orange-500" />
                       {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
                     </Button>
                   </div>
 
-                  {/* Modification Actions - Only for pending/processing */}
-                  {['pending', 'processing'].includes(order.status) && (
-                    <div className="space-y-2 border-t pt-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleModifyOrder(order)}
-                        className="w-full justify-start"
-                      >
-                        <Edit className="h-4 w-4 me-2" />
-                        {language === 'ar' ? 'تعديل' : 'Modify'}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCancelRequest(order)}
-                        className="w-full justify-start text-destructive hover:text-destructive"
-                      >
-                        <XCircle className="h-4 w-4 me-2" />
-                        {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                      </Button>
-                    </div>
+                  {/* Modification Actions - Only for confirmed/processing */}
+                  {['confirmed', 'processing'].includes(order.status) && (
+                    <Button
+                      variant="outline"
+                      className="w-full min-h-[44px] border-primary/20 dark:border-[#d4af37]/20 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300"
+                      onClick={() => handleRequestModification(order)}
+                      data-testid={`button-modify-${order.id}`}
+                    >
+                      <Edit className="w-4 h-4 me-2" />
+                      {language === 'ar' ? 'طلب تعديل' : 'Request Modification'}
+                    </Button>
                   )}</old_str>ta-testid={`button-issue-${order.id}`}
                       className="w-full min-h-[44px]"
                     >

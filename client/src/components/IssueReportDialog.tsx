@@ -96,13 +96,24 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
     });
   };
 
-  const issueTypeOptions = [
+  const issueTypeOptions = language === 'ar' ? [
     { value: 'missing_items', label: 'عناصر مفقودة' },
     { value: 'wrong_items', label: 'عناصر خاطئة' },
     { value: 'damaged_items', label: 'عناصر تالفة' },
     { value: 'quality_issue', label: 'مشكلة في الجودة' },
     { value: 'quantity_mismatch', label: 'عدم تطابق الكمية' },
+    { value: 'delivery_issue', label: 'مشكلة في التوصيل' },
+    { value: 'billing_issue', label: 'مشكلة في الفوترة' },
     { value: 'other', label: 'أخرى' },
+  ] : [
+    { value: 'missing_items', label: 'Missing Items' },
+    { value: 'wrong_items', label: 'Wrong Items' },
+    { value: 'damaged_items', label: 'Damaged Items' },
+    { value: 'quality_issue', label: 'Quality Issue' },
+    { value: 'quantity_mismatch', label: 'Quantity Mismatch' },
+    { value: 'delivery_issue', label: 'Delivery Problem' },
+    { value: 'billing_issue', label: 'Billing Issue' },
+    { value: 'other', label: 'Other' },
   ];
 
   return (
@@ -110,11 +121,13 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            الإبلاغ عن مشكلة
+            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report an Issue'}
           </DialogTitle>
           <DialogDescription>
-            أخبرنا عن أي مشكلة واجهتك وسنعمل على حلها في أقرب وقت
+            {language === 'ar' 
+              ? 'أخبرنا عن أي مشكلة واجهتك وسنعمل على حلها في أقرب وقت'
+              : 'Tell us about any problem you encountered and we will work to resolve it soon'}
           </DialogDescription>
         </DialogHeader>
 

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useLanguage } from "./LanguageProvider";
 import { useToast } from "@/hooks/use-toast";
-import { Star, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Star, Loader2, ThumbsUp, ThumbsDown, Heart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -126,13 +126,14 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {language === 'ar' ? 'تقييم الطلب' : 'Rate Your Order'}
+          <DialogTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5 text-primary" />
+            {language === 'ar' ? 'تقييم تجربتك' : 'Rate Your Experience'}
           </DialogTitle>
           <DialogDescription>
             {language === 'ar'
-              ? 'كيف كانت تجربتك مع هذا الطلب؟'
-              : 'How was your experience with this order?'}
+              ? 'ساعدنا في تحسين خدماتنا من خلال مشاركة رأيك'
+              : 'Help us improve our services by sharing your opinion'}
           </DialogDescription>
         </DialogHeader>
 
