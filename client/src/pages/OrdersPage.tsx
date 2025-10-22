@@ -273,8 +273,8 @@ export default function OrdersPage() {
         </div>
 
       {orders.length === 0 ? (
-        <Card data-testid="card-no-orders">
-          <CardContent className="py-2">
+        <Card data-testid="card-no-orders" className="border-border/50 dark:border-[#d4af37]/20">
+          <CardContent className="py-12">
             <EmptyState
               icon={ShoppingBag}
               title={i18n.language === 'ar' ? 'لا توجد طلبات' : 'No Orders Yet'}
@@ -285,65 +285,100 @@ export default function OrdersPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {orders.map((order) => {
             const items = JSON.parse(order.items || '[]');
             const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
             return (
-              <Card key={order.id} className="hover-elevate" data-testid={`card-order-${order.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2" data-testid={`text-order-id-${order.id}`}>
-                        <Package className="w-5 h-5" />
-                        {i18n.language === 'ar' ? 'الطلب' : 'Order'} #{order.id.substring(0, 8)}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-2">
+              <Card 
+                key={order.id} 
+                className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group overflow-hidden" 
+                data-testid={`card-order-${order.id}`}
+              >
+                {/* Status Bar */}
+                <div className={`h-1 w-full ${
+                  order.status === 'delivered' ? 'bg-green-500' :
+                  order.status === 'shipped' ? 'bg-blue-500' :
+                  order.status === 'processing' ? 'bg-purple-500' :
+                  order.status === 'confirmed' ? 'bg-indigo-500' :
+                  order.status === 'cancelled' ? 'bg-red-500' :
+                  'bg-yellow-500'
+                }`} />
+
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 dark:bg-[#d4af37]/10 flex items-center justify-center shrink-0">
+                          <Package className="h-4 w-4 text-primary dark:text-[#d4af37]" />
+                        </div>
+                        <CardTitle className="text-base sm:text-lg font-bold truncate" data-testid={`text-order-id-${order.id}`}>
+                          #{order.id.substring(0, 8)}
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm mt-2">
                         <span className="flex items-center gap-1" data-testid={`text-date-${order.id}`}>
-                          <Calendar className="w-4 h-4" />
-                          {new Date(order.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US')}
+                          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          {new Date(order.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
                         </span>
                         <span className="flex items-center gap-1" data-testid={`text-items-${order.id}`}>
-                          <Package className="w-4 h-4" />
-                          {itemCount} {i18n.language === 'ar' ? 'صنف' : 'items'}
+                          <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          {itemCount} {i18n.language === 'ar' ? 'عنصر' : 'items'}
                         </span>
+                        {order.ltaNumber && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <span className="text-xs">LTA:</span>
+                            <span className="font-mono">{order.ltaNumber}</span>
+                          </span>
+                        )}
                       </CardDescription>
                     </div>
-                    <div className={isMobile ? "w-24" : ""}>
+                    <div className="shrink-0">
                       {getStatusBadge(order.status)}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
+
+                <CardContent className="space-y-3 pt-0">
+                  {/* Amount Display */}
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 dark:bg-muted/30">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-lg font-semibold" data-testid={`text-total-${order.id}`}>
-                        {order.totalAmount} {i18n.language === 'ar' ? 'ر.س' : 'SAR'}
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-[#d4af37]" />
+                      <span className="text-xs sm:text-sm text-muted-foreground">
+                        {i18n.language === 'ar' ? 'الإجمالي' : 'Total'}
                       </span>
                     </div>
+                    <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent" data-testid={`text-total-${order.id}`}>
+                      {order.totalAmount} {i18n.language === 'ar' ? 'ر.س' : 'SAR'}
+                    </span>
                   </div>
 
+                  {/* Cancellation Reason */}
                   {order.cancellationReason && (
-                    <div className="p-3 bg-destructive/10 rounded-md" data-testid={`text-cancellation-${order.id}`}>
-                      <p className="text-sm font-semibold text-destructive">
+                    <div className="p-3 bg-destructive/10 dark:bg-destructive/20 rounded-lg border border-destructive/20" data-testid={`text-cancellation-${order.id}`}>
+                      <p className="text-xs sm:text-sm font-semibold text-destructive mb-1">
                         {i18n.language === 'ar' ? 'سبب الإلغاء:' : 'Cancellation Reason:'}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {order.cancellationReason}
                       </p>
                     </div>
                   )}
 
+                  {/* Action Button */}
                   {!['cancelled', 'delivered', 'shipped'].includes(order.status) && (
                     <Button
                       variant="outline"
-                      className={`w-full py-2 rounded-lg ${isMobile ? 'text-base' : 'text-sm'}`}
+                      className="w-full min-h-[44px] border-primary/20 dark:border-[#d4af37]/20 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300"
                       onClick={() => handleRequestModification(order)}
                       data-testid={`button-modify-${order.id}`}
                     >
-                      <Edit className="w-4 h-4 mr-2" />
+                      <Edit className="w-4 h-4 me-2" />
                       {i18n.language === 'ar' ? 'طلب تعديل' : 'Request Modification'}
                     </Button>
                   )}
