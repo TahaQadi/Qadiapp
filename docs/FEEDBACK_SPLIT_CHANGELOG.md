@@ -1,4 +1,3 @@
-
 # Feedback & Issues Split - Implementation Changelog
 
 ## Summary
@@ -29,7 +28,7 @@ This document tracks the implementation of separating feedback collection from i
 }
 ```
 
-**Rationale**: 
+**Rationale**:
 - Clearer purpose definition
 - Better user guidance
 - Includes both feedback and issues in one place
@@ -147,7 +146,7 @@ if (statsError || issuesError) {
 router.post('/feedback/order/:orderId', requireAuth, async (req, res) => {
   try {
     const feedbackData = insertOrderFeedbackSchema.parse(req.body);
-    
+
     // Verify order ownership
     const order = await storage.getOrder(orderId);
     if (!order) {
@@ -156,10 +155,10 @@ router.post('/feedback/order/:orderId', requireAuth, async (req, res) => {
         messageAr: 'الطلب غير موجود'
       });
     }
-    
+
     // Create feedback and optional issue report
     const feedback = await storage.createOrderFeedback(feedbackData);
-    
+
     res.json({
       message: 'Feedback submitted successfully',
       messageAr: 'تم إرسال التقييم بنجاح',
@@ -331,6 +330,55 @@ If issues arise:
 
 ---
 
-**Last Updated**: January 22, 2025  
-**Status**: Phase 1 Complete ✅  
+**Last Updated**: January 22, 2025
+**Status**: Phase 1 Complete ✅
 **Next Review**: After user feedback collection
+
+---
+
+## January 22, 2025 - Step 2: Backend API Enhancement
+
+### Changes Made
+
+#### 1. New API Endpoints (`server/feedback-routes.ts`)
+
+**Admin Response to Feedback**:
+- `POST /api/feedback/:id/respond` - Admin can respond to customer feedback
+- Automatically notifies customer when response is added
+- Tracks who responded and when
+
+**Priority Management**:
+- `PATCH /api/feedback/issues/:id/priority` - Update issue priority
+- Validates priority values (low/medium/high/critical)
+- Enables better issue triage and management
+
+#### 2. Frontend Updates (`client/src/pages/admin/CustomerFeedbackPage.tsx`)
+
+**Priority Selector**:
+- Added dropdown to change issue priority in details dialog
+- Real-time priority updates with optimistic UI
+- Visual feedback on priority changes
+
+**Enhanced Issue Dialog**:
+- Priority field now editable
+- Better layout for issue metadata
+- Improved error handling for mutations
+
+**Benefits Achieved**:
+- ✅ Admins can respond to customer feedback
+- ✅ Issue priority can be adjusted for better triage
+- ✅ Customers receive notifications when admins respond
+- ✅ Better issue management workflow
+
+**API Changes**:
+```typescript
+// New endpoints
+POST   /api/feedback/:id/respond       // Add admin response to feedback
+PATCH  /api/feedback/issues/:id/priority  // Update issue priority
+```
+
+**Migration Status**: ✅ Completed
+
+---
+
+## Future Enhancements

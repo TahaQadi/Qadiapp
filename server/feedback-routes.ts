@@ -317,4 +317,80 @@ router.get('/feedback/all', requireAuth, async (req: any, res: any) => {
   }
 });
 
+// Add admin response to feedback (admin only)
+router.post('/feedback/:id/respond', requireAuth, async (req: any, res: any) => {
+  try {
+    if (!req.client!.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { response } = req.body;
+    if (!response || typeof response !== 'string') {
+      return res.status(400).json({ error: 'Response text is required' });
+    }
+
+    const [updatedFeedback] = await db
+      .update(orderFeedback)
+      .set({
+        adminResponse: response,
+        adminResponseAt: new Date(),
+        respondedBy: req.client!.id,
+      })
+      .where(eq(orderFeedback.id, req.params.id))
+      .returning();
+
+    if (!updatedFeedback) {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+
+    // Notify client of response
+    const { storage } = await import('./storage');
+    await storage.createNotification({
+      clientId: updatedFeedback.clientId,
+      type: 'system',
+      titleEn: 'Admin responded to your feedback',
+      titleAr: 'رد المسؤول على ملاحظاتك',
+      messageEn: `We've responded to your feedback on order #${updatedFeedback.orderId.slice(0, 8)}`,
+      messageAr: `لقد قمنا بالرد على ملاحظاتك على الطلب #${updatedFeedback.orderId.slice(0, 8)}`,
+      metadata: JSON.stringify({ feedbackId: updatedFeedback.id, orderId: updatedFeedback.orderId }),
+    });
+
+    res.json(updatedFeedback);
+  } catch (error) {
+    console.error('Error responding to feedback:', error);
+    res.status(500).json({ error: 'Failed to respond to feedback' });
+  }
+});
+
+// Update issue priority (admin only)
+router.patch('/feedback/issues/:id/priority', requireAuth, async (req: any, res: any) => {
+  try {
+    if (!req.client!.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { priority } = req.body;
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+
+    if (!validPriorities.includes(priority)) {
+      return res.status(400).json({ error: 'Invalid priority. Must be: low, medium, high, or critical' });
+    }
+
+    const [updatedIssue] = await db
+      .update(issueReports)
+      .set({ priority })
+      .where(eq(issueReports.id, req.params.id))
+      .returning();
+
+    if (!updatedIssue) {
+      return res.status(404).json({ error: 'Issue not found' });
+    }
+
+    res.json(updatedIssue);
+  } catch (error) {
+    console.error('Error updating issue priority:', error);
+    res.status(500).json({ error: 'Failed to update issue priority' });
+  }
+});
+
 export default router;

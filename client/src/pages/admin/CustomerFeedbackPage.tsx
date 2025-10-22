@@ -42,6 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Table,
@@ -51,6 +52,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -100,6 +102,7 @@ export default function CustomerFeedbackPage() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [selectedIssue, setSelectedIssue] = useState<IssueReport | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [adminResponse, setAdminResponse] = useState('');
 
   // Fetch analytics data with proper error handling
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<FeedbackStats>({
@@ -152,6 +155,27 @@ export default function CustomerFeedbackPage() {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error?.message || (language === 'ar' ? 'فشل في تحديث الحالة' : 'Failed to update status'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update issue priority mutation
+  const updatePriorityMutation = useMutation({
+    mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
+      return apiRequest('PATCH', `/api/feedback/issues/${id}/priority`, { priority });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback/issues'] });
+      toast({
+        title: language === 'ar' ? 'تم التحديث' : 'Updated',
+        description: language === 'ar' ? 'تم تحديث أولوية المشكلة' : 'Issue priority updated',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error?.message || (language === 'ar' ? 'فشل في تحديث الأولوية' : 'Failed to update priority'),
         variant: 'destructive',
       });
     },
@@ -516,6 +540,23 @@ export default function CustomerFeedbackPage() {
                   <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الأهمية' : 'Severity'}</p>
                   {getSeverityBadge(selectedIssue.severity)}
                 </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">{language === 'ar' ? 'الأولوية' : 'Priority'}</p>
+                <Select
+                  value={selectedIssue.priority || 'medium'}
+                  onValueChange={(priority) => updatePriorityMutation.mutate({ id: selectedIssue.id, priority })}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">{language === 'ar' ? 'منخفضة' : 'Low'}</SelectItem>
+                    <SelectItem value="medium">{language === 'ar' ? 'متوسطة' : 'Medium'}</SelectItem>
+                    <SelectItem value="high">{language === 'ar' ? 'عالية' : 'High'}</SelectItem>
+                    <SelectItem value="critical">{language === 'ar' ? 'حرجة' : 'Critical'}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-1">{language === 'ar' ? 'العنوان' : 'Title'}</p>
