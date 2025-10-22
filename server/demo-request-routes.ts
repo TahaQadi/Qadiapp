@@ -1,7 +1,7 @@
 
 import { Router, Request, Response } from 'express';
 import { db } from './db';
-import { demoRequests, clients } from '../shared/schema';
+import { demoRequests } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 

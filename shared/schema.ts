@@ -551,6 +551,27 @@ export const microFeedback = pgTable("micro_feedback", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Demo Requests table
+export const demoRequests = pgTable("demo_requests", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  company: text("company").notNull(),
+  message: text("message"),
+  status: text("status").notNull().default('pending'),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at"),
+});
+
+export const insertDemoRequestSchema = createInsertSchema(demoRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+});
+
 export const insertMicroFeedbackSchema = createInsertSchema(microFeedback).omit({ 
   id: true, 
   createdAt: true,
