@@ -11,9 +11,6 @@ CREATE TABLE IF NOT EXISTS order_feedback (
   communication_rating INTEGER CHECK (communication_rating >= 1 AND communication_rating <= 5),
   comments TEXT,
   would_recommend BOOLEAN NOT NULL,
-  admin_response TEXT,
-  admin_response_at INTEGER,
-  responded_by TEXT REFERENCES users(id),
   created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
