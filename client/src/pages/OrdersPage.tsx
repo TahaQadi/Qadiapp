@@ -4,12 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag, ArrowLeft, User, LogOut } from "lucide-react";
+import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag, ArrowLeft, User, LogOut, Star, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
-import { OrderModificationDialog } from "@/components/OrderModificationDialog";
-import { ModificationSheet } from "@/components/ModificationSheet";
+import { OrderModificationSheet } from "@/components/OrderModificationSheet"; // Renamed from ModificationSheet for clarity
 import OrderFeedbackDialog from "@/components/OrderFeedbackDialog";
+import { IssueReportDialog } from "@/components/IssueReportDialog"; // Imported new dialog
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -25,9 +25,12 @@ export default function OrdersPage() {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [modifyOpen, setModifyOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false); // State for feedback dialog
+  const [issueReportDialogOpen, setIssueReportDialogOpen] = useState(false); // State for issue report dialog
+  const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<string | null>(null); // State for selected order ID for feedback
+  const [selectedOrderForIssue, setSelectedOrderForIssue] = useState<string | null>(null); // State for selected order ID for issue report
+
   const [filters, setFilters] = useState<OrderFilterState>({
     searchTerm: "",
     status: "all",
@@ -48,13 +51,22 @@ export default function OrdersPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const feedbackOrderId = params.get('feedback');
-    
+    const issueOrderId = params.get('issue');
+
     if (feedbackOrderId && ordersData) {
       const order = ordersData.find(o => o.id === feedbackOrderId);
       if (order) {
-        setSelectedOrder(order);
-        setFeedbackOpen(true);
-        // Clear the URL parameter
+        setSelectedOrder(order); // Keep this for modification dialog
+        setSelectedOrderForFeedback(order.id);
+        setFeedbackDialogOpen(true);
+        window.history.replaceState({}, '', '/orders');
+      }
+    } else if (issueOrderId && ordersData) {
+      const order = ordersData.find(o => o.id === issueOrderId);
+      if (order) {
+        setSelectedOrder(order); // Keep this for modification dialog
+        setSelectedOrderForIssue(order.id);
+        setIssueReportDialogOpen(true);
         window.history.replaceState({}, '', '/orders');
       }
     }
@@ -289,6 +301,7 @@ export default function OrdersPage() {
           {orders.map((order) => {
             const items = JSON.parse(order.items || '[]');
             const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+            const language = i18n.language; // For easier access in this scope
 
             return (
               <Card 
@@ -320,7 +333,7 @@ export default function OrdersPage() {
                       <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm mt-2">
                         <span className="flex items-center gap-1" data-testid={`text-date-${order.id}`}>
                           <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          {new Date(order.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', {
+                          {new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
                             month: 'short',
                             day: 'numeric',
                             year: 'numeric'
@@ -328,7 +341,7 @@ export default function OrdersPage() {
                         </span>
                         <span className="flex items-center gap-1" data-testid={`text-items-${order.id}`}>
                           <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          {itemCount} {i18n.language === 'ar' ? 'عنصر' : 'items'}
+                          {itemCount} {language === 'ar' ? 'عنصر' : 'items'}
                         </span>
                         {order.ltaNumber && (
                           <span className="flex items-center gap-1 text-muted-foreground">
@@ -350,11 +363,11 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary dark:text-[#d4af37]" />
                       <span className="text-xs sm:text-sm text-muted-foreground">
-                        {i18n.language === 'ar' ? 'الإجمالي' : 'Total'}
+                        {language === 'ar' ? 'الإجمالي' : 'Total'}
                       </span>
                     </div>
                     <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent" data-testid={`text-total-${order.id}`}>
-                      {order.totalAmount} {i18n.language === 'ar' ? 'ر.س' : 'SAR'}
+                      {order.totalAmount} {language === 'ar' ? 'ر.س' : 'SAR'}
                     </span>
                   </div>
 
@@ -362,7 +375,7 @@ export default function OrdersPage() {
                   {order.cancellationReason && (
                     <div className="p-3 bg-destructive/10 dark:bg-destructive/20 rounded-lg border border-destructive/20" data-testid={`text-cancellation-${order.id}`}>
                       <p className="text-xs sm:text-sm font-semibold text-destructive mb-1">
-                        {i18n.language === 'ar' ? 'سبب الإلغاء:' : 'Cancellation Reason:'}
+                        {language === 'ar' ? 'سبب الإلغاء:' : 'Cancellation Reason:'}
                       </p>
                       <p className="text-xs sm:text-sm text-muted-foreground">
                         {order.cancellationReason}
@@ -370,8 +383,39 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  {/* Action Button */}
-                  {!['cancelled', 'delivered', 'shipped'].includes(order.status) && (
+                  {/* Action Buttons */}
+                  {!['cancelled'].includes(order.status) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrderForFeedback(order.id);
+                          setFeedbackDialogOpen(true);
+                        }}
+                        data-testid={`button-feedback-${order.id}`}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Star className="h-4 w-4 me-1" />
+                        {language === 'ar' ? 'تقييم' : 'Feedback'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrderForIssue(order.id);
+                          setIssueReportDialogOpen(true);
+                        }}
+                        data-testid={`button-issue-${order.id}`}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <AlertTriangle className="h-4 w-4 me-1" />
+                        {language === 'ar' ? 'بلاغ مشكلة' : 'Report Issue'}
+                      </Button>
+                    </div>
+                  )}
+                  {/* Modification Button for specific statuses */}
+                  {['confirmed', 'processing'].includes(order.status) && (
                     <Button
                       variant="outline"
                       className="w-full min-h-[44px] border-primary/20 dark:border-[#d4af37]/20 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300"
@@ -379,7 +423,7 @@ export default function OrdersPage() {
                       data-testid={`button-modify-${order.id}`}
                     >
                       <Edit className="w-4 h-4 me-2" />
-                      {i18n.language === 'ar' ? 'طلب تعديل' : 'Request Modification'}
+                      {language === 'ar' ? 'طلب تعديل' : 'Request Modification'}
                     </Button>
                   )}
                 </CardContent>
@@ -389,19 +433,26 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <ModificationSheet
+      {/* Modification Sheet */}
+      <OrderModificationSheet
           order={selectedOrder}
           open={modifyOpen}
           onOpenChange={setModifyOpen}
         />
 
-      {selectedOrder && (
-        <OrderFeedbackDialog
-          order={selectedOrder}
-          open={feedbackOpen}
-          onOpenChange={setFeedbackOpen}
-        />
-      )}
+      {/* Feedback Dialog */}
+      <OrderFeedbackDialog
+        open={feedbackDialogOpen}
+        onOpenChange={setFeedbackDialogOpen}
+        orderId={selectedOrderForFeedback || ''}
+      />
+
+      {/* Issue Report Dialog */}
+      <IssueReportDialog
+        open={issueReportDialogOpen}
+        onOpenChange={setIssueReportDialogOpen}
+        orderId={selectedOrderForIssue || ''}
+      />
       </div>
     </div>
   );

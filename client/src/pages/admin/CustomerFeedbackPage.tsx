@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -485,7 +484,7 @@ export default function CustomerFeedbackPage() {
                           {new Date(feedback.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                         </span>
                       </div>
-                      
+
                       {/* Admin Response Section */}
                       {(feedback as any).adminResponse ? (
                         <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
