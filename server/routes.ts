@@ -12,6 +12,7 @@ import pushRoutes from './push-routes';
 import analyticsRoutes from './analytics-routes';
 import demoRequestRoutes from './demo-request-routes';
 import feedbackRoutes from './feedback-routes';
+import feedbackAnalyticsRoutes from './feedback-analytics-routes';
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -156,6 +157,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Feedback routes
   app.use('/api', feedbackRoutes);
+
+  // Feedback Analytics routes
+  app.use('/api', feedbackAnalyticsRoutes);
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
@@ -1590,12 +1594,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             titleAr: 'تم التوصيل - شارك تقييمك',
             messageEn: 'Your order has been delivered! Please take a moment to share your feedback and report any issues.',
             messageAr: 'تم توصيل طلبك! يرجى مشاركة تقييمك والإبلاغ عن أي مشاكل.',
-            metadata: {
+            metadata: JSON.stringify({
               orderId: fullOrder.id,
               status: 'delivered',
               promptFeedback: true,
               timestamp: new Date().toISOString(),
-            },
+            }),
           });
         } else {
           await db.insert(notifications).values({
@@ -1605,11 +1609,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             titleAr: 'تحديث حالة الطلب',
             messageEn: message.en,
             messageAr: message.ar,
-            metadata: {
+            metadata: JSON.stringify({
               orderId: fullOrder.id,
               status,
               timestamp: new Date().toISOString(),
-            },
+            }),
           });
         }
 
@@ -2023,7 +2027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await TemplateStorage.createTemplate(validated);
           results.success++;
         } catch (error: any) {
-          const errorMsg = `Template "${template.nameEn || 'unknown'}": ${error.message}`;
+          const errorMsg = `Template "${template.nameEn || 'unknown')}": ${error.message}`;
           results.errors.push(errorMsg);
           log("Template import error:", errorMsg);
         }

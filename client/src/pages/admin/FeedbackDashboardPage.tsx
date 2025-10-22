@@ -1,0 +1,444 @@
+
+import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '@/components/LanguageProvider';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Star, 
+  TrendingUp, 
+  TrendingDown, 
+  Users, 
+  ShoppingCart, 
+  MessageSquare,
+  AlertTriangle,
+  Download,
+  Calendar,
+  BarChart3
+} from 'lucide-react';
+import { useState } from 'react';
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
+
+interface FeedbackStats {
+  totalFeedback: number;
+  averageRating: number;
+  npsScore: number;
+  wouldRecommendPercent: number;
+  aspectRatings: {
+    orderingProcess: number;
+    productQuality: number;
+    deliverySpeed: number;
+    communication: number;
+  };
+  ratingDistribution: {
+    rating: number;
+    count: number;
+  }[];
+  trendData: {
+    date: string;
+    rating: number;
+    count: number;
+  }[];
+  topIssues: {
+    type: string;
+    count: number;
+  }[];
+  recentFeedback: {
+    id: string;
+    orderId: string;
+    rating: number;
+    comments: string;
+    createdAt: string;
+    clientName: string;
+  }[];
+}
+
+export default function FeedbackDashboardPage() {
+  const { language } = useLanguage();
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+
+  const { data: stats, isLoading } = useQuery<FeedbackStats>({
+    queryKey: ['/api/feedback/analytics', timeRange],
+    queryFn: async () => {
+      const response = await fetch(`/api/feedback/analytics?range=${timeRange}`);
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      return response.json();
+    }
+  });
+
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+  const exportData = () => {
+    if (!stats) return;
+
+    const csv = [
+      'Metric,Value',
+      `Total Feedback,${stats.totalFeedback}`,
+      `Average Rating,${stats.averageRating.toFixed(2)}`,
+      `NPS Score,${stats.npsScore}`,
+      `Would Recommend,${stats.wouldRecommendPercent}%`,
+      '',
+      'Aspect Ratings',
+      `Ordering Process,${stats.aspectRatings.orderingProcess.toFixed(2)}`,
+      `Product Quality,${stats.aspectRatings.productQuality.toFixed(2)}`,
+      `Delivery Speed,${stats.aspectRatings.deliverySpeed.toFixed(2)}`,
+      `Communication,${stats.aspectRatings.communication.toFixed(2)}`
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `feedback-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="grid gap-4 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-muted rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  const getRatingTrend = () => {
+    if (stats.trendData.length < 2) return 'neutral';
+    const recent = stats.trendData[stats.trendData.length - 1].rating;
+    const previous = stats.trendData[stats.trendData.length - 2].rating;
+    return recent > previous ? 'up' : recent < previous ? 'down' : 'neutral';
+  };
+
+  const ratingTrend = getRatingTrend();
+
+  return (
+    <div className="container mx-auto p-6 space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {language === 'ar' ? 'تحليلات الملاحظات' : 'Feedback Analytics'}
+          </h1>
+          <p className="text-muted-foreground">
+            {language === 'ar' ? 'رؤى شاملة حول تجربة العملاء' : 'Comprehensive insights into customer experience'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">{language === 'ar' ? '7 أيام' : '7 Days'}</SelectItem>
+              <SelectItem value="30d">{language === 'ar' ? '30 يوماً' : '30 Days'}</SelectItem>
+              <SelectItem value="90d">{language === 'ar' ? '90 يوماً' : '90 Days'}</SelectItem>
+              <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All Time'}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={exportData} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            {language === 'ar' ? 'تصدير' : 'Export'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'متوسط التقييم' : 'Average Rating'}
+            </CardTitle>
+            <Star className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.averageRating.toFixed(2)}</div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {ratingTrend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+              {ratingTrend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+              <span>{language === 'ar' ? 'من 5.00' : 'out of 5.00'}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'نقاط NPS' : 'NPS Score'}
+            </CardTitle>
+            <BarChart3 className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.npsScore}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.npsScore >= 50 ? (language === 'ar' ? 'ممتاز' : 'Excellent') :
+               stats.npsScore >= 30 ? (language === 'ar' ? 'جيد' : 'Good') :
+               stats.npsScore >= 0 ? (language === 'ar' ? 'مقبول' : 'Fair') :
+               (language === 'ar' ? 'يحتاج تحسين' : 'Needs Improvement')}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'سيوصي' : 'Would Recommend'}
+            </CardTitle>
+            <Users className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.wouldRecommendPercent}%</div>
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' ? 'من العملاء' : 'of customers'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'ar' ? 'إجمالي الملاحظات' : 'Total Feedback'}
+            </CardTitle>
+            <MessageSquare className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalFeedback}</div>
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' ? 'مراجعات مقدمة' : 'reviews submitted'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Rating Trend */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              {language === 'ar' ? 'اتجاه التقييم' : 'Rating Trend'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'ar' ? 'متوسط التقييم مع مرور الوقت' : 'Average rating over time'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={stats.trendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={[0, 5]} />
+                <Tooltip />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="rating" 
+                  stroke="#10b981" 
+                  name={language === 'ar' ? 'التقييم' : 'Rating'}
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Rating Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              {language === 'ar' ? 'توزيع التقييمات' : 'Rating Distribution'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'ar' ? 'عدد المراجعات لكل تقييم' : 'Number of reviews per rating'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.ratingDistribution}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="rating" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar 
+                  dataKey="count" 
+                  fill="#3b82f6" 
+                  name={language === 'ar' ? 'العدد' : 'Count'}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Aspect Ratings & Top Issues */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Aspect Ratings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              {language === 'ar' ? 'تقييمات الجوانب' : 'Aspect Ratings'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'ar' ? 'متوسط التقييم لكل جانب' : 'Average rating per aspect'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { key: 'orderingProcess', labelEn: 'Ordering Process', labelAr: 'عملية الطلب' },
+              { key: 'productQuality', labelEn: 'Product Quality', labelAr: 'جودة المنتج' },
+              { key: 'deliverySpeed', labelEn: 'Delivery Speed', labelAr: 'سرعة التوصيل' },
+              { key: 'communication', labelEn: 'Communication', labelAr: 'التواصل' }
+            ].map(aspect => {
+              const value = stats.aspectRatings[aspect.key as keyof typeof stats.aspectRatings];
+              const percentage = (value / 5) * 100;
+              return (
+                <div key={aspect.key}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">
+                      {language === 'ar' ? aspect.labelAr : aspect.labelEn}
+                    </span>
+                    <span className="text-sm font-bold">{value.toFixed(2)}</span>
+                  </div>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all" 
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* Top Issues */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              {language === 'ar' ? 'أهم المشاكل' : 'Top Issues'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'ar' ? 'المشاكل الأكثر شيوعاً' : 'Most common issues reported'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats.topIssues.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={stats.topIssues}
+                    dataKey="count"
+                    nameKey="type"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {stats.topIssues.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                {language === 'ar' ? 'لا توجد مشاكل مُبلغ عنها' : 'No issues reported'}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Feedback */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            {language === 'ar' ? 'أحدث الملاحظات' : 'Recent Feedback'}
+          </CardTitle>
+          <CardDescription>
+            {language === 'ar' ? 'آخر المراجعات المقدمة' : 'Latest submitted reviews'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {stats.recentFeedback.map(feedback => (
+              <div key={feedback.id} className="border rounded-lg p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < feedback.rating
+                                ? 'text-yellow-500 fill-yellow-500'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <Badge variant="outline">
+                        {language === 'ar' ? `طلب #${feedback.orderId.slice(0, 8)}` : `Order #${feedback.orderId.slice(0, 8)}`}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-medium mb-1">{feedback.clientName}</p>
+                    {feedback.comments && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {feedback.comments}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(feedback.createdAt).toLocaleDateString(
+                      language === 'ar' ? 'ar-SA' : 'en-US',
+                      { month: 'short', day: 'numeric' }
+                    )}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {stats.recentFeedback.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                {language === 'ar' ? 'لا توجد ملاحظات حتى الآن' : 'No feedback yet'}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

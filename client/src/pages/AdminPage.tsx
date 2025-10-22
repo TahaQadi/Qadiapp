@@ -137,6 +137,18 @@ export default function AdminPage() {
       gradient: 'from-red-500/20 to-orange-500/10',
       hoverGradient: 'from-red-500/30 to-orange-500/20',
       testId: 'card-issue-reports'
+    },
+    {
+      id: 'feedback-analytics',
+      path: '/admin/feedback-analytics',
+      icon: TrendingUp,
+      titleEn: 'Feedback Analytics',
+      titleAr: 'تحليلات الملاحظات',
+      descEn: 'Customer satisfaction metrics and insights',
+      descAr: 'مقاييس ورؤى رضا العملاء',
+      gradient: 'from-emerald-500/20 to-teal-500/10',
+      hoverGradient: 'from-emerald-500/30 to-teal-500/20',
+      testId: 'card-feedback-analytics'
     }
   ];
 

@@ -151,8 +151,9 @@ function Router() {
       <AdminRoute path="/admin/price-offers" component={AdminPriceOffersPage} />
       <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={AdminOrderModificationsPage} />
+      <AdminRoute path="/admin/issue-reports" component={lazy(() => import('./pages/admin/IssueReportsPage'))} />
+      <AdminRoute path="/admin/feedback-analytics" component={lazy(() => import('./pages/admin/FeedbackDashboardPage'))} />
       <AdminRoute path="/admin/error-logs" component={AdminErrorLogsPage} />
-      <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />
       <AdminRoute path="/admin/templates/documents" component={AdminDocumentsPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
