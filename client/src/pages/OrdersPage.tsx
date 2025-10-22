@@ -10,6 +10,7 @@ import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
 import { OrderFeedbackDialog } from "@/components/OrderFeedbackDialog";
 import { IssueReportDialog } from "@/components/IssueReportDialog";
+import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -26,6 +27,7 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modifyOpen, setModifyOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false); // State for feedback dialog
   const [issueReportDialogOpen, setIssueReportDialogOpen] = useState(false); // State for issue report dialog
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<string | null>(null); // State for selected order ID for feedback
@@ -383,9 +385,39 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  {/* Action Buttons - Completely Separated */}
-                  <div className="space-y-2">
-                    {/* Feedback Button - ONLY for delivered/cancelled orders */}
+                  {/* Compact Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    {/* Details Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setDetailsOpen(true);
+                      }}
+                      data-testid={`button-view-details-${order.id}`}
+                      className="flex-1 min-h-[36px] text-xs"
+                    >
+                      <FileText className="h-3.5 w-3.5 me-1.5" />
+                      {language === 'ar' ? 'التفاصيل' : 'Details'}
+                    </Button>
+
+                    {/* Issue Report Icon Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedOrderForIssue(order.id);
+                        setIssueReportDialogOpen(true);
+                      }}
+                      data-testid={`button-report-issue-${order.id}`}
+                      className="min-h-[36px] px-3 border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950"
+                      title={language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
+                    >
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    </Button>
+
+                    {/* Feedback Icon Button - Only for delivered/cancelled */}
                     {['delivered', 'cancelled'].includes(order.status) && (
                       <Button
                         variant="outline"
@@ -395,46 +427,12 @@ export default function OrdersPage() {
                           setFeedbackDialogOpen(true);
                         }}
                         data-testid={`button-submit-feedback-${order.id}`}
-                        className="w-full min-h-[44px] justify-start border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950 transition-all duration-200"
+                        className="min-h-[36px] px-3 border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950"
+                        title={language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                       >
-                        <Star className="h-4 w-4 me-2 text-yellow-500" />
-                        {language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
+                        <Star className="h-4 w-4 text-yellow-500" />
                       </Button>
                     )}
-                    
-                    {/* Issue Report Button - Prominent design for ALL order statuses */}
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedOrderForIssue(order.id);
-                        setIssueReportDialogOpen(true);
-                      }}
-                      data-testid={`button-report-issue-${order.id}`}
-                      className="w-full min-h-[44px] justify-start bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 group"
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                          <AlertTriangle className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="flex flex-col items-start flex-1">
-                          <span className="font-semibold text-sm">
-                            {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report an Issue'}
-                          </span>
-                          <span className="text-xs text-white/80">
-                            {language === 'ar' ? 'نحن هنا للمساعدة' : 'We\'re here to help'}
-                          </span>
-                        </div>
-                        <svg 
-                          className="h-5 w-5 text-white/80 group-hover:translate-x-1 transition-transform duration-300" 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </Button>
                   </div>
 
                   {/* Modification Actions - Only for confirmed/processing */}
@@ -455,6 +453,13 @@ export default function OrdersPage() {
           })}
         </div>
       )}
+
+      {/* Order Details Dialog */}
+      <OrderDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        order={selectedOrder}
+      />
 
       {/* Modification Dialog */}
       <OrderModificationDialog
