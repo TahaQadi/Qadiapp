@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VirtualList } from "@/components/VirtualList";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Order {
   id: string;
@@ -62,6 +63,7 @@ export default function AdminOrdersPage() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const itemsPerPage = 10;
@@ -81,14 +83,15 @@ export default function AdminOrdersPage() {
       return res.json();
     },
     enabled: useVirtualScrolling,
-    ...cacheStrategies.orders,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch paginated orders
+  // Fetch paginated orders with optimized caching
   const { data: ordersData = { orders: [], totalPages: 1 }, isLoading } = useQuery<any>({
-    queryKey: ['/api/admin/orders', currentPage, itemsPerPage, statusFilter, searchQuery],
+    queryKey: ['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery],
     queryFn: async () => {
-      const res = await fetch(`/api/admin/orders?page=${currentPage}&pageSize=${itemsPerPage}&status=${statusFilter}&search=${searchQuery}`, {
+      const res = await fetch(`/api/admin/orders?page=${currentPage}&pageSize=${itemsPerPage}&status=${statusFilter}&search=${debouncedSearchQuery}`, {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch orders');
@@ -96,10 +99,28 @@ export default function AdminOrdersPage() {
     },
     enabled: !useVirtualScrolling,
     placeholderData: (previousData: any) => previousData,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 3 * 60 * 1000, // 3 minutes
   });
 
   const orders = useVirtualScrolling ? allOrdersData?.orders || [] : ordersData?.orders || [];
   const totalPages = useVirtualScrolling ? 1 : ordersData?.totalPages || 1;
+
+  // Memoized filtered orders for performance
+  const filteredOrders = useMemo(() => {
+    if (!orders || orders.length === 0) return [];
+    
+    let result = [...orders];
+    
+    // Apply hide done/cancelled filter
+    if (hideDoneAndCancelled) {
+      result = result.filter(order => 
+        order.status !== 'delivered' && order.status !== 'cancelled'
+      );
+    }
+    
+    return result;
+  }, [orders, hideDoneAndCancelled]);
 
 
   const { data: clients = [] } = useQuery<Client[]>({
@@ -756,7 +777,17 @@ export default function AdminOrdersPage() {
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-3">
-                  {paginatedOrders.map((order: Order) => renderOrderCard(order))}
+                  {useVirtualScrolling ? (
+                    <VirtualList
+                      items={filteredOrders}
+                      renderItem={(order: Order, index: number) => renderOrderCard(order)}
+                      estimateSize={200}
+                      height="calc(100vh - 300px)"
+                      keyExtractor={(order: Order) => order.id}
+                    />
+                  ) : (
+                    paginatedOrders.map((order: Order) => renderOrderCard(order))
+                  )}
                 </div>
 
                 {/* Desktop Table View */}
@@ -767,7 +798,7 @@ export default function AdminOrdersPage() {
                         <TableHead className="w-12">
                           <input
                             type="checkbox"
-                            checked={selectedOrders.size === orders.length && orders.length > 0}
+                            checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
                             onChange={toggleAllOrders}
                             className="rounded border-gray-300 h-4 w-4 text-primary dark:text-[#d4af37] focus:ring-primary dark:focus:ring-[#d4af37]"
                           />

@@ -1374,10 +1374,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin Orders Management
+  // Admin Orders Management - Optimized with caching hints
   app.get("/api/admin/orders", requireAdmin, async (req: any, res) => {
     try {
       const { page, pageSize, status, search, all } = req.query;
+
+      // Set cache control headers for better performance
+      res.setHeader('Cache-Control', 'private, max-age=60'); // Cache for 1 minute
 
       // If 'all' parameter is present, return all orders without pagination
       if (all === 'true') {
@@ -1386,7 +1389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
-      // Get all orders first
+      // Get all orders first (this should be cached at storage level)
       let orders = await storage.getOrders();
 
       // Apply status filter

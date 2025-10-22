@@ -91,8 +91,9 @@ export const cacheStrategies = {
   
   // Frequently changing data
   orders: {
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute - more frequent updates for admin
+    gcTime: 3 * 60 * 1000, // 3 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   },
   modifications: {
     staleTime: 1 * 60 * 1000, // 1 minute
