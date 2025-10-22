@@ -8,7 +8,7 @@ import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag, ArrowLeft, U
 import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
-import OrderFeedbackDialog from "@/components/OrderFeedbackDialog";
+import { OrderFeedbackDialog } from "@/components/OrderFeedbackDialog";
 import { IssueReportDialog } from "@/components/IssueReportDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
