@@ -2,6 +2,19 @@
 
 This bilingual (Arabic/English) application enables businesses to manage and fulfill Long-Term Agreement (LTA) based product orders. It provides a comprehensive platform for managing contracts, products from a master catalog, and client-specific pricing. Key capabilities include secure client authentication with role-based access, a robust price management system, product image handling, bulk product import, a responsive product grid, order templates, and integration with Pipefy for streamlined order processing. The project's core purpose is to optimize contract fulfillment workflows and enhance the ordering experience for LTA clients.
 
+# Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[APPLICATION_OVERVIEW.md](docs/APPLICATION_OVERVIEW.md)** - Technology stack, architecture patterns, and system design
+- **[FEATURES_DOCUMENTATION.md](docs/FEATURES_DOCUMENTATION.md)** - Complete feature breakdown for admin, client, and system features
+- **[WORKFLOWS_DOCUMENTATION.md](docs/WORKFLOWS_DOCUMENTATION.md)** - Detailed process flows with diagrams for all major workflows
+- **[API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)** - REST API reference with 63+ endpoints, request/response formats, and authentication
+- **[DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)** - Complete database schema with 28 tables, relationships, and constraints
+- **[CODE_AUDIT.md](docs/CODE_AUDIT.md)** - Code quality audit identifying unused/deprecated code and improvement recommendations
+
+These documents provide detailed technical specifications, implementation details, and maintenance guidance for the entire application.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
