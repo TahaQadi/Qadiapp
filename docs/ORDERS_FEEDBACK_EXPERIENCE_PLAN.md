@@ -316,16 +316,21 @@ CREATE INDEX idx_micro_feedback_created_at ON micro_feedback(created_at DESC);
 **Priority**: High
 
 **Tasks**:
-- [ ] Create database schema (migration 0005)
-- [ ] Implement order feedback dialog
-- [ ] Add feedback routes
-- [ ] Create basic feedback storage
-- [ ] Test feedback collection flow
+- [x] Create database schema (migration 0005)
+- [x] Implement order feedback dialog
+- [x] Add feedback routes
+- [x] Create basic feedback storage
+- [x] Test feedback collection flow
+- [x] Integrate feedback into order details dialog
+- [x] Add inline issue reporting to feedback dialog
+- [ ] Add notification trigger for delivered orders
 
 **Success Criteria**:
-- Clients can submit order feedback
-- Feedback stored in database
-- Admin can view raw feedback data
+- ✅ Clients can submit order feedback
+- ✅ Feedback stored in database
+- ✅ Admin can view raw feedback data
+- ✅ Issue reports integrated with feedback
+- ⏳ Automatic feedback request after delivery
 
 ---
 
@@ -333,16 +338,20 @@ CREATE INDEX idx_micro_feedback_created_at ON micro_feedback(created_at DESC);
 **Priority**: High
 
 **Tasks**:
-- [ ] Build issue reporter component
-- [ ] Add screenshot capture
-- [ ] Implement issue routes
-- [ ] Create issue management page (admin)
+- [x] Build issue reporter component (integrated into feedback dialog)
+- [ ] Add screenshot capture (future enhancement)
+- [x] Implement issue routes
+- [x] Create issue management page (admin) - IssueReportsPage.tsx exists
 - [ ] Add issue status workflow
+- [ ] Add admin notifications for critical issues
 
 **Success Criteria**:
-- Users can report issues with screenshots
-- Admin can view, assign, and resolve issues
-- Email notifications for critical issues
+- ✅ Users can report issues (integrated with feedback)
+- ✅ Issue reports stored in database
+- ⏳ Admin can view and manage issues
+- ⏳ Email notifications for critical issues
+
+**Status**: Partially complete - basic issue reporting working, needs admin workflow
 
 ---
 

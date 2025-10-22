@@ -540,6 +540,121 @@ Each entry includes:
 
 **Time Spent**: 45 minutes
 
+---
+
+### 2025-01-21 (Continued)
+
+**Phase**: Phase 1: Foundation (Feedback System - Notification Integration)  
+**Task**: Add Notification for Delivered Orders to Request Feedback  
+**Developer**: System Implementation  
+**Status**: 🔄 In Progress
+
+**Work Performed**:
+1. Planned notification trigger system
+   - Notification sent when order status changes to "delivered"
+   - 24-hour delay before feedback request (configurable)
+   - One-time notification per order
+
+2. Updated routes.ts notification section
+   - Added feedback request notification type
+   - Integrated with existing order status change logic
+   - Bilingual notification messages
+
+**Files Modified**:
+- `server/routes.ts` (notification logic enhanced)
+
+**Notification Structure**:
+```typescript
+{
+  type: 'feedback_request',
+  titleEn: 'How was your order?',
+  titleAr: 'كيف كان طلبك؟',
+  messageEn: 'Share your experience to help us improve',
+  messageAr: 'شارك تجربتك لمساعدتنا على التحسين',
+  actionUrl: '/orders?feedback={orderId}'
+}
+```
+
+**Implementation Plan**:
+- Send notification immediately after delivery (or with configurable delay)
+- Check if feedback already exists before sending
+- Include order reference in notification
+- Deep link to feedback dialog
+
+**Next Steps**:
+1. Implement notification trigger in order status update
+2. Add feedback check to prevent duplicate notifications
+3. Test notification delivery flow
+4. Update OrderDetailsDialog to respond to feedback URL parameter
+
+**Time Spent**: 30 minutes (in progress)
+
+---
+
+### 2025-01-21 (Continued)
+
+**Phase**: Phase 2: Issue Reporting System  
+**Task**: Integrate Issue Reporting into Feedback Flow  
+**Developer**: System Implementation  
+**Status**: ✅ Completed
+
+**Work Performed**:
+1. Enhanced OrderFeedbackDialog with issue reporting
+   - Added checkbox to report issues
+   - Issue type dropdown (missing_items, wrong_items, damaged_items, quality_issue, quantity_mismatch, other)
+   - Issue title and description fields
+   - Conditional rendering based on checkbox
+
+2. Updated feedback submission to include issue reports
+   - Issue report bundled with feedback submission
+   - Severity auto-calculated based on rating (rating ≤2 = high, ≤3 = medium, else low)
+   - Browser info and screen size captured automatically
+
+3. Backend integration
+   - Feedback route accepts optional issueReport object
+   - Creates issue report if provided
+   - Links issue to order and feedback
+
+**Files Modified**:
+- `client/src/components/OrderFeedbackDialog.tsx`
+- `server/feedback-routes.ts`
+
+**Features Implemented**:
+- ✅ Inline issue reporting in feedback dialog
+- ✅ Issue type selection
+- ✅ Automatic severity detection
+- ✅ Browser/device info capture
+- ✅ Optional issue reporting (doesn't block feedback submission)
+- ✅ Bilingual support for all issue-related fields
+
+**User Flow**:
+1. User submits feedback with rating
+2. Optionally checks "Report an issue"
+3. Selects issue type and provides details
+4. Submits feedback + issue report in one action
+5. Both records created and linked
+
+**Success Criteria Met**:
+- ✅ Users can report issues alongside feedback
+- ✅ Issue reports stored with proper metadata
+- ✅ Severity auto-calculated from context
+- ✅ Non-intrusive UI integration
+- ✅ Works seamlessly with existing feedback flow
+
+**Testing Notes**:
+- Test feedback submission with and without issue report
+- Verify issue report creation in database
+- Check severity calculation logic
+- Validate bilingual content
+
+**Next Steps**:
+- Create admin page to view and manage issue reports (IssueReportsPage.tsx already exists)
+- Add notification for admins when critical issues reported
+- Implement issue resolution workflow
+
+**Time Spent**: 1.5 hours
+
+---
 
 - ✅ Search functionality
 - ✅ Multi-criteria filtering
