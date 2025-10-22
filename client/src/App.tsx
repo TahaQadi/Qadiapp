@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, lazy, Suspense } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import NotFoundPage from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import OnboardingPage from "@/pages/OnboardingPage";
@@ -47,6 +48,7 @@ import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { usePageTracking } from '@/lib/analytics';
 import { errorMonitoring } from '@/lib/errorMonitoring';
 import { performanceMonitoring } from '@/lib/performanceMonitoring';
+import { MobileNav } from '@/components/MobileNav';
 
 // Lazy load Admin components with preload capability
 const AdminOrderModificationsPage = lazy(() => import('@/pages/admin/OrderModificationsPage'));
