@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag, ArrowLeft, User, LogOut, Star, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
-import { OrderModificationSheet } from "@/components/OrderModificationSheet"; // Renamed from ModificationSheet for clarity
+import { OrderModificationDialog } from "@/components/OrderModificationDialog";
 import OrderFeedbackDialog from "@/components/OrderFeedbackDialog";
-import { IssueReportDialog } from "@/components/IssueReportDialog"; // Imported new dialog
+import { IssueReportDialog } from "@/components/IssueReportDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -433,8 +433,8 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Modification Sheet */}
-      <OrderModificationSheet
+      {/* Modification Dialog */}
+      <OrderModificationDialog
           order={selectedOrder}
           open={modifyOpen}
           onOpenChange={setModifyOpen}
