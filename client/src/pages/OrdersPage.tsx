@@ -395,10 +395,10 @@ export default function OrdersPage() {
                           setFeedbackDialogOpen(true);
                         }}
                         data-testid={`button-feedback-${order.id}`}
-                        className="w-full min-h-[44px]"
+                        className="w-full min-h-[44px] justify-start"
                       >
-                        <Star className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'تقييم الطلب' : 'Submit Feedback'}
+                        <Star className="h-4 w-4 me-2" />
+                        {language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                       </Button>
                     )}
                     
@@ -410,7 +410,37 @@ export default function OrdersPage() {
                         setSelectedOrderForIssue(order.id);
                         setIssueReportDialogOpen(true);
                       }}
-                      data-testid={`button-issue-${order.id}`}
+                      data-testid={`button-report-issue-${order.id}`}
+                      className="w-full min-h-[44px] justify-start"
+                    >
+                      <AlertTriangle className="h-4 w-4 me-2" />
+                      {language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
+                    </Button>
+                  </div>
+
+                  {/* Modification Actions - Only for pending/processing */}
+                  {['pending', 'processing'].includes(order.status) && (
+                    <div className="space-y-2 border-t pt-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleModifyOrder(order)}
+                        className="w-full justify-start"
+                      >
+                        <Edit className="h-4 w-4 me-2" />
+                        {language === 'ar' ? 'تعديل' : 'Modify'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCancelRequest(order)}
+                        className="w-full justify-start text-destructive hover:text-destructive"
+                      >
+                        <XCircle className="h-4 w-4 me-2" />
+                        {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                      </Button>
+                    </div>
+                  )}</old_str>ta-testid={`button-issue-${order.id}`}
                       className="w-full min-h-[44px]"
                     >
                       <AlertTriangle className="h-4 w-4 me-1" />

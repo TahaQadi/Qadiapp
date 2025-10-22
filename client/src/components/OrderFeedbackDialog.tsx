@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useLanguage } from "./LanguageProvider";
 import { useToast } from "@/hooks/use-toast";
-import { Star, Loader2 } from "lucide-react";
+import { Star, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,12 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
   const { language } = useLanguage();
   const { toast } = useToast();
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [orderingProcessRating, setOrderingProcessRating] = useState(0);
+  const [productQualityRating, setProductQualityRating] = useState(0);
+  const [deliverySpeedRating, setDeliverySpeedRating] = useState(0);
+  const [communicationRating, setCommunicationRating] = useState(0);
+  const [comments, setComments] = useState("");
+  const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -31,7 +37,16 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
       toast({
         variant: "destructive",
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'الرجاء تحديد تقييم' : 'Please select a rating',
+        description: language === 'ar' ? 'الرجاء تحديد تقييم عام' : 'Please select an overall rating',
+      });
+      return;
+    }
+
+    if (wouldRecommend === null) {
+      toast({
+        variant: "destructive",
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'الرجاء تحديد ما إذا كنت ستوصي بنا' : 'Please indicate if you would recommend us',
       });
       return;
     }
@@ -44,7 +59,12 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
         credentials: 'include',
         body: JSON.stringify({
           rating,
-          comment: comment.trim() || undefined,
+          orderingProcessRating: orderingProcessRating || undefined,
+          productQualityRating: productQualityRating || undefined,
+          deliverySpeedRating: deliverySpeedRating || undefined,
+          communicationRating: communicationRating || undefined,
+          comments: comments.trim() || undefined,
+          wouldRecommend,
         }),
       });
 
@@ -59,7 +79,12 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
 
       onOpenChange(false);
       setRating(0);
-      setComment("");
+      setOrderingProcessRating(0);
+      setProductQualityRating(0);
+      setDeliverySpeedRating(0);
+      setCommunicationRating(0);
+      setComments("");
+      setWouldRecommend(null);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -73,9 +98,33 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
     }
   };
 
+  const StarRating = ({ value, onChange, label }: { value: number; onChange: (val: number) => void; label: string }) => (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="focus:outline-none transition-transform hover:scale-110"
+          >
+            <Star
+              className={`h-6 w-6 ${
+                star <= value
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-gray-300'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {language === 'ar' ? 'تقييم الطلب' : 'Rate Your Order'}
@@ -87,39 +136,81 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
+        <div className="space-y-6 py-4">
+          {/* Overall Rating */}
+          <StarRating
+            value={rating}
+            onChange={setRating}
+            label={language === 'ar' ? 'التقييم العام *' : 'Overall Rating *'}
+          />
+
+          {/* Aspect Ratings */}
+          <div className="space-y-4 border-t pt-4">
+            <p className="text-sm font-medium text-muted-foreground">
+              {language === 'ar' ? 'تقييمات تفصيلية (اختياري)' : 'Detailed Ratings (Optional)'}
+            </p>
+            
+            <StarRating
+              value={orderingProcessRating}
+              onChange={setOrderingProcessRating}
+              label={language === 'ar' ? 'سهولة الطلب' : 'Ordering Process'}
+            />
+            
+            <StarRating
+              value={productQualityRating}
+              onChange={setProductQualityRating}
+              label={language === 'ar' ? 'جودة المنتجات' : 'Product Quality'}
+            />
+            
+            <StarRating
+              value={deliverySpeedRating}
+              onChange={setDeliverySpeedRating}
+              label={language === 'ar' ? 'سرعة التسليم' : 'Delivery Speed'}
+            />
+            
+            <StarRating
+              value={communicationRating}
+              onChange={setCommunicationRating}
+              label={language === 'ar' ? 'التواصل' : 'Communication'}
+            />
+          </div>
+
+          {/* Would Recommend */}
+          <div className="space-y-2 border-t pt-4">
             <Label>
-              {language === 'ar' ? 'التقييم' : 'Rating'}
+              {language === 'ar' ? 'هل توصي بنا؟ *' : 'Would you recommend us? *'}
             </Label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  className="focus:outline-none transition-transform hover:scale-110"
-                >
-                  <Star
-                    className={`h-8 w-8 ${
-                      star <= rating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              ))}
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant={wouldRecommend === true ? "default" : "outline"}
+                onClick={() => setWouldRecommend(true)}
+                className="flex-1"
+              >
+                <ThumbsUp className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'نعم' : 'Yes'}
+              </Button>
+              <Button
+                type="button"
+                variant={wouldRecommend === false ? "destructive" : "outline"}
+                onClick={() => setWouldRecommend(false)}
+                className="flex-1"
+              >
+                <ThumbsDown className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'لا' : 'No'}
+              </Button>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="comment">
-              {language === 'ar' ? 'تعليق (اختياري)' : 'Comment (Optional)'}
+          {/* Comments */}
+          <div className="space-y-2 border-t pt-4">
+            <Label htmlFor="comments">
+              {language === 'ar' ? 'تعليقات إضافية (اختياري)' : 'Additional Comments (Optional)'}
             </Label>
             <Textarea
-              id="comment"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              id="comments"
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
               placeholder={
                 language === 'ar'
                   ? 'شاركنا رأيك...'
