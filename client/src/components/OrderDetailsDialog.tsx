@@ -21,7 +21,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
 import { OrderTimeline } from './OrderTimeline';
-import OrderFeedbackDialog from './OrderFeedbackDialog';
+import { OrderFeedbackDialog } from './OrderFeedbackDialog';
 
 interface OrderItem {
   productId: string;
@@ -345,7 +345,6 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
         {order && (
           <OrderFeedbackDialog
             orderId={order.id}
-            orderReference={order.id.substring(0, 8)}
             open={showFeedback}
             onOpenChange={setShowFeedback}
           />
