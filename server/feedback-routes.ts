@@ -7,15 +7,13 @@ import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { Response } from 'express';
 
-// Mock storage for demonstration purposes. In a real app, this would interact with the database.
+// Database storage helpers for feedback operations
 const storage = {
   getOrder: async (orderId: string) => {
-    // Replace with actual DB call
     const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
     return order;
   },
   createOrderFeedback: async (feedbackData: any) => {
-    // Replace with actual DB call
     const [newFeedback] = await db
       .insert(orderFeedback)
       .values(feedbackData)

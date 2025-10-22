@@ -14,7 +14,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (reserved for future multi-tenancy features)
+// User storage table - RESERVED FOR FUTURE USE
+// This table is currently UNUSED and reserved for future multi-tenancy features.
+// The application currently uses the 'clients' table for all authentication and user management.
+// Do NOT reference this table in foreign keys - use 'clients' table instead.
+// This table may be removed in a future version if multi-tenancy is not implemented.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -490,7 +494,7 @@ export type BulkAssignProducts = z.infer<typeof bulkAssignProductsSchema>;
 export const orderFeedback = pgTable("order_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
-  clientId: varchar("client_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   rating: integer("rating").notNull(),
   orderingProcessRating: integer("ordering_process_rating"),
   productQualityRating: integer("product_quality_rating"),
@@ -500,7 +504,7 @@ export const orderFeedback = pgTable("order_feedback", {
   wouldRecommend: boolean("would_recommend").notNull(),
   adminResponse: text("admin_response"),
   adminResponseAt: timestamp("admin_response_at"),
-  respondedBy: varchar("responded_by").references(() => users.id),
+  respondedBy: varchar("responded_by").references(() => clients.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
