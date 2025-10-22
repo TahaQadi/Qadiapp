@@ -551,6 +551,12 @@ export const microFeedback = pgTable("micro_feedback", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const insertMicroFeedbackSchema = createInsertSchema(microFeedback).omit({ 
+  id: true, 
+  createdAt: true,
+  userId: true
+});
+
 // ============================================
 // DEMO REQUESTS TABLE
 // ============================================
