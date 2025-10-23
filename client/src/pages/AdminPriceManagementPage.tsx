@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -69,6 +68,22 @@ interface PriceRequestMetadata {
   message?: string;
 }
 
+interface PriceRequest {
+  id: string;
+  requestNumber: string;
+  clientId: string;
+  ltaId: string | null;
+  status: 'pending' | 'processed' | 'cancelled';
+  requestedAt: string;
+  products: string | Array<{
+    id: string;
+    sku: string;
+    nameEn: string;
+    nameAr: string;
+  }>;
+  notes: string | null;
+}
+
 interface Client {
   id: string;
   nameEn: string;
@@ -102,6 +117,10 @@ export default function AdminPriceManagementPage() {
     queryKey: ['/api/client/notifications'],
   });
 
+  const { data: priceRequests = [], isLoading: isLoadingPriceRequests } = useQuery<PriceRequest[]>({
+    queryKey: ['/api/admin/price-requests'],
+  });
+
   const { data: offers = [], isLoading: isLoadingOffers } = useQuery<PriceOffer[]>({
     queryKey: ['/api/admin/price-offers'],
   });
@@ -121,7 +140,7 @@ export default function AdminPriceManagementPage() {
     queryKey: ['/api/admin/lta-assignments'],
   });
 
-  const priceRequests = notifications.filter(n => n.type === 'price_request');
+  const requestNotifications = notifications.filter(n => n.type === 'price_request');
 
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -253,16 +272,17 @@ export default function AdminPriceManagementPage() {
     );
   };
 
-  const isRequestCompleted = (request: Notification) => {
-    const metadata = parseMetadata(request.metadata);
-    if (!metadata.products || metadata.products.length === 0) return false;
-    return metadata.products.every(product => isProductAssignedToLta(product.id, metadata.clientId));
+  // Check if a request has been completed (has an associated offer)
+  const isRequestCompleted = (request: PriceRequest) => {
+    return request.status === 'processed' || request.status === 'cancelled';
   };
 
+  // Filter requests based on status
   const filteredRequests = priceRequests.filter(request => {
     if (requestStatusFilter === 'all') return true;
-    const completed = isRequestCompleted(request);
-    return requestStatusFilter === 'completed' ? completed : !completed;
+    if (requestStatusFilter === 'pending') return request.status === 'pending';
+    if (requestStatusFilter === 'completed') return isRequestCompleted(request);
+    return true;
   });
 
   const filteredOffers = offerStatusFilter === 'all' 
@@ -415,7 +435,7 @@ export default function AdminPriceManagementPage() {
                 >
                   {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
                   <Badge variant={requestStatusFilter === 'pending' ? 'secondary' : 'outline'}>
-                    {priceRequests.filter(r => !isRequestCompleted(r)).length}
+                    {priceRequests.filter(r => r.status === 'pending').length}
                   </Badge>
                 </Button>
                 <Button
@@ -426,13 +446,13 @@ export default function AdminPriceManagementPage() {
                 >
                   {language === 'ar' ? 'مكتمل' : 'Completed'}
                   <Badge variant={requestStatusFilter === 'completed' ? 'secondary' : 'outline'}>
-                    {priceRequests.filter(r => isRequestCompleted(r)).length}
+                    {priceRequests.filter(isRequestCompleted).length}
                   </Badge>
                 </Button>
               </div>
             )}
 
-            {isLoadingRequests ? (
+            {isLoadingPriceRequests ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
                   {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
@@ -461,143 +481,79 @@ export default function AdminPriceManagementPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {filteredRequests.map((request) => {
-                  const metadata = parseMetadata(request.metadata);
-                  const completed = isRequestCompleted(request);
+                  const products = typeof request.products === 'string' 
+                    ? JSON.parse(request.products) 
+                    : request.products || [];
+                  const isCompleted = isRequestCompleted(request);
+
+                  const client = clients.find(c => c.id === request.clientId);
+                  const lta = ltas.find(l => l.id === request.ltaId);
 
                   return (
-                    <Card key={request.id} className={`${!request.isRead && !completed ? 'border-primary dark:border-[#d4af37] shadow-lg dark:shadow-[#d4af37]/20' : completed ? 'border-green-500/30 dark:border-green-500/30 shadow-md' : 'border-border/50 dark:border-[#d4af37]/20 shadow-sm'} hover:shadow-xl dark:hover:shadow-[#d4af37]/20 transition-all duration-300`}>
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="space-y-1 flex-1">
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                              {!request.isRead && !completed && (
-                                <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
-                              )}
-                              {language === 'ar' ? metadata.clientNameAr : metadata.clientNameEn}
-                              {completed && (
-                                <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
-                                  <Check className="h-3 w-3 me-1" />
-                                  {language === 'ar' ? 'مكتمل' : 'Completed'}
-                                </Badge>
-                              )}
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDate(request.createdAt)}
-                            </p>
+                    <Card key={request.id} className="hover-elevate">
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 mt-1">
+                                {isCompleted ? (
+                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                ) : (
+                                  <Clock className="h-5 w-5 text-yellow-600" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-base sm:text-lg mb-1">
+                                  {request.requestNumber}
+                                </h3>
+                                <p className="text-sm font-medium">
+                                  {client?.nameEn || client?.nameAr || 'Unknown Client'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {language === 'ar' ? 'الاتفاقية:' : 'LTA:'} {lta?.nameEn || lta?.nameAr || 'Unknown LTA'}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(request.requestedAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={isCompleted ? 'secondary' : 'default'}>
+                                {isCompleted 
+                                  ? (language === 'ar' ? 'مكتمل' : 'Completed')
+                                  : (language === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                              </Badge>
+                              <Badge variant="outline">
+                                {products.length} {language === 'ar' ? 'منتج' : 'products'}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="flex gap-2 flex-wrap justify-end">
-                            {completed && (
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(`/admin/price-requests`, '_blank')}
+                              className="w-full sm:w-auto"
+                            >
+                              <Eye className="h-4 w-4 me-2" />
+                              {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                            </Button>
+                            {!isCompleted && (
                               <>
                                 <Button
-                                  variant="default"
                                   size="sm"
-                                  onClick={() => {
-                                    setSelectedRequestForPdf(request);
-                                    setPdfDialogOpen(true);
-                                  }}
-                                  className="gap-2"
+                                  onClick={() => window.open(`/admin/price-offers/create?requestId=${request.id}`, '_blank')}
+                                  className="w-full sm:w-auto"
                                 >
-                                  <Package className="h-4 w-4" />
-                                  <span className="hidden sm:inline">
-                                    {language === 'ar' ? 'إنشاء PDF' : 'Generate PDF'}
-                                  </span>
+                                  <FileText className="h-4 w-4 me-2" />
+                                  {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
                                 </Button>
-                                {request.pdfFileName && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => window.open(`/api/pdf/download/${request.pdfFileName}`, '_blank')}
-                                    className="gap-2"
-                                  >
-                                    <Download className="h-4 w-4" />
-                                    <span className="hidden sm:inline">
-                                      {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
-                                    </span>
-                                  </Button>
-                                )}
                               </>
                             )}
-                            {!request.isRead && !completed && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => markAsReadMutation.mutate(request.id)}
-                                className="gap-2"
-                              >
-                                <Check className="h-4 w-4" />
-                                <span className="hidden sm:inline">
-                                  {language === 'ar' ? 'وضع علامة كمقروء' : 'Mark as Read'}
-                                </span>
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => archiveRequestMutation.mutate(request.id)}
-                              disabled={archiveRequestMutation.isPending}
-                              className="gap-2"
-                            >
-                              <Archive className="h-4 w-4" />
-                              <span className="hidden sm:inline">
-                                {language === 'ar' ? 'أرشفة' : 'Archive'}
-                              </span>
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {metadata.message && (
-                          <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
-                            <p className="text-sm">{metadata.message}</p>
-                          </div>
-                        )}
-
-                        <div>
-                          <h4 className="font-semibold mb-3 flex items-center gap-2">
-                            <Package className="h-4 w-4" />
-                            {language === 'ar' ? 'المنتجات المطلوبة:' : 'Requested Products:'}
-                          </h4>
-                          <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                                  <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                                  <TableHead className="text-end">{language === 'ar' ? 'إجراء' : 'Action'}</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {metadata.products.map((product) => {
-                                  const hasPrice = isProductAssignedToLta(product.id, metadata.clientId);
-                                  return (
-                                    <TableRow key={product.id}>
-                                      <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                                      <TableCell className="font-medium">
-                                        {language === 'ar' ? product.nameAr : product.nameEn}
-                                      </TableCell>
-                                      <TableCell className="text-end">
-                                        {hasPrice ? (
-                                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
-                                            <Check className="h-3 w-3 me-1" />
-                                            {language === 'ar' ? 'تم التعيين' : 'Assigned'}
-                                          </Badge>
-                                        ) : (
-                                          <Button
-                                            size="sm"
-                                            onClick={() => handleAssignPrice(product, request)}
-                                          >
-                                            {language === 'ar' ? 'تعيين سعر' : 'Assign Price'}
-                                          </Button>
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
                           </div>
                         </div>
                       </CardContent>
