@@ -391,8 +391,15 @@ export default function AdminPriceManagementPage() {
   };
 
   const handleCreateOffer = (request: PriceRequest) => {
-    // Navigate to the create offer page with the request ID
-    window.location.href = `/admin/price-offers/create?requestId=${request.id}`;
+    // Navigate to price management page with request ID for auto-fill
+    setLocation(`/admin/price-management?requestId=${request.id}`);
+    
+    toast({
+      title: language === 'ar' ? 'إنشاء عرض من الطلب' : 'Creating Offer from Request',
+      description: language === 'ar' 
+        ? `سيتم ربط العرض بالطلب ${request.requestNumber}` 
+        : `Offer will be linked to request ${request.requestNumber}`,
+    });
   };
 
   return (
