@@ -12,9 +12,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDateLocalized } from "@/lib/dateUtils";
-import { PlayCircle, Mail, Phone, Building2, Calendar, FileText, Loader2, Eye, CheckCircle2, Clock, XCircle, Filter, ArrowLeft } from "lucide-react";
+import { PlayCircle, Mail, Phone, Building2, Calendar, FileText, Loader2, Eye, CheckCircle2, Clock, XCircle, Filter } from "lucide-react";
 import { useState, useMemo } from "react";
-import { Link } from "wouter";
 
 interface DemoRequest {
   id: number;
@@ -242,45 +241,35 @@ export default function AdminDemoRequestsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Header */}
+        <header className="mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-lg font-bold">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 {language === 'ar' ? 'طلبات العروض التوضيحية' : 'Demo Requests'}
               </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
+              <p className="text-muted-foreground mt-1">
                 {language === 'ar' ? 'إدارة طلبات العروض التوضيحية من العملاء' : 'Manage demo requests from clients'}
               </p>
             </div>
-          </div>
             
-            </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Filter Tabs */}
-        <div className="mb-6">
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="w-auto">
-            <TabsList>
-              <TabsTrigger value="all">
-                {language === 'ar' ? 'الكل' : 'All'} ({stats.total})
-              </TabsTrigger>
-              <TabsTrigger value="pending">
-                {language === 'ar' ? 'قيد الانتظار' : 'Pending'} ({stats.pending})
-              </TabsTrigger>
-              <TabsTrigger value="contacted">
-                {language === 'ar' ? 'تم الاتصال' : 'Contacted'} ({stats.contacted})
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+            {/* Filter Tabs */}
+            <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="w-auto">
+              <TabsList>
+                <TabsTrigger value="all">
+                  {language === 'ar' ? 'الكل' : 'All'} ({stats.total})
+                </TabsTrigger>
+                <TabsTrigger value="pending">
+                  {language === 'ar' ? 'قيد الانتظار' : 'Pending'} ({stats.pending})
+                </TabsTrigger>
+                <TabsTrigger value="contacted">
+                  {language === 'ar' ? 'تم الاتصال' : 'Contacted'} ({stats.contacted})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </header>
 
         {/* Statistics */}
         {!isLoading && requests.length > 0 && renderStatCards()}
