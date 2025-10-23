@@ -99,7 +99,8 @@ interface LTA {
 export default function AdminPriceManagementPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [selectedRequest, setSelectedRequest] = useState<Notification | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
+  const [viewRequestDialogOpen, setViewRequestDialogOpen] = useState(false);
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [contractPrice, setContractPrice] = useState('');
@@ -359,6 +360,16 @@ export default function AdminPriceManagementPage() {
     window.open(`/api/pdf/download/${fileName}`, '_blank');
   };
 
+  const handleViewRequest = (request: PriceRequest) => {
+    setSelectedRequest(request);
+    setViewRequestDialogOpen(true);
+  };
+
+  const handleCreateOffer = (request: PriceRequest) => {
+    // Navigate to the create offer page with the request ID
+    window.location.href = `/admin/price-offers/create?requestId=${request.id}`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       {/* Animated background elements */}
@@ -536,7 +547,7 @@ export default function AdminPriceManagementPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => window.open(`/admin/price-requests`, '_blank')}
+                              onClick={() => handleViewRequest(request)}
                               className="w-full sm:w-auto"
                             >
                               <Eye className="h-4 w-4 me-2" />
@@ -546,7 +557,7 @@ export default function AdminPriceManagementPage() {
                               <>
                                 <Button
                                   size="sm"
-                                  onClick={() => window.open(`/admin/price-offers/create?requestId=${request.id}`, '_blank')}
+                                  onClick={() => handleCreateOffer(request)}
                                   className="w-full sm:w-auto"
                                 >
                                   <FileText className="h-4 w-4 me-2" />
@@ -757,6 +768,101 @@ export default function AdminPriceManagementPage() {
               }
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Request Dialog */}
+      <Dialog open={viewRequestDialogOpen} onOpenChange={setViewRequestDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'تفاصيل طلب السعر' : 'Price Request Details'}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'رقم الطلب' : 'Request Number'}:</span>
+                  <div className="mt-1 font-medium font-mono">{selectedRequest.requestNumber}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}:</span>
+                  <div className="mt-1">
+                    <Badge variant={selectedRequest.status === 'pending' ? 'default' : 'secondary'}>
+                      {selectedRequest.status === 'pending' 
+                        ? (language === 'ar' ? 'قيد الانتظار' : 'Pending')
+                        : (language === 'ar' ? 'تمت المعالجة' : 'Processed')}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
+                  <div className="mt-1 font-medium">{getClientName(selectedRequest.clientId)}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
+                  <div className="mt-1 font-medium">{getLtaName(selectedRequest.ltaId)}</div>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}:</span>
+                  <div className="mt-1 font-medium">
+                    {new Date(selectedRequest.requestedAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  {language === 'ar' ? 'المنتجات المطلوبة' : 'Requested Products'}
+                </h4>
+                <div className="space-y-2">
+                  {(typeof selectedRequest.products === 'string' 
+                    ? JSON.parse(selectedRequest.products) 
+                    : selectedRequest.products || []).map((product: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                      <div className="flex-1">
+                        <div className="font-medium">{language === 'ar' ? product.nameAr : product.nameEn}</div>
+                        <div className="text-sm text-muted-foreground">SKU: {product.sku}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{language === 'ar' ? 'الكمية:' : 'Qty:'} {product.quantity || 1}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedRequest.notes && (
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">{language === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedRequest.notes}</p>
+                </div>
+              )}
+
+              {selectedRequest.status === 'pending' && (
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewRequestDialogOpen(false)}
+                  >
+                    {language === 'ar' ? 'إغلاق' : 'Close'}
+                  </Button>
+                  <Button onClick={() => handleCreateOffer(selectedRequest)}>
+                    <FileText className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'إنشاء عرض سعر' : 'Create Offer'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
