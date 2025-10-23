@@ -100,7 +100,7 @@ interface LTA {
 export default function AdminPriceManagementPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
   const [viewRequestDialogOpen, setViewRequestDialogOpen] = useState(false);
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
