@@ -780,7 +780,7 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-    const inPriceRequest = priceRequestList.some(item => item.productId === product.id);
+    // const inPriceRequest = priceRequestList.some(item => item.productId === product.id); // Removed as price request is removed
     const [, setLocation] = useLocation();
     const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
     // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
@@ -1081,22 +1081,17 @@ export default function OrderingPage() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleAddToPriceRequest(product);
+                // Redirect to catalog page for price requests
+                window.location.href = '/catalog';
               }}
-              variant={inPriceRequest
-                ? 'secondary'
-                : 'outline'
-              }
+              variant="outline"
               className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
               size="lg"
-              data-testid={`button-add-to-price-request-${product.id}`}
+              data-testid={`button-request-price-${product.id}`}
             >
-              <Heart className={`w-4 h-4 me-2 ${inPriceRequest ? 'fill-current' : ''}`} />
+              <Heart className="w-4 h-4 me-2" />
               <span>
-                {inPriceRequest
-                  ? (language === 'ar' ? 'في قائمة الأسعار' : 'In Price List')
-                  : (language === 'ar' ? 'طلب عرض سعر' : 'Request Quote')
-                }
+                {language === 'ar' ? 'طلب عرض سعر' : 'Request Quote'}
               </span>
             </Button>
           )}
@@ -1604,7 +1599,7 @@ export default function OrderingPage() {
                       id={template.id}
                       nameEn={template.nameEn}
                       nameAr={template.nameAr}
-                      itemCount={template.itemCount}
+                      items={template.items}
                       createdAt={template.createdAt}
                       onLoad={() => handleLoadTemplate(template)}
                       onDelete={() => handleDeleteTemplate(template.id)}
@@ -1825,7 +1820,7 @@ export default function OrderingPage() {
               </DialogTitle>
             </DialogHeader>
             <p id="price-request-description" className="sr-only">
-              {language === 'ar' 
+              {language === 'ar'
                 ? 'عرض وإدارة قائمة المنتجات التي تريد طلب أسعار لها'
                 : 'View and manage your list of products to request prices for'}
             </p>
@@ -1896,11 +1891,6 @@ export default function OrderingPage() {
                   disabled={requestPriceMutation.isPending}
                   data-testid="button-send-price-request"
                 >
-                  {requestPriceMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 me-2" />
-                  )}
                   {requestPriceMutation.isPending
                     ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
                     : (language === 'ar' ? 'إرسال الطلب' : 'Send Request')
