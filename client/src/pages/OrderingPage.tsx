@@ -1901,7 +1901,7 @@ export default function OrderingPage() {
                 </Button>
               )}
             </DialogFooter>
-          </Dialog>
+          </DialogContent>
         </Dialog>
 
         {/* Feedback Dialog */}
