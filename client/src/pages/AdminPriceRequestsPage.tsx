@@ -12,12 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import type { PriceRequest, Client, Lta } from "@shared/schema";
-import Link from "next/link";
+import Link from "wouter-link";
 
 
 export default function AdminPriceRequestsPage() {
   const { language } = useLanguage();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
