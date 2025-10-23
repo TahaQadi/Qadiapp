@@ -129,9 +129,9 @@ export const ltas = pgTable("ltas", {
   nameAr: text("name_ar").notNull(),
   descriptionEn: text("description_en"),
   descriptionAr: text("description_ar"),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  status: text("status").notNull().default("active"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  status: text("status", { enum: ["draft", "active", "expired"] }).notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -285,7 +285,7 @@ export const priceRequests = pgTable("price_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   requestNumber: text("request_number").notNull().unique(),
   clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
-  ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
+  ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "restrict" }), // Nullable for bootstrap flow
   products: jsonb("products").notNull(), // Array of {productId, quantity}
   notes: text("notes"),
   status: text("status").notNull().default("pending"), // pending, processed, cancelled
@@ -299,7 +299,7 @@ export const priceOffers = pgTable("price_offers", {
   offerNumber: text("offer_number").notNull().unique(),
   requestId: varchar("request_id").references(() => priceRequests.id, { onDelete: "set null" }), // Can be null if admin creates directly
   clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
-  ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
+  ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "restrict" }), // Nullable for bootstrap flow
   items: jsonb("items").notNull(), // Array of {productId, nameEn, nameAr, sku, quantity, unitPrice, total}
   subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -337,8 +337,8 @@ export const insertClientLocationSchema = createInsertSchema(clientLocations).om
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertLtaSchema = createInsertSchema(ltas).omit({ id: true, createdAt: true }).extend({
-  startDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
-  endDate: z.union([z.date(), z.string().transform(str => new Date(str))]),
+  startDate: z.union([z.date(), z.string().transform(str => new Date(str))]).optional(),
+  endDate: z.union([z.date(), z.string().transform(str => new Date(str))]).optional(),
 });
 export const insertLtaProductSchema = createInsertSchema(ltaProducts).omit({ id: true, createdAt: true });
 export const insertLtaClientSchema = createInsertSchema(ltaClients).omit({ id: true, createdAt: true });
