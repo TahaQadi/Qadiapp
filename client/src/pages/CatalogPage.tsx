@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package, X, Send, Loader2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package, X, Send, Loader2, Trash2, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Product, Lta } from '@shared/schema';
 import { SEO } from "@/components/SEO";
@@ -330,7 +330,7 @@ export default function CatalogPage() {
                       }}
                       className="bg-pink-600 hover:bg-pink-700 text-white"
                     >
-                      <Send className="h-4 w-4 me-1" />
+                      <FileText className="h-4 w-4 me-1" />
                       {language === 'ar' ? 'إرسال' : 'Submit'}
                     </Button>
                     <Button
@@ -398,7 +398,7 @@ export default function CatalogPage() {
                         onClick={() => setPriceRequestDialogOpen(true)}
                         className="flex-1 bg-pink-600 hover:bg-pink-700"
                       >
-                        <Send className="h-4 w-4 me-1" />
+                        <FileText className="h-4 w-4 me-1" />
                         {language === 'ar' ? 'إرسال الطلب' : 'Submit Request'}
                       </Button>
                     </div>
