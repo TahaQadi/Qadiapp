@@ -179,4 +179,3 @@
 3. Add proper ARIA labels and descriptions to all dialogs
 4. Test end-to-end price request workflow
 5. Verify issue reporting functionality after migration
-
