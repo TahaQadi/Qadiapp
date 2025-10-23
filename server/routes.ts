@@ -517,6 +517,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get single price request
+  app.get("/api/admin/price-requests/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const request = await storage.getPriceRequest(req.params.id);
+      if (!request) {
+        return res.status(404).json({
+          message: "Price request not found",
+          messageAr: "طلب السعر غير موجود"
+        });
+      }
+      res.json(request);
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   // Admin: Get all price offers
   app.get("/api/admin/price-offers", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
