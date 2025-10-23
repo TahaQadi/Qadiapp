@@ -220,6 +220,12 @@ export default function AdminLtaListPage() {
     if (status === 'active') {
       return <Badge data-testid={`badge-status-${status}`}>{language === 'ar' ? 'نشط' : 'Active'}</Badge>;
     }
+    if (status === 'draft') {
+      return <Badge variant="outline" data-testid={`badge-status-${status}`}>{language === 'ar' ? 'مسودة' : 'Draft'}</Badge>;
+    }
+    if (status === 'expired') {
+      return <Badge variant="destructive" data-testid={`badge-status-${status}`}>{language === 'ar' ? 'منتهي' : 'Expired'}</Badge>;
+    }
     return <Badge variant="secondary" data-testid={`badge-status-${status}`}>{language === 'ar' ? 'غير نشط' : 'Inactive'}</Badge>;
   };
 

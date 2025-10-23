@@ -36,10 +36,21 @@ export default function PriceRequestPage() {
     queryKey: ["/api/client/ltas"],
   });
 
-  const { data: products = [] } = useQuery<ProductWithPrice[]>({
+  const activeLtas = ltas.filter(lta => lta.status === 'active');
+  const hasNoActiveLtas = activeLtas.length === 0;
+
+  // Load products from LTA if selected, otherwise load all products for bootstrap flow
+  const { data: ltaProducts = [] } = useQuery<ProductWithPrice[]>({
     queryKey: [`/api/ltas/${selectedLtaId}/products`],
     enabled: !!selectedLtaId,
   });
+
+  const { data: allProducts = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    enabled: hasNoActiveLtas && !selectedLtaId,
+  });
+
+  const products = selectedLtaId ? ltaProducts : (allProducts as any);
 
   const requestMutation = useMutation({
     mutationFn: async (data: { ltaId: string; products: { productId: string; quantity: number }[]; notes?: string }) => {
@@ -83,10 +94,10 @@ export default function PriceRequestPage() {
   };
 
   const handleSubmit = () => {
-    if (!selectedLtaId || selectedProducts.size === 0) {
+    if (selectedProducts.size === 0) {
       toast({
         title: language === "ar" ? "خطأ" : "Error",
-        description: language === "ar" ? "اختر اتفاقية ومنتج واحد على الأقل" : "Select LTA and at least one product",
+        description: language === "ar" ? "اختر منتج واحد على الأقل" : "Select at least one product",
         variant: "destructive",
       });
       return;
@@ -98,10 +109,10 @@ export default function PriceRequestPage() {
     }));
 
     requestMutation.mutate({
-      ltaId: selectedLtaId,
+      ltaId: selectedLtaId || undefined,
       products: productsArray,
       notes: notes || undefined,
-    });
+    } as any);
   };
 
   return (
@@ -154,27 +165,41 @@ export default function PriceRequestPage() {
 
       <main className="container mx-auto px-4 py-6 relative">
         <div className="max-w-4xl mx-auto space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{language === "ar" ? "اختر الاتفاقية" : "Select Agreement"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedLtaId} onValueChange={setSelectedLtaId}>
-                <SelectTrigger data-testid="select-lta">
-                  <SelectValue placeholder={language === "ar" ? "اختر اتفاقية" : "Select LTA"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ltas.map((lta) => (
-                    <SelectItem key={lta.id} value={lta.id}>
-                      {language === "ar" ? lta.nameAr : lta.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          {hasNoActiveLtas ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ar" 
+                      ? "ليس لديك اتفاقيات نشطة. يمكنك تقديم طلب سعر من الكتالوج وسيتم إنشاء اتفاقية مسودة تلقائياً."
+                      : "You have no active contracts. Submit a price request from the catalog and a draft contract will be created automatically."}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : activeLtas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{language === "ar" ? "اختر الاتفاقية" : "Select Agreement"}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedLtaId} onValueChange={setSelectedLtaId}>
+                  <SelectTrigger data-testid="select-lta">
+                    <SelectValue placeholder={language === "ar" ? "اختر اتفاقية" : "Select LTA"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeLtas.map((lta) => (
+                      <SelectItem key={lta.id} value={lta.id}>
+                        {language === "ar" ? lta.nameAr : lta.nameEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
 
-          {selectedLtaId && (
+          {(selectedLtaId || hasNoActiveLtas) && (
             <>
               <Card>
                 <CardHeader>
@@ -189,7 +214,7 @@ export default function PriceRequestPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {products.map((product) => {
+                    {products.map((product: Product | ProductWithPrice) => {
                       const isSelected = selectedProducts.has(product.id);
                       const quantity = selectedProducts.get(product.id) || 1;
 
@@ -210,7 +235,14 @@ export default function PriceRequestPage() {
                             <div className="font-semibold">
                               {language === "ar" ? product.nameAr : product.nameEn}
                             </div>
-                            <div className="text-sm text-muted-foreground">SKU: {product.sku}</div>
+                            <div className="text-sm text-muted-foreground">
+                              SKU: {product.sku}
+                              {('contractPrice' in product && product.contractPrice) && (
+                                <span className="ml-2 text-primary font-medium">
+                                  {product.currency} {product.contractPrice}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           {isSelected && (
                             <div className="flex items-center gap-2">

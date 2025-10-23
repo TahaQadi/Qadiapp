@@ -46,6 +46,19 @@ export default function AdminPriceRequestsPage() {
     return lta ? (language === "ar" ? lta.nameAr : lta.nameEn) : ltaId;
   };
 
+  const getLtaStatus = (ltaId: string) => {
+    const lta = ltas.find((l) => l.id === ltaId);
+    return lta?.status;
+  };
+
+  const getLtaStatusBadge = (ltaId: string) => {
+    const status = getLtaStatus(ltaId);
+    if (status === 'draft') {
+      return <Badge variant="outline" className="ml-2">{language === 'ar' ? 'مسودة' : 'Draft'}</Badge>;
+    }
+    return null;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; labelAr: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
       pending: { label: "Pending", labelAr: "قيد الانتظار", variant: "default" },
@@ -191,8 +204,9 @@ export default function AdminPriceRequestsPage() {
                       <span className="text-muted-foreground">
                         {language === "ar" ? "الاتفاقية" : "LTA"}
                       </span>
-                      <span className="font-medium text-right flex-1 ml-2 truncate">
+                      <span className="font-medium text-right flex-1 ml-2 truncate flex items-center gap-2">
                         {getLtaName(request.ltaId)}
+                        {getLtaStatusBadge(request.ltaId)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
