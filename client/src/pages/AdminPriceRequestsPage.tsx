@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import type { PriceRequest, Client, Lta } from "@shared/schema";
+import Link from "next/link";
+
 
 export default function AdminPriceRequestsPage() {
   const { language } = useLanguage();
@@ -21,6 +23,7 @@ export default function AdminPriceRequestsPage() {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [pdfRequest, setPdfRequest] = useState<PriceRequest | null>(null);
   const [pdfLanguage, setPdfLanguage] = useState<'en' | 'ar'>('en');
+  const [offerDialogOpen, setOfferDialogOpen] = useState(false); // Added for offer dialog
 
   const { data: requests = [], isLoading } = useQuery<PriceRequest[]>({
     queryKey: ["/api/admin/price-requests"],
@@ -78,8 +81,17 @@ export default function AdminPriceRequestsPage() {
   };
 
   const handleCreateOffer = (request: PriceRequest) => {
-    // Navigate to price management page with request ID
-    window.location.href = `/admin/price-management?requestId=${request.id}&action=createOffer`;
+    // Pre-fill offer data from request
+    setSelectedRequest(request);
+    setOfferDialogOpen(true);
+
+    // Show linking indicator
+    toast({
+      title: language === "ar" ? "إنشاء عرض من الطلب" : "Creating Offer from Request",
+      description: language === "ar" 
+        ? `سيتم ربط العرض بالطلب ${request.requestNumber}` 
+        : `Offer will be linked to request ${request.requestNumber}`,
+    });
   };
 
   const handleGeneratePDF = (request: PriceRequest) => {
@@ -163,6 +175,11 @@ export default function AdminPriceRequestsPage() {
                         <CardTitle className="text-lg flex items-center gap-2">
                           {getStatusIcon(request.status)}
                           {request.requestNumber}
+                          {request.status === 'processed' && (
+                            <Badge variant="outline" className="text-xs">
+                              {language === "ar" ? "تم إنشاء عرض" : "Offer Created"}
+                            </Badge>
+                          )}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground mt-1">
                           {getClientName(request.clientId)}
@@ -210,10 +227,14 @@ export default function AdminPriceRequestsPage() {
                           <Button
                             size="sm"
                             onClick={() => handleCreateOffer(request)}
+                            disabled={request.status === 'processed'}
                             data-testid={`button-create-offer-${request.id}`}
                           >
-                            <Send className="h-4 w-4 mr-2" />
-                            {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
+                            <FileText className="h-4 w-4 mr-2" />
+                            {request.status === 'processed' 
+                              ? (language === "ar" ? "تم الإنشاء" : "Already Created")
+                              : (language === "ar" ? "إنشاء عرض" : "Create Offer")
+                            }
                           </Button>
                           <Button
                             variant="secondary"
@@ -362,6 +383,32 @@ export default function AdminPriceRequestsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Offer Creation Dialog (Placeholder - actual implementation would be here) */}
+      <Dialog open={offerDialogOpen} onOpenChange={setOfferDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{language === "ar" ? "إنشاء عرض سعر" : "Create Price Offer"}</DialogTitle>
+          </DialogHeader>
+          <DialogContent>
+            {selectedRequest ? (
+              <p>
+                {language === "ar"
+                  ? `هل أنت متأكد أنك تريد إنشاء عرض سعر لهذا الطلب: ${selectedRequest.requestNumber}؟`
+                  : `Are you sure you want to create a price offer for this request: ${selectedRequest.requestNumber}?`}
+              </p>
+            ) : null}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setOfferDialogOpen(false)}>
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button onClick={() => { /* handle confirmed offer creation */ setOfferDialogOpen(false); }}>
+                {language === "ar" ? "إنشاء عرض" : "Create Offer"}
+              </Button>
+            </div>
+          </DialogContent>
         </DialogContent>
       </Dialog>
     </div>

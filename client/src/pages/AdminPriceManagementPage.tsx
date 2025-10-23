@@ -37,6 +37,7 @@ interface Notification {
 interface PriceOffer {
   id: string;
   offerNumber: string;
+  requestId: string | null; // Added requestId here
   clientId: string;
   ltaId: string | null;
   status: string;
@@ -316,15 +317,14 @@ export default function AdminPriceManagementPage() {
     });
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDateLocalized = (date: Date, lang: string) => {
     return formatDistanceToNow(date, {
       addSuffix: true,
-      locale: language === 'ar' ? ar : enUS,
+      locale: lang === 'ar' ? ar : enUS,
     });
   };
 
-  const getOfferStatusBadge = (offer: PriceOffer) => {
+  const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; labelAr: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       draft: { label: 'Draft', labelAr: 'مسودة', variant: 'outline' },
       sent: { label: 'Sent', labelAr: 'مُرسل', variant: 'default' },
@@ -333,7 +333,7 @@ export default function AdminPriceManagementPage() {
       rejected: { label: 'Rejected', labelAr: 'مرفوض', variant: 'destructive' },
     };
 
-    const config = statusConfig[offer.status] || { label: offer.status, labelAr: offer.status, variant: 'outline' as const };
+    const config = statusConfig[status] || { label: status, labelAr: status, variant: 'outline' as const };
     return (
       <Badge variant={config.variant}>
         {language === 'ar' ? config.labelAr : config.label}
@@ -639,7 +639,7 @@ export default function AdminPriceManagementPage() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {getOfferStatusIcon(offer.status)}
-                                {getOfferStatusBadge(offer)}
+                                {getStatusBadge(offer.status)}
                               </div>
                             </TableCell>
                             <TableCell>
