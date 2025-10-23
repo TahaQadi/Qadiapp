@@ -1818,12 +1818,17 @@ export default function OrderingPage() {
 
         {/* Price Request Dialog */}
         <Dialog open={priceRequestDialogOpen} onOpenChange={setPriceRequestDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="price-request-description">
             <DialogHeader>
               <DialogTitle>
                 {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
               </DialogTitle>
             </DialogHeader>
+            <p id="price-request-description" className="sr-only">
+              {language === 'ar' 
+                ? 'عرض وإدارة قائمة المنتجات التي تريد طلب أسعار لها'
+                : 'View and manage your list of products to request prices for'}
+            </p>
             <div className="space-y-4 py-4">
               {priceRequestList.length === 0 ? (
                 <div className="text-center py-8">
@@ -1941,12 +1946,17 @@ export default function OrderingPage() {
         {/* Price Offer Creation Dialog */}
         {user?.isAdmin && (
           <Dialog open={createOfferDialogOpen} onOpenChange={setCreateOfferDialogOpen}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="create-offer-description">
               <DialogHeader>
                 <DialogTitle>
                   {language === 'ar' ? 'إنشاء عرض سعر' : 'Create Price Offer'}
                 </DialogTitle>
               </DialogHeader>
+              <p id="create-offer-description" className="sr-only">
+                {language === 'ar'
+                  ? 'نموذج إنشاء عرض سعر جديد للعميل'
+                  : 'Form to create a new price offer for the client'}
+              </p>
               <div className="space-y-4">
                 {selectedRequestForOffer && offerItems.size > 0 ? (
                   <>
