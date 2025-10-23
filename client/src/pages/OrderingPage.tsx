@@ -692,7 +692,7 @@ export default function OrderingPage() {
           <div className="w-full h-full">
             {product.imageUrl ? (
               <img
-                src={product.imageUrl.startsWith('http') ? product.imageUrl : `/${product.imageUrl}`}
+                src={product.imageUrl}
                 alt={primaryName}
                 className="w-full h-full object-cover"
                 data-testid={`img-product-${product.id}`}
