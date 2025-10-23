@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -29,7 +28,6 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
   const { language } = useLanguage();
   const { toast } = useToast();
   const [issueType, setIssueType] = useState('');
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   const submitIssueMutation = useMutation({
@@ -57,13 +55,12 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
 
   const handleClose = () => {
     setIssueType('');
-    setTitle('');
     setDescription('');
     onOpenChange(false);
   };
 
   const handleSubmit = () => {
-    if (!issueType || !title || !description) {
+    if (!issueType || !description) {
       toast({
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: language === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields',
@@ -84,6 +81,12 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
     } else {
       severity = 'low';
     }
+
+    // Auto-generate title from issue type
+    const issueTypeLabel = issueTypeOptions.find(opt => opt.value === issueType)?.label || issueType;
+    const title = language === 'ar' 
+      ? `مشكلة: ${issueTypeLabel}`
+      : `Issue: ${issueTypeLabel}`;
 
     submitIssueMutation.mutate({
       orderId: orderId || undefined,
@@ -118,7 +121,7 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -135,11 +138,11 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
           {/* Issue Type */}
           <div className="space-y-2">
             <Label htmlFor="issueType" className="text-base">
-              نوع المشكلة <span className="text-destructive">*</span>
+              {language === 'ar' ? 'نوع المشكلة' : 'Issue Type'} <span className="text-destructive">*</span>
             </Label>
             <Select value={issueType} onValueChange={setIssueType}>
-              <SelectTrigger id="issueType" className="w-full">
-                <SelectValue placeholder="اختر نوع المشكلة" />
+              <SelectTrigger id="issueType" className="w-full" data-testid="select-issue-type">
+                <SelectValue placeholder={language === 'ar' ? 'اختر نوع المشكلة' : 'Select issue type'} />
               </SelectTrigger>
               <SelectContent>
                 {issueTypeOptions.map((option) => (
@@ -151,42 +154,33 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
             </Select>
           </div>
 
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-base">
-              عنوان المشكلة <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="مثال: المنتج وصل تالف"
-              className="text-base"
-            />
-          </div>
-
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-base">
-              وصف المشكلة <span className="text-destructive">*</span>
+              {language === 'ar' ? 'وصف المشكلة' : 'Description'} <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="اشرح المشكلة بالتفصيل..."
+              placeholder={language === 'ar' ? 'اشرح المشكلة بالتفصيل...' : 'Explain the issue in detail...'}
               rows={6}
               className="resize-none text-base"
+              data-testid="textarea-issue-description"
             />
             <p className="text-xs text-muted-foreground">
-              كلما كان الوصف أكثر تفصيلاً، كان بإمكاننا مساعدتك بشكل أفضل
+              {language === 'ar' 
+                ? 'كلما كان الوصف أكثر تفصيلاً، كان بإمكاننا مساعدتك بشكل أفضل'
+                : 'The more detailed the description, the better we can help you'}
             </p>
           </div>
 
           {orderId && (
             <div className="bg-muted/50 p-3 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold">رقم الطلب:</span> {orderId.slice(0, 8)}
+                <span className="font-semibold">
+                  {language === 'ar' ? 'رقم الطلب:' : 'Order ID:'}
+                </span> {orderId.slice(0, 8)}
               </p>
             </div>
           )}
@@ -199,22 +193,24 @@ export function IssueReportDialog({ open, onOpenChange, orderId }: IssueReportDi
             onClick={handleClose}
             disabled={submitIssueMutation.isPending}
             className="flex-1 sm:flex-none"
+            data-testid="button-cancel-issue"
           >
-            إلغاء
+            {language === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={submitIssueMutation.isPending}
             className="flex-1 sm:flex-none"
+            data-testid="button-submit-issue"
           >
             {submitIssueMutation.isPending ? (
               <>
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                جاري الإرسال...
+                <Loader2 className={language === 'ar' ? 'ml-2 h-4 w-4 animate-spin' : 'mr-2 h-4 w-4 animate-spin'} />
+                {language === 'ar' ? 'جاري الإرسال...' : 'Sending...'}
               </>
             ) : (
-              'إرسال البلاغ'
+              language === 'ar' ? 'إرسال البلاغ' : 'Submit Report'
             )}
           </Button>
         </DialogFooter>
