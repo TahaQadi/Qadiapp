@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package, X, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package, X, Send, Loader2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Product, Lta } from '@shared/schema';
 import { SEO } from "@/components/SEO";
@@ -26,6 +26,14 @@ interface ProductWithLtaPrice extends Product {
   hasPrice: boolean;
 }
 
+interface PriceRequestItem {
+  productId: string;
+  productSku: string;
+  productNameEn: string;
+  productNameAr: string;
+  quantity: number;
+}
+
 export default function CatalogPage() {
   const [, params] = useRoute('/catalog/:category');
   const category = params?.category;
@@ -35,13 +43,9 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
-  const [priceRequestList, setPriceRequestList] = useState<Array<{
-    productId: string;
-    productSku: string;
-    productNameEn: string;
-    productNameAr: string;
-  }>>([]);
+  const [priceRequestList, setPriceRequestList] = useState<PriceRequestItem[]>([]);
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
+  const [priceRequestExpanded, setPriceRequestExpanded] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [selectedLtaId, setSelectedLtaId] = useState('');
 
@@ -145,6 +149,7 @@ export default function CatalogPage() {
       productSku: product.sku,
       productNameEn: product.nameEn,
       productNameAr: product.nameAr,
+      quantity: 1,
     }]);
 
     toast({
@@ -188,7 +193,7 @@ export default function CatalogPage() {
       ltaId: selectedLtaId,
       products: priceRequestList.map(item => ({
         productId: item.productId,
-        quantity: 1
+        quantity: item.quantity
       })),
       notes: priceRequestMessage || undefined
     });
@@ -288,45 +293,120 @@ export default function CatalogPage() {
           </p>
         </div>
 
-        {/* Price Request List Banner */}
-        {user && priceRequestList.length > 0 && (
-          <Card className="mb-6 bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-background border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 animate-fade-in">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="p-2 rounded-xl bg-orange-500/10 flex-shrink-0">
-                    <Heart className="h-5 w-5 text-orange-500 fill-current" />
+        {/* Price Request List Banner - Above Search */}
+          {priceRequestList.length > 0 && (
+            <Card className="mb-6 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20 border-pink-200 dark:border-pink-800 overflow-hidden transition-all duration-300 hover:shadow-lg">
+              <CardContent className="p-0">
+                {/* Compact Header */}
+                <div 
+                  className="flex items-center justify-between gap-4 p-4 cursor-pointer hover:bg-pink-100/50 dark:hover:bg-pink-900/20 transition-colors"
+                  onClick={() => setPriceRequestExpanded(!priceRequestExpanded)}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2 rounded-full bg-pink-100 dark:bg-pink-900 animate-pulse">
+                      <Heart className="h-5 w-5 text-pink-600 dark:text-pink-400 fill-current" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm flex items-center gap-2">
+                        {language === 'ar' ? 'قائمة طلب السعر' : 'Price Request List'}
+                        <Badge variant="secondary" className="text-xs">
+                          {priceRequestList.length}
+                        </Badge>
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ar' 
+                          ? `${priceRequestList.length} منتج في القائمة` 
+                          : `${priceRequestList.length} items in list`}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-sm mb-1">
-                      {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {priceRequestList.length} {language === 'ar' ? 'منتج' : 'products'}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPriceRequestDialogOpen(true);
+                      }}
+                      className="bg-pink-600 hover:bg-pink-700 text-white"
+                    >
+                      <Send className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'إرسال' : 'Submit'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPriceRequestExpanded(!priceRequestExpanded);
+                      }}
+                      className="h-8 w-8"
+                    >
+                      {priceRequestExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPriceRequestDialogOpen(true)}
-                  >
-                    {language === 'ar' ? 'عرض وإرسال' : 'View & Send'}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setPriceRequestList([])}
-                    className="h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
+                {/* Expandable Content */}
+                {priceRequestExpanded && (
+                  <div className="border-t border-pink-200 dark:border-pink-800 bg-background/50 backdrop-blur-sm animate-slide-down">
+                    <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                      {priceRequestList.map((item) => (
+                        <div 
+                          key={item.productId} 
+                          className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {language === 'ar' ? item.productNameAr : item.productNameEn}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              SKU: {item.productSku} • {language === 'ar' ? 'الكمية:' : 'Qty:'} {item.quantity}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveFromPriceRequest(item.productId)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-4 border-t border-border/50 bg-muted/30 flex items-center justify-between gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPriceRequestList([]);
+                          setPriceRequestExpanded(false);
+                        }}
+                        className="flex-1"
+                      >
+                        <Trash2 className="h-4 w-4 me-1" />
+                        {language === 'ar' ? 'مسح الكل' : 'Clear All'}
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setPriceRequestDialogOpen(true)}
+                        className="flex-1 bg-pink-600 hover:bg-pink-700"
+                      >
+                        <Send className="h-4 w-4 me-1" />
+                        {language === 'ar' ? 'إرسال الطلب' : 'Submit Request'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
         {/* Search */}
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
