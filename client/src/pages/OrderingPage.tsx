@@ -592,13 +592,15 @@ export default function OrderingPage() {
 
   const formattedOrders = useMemo(() => orders.map(order => {
     const orderItems = safeJsonParse(order.items, []) as any[];
+    // Calculate total quantity of all items
+    const totalQuantity = orderItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
     return {
       id: order.id,
       createdAt: new Date(order.createdAt),
-      itemCount: orderItems.length,
+      itemCount: totalQuantity,
       totalAmount: order.totalAmount,
       status: order.status,
-      currency: orderItems[0]?.currency || order.currency || 'ILS',
+      currency: order.currency || 'ILS',
     };
   }), [orders]);
 
@@ -1548,7 +1550,7 @@ export default function OrderingPage() {
                               </span>
                             </div>
                             <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
-                              {order.totalAmount} {language === 'ar' ? 'ر.س' : 'SAR'}
+                              {order.totalAmount} {order.currency}
                             </span>
                           </div>
 
