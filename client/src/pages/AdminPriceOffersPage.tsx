@@ -177,6 +177,19 @@ export default function AdminPriceOffersPage() {
       return;
     }
 
+    // Validate all prices are filled
+    const missingPrices = Array.from(selectedItems.entries()).filter(([_, data]) => !data.price || parseFloat(data.price) <= 0);
+    if (missingPrices.length > 0) {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar" 
+          ? `يرجى إدخال أسعار صحيحة لجميع المنتجات (${missingPrices.length} منتج بدون سعر)`
+          : `Please enter valid prices for all products (${missingPrices.length} items missing prices)`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const request = requests.find((r) => r.id === selectedRequestId);
     if (!request) {
       toast({
@@ -195,7 +208,7 @@ export default function AdminPriceOffersPage() {
         nameEn: product?.nameEn || "",
         nameAr: product?.nameAr || "",
         quantity: data.quantity,
-        price: data.price || "0",
+        price: data.price,
       };
     });
 
@@ -422,55 +435,99 @@ export default function AdminPriceOffersPage() {
 
             {selectedRequestId && selectedLtaId && products.length > 0 && (
               <>
-                <div className="border rounded-lg p-4 space-y-3">
-                  <h4 className="font-semibold">{language === "ar" ? "المنتجات" : "Products"}</h4>
-                  {Array.from(selectedItems.entries()).map(([productId, data]) => {
-                    const product = products.find((p) => p.id === productId);
-                    if (!product) return null;
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">{language === "ar" ? "المنتجات والأسعار" : "Products & Pricing"}</h4>
+                    <span className="text-sm text-muted-foreground">
+                      {language === "ar" ? `${selectedItems.size} منتج` : `${selectedItems.size} items`}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                      <div className="col-span-5">{language === "ar" ? "المنتج" : "Product"}</div>
+                      <div className="col-span-2 text-center">{language === "ar" ? "الكمية" : "Qty"}</div>
+                      <div className="col-span-3">{language === "ar" ? "سعر الوحدة" : "Unit Price"}</div>
+                      <div className="col-span-2 text-right">{language === "ar" ? "الإجمالي" : "Total"}</div>
+                    </div>
+                    
+                    {Array.from(selectedItems.entries()).map(([productId, data]) => {
+                      const product = products.find((p) => p.id === productId);
+                      if (!product) return null;
 
-                    return (
-                      <div key={productId} className="flex items-center gap-3 p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {language === "ar" ? product.nameAr : product.nameEn}
+                      const itemTotal = data.price ? (parseFloat(data.price) * data.quantity).toFixed(2) : "0.00";
+
+                      return (
+                        <div key={productId} className="grid grid-cols-12 gap-2 items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="col-span-5">
+                            <div className="font-medium text-sm">
+                              {language === "ar" ? product.nameAr : product.nameEn}
+                            </div>
+                            <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
                           </div>
-                          <div className="text-sm text-muted-foreground">SKU: {product.sku}</div>
+                          
+                          <div className="col-span-2 flex items-center justify-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateItemQuantity(productId, -1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <div className="w-12 text-center font-medium">{data.quantity}</div>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateItemQuantity(productId, 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          <div className="col-span-3">
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm text-muted-foreground">$</span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="0.00"
+                                value={data.price}
+                                onChange={(e) => updateItemPrice(productId, e.target.value)}
+                                className="h-9"
+                                data-testid={`input-price-${productId}`}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-2 text-right font-semibold">
+                            ${itemTotal}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => updateItemQuantity(productId, -1)}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <Input
-                            type="number"
-                            value={data.quantity}
-                            className="w-16 text-center"
-                            readOnly
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => updateItemQuantity(productId, 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="w-32">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="Price"
-                            value={data.price}
-                            onChange={(e) => updateItemPrice(productId, e.target.value)}
-                            data-testid={`input-price-${productId}`}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-3 border-t space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{language === "ar" ? "المجموع الفرعي" : "Subtotal"}:</span>
+                      <span className="font-medium">
+                        ${Array.from(selectedItems.entries()).reduce((sum, [productId, data]) => {
+                          return sum + (data.price ? parseFloat(data.price) * data.quantity : 0);
+                        }, 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>{language === "ar" ? "الإجمالي (شامل الضريبة)" : "Total (Tax Included)"}:</span>
+                      <span className="text-primary">
+                        ${Array.from(selectedItems.entries()).reduce((sum, [productId, data]) => {
+                          return sum + (data.price ? parseFloat(data.price) * data.quantity : 0);
+                        }, 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -478,19 +535,30 @@ export default function AdminPriceOffersPage() {
                     <Label>{language === "ar" ? "الصلاحية (أيام)" : "Validity (Days)"}</Label>
                     <Input
                       type="number"
+                      min="1"
                       value={validityDays}
                       onChange={(e) => setValidityDays(e.target.value)}
                       data-testid="input-validity-days"
                     />
                   </div>
+                  <div>
+                    <Label>{language === "ar" ? "تاريخ الانتهاء" : "Expiry Date"}</Label>
+                    <Input
+                      type="text"
+                      value={new Date(Date.now() + parseInt(validityDays || "30") * 24 * 60 * 60 * 1000).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US")}
+                      readOnly
+                      className="bg-muted"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <Label>{language === "ar" ? "ملاحظات" : "Notes"}</Label>
+                  <Label>{language === "ar" ? "ملاحظات (اختياري)" : "Notes (Optional)"}</Label>
                   <Textarea
                     value={offerNotes}
                     onChange={(e) => setOfferNotes(e.target.value)}
                     rows={3}
+                    placeholder={language === "ar" ? "أضف أي ملاحظات إضافية..." : "Add any additional notes..."}
                     data-testid="textarea-notes"
                   />
                 </div>
