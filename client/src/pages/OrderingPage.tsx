@@ -794,7 +794,7 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
+        <CardFooter className="p-0 gap-2 relative z-20 flex-col">
           {product.hasPrice ? (
             <>
               {cartItem ? (
