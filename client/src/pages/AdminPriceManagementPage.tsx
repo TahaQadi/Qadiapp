@@ -391,8 +391,14 @@ export default function AdminPriceManagementPage() {
   };
 
   const handleCreateOffer = (request: PriceRequest) => {
-    // Navigate to price management page with request ID for auto-fill
-    setLocation(`/admin/price-management?requestId=${request.id}`);
+    // Set up the form data from the request
+    setLinkedRequestId(request.id);
+    setSelectedLtaId(request.ltaId || '');
+    setPdfLtaId(request.ltaId || '');
+    setPdfNotes(request.notes || '');
+    
+    // Navigate to price offers creation page
+    setLocation(`/admin/price-offers/create?requestId=${request.id}`);
     
     toast({
       title: language === 'ar' ? 'إنشاء عرض من الطلب' : 'Creating Offer from Request',
@@ -572,8 +578,8 @@ export default function AdminPriceManagementPage() {
                                     {request.requestNumber}
                                   </h3>
                                   {linkedOffer && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      <FileText className="h-3 w-3 mr-1" />
+                                    <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700">
+                                      <CheckCircle className="h-3 w-3 mr-1" />
                                       {linkedOffer.offerNumber}
                                     </Badge>
                                   )}

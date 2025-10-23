@@ -576,6 +576,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If created from request, mark request as processed
       if (requestId) {
         await storage.updatePriceRequestStatus(requestId, 'processed');
+        
+        // Notify client that their request has been processed
+        const request = await storage.getPriceRequest(requestId);
+        if (request) {
+          await storage.createNotification({
+            clientId: request.clientId,
+            type: 'system',
+            titleEn: 'Price Request Processed',
+            titleAr: 'تمت معالجة طلب السعر',
+            messageEn: `Your price request ${request.requestNumber} has been processed. An offer will be sent to you shortly.`,
+            messageAr: `تمت معالجة طلب السعر ${request.requestNumber}. سيتم إرسال عرض السعر قريباً.`,
+            metadata: JSON.stringify({ requestId: request.id, offerId: offer.id })
+          });
+        }
       }
 
       res.json(offer);
