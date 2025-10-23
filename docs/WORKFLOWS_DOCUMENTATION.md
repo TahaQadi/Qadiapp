@@ -301,6 +301,24 @@ graph TD
 
 ## Price Management Workflows
 
+### Recent Changes (Jan 2025)
+
+**Price Request/Offer Linking Fix**
+- Fixed issue where price requests and offers were not properly linked
+- Updated `AdminPriceRequestsPage.tsx` to show "Create Offer" button for pending requests
+- Modified button to navigate to `/admin/price-offers/create?requestId={request.id}`
+- Added visual indicator (badge) when an offer has been created from a request
+- Updated request status to 'processed' when offer is created
+- Removed duplicate "Create Offer" dialog - using direct navigation instead
+- Fixed import issue: removed Next.js `Link` component, using direct navigation
+
+**Key Implementation Details**:
+1. Price requests now have a `requestId` field in `price_offers` table
+2. When creating an offer from a request, the `requestId` is passed as URL parameter
+3. Admin can click "Create Offer" button which navigates to creation page with pre-filled data
+4. After offer creation, request status automatically updates to 'processed'
+5. UI shows visual feedback when request has been processed
+
 ### 1. Price Request & Offer Flow
 
 ```mermaid
@@ -317,34 +335,31 @@ graph TD
     J --> K[Notify client: Request submitted]
     K --> L[Admin views /admin/price-requests]
     L --> M[Admin clicks 'Create Offer from Request']
-    M --> N[Form pre-filled with request data]
-    N --> O[Admin adjusts prices/adds tax]
-    O --> P[Admin sets validity date]
-    P --> Q[POST /api/admin/price-offers]
-    Q --> R[Generate offer number: PO-timestamp-####]
-    R --> S[Insert into price_offers table]
-    S --> T[Status = 'draft']
-    T --> U[Admin clicks 'Send Offer']
-    U --> V[POST /api/admin/price-offers/:id/send]
-    V --> W[Load active price_offer template]
-    W --> X[Generate PDF with PDFKit]
-    X --> Y[Apply Arabic text reshaping]
-    Y --> Z[Save PDF to Object Storage]
-    Z --> AA[Update offer.pdfPath]
-    AA --> AB[Update offer.status = 'sent']
-    AB --> AC[Notify client: New offer available]
-    AC --> AD[Client views /price-offers]
-    AD --> AE[Click offer to view details]
-    AE --> AF{Auto-mark as viewed}
-    AF --> AG[Update offer.status = 'viewed']
-    AG --> AH[Client clicks 'Accept' or 'Reject']
-    AH --> AI[POST /api/price-offers/:id/respond]
-    AI --> AJ{Response type?}
-    AJ -->|Accept| AK[Update offer.status = 'accepted']
-    AJ -->|Reject| AL[Update offer.status = 'rejected']
-    AK --> AM[Notify admins: Offer accepted]
-    AL --> AN[Notify admins: Offer rejected]
-    AM --> AO[Client can now place order]
+    M --> N[Navigate to /admin/price-offers/create?requestId=XXX]
+    N --> O[Form pre-filled with request data]
+    O --> P[Admin adjusts prices/adds tax]
+    P --> Q[Admin sets validity date]
+    Q --> R[POST /api/admin/price-offers]
+    R --> S[Generate offer number: PO-timestamp-####]
+    S --> T[Insert into price_offers table with requestId]
+    T --> U[Update request.status = 'processed']
+    U --> V[Status = 'draft']
+    V --> W[Admin clicks 'Send Offer']
+    W --> X[POST /api/admin/price-offers/:id/send]
+    X --> Y[Load active price_offer template]
+    Y --> Z[Generate PDF with PDFKit]
+    Z --> AA[Apply Arabic text reshaping]
+    AA --> AB[Save PDF to Object Storage]
+    AB --> AC[Update offer.pdfPath]
+    AC --> AD[Update offer.status = 'sent']
+    AD --> AE[Notify client: New offer available]
+    AE --> AF[Client views /price-offers]
+    AF --> AG[Click offer to view details]
+    AG --> AH{Auto-mark as viewed}
+    AH --> AI[Update offer.status = 'viewed']
+    AI --> AJ[Client clicks 'Accept' or 'Reject']
+    AJ --> AK[POST /api/price-offers/:id/respond]
+    AK -->
 ```
 
 **Key Points**:
@@ -578,7 +593,7 @@ graph TD
 
 **Allowed Statuses**:
 - pending
-- confirmed  
+- confirmed
 - processing
 
 **Not Allowed**:

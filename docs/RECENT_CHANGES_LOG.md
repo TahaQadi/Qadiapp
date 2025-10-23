@@ -1,6 +1,66 @@
 
 # Recent Changes Log
 
+## January 21, 2025 - Price Request/Offer Linking Fix
+
+### Issue
+Price requests and price offers were not properly linked, making it difficult to track which offers were created from which requests.
+
+### Changes Made
+
+#### 1. AdminPriceRequestsPage.tsx
+- **Removed**: Next.js `Link` import (not available in React Router setup)
+- **Fixed**: "Create Offer" button now uses direct navigation via `window.location.href`
+- **Added**: Visual indicator (badge) showing when a request has been processed
+- **Added**: Button state management - button is disabled after offer is created
+- **Updated**: UI to show "Already Created" text when request status is 'processed'
+- **Removed**: Duplicate offer creation dialog - simplified to direct navigation
+
+#### 2. Server Routes (routes.ts)
+- **Confirmed**: `requestId` field exists in `price_offers` table schema
+- **Confirmed**: Offer creation endpoint accepts `requestId` parameter
+- **Confirmed**: Request status is updated to 'processed' when offer is created
+
+#### 3. Database Schema
+```typescript
+priceOffers: {
+  requestId: varchar("request_id").references(() => priceRequests.id, { onDelete: "set null" })
+  // This allows linking offers back to their originating requests
+}
+```
+
+### Technical Details
+
+**Navigation Flow**:
+1. Admin clicks "Create Offer" on a pending price request
+2. Page navigates to `/admin/price-offers/create?requestId={request.id}`
+3. Offer creation page pre-fills data from the request
+4. When offer is saved, `requestId` is included in the POST request
+5. Server updates request status to 'processed'
+6. UI reflects the change immediately
+
+**Status Management**:
+- Request status: `pending` → `processed` (when offer is created)
+- Offer status: `draft` → `sent` → `viewed` → `accepted/rejected`
+
+### Testing
+- ✅ Price request creation works
+- ✅ "Create Offer" button navigates correctly
+- ✅ Request status updates to 'processed'
+- ✅ Visual feedback shows when request is processed
+- ✅ Button is disabled after offer creation
+
+### Files Modified
+- `client/src/pages/AdminPriceRequestsPage.tsx`
+- `docs/WORKFLOWS_DOCUMENTATION.md` (this update)
+- `docs/RECENT_CHANGES_LOG.md` (this file)
+
+---
+
+
+
+# Recent Changes Log
+
 ## Date: 2025-01-23
 
 ### Price Management System Improvements
