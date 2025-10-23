@@ -318,24 +318,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client: Create price request
   app.post("/api/price-requests", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { ltaId, products, notes } = req.body;
+      let { ltaId, products, notes } = req.body;
 
-      if (!ltaId || !products || !Array.isArray(products) || products.length === 0) {
+      if (!products || !Array.isArray(products) || products.length === 0) {
         return res.status(400).json({
-          message: "LTA ID and products are required",
-          messageAr: "معرف الاتفاقية والمنتجات مطلوبة"
+          message: "Products are required",
+          messageAr: "المنتجات مطلوبة"
         });
       }
 
-      // Verify client has access to this LTA
-      const clientLtas = await storage.getClientLtas(req.client.id);
-      const hasAccess = clientLtas.some(lta => lta.id === ltaId);
+      // Bootstrap flow: If no ltaId provided, check if client has any active LTAs
+      if (!ltaId) {
+        const clientLtas = await storage.getClientLtas(req.client.id);
+        const activeLtas = clientLtas.filter(lta => lta.status === 'active');
+        
+        if (activeLtas.length === 0) {
+          // Auto-create draft LTA for this client
+          const client = await storage.getClient(req.client.id);
+          const ltaCount = (await storage.getLtas()).length + 1;
+          const ltaName = `Draft Contract - ${client?.nameEn || 'Client'} - ${new Date().toISOString().split('T')[0]}`;
+          
+          const newLta = await storage.createLta({
+            nameEn: ltaName,
+            nameAr: `عقد مسودة - ${client?.nameAr || 'عميل'} - ${new Date().toISOString().split('T')[0]}`,
+            descriptionEn: 'Auto-generated draft contract from price request',
+            descriptionAr: 'عقد مسودة تم إنشاؤه تلقائياً من طلب السعر',
+            status: 'draft'
+          });
+          
+          // Assign draft LTA to client
+          await storage.assignLtaToClient(newLta.id, req.client.id);
+          
+          ltaId = newLta.id;
+        } else {
+          return res.status(400).json({
+            message: "Please select an LTA",
+            messageAr: "يرجى اختيار اتفاقية"
+          });
+        }
+      } else {
+        // Verify client has access to this LTA
+        const clientLtas = await storage.getClientLtas(req.client.id);
+        const hasAccess = clientLtas.some(lta => lta.id === ltaId);
 
-      if (!hasAccess) {
-        return res.status(403).json({
-          message: "You don't have access to this LTA",
-          messageAr: "ليس لديك صلاحية الوصول لهذه الاتفاقية"
-        });
+        if (!hasAccess) {
+          return res.status(403).json({
+            message: "You don't have access to this LTA",
+            messageAr: "ليس لديك صلاحية الوصول لهذه الاتفاقية"
+          });
+        }
       }
 
       // Generate request number
@@ -480,6 +511,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         respondedAt: new Date(),
         responseNote: note || null
       });
+
+      // Auto-activate draft LTA if offer is accepted
+      if (status === 'accepted' && offer.ltaId) {
+        const lta = await storage.getLta(offer.ltaId);
+        
+        if (lta && lta.status === 'draft') {
+          // Activate the LTA with 1-year validity
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          
+          await storage.updateLta(offer.ltaId, {
+            status: 'active',
+            startDate,
+            endDate
+          });
+          
+          // Populate lta_products from offer items
+          const items = offer.items as any[];
+          for (const item of items) {
+            try {
+              await storage.assignProductToLta(offer.ltaId, {
+                productId: item.productId,
+                contractPrice: item.unitPrice.toString(),
+                currency: 'USD'
+              });
+            } catch (error) {
+              // Ignore duplicate product errors
+              console.log('Product already assigned to LTA or error:', error);
+            }
+          }
+        }
+      }
 
       // Notify admins
       const client = await storage.getClient(req.client.id);
