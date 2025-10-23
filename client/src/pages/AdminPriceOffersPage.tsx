@@ -199,9 +199,7 @@ export default function AdminPriceOffersPage() {
       };
     });
 
-    const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
-    const tax = subtotal * 0.15;
-    const total = subtotal + tax;
+    const total = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
 
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + parseInt(validityDays || "30"));
@@ -211,8 +209,8 @@ export default function AdminPriceOffersPage() {
       clientId: request.clientId,
       ltaId: selectedLtaId,
       items,
-      subtotal: subtotal.toFixed(2),
-      tax: tax.toFixed(2),
+      subtotal: total.toFixed(2),
+      tax: "0.00",
       total: total.toFixed(2),
       notes: offerNotes || undefined,
       validUntil: validUntil.toISOString(),
@@ -584,16 +582,8 @@ export default function AdminPriceOffersPage() {
               </div>
 
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{language === "ar" ? "المجموع الفرعي" : "Subtotal"}:</span>
-                  <span>${selectedOffer.subtotal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{language === "ar" ? "الضريبة" : "Tax"}:</span>
-                  <span>${selectedOffer.tax}</span>
-                </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                  <span>{language === "ar" ? "الإجمالي" : "Total"}:</span>
+                  <span>{language === "ar" ? "الإجمالي (شامل الضريبة)" : "Total (Tax Included)"}:</span>
                   <span>${selectedOffer.total}</span>
                 </div>
               </div>

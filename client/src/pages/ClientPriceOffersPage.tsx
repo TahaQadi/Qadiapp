@@ -316,8 +316,8 @@ export default function ClientPriceOffersPage() {
                 ))}
               </div>
 
-              <div className="flex justify-between items-center text-lg font-bold pt-2 border-t">
-                <span>{language === "ar" ? "الإجمالي" : "Total"}</span>
+              <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                <span>{language === "ar" ? "الإجمالي (شامل الضريبة)" : "Total (Tax Included)"}:</span>
                 <span>${selectedOffer.total}</span>
               </div>
 
