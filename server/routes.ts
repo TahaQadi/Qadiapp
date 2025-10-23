@@ -132,10 +132,6 @@ const uploadDocument = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
-  // Serve static files from attached_assets directory
-  const express = await import('express');
-  app.use('/attached_assets', express.default.static('attached_assets'));
-
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
 
