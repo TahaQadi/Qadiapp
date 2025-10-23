@@ -154,22 +154,7 @@ export default function OrderingPage() {
         console.error('Error loading price request list:', error);
       }
     }
-
-    // Check if admin is creating an offer from price request
-    const requestId = sessionStorage.getItem('createOfferRequestId');
-    if (requestId && user?.isAdmin) {
-      sessionStorage.removeItem('createOfferRequestId');
-      // Small delay to ensure data is loaded
-      setTimeout(() => {
-        // Find the request and open the dialog
-        const request = priceRequests.find((r: any) => r.id === requestId);
-        if (request) {
-          setSelectedRequestForOffer(request);
-          handleOpenCreateOffer(request.id);
-        }
-      }, 500);
-    }
-  }, [user?.isAdmin, priceRequests]);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -207,6 +192,23 @@ export default function OrderingPage() {
     queryKey: ['/api/admin/price-requests'],
     enabled: user?.isAdmin || false,
   });
+
+  // Check if admin is creating an offer from price request (must be after priceRequests query)
+  useEffect(() => {
+    const requestId = sessionStorage.getItem('createOfferRequestId');
+    if (requestId && user?.isAdmin && priceRequests.length > 0) {
+      sessionStorage.removeItem('createOfferRequestId');
+      // Small delay to ensure data is loaded
+      setTimeout(() => {
+        // Find the request and open the dialog
+        const request = priceRequests.find((r: any) => r.id === requestId);
+        if (request) {
+          setSelectedRequestForOffer(request);
+          handleOpenCreateOffer(request.id);
+        }
+      }, 500);
+    }
+  }, [user?.isAdmin, priceRequests]);
 
   const submitOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
