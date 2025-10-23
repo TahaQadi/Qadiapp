@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 import { Loader2, AlertTriangle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -121,15 +123,42 @@ export default function IssueReportsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h2 className="text-2xl font-bold">
-          {i18n.language === 'ar' ? 'بلاغات المشاكل' : 'Issue Reports'}
-        </h2>
-        <p className="text-muted-foreground">
-          {i18n.language === 'ar' ? 'إدارة المشاكل المُبلغ عنها من العملاء' : 'Manage customer-reported issues'}
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-back-admin"
+            >
+              <Link href="/admin">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {i18n.language === 'ar' ? 'بلاغات المشاكل' : 'Issue Reports'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {i18n.language === 'ar' ? 'إدارة المشاكل المُبلغ عنها من العملاء' : 'Manage customer-reported issues'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        <div className="space-y-6">
+          {/* Mobile Header */}
+          <div className="block sm:hidden">
+            <p className="text-muted-foreground text-sm">
+              {i18n.language === 'ar' ? 'إدارة المشاكل المُبلغ عنها من العملاء' : 'Manage customer-reported issues'}
+            </p>
+          </div>
 
       <Card>
         <CardHeader>
@@ -266,6 +295,8 @@ export default function IssueReportsPage() {
           )}
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   );
 }

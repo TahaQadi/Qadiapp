@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 import { AlertCircle, AlertTriangle, Info, Trash2, RefreshCw } from "lucide-react";
 
 interface ErrorLog {
@@ -116,19 +118,46 @@ export default function ErrorLogsPage() {
   };
 
   return (
-    <div className={`container mx-auto p-6 ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">
-          {isRTL ? 'سجلات الأخطاء' : 'Error Logs'}
-        </h1>
-        <p className="text-muted-foreground">
-          {isRTL ? 'مراقبة وإدارة أخطاء التطبيق' : 'Monitor and manage application errors'}
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-back-admin"
+            >
+              <Link href="/admin">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {isRTL ? 'سجلات الأخطاء' : 'Error Logs'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {isRTL ? 'مراقبة وإدارة أخطاء التطبيق' : 'Monitor and manage application errors'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        <div className={`space-y-6 ${isRTL ? 'rtl' : 'ltr'}`}>
+          {/* Mobile Header */}
+          <div className="block sm:hidden">
+            <p className="text-muted-foreground text-sm">
+              {isRTL ? 'مراقبة وإدارة أخطاء التطبيق' : 'Monitor and manage application errors'}
+            </p>
+          </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
@@ -177,14 +206,14 @@ export default function ErrorLogsPage() {
 
       {/* Filters */}
       <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 min-w-[200px]">
               <label className="text-sm font-medium mb-2 block">
                 {isRTL ? 'المستوى' : 'Level'}
               </label>
               <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger>
+                <SelectTrigger className="min-h-[44px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,7 +230,7 @@ export default function ErrorLogsPage() {
                 {isRTL ? 'العدد' : 'Limit'}
               </label>
               <Select value={limit.toString()} onValueChange={(v) => setLimit(parseInt(v))}>
-                <SelectTrigger>
+                <SelectTrigger className="min-h-[44px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -213,12 +242,12 @@ export default function ErrorLogsPage() {
               </Select>
             </div>
 
-            <div className="flex gap-2 items-end">
-              <Button onClick={fetchLogs} variant="outline">
+            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
+              <Button onClick={fetchLogs} variant="outline" className="min-h-[44px]">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 {isRTL ? 'تحديث' : 'Refresh'}
               </Button>
-              <Button onClick={clearOldLogs} variant="destructive">
+              <Button onClick={clearOldLogs} variant="destructive" className="min-h-[44px]">
                 <Trash2 className="h-4 w-4 mr-2" />
                 {isRTL ? 'مسح القديم' : 'Clear Old'}
               </Button>
@@ -316,6 +345,8 @@ export default function ErrorLogsPage() {
           </ScrollArea>
         </CardContent>
       </Card>
+        </div>
+      </main>
     </div>
   );
 }

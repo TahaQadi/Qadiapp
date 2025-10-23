@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 import { 
   Star, 
   TrendingUp, 
@@ -198,16 +200,41 @@ export default function FeedbackDashboardPage() {
   const ratingTrend = getRatingTrend();
 
   return (
-    <div className="container mx-auto p-6 space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {language === 'ar' ? 'تحليلات الملاحظات' : 'Feedback Analytics'}
-          </h1>
-          <p className="text-muted-foreground">
-            {language === 'ar' ? 'رؤى شاملة حول تجربة العملاء' : 'Comprehensive insights into customer experience'}
-          </p>
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-back-admin"
+            >
+              <Link href="/admin">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'تحليلات الملاحظات' : 'Feedback Analytics'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {language === 'ar' ? 'رؤى شاملة حول تجربة العملاء' : 'Comprehensive insights into customer experience'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        <div className="space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {/* Mobile Header */}
+          <div className="block sm:hidden">
+            <p className="text-muted-foreground text-sm">
+              {language === 'ar' ? 'رؤى شاملة حول تجربة العملاء' : 'Comprehensive insights into customer experience'}
+            </p>
           {stats.isEmpty && (
             <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -219,27 +246,29 @@ export default function FeedbackDashboardPage() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">{language === 'ar' ? '7 أيام' : '7 Days'}</SelectItem>
-              <SelectItem value="30d">{language === 'ar' ? '30 يوماً' : '30 Days'}</SelectItem>
-              <SelectItem value="90d">{language === 'ar' ? '90 يوماً' : '90 Days'}</SelectItem>
-              <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All Time'}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={exportData} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            {language === 'ar' ? 'تصدير' : 'Export'}
-          </Button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">{language === 'ar' ? '7 أيام' : '7 Days'}</SelectItem>
+                  <SelectItem value="30d">{language === 'ar' ? '30 يوماً' : '30 Days'}</SelectItem>
+                  <SelectItem value="90d">{language === 'ar' ? '90 يوماً' : '90 Days'}</SelectItem>
+                  <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All Time'}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={exportData} variant="outline" className="min-h-[44px]">
+                <Download className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'تصدير' : 'Export'}
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -317,7 +346,7 @@ export default function FeedbackDashboardPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
         {/* Rating Trend */}
         <Card>
           <CardHeader>
@@ -392,7 +421,7 @@ export default function FeedbackDashboardPage() {
       </div>
 
       {/* Aspect Ratings & Top Issues */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
         {/* Aspect Ratings */}
         <Card>
           <CardHeader>
@@ -531,7 +560,9 @@ export default function FeedbackDashboardPage() {
             )}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+        </div>
+      </main>
     </div>
   );
 }

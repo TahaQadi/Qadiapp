@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/EmptyState';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 import { 
   Star, 
   TrendingUp, 
@@ -297,49 +299,76 @@ export default function CustomerFeedbackPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
-          </h1>
-          <p className="text-muted-foreground">
-            {language === 'ar' ? 'التحليلات والتقييمات وإدارة المشاكل' : 'Analytics, ratings, and issue management'}
-          </p>
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              data-testid="button-back-admin"
+            >
+              <Link href="/admin">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                {language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {language === 'ar' ? 'التحليلات والتقييمات وإدارة المشاكل' : 'Analytics, ratings, and issue management'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
+              <SelectTrigger className="w-24 sm:w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">{language === 'ar' ? '7 أيام' : '7 Days'}</SelectItem>
+                <SelectItem value="30d">{language === 'ar' ? '30 يوماً' : '30 Days'}</SelectItem>
+                <SelectItem value="90d">{language === 'ar' ? '90 يوماً' : '90 Days'}</SelectItem>
+                <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All Time'}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={exportData} variant="outline" size="sm" className="min-h-[44px]">
+              <Download className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'تصدير' : 'Export'}</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">{language === 'ar' ? '7 أيام' : '7 Days'}</SelectItem>
-              <SelectItem value="30d">{language === 'ar' ? '30 يوماً' : '30 Days'}</SelectItem>
-              <SelectItem value="90d">{language === 'ar' ? '90 يوماً' : '90 Days'}</SelectItem>
-              <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All Time'}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={exportData} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            {language === 'ar' ? 'تصدير' : 'Export'}
-          </Button>
-        </div>
-      </div>
+      </header>
+
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        <div className="space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          {/* Mobile Header */}
+          <div className="block sm:hidden">
+            <p className="text-muted-foreground text-sm">
+              {language === 'ar' ? 'التحليلات والتقييمات وإدارة المشاكل' : 'Analytics, ratings, and issue management'}
+            </p>
+          </div>
 
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="analytics">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            {language === 'ar' ? 'التحليلات' : 'Analytics'}
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm min-h-[44px]">
+            <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">{language === 'ar' ? 'التحليلات' : 'Analytics'}</span>
+            <span className="sm:hidden">{language === 'ar' ? 'تحليل' : 'Analytics'}</span>
           </TabsTrigger>
-          <TabsTrigger value="ratings">
-            <Star className="h-4 w-4 mr-2" />
-            {language === 'ar' ? 'التقييمات' : 'Ratings'}
+          <TabsTrigger value="ratings" className="text-xs sm:text-sm min-h-[44px]">
+            <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">{language === 'ar' ? 'التقييمات' : 'Ratings'}</span>
+            <span className="sm:hidden">{language === 'ar' ? 'تقييم' : 'Ratings'}</span>
           </TabsTrigger>
-          <TabsTrigger value="issues">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            {language === 'ar' ? 'المشاكل' : 'Issues'}
+          <TabsTrigger value="issues" className="text-xs sm:text-sm min-h-[44px]">
+            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">{language === 'ar' ? 'المشاكل' : 'Issues'}</span>
+            <span className="sm:hidden">{language === 'ar' ? 'مشاكل' : 'Issues'}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -348,7 +377,7 @@ export default function CustomerFeedbackPage() {
           {stats && (
             <>
               {/* Key Metrics */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -405,7 +434,7 @@ export default function CustomerFeedbackPage() {
               </div>
 
               {/* Charts Row */}
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                 {/* Trend Chart */}
                 <Card>
                   <CardHeader>
@@ -650,6 +679,8 @@ export default function CustomerFeedbackPage() {
           )}
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   );
 }
