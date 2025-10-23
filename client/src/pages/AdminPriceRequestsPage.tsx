@@ -78,9 +78,8 @@ export default function AdminPriceRequestsPage() {
   };
 
   const handleCreateOffer = (request: PriceRequest) => {
-    // Store request ID in sessionStorage and navigate to ordering page
-    sessionStorage.setItem('createOfferRequestId', request.id);
-    window.location.href = '/ordering';
+    // Navigate to price management page with request ID
+    window.location.href = `/admin/price-management?requestId=${request.id}&action=createOffer`;
   };
 
   const handleGeneratePDF = (request: PriceRequest) => {
@@ -210,11 +209,7 @@ export default function AdminPriceRequestsPage() {
                         <>
                           <Button
                             size="sm"
-                            onClick={() => {
-                              // Store request ID in sessionStorage and navigate to ordering page
-                              sessionStorage.setItem('createOfferRequestId', request.id);
-                              window.location.href = '/ordering';
-                            }}
+                            onClick={() => handleCreateOffer(request)}
                             data-testid={`button-create-offer-${request.id}`}
                           >
                             <Send className="h-4 w-4 mr-2" />

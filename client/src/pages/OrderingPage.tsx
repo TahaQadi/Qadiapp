@@ -37,6 +37,8 @@ import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
 import { cn } from '@/lib/utils';
 import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
+import { EmptyState } from '@/components/EmptyState'; // Import EmptyState component
+import { Label } from '@/components/ui/label'; // Import Label component
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -113,13 +115,14 @@ export default function OrderingPage() {
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false); // Added for micro-feedback
-  
+
   // Price offer creation states
   const [createOfferDialogOpen, setCreateOfferDialogOpen] = useState(false);
   const [selectedPriceRequestId, setSelectedPriceRequestId] = useState<string | null>(null);
   const [offerItems, setOfferItems] = useState<Map<string, { quantity: number; price: string }>>(new Map());
   const [offerNotes, setOfferNotes] = useState('');
   const [offerValidityDays, setOfferValidityDays] = useState('30');
+  const [selectedRequestForOffer, setSelectedRequestForOffer] = useState<any | null>(null); // State to hold the selected price request for offer creation
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('lta-products'); // Default to 'lta-products'
@@ -158,10 +161,15 @@ export default function OrderingPage() {
       sessionStorage.removeItem('createOfferRequestId');
       // Small delay to ensure data is loaded
       setTimeout(() => {
-        handleOpenCreateOffer(requestId);
+        // Find the request and open the dialog
+        const request = priceRequests.find((r: any) => r.id === requestId);
+        if (request) {
+          setSelectedRequestForOffer(request);
+          handleOpenCreateOffer(request.id);
+        }
       }, 500);
     }
-  }, [user?.isAdmin]);
+  }, [user?.isAdmin, priceRequests]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -195,7 +203,7 @@ export default function OrderingPage() {
     queryKey: ['/api/client/orders'],
   });
 
-  const { data: priceRequests = [] } = useQuery<any[]>({
+  const { data: priceRequests = [], isLoading: priceRequestsLoading } = useQuery<any[]>({
     queryKey: ['/api/admin/price-requests'],
     enabled: user?.isAdmin || false,
   });
@@ -266,6 +274,7 @@ export default function OrderingPage() {
       setOfferNotes('');
       setOfferValidityDays('30');
       setSelectedPriceRequestId(null);
+      setSelectedRequestForOffer(null); // Clear selected request
       queryClient.invalidateQueries({ queryKey: ['/api/admin/price-requests'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
     },
@@ -480,6 +489,7 @@ export default function OrderingPage() {
         newMap.set(p.productId, { quantity: p.quantity, price: '' });
       });
       setOfferItems(newMap);
+      setSelectedRequestForOffer(request); // Set the selected request
     }
     setCreateOfferDialogOpen(true);
   };
@@ -518,14 +528,14 @@ export default function OrderingPage() {
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' 
+        description: language === 'ar'
           ? `يرجى إدخال أسعار صحيحة لجميع المنتجات (${missingPrices.length} منتج بدون سعر)`
           : `Please enter valid prices for all products (${missingPrices.length} items missing prices)`,
       });
       return;
     }
 
-    const request = priceRequests.find((r: any) => r.id === selectedPriceRequestId);
+    const request = selectedRequestForOffer; // Use the state variable here
     if (!request) return;
 
     const items = Array.from(offerItems.entries()).map(([productId, data]) => {
@@ -1094,7 +1104,7 @@ export default function OrderingPage() {
   }
 
   // Check for empty state or loading states
-  if (ltasLoading || productsLoading || templatesLoading || ordersLoading) {
+  if (ltasLoading || productsLoading || templatesLoading || ordersLoading || priceRequestsLoading) {
     return (
       <>
         <SEO
@@ -1580,7 +1590,7 @@ export default function OrderingPage() {
                       title={isArabic ? 'لا توجد قوالب' : 'No Templates'}
                       description={isArabic ? 'قم بإنشاء قالب من السلة لحفظ طلباتك المتكررة' : 'Create a template from your cart to save recurring orders'}
                       actionLabel={isArabic ? 'العودة للسلة' : 'Back to Cart'}
-                      onAction={() => setActiveTab('cart')}
+                      onAction={() => setActiveTab('cart')} // Assuming 'cart' is a valid tab value or a way to show cart
                     />
                   </CardContent>
                 </Card>
@@ -1619,8 +1629,8 @@ export default function OrderingPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {formattedOrders.map((order) => {
-                    const items = safeJsonParse(order.items, []) as any[];
-                    const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+                    const orderItems = safeJsonParse(order.items, []) as any[];
+                    const itemCount = orderItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
                     return (
                       <Card
@@ -1891,7 +1901,7 @@ export default function OrderingPage() {
                 </Button>
               )}
             </DialogFooter>
-          </DialogContent>
+          </Dialog>
         </Dialog>
 
         {/* Feedback Dialog */}
@@ -1936,7 +1946,7 @@ export default function OrderingPage() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                {selectedPriceRequestId && offerItems.size > 0 && (
+                {selectedRequestForOffer && offerItems.size > 0 ? (
                   <>
                     <div className="border rounded-lg p-4 space-y-4">
                       <div className="flex items-center justify-between">
@@ -1945,7 +1955,7 @@ export default function OrderingPage() {
                           {language === 'ar' ? `${offerItems.size} منتج` : `${offerItems.size} items`}
                         </span>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
                           <div className="col-span-5">{language === 'ar' ? 'المنتج' : 'Product'}</div>
@@ -1953,7 +1963,7 @@ export default function OrderingPage() {
                           <div className="col-span-3">{language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</div>
                           <div className="col-span-2 text-right">{language === 'ar' ? 'الإجمالي' : 'Total'}</div>
                         </div>
-                        
+
                         {Array.from(offerItems.entries()).map(([productId, data]) => {
                           const product = products.find((p) => p.id === productId);
                           if (!product) return null;
@@ -1968,7 +1978,7 @@ export default function OrderingPage() {
                                 </div>
                                 <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
                               </div>
-                              
+
                               <div className="col-span-2 flex items-center justify-center gap-1">
                                 <Button
                                   variant="outline"
@@ -1988,7 +1998,7 @@ export default function OrderingPage() {
                                   <Plus className="h-3 w-3" />
                                 </Button>
                               </div>
-                              
+
                               <div className="col-span-3">
                                 <div className="flex items-center gap-1">
                                   <span className="text-sm text-muted-foreground">$</span>
@@ -2003,7 +2013,7 @@ export default function OrderingPage() {
                                   />
                                 </div>
                               </div>
-                              
+
                               <div className="col-span-2 text-right font-semibold">
                                 ${itemTotal}
                               </div>
@@ -2055,6 +2065,19 @@ export default function OrderingPage() {
                       />
                     </div>
                   </>
+                ) : (
+                  <div className="text-center py-10">
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p className="text-lg font-medium text-foreground mb-4">
+                      {language === 'ar' ? 'لم يتم تحديد طلب سعر' : 'No Price Request Selected'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      {language === 'ar' ? 'يرجى تحديد طلب سعر من قائمة طلبات الأسعار لإنشاء عرض.' : 'Please select a price request from the list to create an offer.'}
+                    </p>
+                    <Button onClick={() => setCreateOfferDialogOpen(false)}>
+                      {language === 'ar' ? 'حسناً' : 'Got it'}
+                    </Button>
+                  </div>
                 )}
               </div>
               <DialogFooter>
@@ -2066,6 +2089,7 @@ export default function OrderingPage() {
                     setOfferNotes('');
                     setOfferValidityDays('30');
                     setSelectedPriceRequestId(null);
+                    setSelectedRequestForOffer(null); // Clear selected request
                   }}
                 >
                   {language === 'ar' ? 'إلغاء' : 'Cancel'}
