@@ -282,7 +282,7 @@ export default function CatalogPage() {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Welcome Section */}
-        <div className="mb-8 animate-slide-down">
+        <div className="mb-6 animate-slide-down">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">
             {language === 'ar' ? 'كتالوج المنتجات' : 'Product Catalog'}
           </h2>
@@ -293,10 +293,10 @@ export default function CatalogPage() {
           </p>
         </div>
 
-        {/* Price Request List Banner - Above Search */}
-          {priceRequestList.length > 0 && (
-            <Card className="mb-6 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20 border-pink-200 dark:border-pink-800 overflow-hidden transition-all duration-300 hover:shadow-lg">
-              <CardContent className="p-0">
+        {/* Price Request List Banner - Prominent Position */}
+        {priceRequestList.length > 0 && (
+          <Card className="mb-6 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20 border-pink-200 dark:border-pink-800 overflow-hidden transition-all duration-300 hover:shadow-lg animate-slide-down shadow-md">
+            <CardContent className="p-0">
                 {/* Compact Header */}
                 <div 
                   className="flex items-center justify-between gap-4 p-4 cursor-pointer hover:bg-pink-100/50 dark:hover:bg-pink-900/20 transition-colors"
@@ -405,8 +405,8 @@ export default function CatalogPage() {
                   </div>
                 )}
               </CardContent>
-            </Card>
-          )}
+          </Card>
+        )}
 
         {/* Search */}
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
