@@ -196,7 +196,15 @@ export default function ClientPriceOffersPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg">{offer.offerNumber}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">{offer.offerNumber}</CardTitle>
+                            {offer.requestId && (
+                              <Badge variant="outline" className="text-xs">
+                                <FileText className="h-3 w-3 mr-1" />
+                                {language === 'ar' ? 'من طلب' : 'From Request'}
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
                             {formatDateLocalized(new Date(offer.createdAt), language)}
                           </p>

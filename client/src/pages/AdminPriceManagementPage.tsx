@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -13,8 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle } from 'lucide-react';
-import { Link } from 'wouter';
+import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
@@ -100,6 +100,7 @@ interface LTA {
 export default function AdminPriceManagementPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const [location] = useLocation();
   const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
   const [viewRequestDialogOpen, setViewRequestDialogOpen] = useState(false);
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
@@ -114,6 +115,7 @@ export default function AdminPriceManagementPage() {
   const [pdfLtaId, setPdfLtaId] = useState('');
   const [pdfValidityDays, setPdfValidityDays] = useState('30');
   const [pdfNotes, setPdfNotes] = useState('');
+  const [linkedRequestId, setLinkedRequestId] = useState<string | null>(null);
 
   const { data: notifications = [], isLoading: isLoadingRequests } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -141,6 +143,29 @@ export default function AdminPriceManagementPage() {
   }>({
     queryKey: ['/api/admin/lta-assignments'],
   });
+
+  // Auto-fill from price request if requestId is in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestId = params.get('requestId');
+    
+    if (requestId && priceRequests.length > 0) {
+      const request = priceRequests.find(r => r.id === requestId);
+      if (request) {
+        setLinkedRequestId(requestId);
+        setSelectedLtaId(request.ltaId || '');
+        setPdfLtaId(request.ltaId || '');
+        setPdfNotes(request.notes || '');
+        
+        toast({
+          title: language === 'ar' ? 'تم التحميل من الطلب' : 'Loaded from Request',
+          description: language === 'ar' 
+            ? `تم تحميل البيانات من الطلب ${request.requestNumber}` 
+            : `Data loaded from request ${request.requestNumber}`,
+        });
+      }
+    }
+  }, [priceRequests, language, toast]);
 
   const requestNotifications = notifications.filter(n => n.type === 'price_request');
 
@@ -402,6 +427,22 @@ export default function AdminPriceManagementPage() {
       </header>
 
       <main className="container mx-auto px-4 py-6 relative z-10">
+        {linkedRequestId && (
+          <Card className="mb-6 border-primary/50 bg-primary/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-primary" />
+                <p className="text-sm font-medium">
+                  {language === 'ar' 
+                    ? `تم التحميل من طلب السعر: ${priceRequests.find(r => r.id === linkedRequestId)?.requestNumber || linkedRequestId}`
+                    : `Loaded from price request: ${priceRequests.find(r => r.id === linkedRequestId)?.requestNumber || linkedRequestId}`
+                  }
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         <Tabs defaultValue="requests" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2 h-auto p-1">
             <TabsTrigger value="requests" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -498,6 +539,9 @@ export default function AdminPriceManagementPage() {
                     ? JSON.parse(request.products) 
                     : request.products || [];
                   const isCompleted = isRequestCompleted(request);
+                  
+                  // Find linked offer
+                  const linkedOffer = offers.find(o => o.requestId === request.id);
 
                   const client = clients.find(c => c.id === request.clientId);
                   const lta = ltas.find(l => l.id === request.ltaId);
@@ -516,9 +560,17 @@ export default function AdminPriceManagementPage() {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-base sm:text-lg mb-1">
-                                  {request.requestNumber}
-                                </h3>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold text-base sm:text-lg">
+                                    {request.requestNumber}
+                                  </h3>
+                                  {linkedOffer && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      {linkedOffer.offerNumber}
+                                    </Badge>
+                                  )}
+                                </div>
                                 <p className="text-sm font-medium">
                                   {client?.nameEn || client?.nameAr || 'Unknown Client'}
                                 </p>
@@ -631,34 +683,62 @@ export default function AdminPriceManagementPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredOffers.map((offer) => (
-                          <TableRow key={offer.id}>
-                            <TableCell className="font-medium font-mono">{offer.offerNumber}</TableCell>
-                            <TableCell>{getClientName(offer.clientId)}</TableCell>
-                            <TableCell>{getLtaName(offer.ltaId)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {getOfferStatusIcon(offer.status)}
-                                {getStatusBadge(offer.status)}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownload(offer.pdfFileName)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {filteredOffers.map((offer) => {
+                          const linkedRequest = offer.requestId 
+                            ? priceRequests.find(r => r.id === offer.requestId)
+                            : null;
+                          
+                          return (
+                            <TableRow key={offer.id}>
+                              <TableCell className="font-medium font-mono">
+                                <div className="flex items-center gap-2">
+                                  {offer.offerNumber}
+                                  {linkedRequest && (
+                                    <Badge variant="outline" className="text-xs">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      {linkedRequest.requestNumber}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>{getClientName(offer.clientId)}</TableCell>
+                              <TableCell>{getLtaName(offer.ltaId)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {getOfferStatusIcon(offer.status)}
+                                  {getStatusBadge(offer.status)}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center gap-2 justify-end">
+                                  {linkedRequest && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleViewRequest(linkedRequest)}
+                                      title={language === 'ar' ? 'عرض الطلب الأصلي' : 'View original request'}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDownload(offer.pdfFileName)}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
