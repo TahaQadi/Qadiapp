@@ -165,7 +165,7 @@ export default function PriceRequestPage() {
 
       <main className="container mx-auto px-4 py-6 relative">
         <div className="max-w-4xl mx-auto space-y-6">
-          {hasNoActiveLtas ? (
+          {hasNoActiveLtas && (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center space-y-2">
@@ -177,7 +177,9 @@ export default function PriceRequestPage() {
                 </div>
               </CardContent>
             </Card>
-          ) : activeLtas.length > 0 && (
+          )}
+
+          {activeLtas.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>{language === "ar" ? "اختر الاتفاقية" : "Select Agreement"}</CardTitle>
