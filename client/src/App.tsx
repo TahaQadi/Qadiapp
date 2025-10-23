@@ -150,8 +150,6 @@ function Router() {
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />
       <AdminRoute path="/admin/price-management" component={AdminPriceManagementPage} />
       <AdminRoute path="/admin/price-requests" component={AdminPriceRequestsPage} />
-      <AdminRoute path="/admin/price-offers/create" component={AdminPriceOffersPage} />
-      <AdminRoute path="/admin/price-offers" component={AdminPriceOffersPage} />
       <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
       <AdminRoute path="/admin/order-modifications" component={AdminOrderModificationsPage} />
       <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />

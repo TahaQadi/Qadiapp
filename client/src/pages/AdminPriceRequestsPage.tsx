@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Eye, Clock, CheckCircle, Package, Loader2 } from "lucide-react";
+import { FileText, Eye, Clock, CheckCircle, Package, Loader2, Send } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import type { PriceRequest, Client, Lta } from "@shared/schema";
 
@@ -78,7 +78,9 @@ export default function AdminPriceRequestsPage() {
   };
 
   const handleCreateOffer = (request: PriceRequest) => {
-    setLocation(`/admin/price-offers/create?requestId=${request.id}`);
+    // Store request ID in sessionStorage and navigate to ordering page
+    sessionStorage.setItem('createOfferRequestId', request.id);
+    window.location.href = '/ordering';
   };
 
   const handleGeneratePDF = (request: PriceRequest) => {
@@ -207,14 +209,16 @@ export default function AdminPriceRequestsPage() {
                       {isPending && (
                         <>
                           <Button
-                            variant="default"
                             size="sm"
-                            className="flex-1"
-                            onClick={() => handleCreateOffer(request)}
+                            onClick={() => {
+                              // Store request ID in sessionStorage and navigate to ordering page
+                              sessionStorage.setItem('createOfferRequestId', request.id);
+                              window.location.href = '/ordering';
+                            }}
                             data-testid={`button-create-offer-${request.id}`}
                           >
-                            <FileText className="h-4 w-4 mr-2" />
-                            {language === "ar" ? "إنشاء عرض" : "Create Offer"}
+                            <Send className="h-4 w-4 mr-2" />
+                            {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
                           </Button>
                           <Button
                             variant="secondary"

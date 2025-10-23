@@ -113,6 +113,13 @@ export default function OrderingPage() {
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false); // Added for micro-feedback
+  
+  // Price offer creation states
+  const [createOfferDialogOpen, setCreateOfferDialogOpen] = useState(false);
+  const [selectedPriceRequestId, setSelectedPriceRequestId] = useState<string | null>(null);
+  const [offerItems, setOfferItems] = useState<Map<string, { quantity: number; price: string }>>(new Map());
+  const [offerNotes, setOfferNotes] = useState('');
+  const [offerValidityDays, setOfferValidityDays] = useState('30');
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('lta-products'); // Default to 'lta-products'
@@ -144,7 +151,17 @@ export default function OrderingPage() {
         console.error('Error loading price request list:', error);
       }
     }
-  }, []);
+
+    // Check if admin is creating an offer from price request
+    const requestId = sessionStorage.getItem('createOfferRequestId');
+    if (requestId && user?.isAdmin) {
+      sessionStorage.removeItem('createOfferRequestId');
+      // Small delay to ensure data is loaded
+      setTimeout(() => {
+        handleOpenCreateOffer(requestId);
+      }, 500);
+    }
+  }, [user?.isAdmin]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -176,6 +193,11 @@ export default function OrderingPage() {
 
   const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ['/api/client/orders'],
+  });
+
+  const { data: priceRequests = [] } = useQuery<any[]>({
+    queryKey: ['/api/admin/price-requests'],
+    enabled: user?.isAdmin || false,
   });
 
   const submitOrderMutation = useMutation({
@@ -225,6 +247,33 @@ export default function OrderingPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/client/templates'] });
       toast({
         title: t('templateDeleted'),
+      });
+    },
+  });
+
+  const createOfferMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest('POST', '/api/admin/price-offers', data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم إنشاء العرض' : 'Offer Created',
+        description: language === 'ar' ? 'تم إنشاء عرض السعر بنجاح' : 'Price offer created successfully',
+      });
+      setCreateOfferDialogOpen(false);
+      setOfferItems(new Map());
+      setOfferNotes('');
+      setOfferValidityDays('30');
+      setSelectedPriceRequestId(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل إنشاء العرض' : 'Failed to create offer'),
       });
     },
   });
@@ -419,6 +468,93 @@ export default function OrderingPage() {
 
   const handleDeleteTemplate = (id: string) => {
     deleteTemplateMutation.mutate(id);
+  };
+
+  const handleOpenCreateOffer = (requestId: string) => {
+    setSelectedPriceRequestId(requestId);
+    const request = priceRequests.find((r: any) => r.id === requestId);
+    if (request) {
+      const requestProducts = typeof request.products === 'string' ? JSON.parse(request.products) : request.products;
+      const newMap = new Map();
+      requestProducts.forEach((p: any) => {
+        newMap.set(p.productId, { quantity: p.quantity, price: '' });
+      });
+      setOfferItems(newMap);
+    }
+    setCreateOfferDialogOpen(true);
+  };
+
+  const handleUpdateOfferItemPrice = (productId: string, price: string) => {
+    const newMap = new Map(offerItems);
+    const current = newMap.get(productId);
+    if (current) {
+      newMap.set(productId, { ...current, price });
+    }
+    setOfferItems(newMap);
+  };
+
+  const handleUpdateOfferItemQuantity = (productId: string, delta: number) => {
+    const newMap = new Map(offerItems);
+    const current = newMap.get(productId);
+    if (current) {
+      const newQty = Math.max(1, current.quantity + delta);
+      newMap.set(productId, { ...current, quantity: newQty });
+    }
+    setOfferItems(newMap);
+  };
+
+  const handleSubmitOffer = () => {
+    if (!selectedPriceRequestId || offerItems.size === 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'يرجى إضافة منتجات وأسعار' : 'Please add products and prices',
+      });
+      return;
+    }
+
+    const missingPrices = Array.from(offerItems.entries()).filter(([_, data]) => !data.price || parseFloat(data.price) <= 0);
+    if (missingPrices.length > 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' 
+          ? `يرجى إدخال أسعار صحيحة لجميع المنتجات (${missingPrices.length} منتج بدون سعر)`
+          : `Please enter valid prices for all products (${missingPrices.length} items missing prices)`,
+      });
+      return;
+    }
+
+    const request = priceRequests.find((r: any) => r.id === selectedPriceRequestId);
+    if (!request) return;
+
+    const items = Array.from(offerItems.entries()).map(([productId, data]) => {
+      const product = products.find((p) => p.id === productId);
+      return {
+        productId,
+        sku: product?.sku || '',
+        nameEn: product?.nameEn || '',
+        nameAr: product?.nameAr || '',
+        quantity: data.quantity,
+        price: data.price,
+      };
+    });
+
+    const total = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + parseInt(offerValidityDays || '30'));
+
+    createOfferMutation.mutate({
+      requestId: selectedPriceRequestId,
+      clientId: request.clientId,
+      ltaId: request.ltaId,
+      items,
+      subtotal: total.toFixed(2),
+      tax: '0.00',
+      total: total.toFixed(2),
+      notes: offerNotes || undefined,
+      validUntil: validUntil.toISOString(),
+    });
   };
 
   const handleAddToPriceRequest = useCallback((product: ProductWithLtaPrice) => {
@@ -1788,6 +1924,164 @@ export default function OrderingPage() {
               onDismiss={() => setShowOrderPlacementFeedback(false)}
             />
           </div>
+        )}
+
+        {/* Price Offer Creation Dialog */}
+        {user?.isAdmin && (
+          <Dialog open={createOfferDialogOpen} onOpenChange={setCreateOfferDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {language === 'ar' ? 'إنشاء عرض سعر' : 'Create Price Offer'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {selectedPriceRequestId && offerItems.size > 0 && (
+                  <>
+                    <div className="border rounded-lg p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold">{language === 'ar' ? 'المنتجات والأسعار' : 'Products & Pricing'}</h4>
+                        <span className="text-sm text-muted-foreground">
+                          {language === 'ar' ? `${offerItems.size} منتج` : `${offerItems.size} items`}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                          <div className="col-span-5">{language === 'ar' ? 'المنتج' : 'Product'}</div>
+                          <div className="col-span-2 text-center">{language === 'ar' ? 'الكمية' : 'Qty'}</div>
+                          <div className="col-span-3">{language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</div>
+                          <div className="col-span-2 text-right">{language === 'ar' ? 'الإجمالي' : 'Total'}</div>
+                        </div>
+                        
+                        {Array.from(offerItems.entries()).map(([productId, data]) => {
+                          const product = products.find((p) => p.id === productId);
+                          if (!product) return null;
+
+                          const itemTotal = data.price ? (parseFloat(data.price) * data.quantity).toFixed(2) : "0.00";
+
+                          return (
+                            <div key={productId} className="grid grid-cols-12 gap-2 items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                              <div className="col-span-5">
+                                <div className="font-medium text-sm">
+                                  {language === 'ar' ? product.nameAr : product.nameEn}
+                                </div>
+                                <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
+                              </div>
+                              
+                              <div className="col-span-2 flex items-center justify-center gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => handleUpdateOfferItemQuantity(productId, -1)}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <div className="w-12 text-center font-medium">{data.quantity}</div>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => handleUpdateOfferItemQuantity(productId, 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              
+                              <div className="col-span-3">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-sm text-muted-foreground">$</span>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0.00"
+                                    value={data.price}
+                                    onChange={(e) => handleUpdateOfferItemPrice(productId, e.target.value)}
+                                    className="h-9"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="col-span-2 text-right font-semibold">
+                                ${itemTotal}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="pt-3 border-t space-y-2">
+                        <div className="flex justify-between text-lg font-bold">
+                          <span>{language === 'ar' ? 'الإجمالي (شامل الضريبة)' : 'Total (Tax Included)'}:</span>
+                          <span className="text-primary">
+                            ${Array.from(offerItems.entries()).reduce((sum, [_, data]) => {
+                              return sum + (data.price ? parseFloat(data.price) * data.quantity : 0);
+                            }, 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>{language === 'ar' ? 'الصلاحية (أيام)' : 'Validity (Days)'}</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={offerValidityDays}
+                          onChange={(e) => setOfferValidityDays(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>{language === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date'}</Label>
+                        <Input
+                          type="text"
+                          value={new Date(Date.now() + parseInt(offerValidityDays || '30') * 24 * 60 * 60 * 1000).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>{language === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (Optional)'}</Label>
+                      <Textarea
+                        value={offerNotes}
+                        onChange={(e) => setOfferNotes(e.target.value)}
+                        rows={3}
+                        placeholder={language === 'ar' ? 'أضف أي ملاحظات إضافية...' : 'Add any additional notes...'}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCreateOfferDialogOpen(false);
+                    setOfferItems(new Map());
+                    setOfferNotes('');
+                    setOfferValidityDays('30');
+                    setSelectedPriceRequestId(null);
+                  }}
+                >
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button
+                  onClick={handleSubmitOffer}
+                  disabled={createOfferMutation.isPending || offerItems.size === 0}
+                >
+                  {createOfferMutation.isPending
+                    ? (language === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
+                    : (language === 'ar' ? 'إنشاء عرض' : 'Create Offer')
+                  }
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </>
