@@ -692,16 +692,22 @@ export default function OrderingPage() {
           <div className="w-full h-full">
             {product.imageUrl ? (
               <img
-                src={product.imageUrl}
+                src={product.imageUrl.startsWith('http') ? product.imageUrl : `/${product.imageUrl}`}
                 alt={primaryName}
                 className="w-full h-full object-cover"
                 data-testid={`img-product-${product.id}`}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
-              </div>
-            )}
+            ) : null}
+            <div className={cn(
+              "w-full h-full flex items-center justify-center",
+              product.imageUrl && "hidden"
+            )}>
+              <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
+            </div>
           </div>
         </div>
 
