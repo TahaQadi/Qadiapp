@@ -111,9 +111,6 @@ export default function OrderingPage() {
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<string | null>(null);
   const [selectedOrderForIssue, setSelectedOrderForIssue] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [priceRequestList, setPriceRequestList] = useState<CartItem[]>([]);
-  const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
-  const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false); // Added for micro-feedback
 
   // Price offer creation states
@@ -141,20 +138,6 @@ export default function OrderingPage() {
       return () => clearTimeout(timeoutId);
     }
   }, [cart]);
-
-  // Load price request list from sessionStorage on mount
-  useEffect(() => {
-    const savedList = sessionStorage.getItem('priceRequestList');
-    if (savedList) {
-      try {
-        const parsedList = JSON.parse(savedList);
-        setPriceRequestList(parsedList);
-        sessionStorage.removeItem('priceRequestList'); // Clear after loading
-      } catch (error) {
-        console.error('Error loading price request list:', error);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -285,30 +268,6 @@ export default function OrderingPage() {
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error.message || (language === 'ar' ? 'فشل إنشاء العرض' : 'Failed to create offer'),
-      });
-    },
-  });
-
-  const requestPriceMutation = useMutation({
-    mutationFn: async (data: { productIds: string[]; message: string }) => {
-      const res = await apiRequest('POST', '/api/client/price-request', data);
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
-        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
-      });
-      setPriceRequestList([]);
-      setPriceRequestMessage('');
-      setPriceRequestDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message,
       });
     },
   });
@@ -569,108 +528,6 @@ export default function OrderingPage() {
     });
   };
 
-  const handleAddToPriceRequest = useCallback((product: ProductWithLtaPrice) => {
-    setPriceRequestList(prev => {
-      // Check if already exists
-      if (prev.some(item => item.productId === product.id)) {
-        toast({
-          description: language === 'ar'
-            ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار'
-            : 'Product already in price request list'
-        });
-        return prev;
-      }
-
-      toast({
-        description: language === 'ar'
-          ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
-          : `${product.nameEn} added to price request list`
-      });
-
-      return [...prev, {
-        productId: product.id,
-        productSku: product.sku,
-        productNameEn: product.nameEn,
-        productNameAr: product.nameAr,
-        quantity: 1,
-        price: '0',
-        currency: 'USD',
-        ltaId: '',
-      }];
-    });
-  }, [toast, language]);
-
-  const handleRemoveFromPriceRequest = useCallback((productId: string) => {
-    setPriceRequestList(prev => prev.filter(item => item.productId !== productId));
-    toast({
-      description: language === 'ar' ? 'تمت إزالة المنتج' : 'Product removed'
-    });
-  }, [toast, language]);
-
-  const handleSubmitPriceRequest = async () => {
-    if (priceRequestList.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar'
-          ? 'يرجى إضافة منتجات لطلب السعر'
-          : 'Please add products to request price'
-      });
-      return;
-    }
-
-    if (!selectedLtaFilter) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar'
-          ? 'يرجى اختيار اتفاقية'
-          : 'Please select an LTA'
-      });
-      return;
-    }
-
-    try {
-      const productIds = priceRequestList.map(item => item.productId);
-
-      const res = await apiRequest('POST', '/api/price-requests', {
-        ltaId: selectedLtaFilter,
-        products: priceRequestList.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity || 1
-        })),
-        notes: priceRequestMessage || undefined
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to submit price request');
-      }
-
-      const data = await res.json();
-
-      toast({
-        title: language === 'ar' ? 'تم إرسال الطلب' : 'Request Sent',
-        description: data.messageAr && language === 'ar' ? data.messageAr : data.message,
-      });
-
-      setPriceRequestList([]);
-      setPriceRequestMessage('');
-      setPriceRequestDialogOpen(false);
-
-      // Invalidate both notifications and products to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-    } catch (error: any) {
-      console.error('Price request error:', error);
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message || (language === 'ar' ? 'فشل إرسال الطلب' : 'Failed to submit request'),
-      });
-    }
-  };
-
   const handleClearFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedCategory('all');
@@ -780,7 +637,6 @@ export default function OrderingPage() {
     const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
-    // const inPriceRequest = priceRequestList.some(item => item.productId === product.id); // Removed as price request is removed
     const [, setLocation] = useLocation();
     const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
     // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
@@ -1161,25 +1017,6 @@ export default function OrderingPage() {
 
             {/* Right Section - Action Buttons */}
             <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 flex-shrink-0">
-              {/* Price Request Button */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm touch-manipulation active:scale-95"
-                onClick={() => setPriceRequestDialogOpen(true)}
-                data-testid="button-price-request"
-              >
-                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {priceRequestList.length > 0 && (
-                  <span
-                    className="absolute -top-0.5 -end-0.5 sm:-top-1 sm:-end-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold bg-destructive text-destructive-foreground shadow-lg animate-pulse ring-2 ring-background"
-                    data-testid="badge-price-request-count"
-                  >
-                    {priceRequestList.length > 9 ? '9+' : priceRequestList.length}
-                  </span>
-                )}
-              </Button>
-
               {/* Cart Button */}
               <Button
                 variant="outline"
@@ -1810,96 +1647,6 @@ export default function OrderingPage() {
           }}
           isSubmitting={submitOrderMutation.isPending}
         />
-
-        {/* Price Request Dialog */}
-        <Dialog open={priceRequestDialogOpen} onOpenChange={setPriceRequestDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="price-request-description">
-            <DialogHeader>
-              <DialogTitle>
-                {language === 'ar' ? 'قائمة طلبات الأسعار' : 'Price Request List'}
-              </DialogTitle>
-            </DialogHeader>
-            <p id="price-request-description" className="sr-only">
-              {language === 'ar'
-                ? 'عرض وإدارة قائمة المنتجات التي تريد طلب أسعار لها'
-                : 'View and manage your list of products to request prices for'}
-            </p>
-            <div className="space-y-4 py-4">
-              {priceRequestList.length === 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {language === 'ar'
-                      ? 'قائمتك فارغة. أضف منتجات بدون أسعار من صفحة المنتجات أدناه.'
-                      : 'Your list is empty. Add products without prices from the products page below.'}
-                  </p>
-                  <Button onClick={() => setPriceRequestDialogOpen(false)}>
-                    <Package className="h-4 w-4 me-2" />
-                    {language === 'ar' ? 'تصفح المنتجات' : 'Browse Products'}
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    {priceRequestList.map((item) => (
-                      <div key={item.productId} className="flex items-center justify-between gap-2 p-3 rounded-lg border">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {language === 'ar' ? item.productNameAr : item.productNameEn}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            SKU: {item.productSku}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveFromPriceRequest(item.productId)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {language === 'ar' ? 'رسالة إضافية (اختياري)' : 'Additional Message (Optional)'}
-                    </label>
-                    <Textarea
-                      value={priceRequestMessage}
-                      onChange={(e) => setPriceRequestMessage(e.target.value)}
-                      placeholder={language === 'ar'
-                        ? 'أضف أي ملاحظات أو تفاصيل إضافية...'
-                        : 'Add any notes or additional details...'}
-                      rows={4}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setPriceRequestDialogOpen(false)}
-                data-testid="button-close-price-request-dialog"
-              >
-                {language === 'ar' ? 'إغلاق' : 'Close'}
-              </Button>
-              {priceRequestList.length > 0 && (
-                <Button
-                  onClick={handleSubmitPriceRequest}
-                  disabled={requestPriceMutation.isPending}
-                  data-testid="button-send-price-request"
-                >
-                  {requestPriceMutation.isPending
-                    ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
-                    : (language === 'ar' ? 'إرسال الطلب' : 'Send Request')
-                  }
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* Feedback Dialog */}
         {selectedOrderForFeedback && (
