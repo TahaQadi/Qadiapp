@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLanguage } from '@/components/LanguageProvider';
 import { securityAudit } from '@/lib/securityAudit';
 import { performanceMonitoring } from '@/lib/performanceMonitoring';
-import { Shield, Activity, AlertTriangle, CheckCircle, RefreshCw, Download, TrendingUp, Database, Clock } from 'lucide-react';
+import { Shield, Activity, AlertTriangle, CheckCircle, RefreshCw, Download, TrendingUp, Database, Clock, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Link } from 'wouter';
 
 interface HistoricalDataPoint {
   timestamp: string;
@@ -137,16 +138,28 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {language === 'ar' ? 'تقارير النظام' : 'System Reports'}
-          </h1>
-          <p className="text-muted-foreground">
-            {language === 'ar' ? 'عرض تقارير الأمان والأداء' : 'View security and performance reports'}
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 h-16 flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/admin">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-lg font-bold">
+              {language === 'ar' ? 'تقارير النظام' : 'System Reports'}
+            </h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">
+              {language === 'ar' ? 'عرض تقارير الأمان والأداء' : 'View security and performance reports'}
+            </p>
+          </div>
         </div>
+      </header>
+
+      <div className="container mx-auto p-6 space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
             <SelectTrigger className="w-32">
@@ -348,6 +361,7 @@ export default function AdminReportsPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
