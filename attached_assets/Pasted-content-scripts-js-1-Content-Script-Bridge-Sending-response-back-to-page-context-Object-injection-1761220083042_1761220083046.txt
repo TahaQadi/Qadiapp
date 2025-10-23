@@ -1,0 +1,30 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: Object
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: Object
+chunk-SXRIVT2P.js?v=545e92d7:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+main.tsx:10 ✅ Service Worker registered successfully
+catalog:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+securityAudit.ts:126 🔒 Security Audit Report
+securityAudit.ts:127 Score: 50%
+securityAudit.ts:128 ---
+securityAudit.ts:133 ✅ HTTPS : Site is using HTTPS
+securityAudit.ts:133 ❌ Content Security Policy [MEDIUM]: No CSP meta tag found
+securityAudit.ts:133 ✅ Cookie Security : Cookies are properly secured
+securityAudit.ts:133 ❌ XSS Protection [MEDIUM]: 3 inline scripts detected
+securityAudit.ts:133 ❌ Clickjacking Protection [MEDIUM]: No X-Frame-Options protection
+securityAudit.ts:133 ✅ Mixed Content : No mixed content detected
+chunk-64NBFEBI.js?v=545e92d7:340 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-64NBFEBI.js?v=545e92d7:340
+chunk-64NBFEBI.js?v=545e92d7:340 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-64NBFEBI.js?v=545e92d7:340
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=545e92d7:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=545e92d7:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=545e92d7:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=545e92d7:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=545e92d7:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=545e92d7:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=545e92d7:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=545e92d7:19469
+commitRoot @ chunk-SXRIVT2P.js?v=545e92d7:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=545e92d7:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=545e92d7:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=545e92d7:18677
