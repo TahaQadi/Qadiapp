@@ -22,6 +22,7 @@ import AdminClientsPage from "@/pages/AdminClientsPage";
 import AdminLtaListPage from "@/pages/AdminLtaListPage";
 import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import AdminPriceRequestsPage from './pages/AdminPriceRequestsPage';
+import AdminPriceOffersPage from './pages/AdminPriceOffersPage';
 import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
@@ -107,14 +108,6 @@ function AdminRoute({
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
-      </div>
-    );
-  }
-
   return (
     <Switch>
       {/* Public routes */}
@@ -158,26 +151,10 @@ function Router() {
       <AdminRoute path="/admin/price-management" component={AdminPriceManagementPage} />
       <AdminRoute path="/admin/price-requests" component={AdminPriceRequestsPage} />
       <AdminRoute path="/admin/orders" component={AdminOrdersPage} />
-      <Route path="/admin/order-modifications">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <AdminOrderModificationsPage />
-        </Suspense>
-      </Route>
-      <Route path="/admin/issue-reports">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <IssueReportsPage />
-        </Suspense>
-      </Route>
-      <Route path="/admin/feedback">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <CustomerFeedbackPage />
-        </Suspense>
-      </Route>
-      <Route path="/admin/error-logs">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <AdminErrorLogsPage />
-        </Suspense>
-      </Route>
+      <AdminRoute path="/admin/order-modifications" component={AdminOrderModificationsPage} />
+      <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />
+      <AdminRoute path="/admin/feedback" component={CustomerFeedbackPage} />
+      <AdminRoute path="/admin/error-logs" component={AdminErrorLogsPage} />
       <AdminRoute path="/admin/templates/documents" component={AdminTemplatesPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
@@ -247,18 +224,20 @@ function AppWithProviders() {
     }
   }, [isAuthenticated]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <HelmetProvider>
       <ThemeProvider>
         <LanguageProvider>
           <TooltipProvider>
-            {isLoading ? (
-              <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <AppContent />
-            )}
+            <AppContent />
           </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>

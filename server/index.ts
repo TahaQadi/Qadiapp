@@ -1,18 +1,8 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
-import session from 'express-session';
-import connectPgSimple from 'connect-pg-simple';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
-
-// Use PostgreSQL for session storage
-const PgStore = connectPgSimple(session);
-const sessionStore = new PgStore({
-  conString: process.env.DATABASE_URL,
-  tableName: 'sessions', // Match the table name in schema.ts
-  createTableIfMissing: false, // Table is created by Drizzle migrations
-});
 
 // Handle uncaught errors in production
 process.on('unhandledRejection', (reason, promise) => {
@@ -27,33 +17,6 @@ process.on('uncaughtException', (error) => {
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
-  );
-  next();
-});
-
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    },
-    store: sessionStore
-  })
-);
 
 // Serve static files from attached_assets directory BEFORE other middlewares
 app.use('/attached_assets', express.static('attached_assets'));
@@ -106,8 +69,8 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error('Server Error:', err);
     res.status(status).json({ message });
+    throw err;
   });
 
   // importantly only setup vite in development and after
