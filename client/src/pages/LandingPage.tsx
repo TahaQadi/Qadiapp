@@ -213,7 +213,7 @@ export default function LandingPage() {
               </span>
               <br />
               <span className="text-white/90">
-                {isArabic ? 'مع بوابة القاضي' : 'with Al Qadi Portal'}
+                {isArabic ? 'مع منصة القاضي' : 'with Al Qadi Portal'}
               </span>
             </h2>
 
