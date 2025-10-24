@@ -706,16 +706,16 @@ export default function OrderingPage() {
               "w-full h-full flex items-center justify-center",
               product.imageUrl && "hidden"
             )}>
-              <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
+              <Package className="w-12 h-12 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
             </div>
           </div>
         </div>
 
           {/* Badges */}
-          <div className="absolute top-2 end-2 flex flex-col gap-2">
+          <div className="absolute top-1.5 end-1.5 flex flex-col gap-1">
             {cartItem && (
               <Badge
-                className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm"
+                className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm text-xs px-1.5 py-0.5"
                 data-testid={`badge-in-cart-${product.id}`}
               >
                 {cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}
@@ -724,7 +724,7 @@ export default function OrderingPage() {
             {product.category && (
               <Badge
                 variant="secondary"
-                className="bg-background/80 backdrop-blur-sm text-xs"
+                className="bg-background/80 backdrop-blur-sm text-[10px] px-1.5 py-0.5"
               >
                 {product.category}
               </Badge>
@@ -732,60 +732,60 @@ export default function OrderingPage() {
           </div>
 
         {/* Product Info */}
-        <CardContent className="flex-1 p-4 space-y-3 relative z-10">
+        <CardContent className="flex-1 p-2.5 space-y-1.5 relative z-10">
           <div>
             <h3
-              className="font-semibold text-base line-clamp-2 text-card-foreground hover:text-primary transition-colors cursor-pointer"
+              className="font-semibold text-sm line-clamp-2 leading-tight text-card-foreground hover:text-primary transition-colors cursor-pointer"
               data-testid={`text-product-name-${product.id}`}
               onClick={handleCardClick}
             >
               {primaryName}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
               {secondaryName}
             </p>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-xs text-muted-foreground font-mono">SKU: {product.sku}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[10px] text-muted-foreground font-mono">SKU: {product.sku}</p>
             {product.unitPerBox && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[9px] px-1 py-0">
                 📦 {product.unitPerBox} {language === 'ar' ? 'قطع/صندوق' : 'pcs/box'}
               </Badge>
             )}
           </div>
 
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+            <p className="text-xs text-muted-foreground line-clamp-1">
               {description}
             </p>
           )}
 
           {/* Pricing Section */}
-          <div className="pt-2 border-t border-border/50">
+          <div className="pt-1.5 border-t border-border/50">
             {product.hasPrice && product.contractPrice ? (
-              <div className="space-y-1">
-                <p className="text-2xl font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
-                  {product.contractPrice} <span className="text-sm font-normal">{product.currency}</span>
+              <div className="space-y-0.5">
+                <p className="text-lg font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
+                  {product.contractPrice} <span className="text-xs font-normal">{product.currency}</span>
                 </p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" />
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <DollarSign className="w-2.5 h-2.5" />
                   {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
                 </p>
               </div>
             ) : product.sellingPricePiece ? (
-              <div className="space-y-1">
-                <p className="text-xl font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                  {product.sellingPricePiece} <span className="text-sm font-normal">{language === 'ar' ? 'ش' : 'ILS'}</span>
+              <div className="space-y-0.5">
+                <p className="text-base font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
+                  {product.sellingPricePiece} <span className="text-xs font-normal">{language === 'ar' ? 'ش' : 'ILS'}</span>
                 </p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="w-2.5 h-2.5" />
                   {language === 'ar' ? 'سعر القطعة (مرجعي)' : 'Reference Price'}
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="w-2.5 h-2.5" />
                   {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
                 </p>
               </div>
@@ -794,15 +794,15 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-0 gap-2 relative z-20 flex-col">
+        <CardFooter className="p-2 pt-0 gap-1.5 relative z-20 flex-col">
           {product.hasPrice ? (
             <>
               {cartItem ? (
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-center gap-1.5 w-full">
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-full h-8 w-8 flex-shrink-0"
+                    className="rounded-full h-7 w-7 flex-shrink-0"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -811,13 +811,13 @@ export default function OrderingPage() {
                     disabled={isDifferentLta}
                     data-testid={`button-decrement-cart-${product.id}`}
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="font-semibold text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}</span>
+                  <span className="font-semibold text-xs text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في السلة' : 'in cart'}</span>
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-full h-8 w-8 flex-shrink-0"
+                    className="rounded-full h-7 w-7 flex-shrink-0"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -826,14 +826,14 @@ export default function OrderingPage() {
                     disabled={isDifferentLta}
                     data-testid={`button-increment-cart-${product.id}`}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               ) : (
-                <div className="w-full space-y-2">
+                <div className="w-full space-y-1.5">
                   {/* Quantity Type Selector (only if product has unitPerBox) */}
                   {product.unitPerBox && (
-                    <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                    <div className="flex gap-0.5 p-0.5 bg-muted rounded">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -841,7 +841,7 @@ export default function OrderingPage() {
                           setQuantityType('pcs');
                         }}
                         className={cn(
-                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          "flex-1 px-2 py-1 text-[10px] font-medium rounded transition-colors",
                           quantityType === 'pcs'
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -857,7 +857,7 @@ export default function OrderingPage() {
                           setQuantityType('box');
                         }}
                         className={cn(
-                          "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          "flex-1 px-2 py-1 text-[10px] font-medium rounded transition-colors",
                           quantityType === 'box'
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -870,18 +870,18 @@ export default function OrderingPage() {
                   )}
 
                   {/* Quantity Selector and Add Button */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center border rounded-lg flex-shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center border rounded flex-shrink-0">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           setCustomQuantity(Math.max(1, customQuantity - 1));
                         }}
-                        className="p-2 hover:bg-muted transition-colors"
+                        className="p-1 hover:bg-muted transition-colors"
                         data-testid={`button-decrease-qty-${product.id}`}
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3 w-3" />
                       </button>
                       <input
                         type="number"
@@ -893,7 +893,7 @@ export default function OrderingPage() {
                           setCustomQuantity(Math.max(1, val));
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-12 text-center border-x bg-transparent focus:outline-none font-semibold"
+                        className="w-10 text-center text-xs border-x bg-transparent focus:outline-none font-semibold"
                         data-testid={`input-quantity-${product.id}`}
                       />
                       <button
@@ -902,10 +902,10 @@ export default function OrderingPage() {
                           e.stopPropagation();
                           setCustomQuantity(customQuantity + 1);
                         }}
-                        className="p-2 hover:bg-muted transition-colors"
+                        className="p-1 hover:bg-muted transition-colors"
                         data-testid={`button-increase-qty-${product.id}`}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3 w-3" />
                       </button>
                     </div>
 
@@ -916,10 +916,11 @@ export default function OrderingPage() {
                         handleAddWithQuantity();
                       }}
                       disabled={isDifferentLta}
-                      className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md"
+                      size="sm"
+                      className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md h-7 text-xs"
                       data-testid={`button-add-to-cart-${product.id}`}
                     >
-                      <ShoppingCart className="w-4 h-4 me-2" />
+                      <ShoppingCart className="w-3 h-3 me-1" />
                       <span className="truncate">
                         {isDifferentLta
                           ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
@@ -931,7 +932,7 @@ export default function OrderingPage() {
 
                   {/* Show total pieces when box is selected */}
                   {quantityType === 'box' && product.unitPerBox && customQuantity > 0 && (
-                    <p className="text-xs text-muted-foreground text-center">
+                    <p className="text-[10px] text-muted-foreground text-center">
                       = {getFinalQuantity(customQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
                     </p>
                   )}
@@ -947,11 +948,10 @@ export default function OrderingPage() {
                 window.location.href = '/catalog';
               }}
               variant="outline"
-              className="w-full transition-all duration-300 shadow-sm hover:shadow-md"
-              size="lg"
+              className="w-full transition-all duration-300 shadow-sm hover:shadow-md h-7 text-xs"
               data-testid={`button-request-price-${product.id}`}
             >
-              <Heart className="w-4 h-4 me-2" />
+              <Heart className="w-3 h-3 me-1" />
               <span>
                 {language === 'ar' ? 'طلب عرض سعر' : 'Request Quote'}
               </span>
