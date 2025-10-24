@@ -20,7 +20,8 @@ import {
   Clock,
   XCircle,
   Loader2,
-  FileText
+  FileText,
+  Minus // Import Minus icon
 } from 'lucide-react';
 import { 
   LineChart, 
