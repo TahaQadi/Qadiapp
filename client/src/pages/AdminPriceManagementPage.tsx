@@ -940,11 +940,11 @@ export default function AdminPriceManagementPage() {
                     : selectedRequest.products || []).map((product: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
                       <div className="flex-1">
-                        <div className="font-medium">{language === 'ar' ? product.nameAr : product.nameEn}</div>
-                        <div className="text-sm text-muted-foreground">SKU: {product.sku}</div>
+                        <div className="font-medium">{language === 'ar' ? (product?.nameAr || product?.nameEn || product?.productId) : (product?.nameEn || product?.nameAr || product?.productId)}</div>
+                        <div className="text-sm text-muted-foreground">SKU: {product?.sku || 'N/A'}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">{language === 'ar' ? 'الكمية:' : 'Qty:'} {product.quantity || 1}</div>
+                        <div className="font-semibold">{language === 'ar' ? 'الكمية:' : 'Qty:'} {product?.quantity || 1}</div>
                       </div>
                     </div>
                   ))}

@@ -233,12 +233,12 @@ export default function PriceOfferCreationDialog({
         : priceRequest.products || [];
       
       const items = products.map((product: any) => ({
-        productId: product.id,
-        nameEn: product.nameEn,
-        nameAr: product.nameAr,
-        sku: product.sku,
-        quantity: 1, // Default to 1 since price requests don't have quantities
-        unitPrice: product.contractPrice || '0',
+        productId: product.productId || product.id,
+        nameEn: product.nameEn || '',
+        nameAr: product.nameAr || '',
+        sku: product.sku || '',
+        quantity: product.quantity || 1, // Use provided quantity if available
+        unitPrice: (product.contractPrice && product.contractPrice.toString()) || '0',
         currency: 'USD', // Will be updated when LTA loads
       }));
       

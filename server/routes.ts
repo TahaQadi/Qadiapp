@@ -371,12 +371,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const count = (await storage.getAllPriceRequests()).length + 1;
       const requestNumber = `PR-${Date.now()}-${count.toString().padStart(4, '0')}`;
 
+      // Enrich products with basic details so UIs can display names immediately
+      const enrichedProducts = await Promise.all(
+        (products as Array<{ productId: string; quantity?: number }>).map(async (item) => {
+          try {
+            const product = await storage.getProduct(item.productId);
+            return {
+              // Keep both keys for backward/forward compatibility
+              productId: item.productId,
+              id: item.productId,
+              sku: product?.sku,
+              nameEn: product?.nameEn,
+              nameAr: product?.nameAr,
+              quantity: item.quantity || 1,
+            };
+          } catch {
+            return {
+              productId: item.productId,
+              id: item.productId,
+              quantity: item.quantity || 1,
+            };
+          }
+        })
+      );
+
       // Create price request
       const priceRequest = await storage.createPriceRequest({
         requestNumber,
         clientId: req.client.id,
         ltaId,
-        products,
+        products: enrichedProducts,
         notes: notes || null,
         status: 'pending'
       });

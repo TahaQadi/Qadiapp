@@ -302,15 +302,20 @@ export default function AdminPriceRequestsPage() {
 
               <div className="border rounded-lg p-4 space-y-2">
                 <h4 className="font-semibold">{language === "ar" ? "المنتجات المطلوبة" : "Requested Products"}</h4>
-                {(typeof selectedRequest.products === "string" ? JSON.parse(selectedRequest.products) : selectedRequest.products).map((product: any, idx: number) => (
-                  <div key={idx} className="flex justify-between text-sm py-2 border-b last:border-0">
-                    <div>
-                      <div className="font-medium">{product.productId}</div>
-                      <div className="text-muted-foreground">SKU: {product.sku || "N/A"}</div>
+                {(typeof selectedRequest.products === "string" ? JSON.parse(selectedRequest.products) : selectedRequest.products).map((product: any, idx: number) => {
+                  const displayName = language === 'ar'
+                    ? (product?.nameAr || product?.nameEn || product?.productId)
+                    : (product?.nameEn || product?.nameAr || product?.productId);
+                  return (
+                    <div key={idx} className="flex justify-between text-sm py-2 border-b last:border-0">
+                      <div>
+                        <div className="font-medium">{displayName}</div>
+                        <div className="text-muted-foreground">SKU: {product?.sku || "N/A"}</div>
+                      </div>
+                      <span className="font-medium">{language === "ar" ? "الكمية" : "Qty"}: {product?.quantity || 1}</span>
                     </div>
-                    <span className="font-medium">{language === "ar" ? "الكمية" : "Qty"}: {product.quantity}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {selectedRequest.notes && (
