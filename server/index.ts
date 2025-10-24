@@ -1,18 +1,16 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
-import session from 'express-session'; // Assuming session is imported elsewhere or needs to be added
-import connectRedis from 'connect-redis'; // Assuming connect-redis is used for session store
-import { createClient } from 'redis'; // Assuming redis client is used
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
 
-// Assuming redisClient and sessionStore are defined elsewhere or need to be initialized
-const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
-redisClient.connect().catch(console.error);
-const RedisStore = connectRedis(session);
-const sessionStore = new RedisStore({
-  client: redisClient,
+// Use PostgreSQL for session storage
+const PgStore = connectPgSimple(session);
+const sessionStore = new PgStore({
+  conString: process.env.DATABASE_URL,
+  createTableIfMissing: true,
 });
 
 // Handle uncaught errors in production
