@@ -84,6 +84,22 @@ interface FeedbackStats {
   }[];
 }
 
+interface MicroFeedbackStats {
+  sentimentCounts: { positive: number; neutral: number; negative: number; };
+  topTouchpoints: { touchpoint: string; count: number; }[];
+  recentFeedback: {
+    id: string;
+    orderId: string;
+    rating: number;
+    comments: string;
+    createdAt: string;
+    clientName: string;
+    adminResponse?: string;
+    adminResponseAt?: string;
+    respondedBy?: string;
+  }[];
+}
+
 interface IssueReport {
   id: string;
   userId: string;
@@ -126,6 +142,24 @@ export default function CustomerFeedbackPage() {
     staleTime: 60000, // Cache for 1 minute
   });
 
+  // Fetch micro-feedback analytics data
+  const { data: microStats, isLoading: microStatsLoading, error: microStatsError } = useQuery<MicroFeedbackStats>({
+    queryKey: ['/api/feedback/micro/analytics'],
+    queryFn: async () => {
+      const response = await fetch('/api/feedback/micro/analytics', {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Failed to fetch micro feedback analytics' }));
+        throw new Error(error.message || 'Failed to fetch micro feedback analytics');
+      }
+      return response.json();
+    },
+    retry: 1,
+    staleTime: 60000,
+  });
+
+
   // Fetch issues data with proper error handling
   const { data: issues = [], isLoading: issuesLoading, error: issuesError } = useQuery<IssueReport[]>({
     queryKey: ['/api/feedback/issues'],
@@ -141,6 +175,24 @@ export default function CustomerFeedbackPage() {
     },
     retry: 1,
     staleTime: 60000,
+  });
+
+  // Fetch all feedback for the Ratings tab
+  const { data: allFeedback = [], isLoading: allFeedbackLoading, error: allFeedbackError } = useQuery<any[]>({
+    queryKey: ['/api/feedback/all'],
+    queryFn: async () => {
+      const response = await fetch('/api/feedback/all', {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Failed to fetch all feedback' }));
+        throw new Error(error.message || 'Failed to fetch all feedback');
+      }
+      return response.json();
+    },
+    retry: 1,
+    staleTime: 60000,
+    enabled: false, // Initially disabled, enable when tab is active
   });
 
   // Update issue status mutation
@@ -193,6 +245,7 @@ export default function CustomerFeedbackPage() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback/all'] }); // Invalidate all feedback query
       // Clear the specific feedback's response
       setAdminResponses(prev => {
         const updated = { ...prev };
@@ -260,7 +313,7 @@ export default function CustomerFeedbackPage() {
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
   };
 
-  if (statsLoading || issuesLoading) {
+  if (statsLoading || issuesLoading || microStatsLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -268,7 +321,7 @@ export default function CustomerFeedbackPage() {
     );
   }
 
-  if (statsError || issuesError) {
+  if (statsError || issuesError || microStatsError) {
     return (
       <div className="container mx-auto p-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <Card>
@@ -283,11 +336,14 @@ export default function CustomerFeedbackPage() {
               {statsError && `Analytics: ${(statsError as any)?.message || 'Unknown error'}`}
               <br />
               {issuesError && `Issues: ${(issuesError as any)?.message || 'Unknown error'}`}
+              <br />
+              {microStatsError && `Micro Feedback Analytics: ${(microStatsError as any)?.message || 'Unknown error'}`}
             </p>
             <Button 
               onClick={() => {
                 queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
                 queryClient.invalidateQueries({ queryKey: ['/api/feedback/issues'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/feedback/micro/analytics'] });
               }}
             >
               {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
@@ -360,7 +416,7 @@ export default function CustomerFeedbackPage() {
             <span className="hidden sm:inline">{language === 'ar' ? 'التحليلات' : 'Analytics'}</span>
             <span className="sm:hidden">{language === 'ar' ? 'تحليل' : 'Analytics'}</span>
           </TabsTrigger>
-          <TabsTrigger value="ratings" className="text-xs sm:text-sm min-h-[44px]">
+          <TabsTrigger value="ratings" className="text-xs sm:text-sm min-h-[44px]" onClick={() => queryClient.ensureQueryData({ queryKey: ['/api/feedback/all'] })}>
             <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">{language === 'ar' ? 'التقييمات' : 'Ratings'}</span>
             <span className="sm:hidden">{language === 'ar' ? 'تقييم' : 'Ratings'}</span>
@@ -376,62 +432,40 @@ export default function CustomerFeedbackPage() {
         <TabsContent value="analytics" className="space-y-4">
           {stats && (
             <>
-              {/* Key Metrics */}
-              <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+              {/* Micro Feedback Summary */}
+              {microStats && (
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      {language === 'ar' ? 'متوسط التقييم' : 'Average Rating'}
-                    </CardTitle>
-                    <Star className="h-4 w-4 text-yellow-500" />
+                  <CardHeader>
+                    <CardTitle>{language === 'ar' ? 'ملاحظات سريعة' : 'Quick Feedback'}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stats.averageRating.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">{language === 'ar' ? 'من 5.00' : 'out of 5.00'}</p>
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{microStats.sentimentCounts.positive}</div>
+                        <div className="text-xs text-muted-foreground">{language === 'ar' ? 'إيجابي' : 'Positive'}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">{microStats.sentimentCounts.neutral}</div>
+                        <div className="text-xs text-muted-foreground">{language === 'ar' ? 'محايد' : 'Neutral'}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{microStats.sentimentCounts.negative}</div>
+                        <div className="text-xs text-muted-foreground">{language === 'ar' ? 'سلبي' : 'Negative'}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'أهم نقاط التفاعل:' : 'Top touchpoints:'}
+                      <ul className="mt-2 space-y-1">
+                        {microStats.topTouchpoints.slice(0, 3).map((tp: any) => (
+                          <li key={tp.touchpoint}>
+                            {tp.touchpoint}: <span className="font-semibold">{tp.count}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </CardContent>
                 </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      {language === 'ar' ? 'نقاط NPS' : 'NPS Score'}
-                    </CardTitle>
-                    <TrendingUp className="h-4 w-4 text-blue-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.npsScore}</div>
-                    <p className="text-xs text-muted-foreground">
-                      {stats.npsScore >= 50 ? (language === 'ar' ? 'ممتاز' : 'Excellent') : 'Good'}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      {language === 'ar' ? 'سيوصي' : 'Would Recommend'}
-                    </CardTitle>
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.wouldRecommendPercent}%</div>
-                    <p className="text-xs text-muted-foreground">{language === 'ar' ? 'من العملاء' : 'of customers'}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      {language === 'ar' ? 'إجمالي الملاحظات' : 'Total Feedback'}
-                    </CardTitle>
-                    <MessageSquare className="h-4 w-4 text-purple-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalFeedback}</div>
-                    <p className="text-xs text-muted-foreground">{language === 'ar' ? 'مراجعات' : 'reviews'}</p>
-                  </CardContent>
-                </Card>
-              </div>
+              )}
 
               {/* Charts Row */}
               <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
@@ -487,77 +521,106 @@ export default function CustomerFeedbackPage() {
 
         {/* Ratings Tab */}
         <TabsContent value="ratings" className="space-y-4">
-          {stats && (
+          {allFeedbackLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+          ) : allFeedbackError ? (
             <Card>
               <CardHeader>
-                <CardTitle>{language === 'ar' ? 'أحدث الملاحظات' : 'Recent Feedback'}</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  {language === 'ar' ? 'خطأ في تحميل الملاحظات' : 'Error Loading Feedback'}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {stats.recentFeedback.map(feedback => (
-                    <div key={feedback.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${i < feedback.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
-                                />
-                              ))}
+                <p className="text-muted-foreground mb-4">
+                  {(allFeedbackError as any)?.message || 'Unknown error'}
+                </p>
+                <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/feedback/all'] })}>
+                  {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>{language === 'ar' ? 'جميع الملاحظات' : 'All Feedback'}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {allFeedback.length === 0 ? (
+                  <EmptyState
+                    icon={MessageSquare}
+                    title={language === 'ar' ? 'لا توجد ملاحظات حالياً' : 'No feedback yet'}
+                    description={language === 'ar' ? 'سيتم عرض الملاحظات المقدمة من العملاء هنا' : 'Customer feedback will appear here'}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {allFeedback.map(feedback => (
+                      <div key={feedback.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${i < feedback.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                              <Badge variant="outline">{feedback.orderId.slice(0, 8)}</Badge>
                             </div>
-                            <Badge variant="outline">{feedback.orderId.slice(0, 8)}</Badge>
-                          </div>
-                          <p className="text-sm font-medium mb-1">{feedback.clientName}</p>
-                          {feedback.comments && (
-                            <p className="text-sm text-muted-foreground">{feedback.comments}</p>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {new Date(feedback.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
-                        </span>
-                      </div>
-
-                      {/* Admin Response Section */}
-                      {(feedback as any).adminResponse ? (
-                        <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline" className="text-xs">
-                              {language === 'ar' ? 'رد الإدارة' : 'Admin Response'}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date((feedback as any).adminResponseAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
-                            </span>
-                          </div>
-                          <p className="text-sm">{(feedback as any).adminResponse}</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Textarea
-                            placeholder={language === 'ar' ? 'اكتب ردك هنا...' : 'Write your response here...'}
-                            value={adminResponses[feedback.id] || ''}
-                            onChange={(e) => setAdminResponses(prev => ({ ...prev, [feedback.id]: e.target.value }))}
-                            className="min-h-20"
-                            data-testid={`textarea-admin-response-${feedback.id}`}
-                          />
-                          <Button
-                            onClick={() => submitResponseMutation.mutate({ id: feedback.id, response: adminResponses[feedback.id] || '' })}
-                            disabled={!(adminResponses[feedback.id] || '').trim() || submitResponseMutation.isPending}
-                            size="sm"
-                            data-testid={`button-submit-response-${feedback.id}`}
-                          >
-                            {submitResponseMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              language === 'ar' ? 'إرسال الرد' : 'Send Response'
+                            <p className="text-sm font-medium mb-1">{feedback.clientName}</p>
+                            {feedback.comments && (
+                              <p className="text-sm text-muted-foreground">{feedback.comments}</p>
                             )}
-                          </Button>
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(feedback.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+
+                        {/* Admin Response Section */}
+                        {(feedback as any).adminResponse ? (
+                          <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                {language === 'ar' ? 'رد الإدارة' : 'Admin Response'}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date((feedback as any).adminResponseAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                              </span>
+                            </div>
+                            <p className="text-sm">{(feedback as any).adminResponse}</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Textarea
+                              placeholder={language === 'ar' ? 'اكتب ردك هنا...' : 'Write your response here...'}
+                              value={adminResponses[feedback.id] || ''}
+                              onChange={(e) => setAdminResponses(prev => ({ ...prev, [feedback.id]: e.target.value }))}
+                              className="min-h-20"
+                              data-testid={`textarea-admin-response-${feedback.id}`}
+                            />
+                            <Button
+                              onClick={() => submitResponseMutation.mutate({ id: feedback.id, response: adminResponses[feedback.id] || '' })}
+                              disabled={!(adminResponses[feedback.id] || '').trim() || submitResponseMutation.isPending}
+                              size="sm"
+                              data-testid={`button-submit-response-${feedback.id}`}
+                            >
+                              {submitResponseMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                language === 'ar' ? 'إرسال الرد' : 'Send Response'
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { db } from './db';
-import { orderFeedback, issueReports, clients } from '../shared/schema';
+import { orderFeedback, issueReports, clients, microFeedback } from '../shared/schema';
 import { eq, gte, sql, desc, and, gte as greaterThanOrEqual } from 'drizzle-orm';
 import { requireAdmin } from './auth';
 
@@ -200,6 +200,80 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
     });
     res.status(500).json({ 
       error: 'Failed to fetch analytics',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get micro-feedback analytics
+router.get('/feedback/micro/analytics', requireAdmin, async (req: any, res) => {
+  try {
+    const range = req.query.range as string || '30d';
+    
+    // Calculate date threshold
+    const now = new Date();
+    let startDate = new Date();
+    switch (range) {
+      case '7d':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(now.getDate() - 90);
+        break;
+      case 'all':
+        startDate = new Date(0);
+        break;
+    }
+
+    // Get all micro feedback in range
+    const feedbackData = await db
+      .select()
+      .from(microFeedback)
+      .where(greaterThanOrEqual(microFeedback.createdAt, startDate))
+      .execute();
+
+    // Sentiment counts
+    const sentimentCounts = {
+      positive: feedbackData.filter(f => f.sentiment === 'positive').length,
+      neutral: feedbackData.filter(f => f.sentiment === 'neutral').length,
+      negative: feedbackData.filter(f => f.sentiment === 'negative').length,
+    };
+
+    // Top touchpoints
+    const touchpointMap = new Map<string, number>();
+    feedbackData.forEach(f => {
+      touchpointMap.set(f.touchpoint, (touchpointMap.get(f.touchpoint) || 0) + 1);
+    });
+
+    const topTouchpoints = Array.from(touchpointMap.entries())
+      .map(([touchpoint, count]) => ({ touchpoint, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Recent feedback
+    const recentFeedback = feedbackData
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10)
+      .map(f => ({
+        touchpoint: f.touchpoint,
+        sentiment: f.sentiment,
+        quickResponse: f.quickResponse,
+        createdAt: f.createdAt,
+      }));
+
+    res.json({
+      totalCount: feedbackData.length,
+      sentimentCounts,
+      topTouchpoints,
+      recentFeedback,
+    });
+  } catch (error) {
+    console.error('[Micro Feedback Analytics] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch micro-feedback analytics',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }

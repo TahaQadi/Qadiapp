@@ -42,6 +42,21 @@ router.post('/feedback/order/:orderId', requireAuth, async (req: AuthenticatedRe
     console.log('Request body:', req.body);
     console.log('Client ID:', req.client.id);
 
+    // Check if feedback already exists
+    const [existingFeedback] = await db
+      .select()
+      .from(orderFeedback)
+      .where(eq(orderFeedback.orderId, orderId))
+      .limit(1);
+
+    if (existingFeedback) {
+      console.log('Feedback already exists for order:', orderId);
+      return res.status(409).json({
+        message: 'Feedback already submitted for this order',
+        messageAr: 'تم تقديم ملاحظات لهذا الطلب بالفعل'
+      });
+    }
+
     // Parse feedback data without orderId (it comes from URL params)
     const feedbackData = insertOrderFeedbackSchema.parse({
       ...req.body,

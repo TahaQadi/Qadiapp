@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useLanguage } from "./LanguageProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Star, Loader2, ThumbsUp, ThumbsDown, Heart } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
@@ -30,9 +32,49 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
   const [communicationRating, setCommunicationRating] = useState(0);
   const [comments, setComments] = useState("");
   const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  const submitMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', `/api/feedback/order/${orderId}`, {
+        rating,
+        orderingProcessRating: orderingProcessRating || undefined,
+        productQualityRating: productQualityRating || undefined,
+        deliverySpeedRating: deliverySpeedRating || undefined,
+        communicationRating: communicationRating || undefined,
+        comments: comments.trim() || undefined,
+        wouldRecommend,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/feedback/order/${orderId}`] });
+      toast({
+        title: language === 'ar' ? 'شكراً لك!' : 'Thank you!',
+        description: language === 'ar'
+          ? 'تم إرسال ملاحظاتك بنجاح'
+          : 'Your feedback has been submitted successfully',
+      });
+      onOpenChange(false);
+      setRating(0);
+      setOrderingProcessRating(0);
+      setProductQualityRating(0);
+      setDeliverySpeedRating(0);
+      setCommunicationRating(0);
+      setComments("");
+      setWouldRecommend(null);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error?.message || (language === 'ar'
+          ? 'فشل إرسال الملاحظات'
+          : 'Failed to submit feedback'),
+      });
+    },
+  });
+
+  const handleSubmit = () => {
     if (rating === 0) {
       toast({
         variant: "destructive",
@@ -51,51 +93,7 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const response = await fetch(`/api/feedback/order/${orderId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          rating,
-          orderingProcessRating: orderingProcessRating || undefined,
-          productQualityRating: productQualityRating || undefined,
-          deliverySpeedRating: deliverySpeedRating || undefined,
-          communicationRating: communicationRating || undefined,
-          comments: comments.trim() || undefined,
-          wouldRecommend,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to submit feedback');
-
-      toast({
-        title: language === 'ar' ? 'شكراً لك!' : 'Thank you!',
-        description: language === 'ar'
-          ? 'تم إرسال ملاحظاتك بنجاح'
-          : 'Your feedback has been submitted successfully',
-      });
-
-      onOpenChange(false);
-      setRating(0);
-      setOrderingProcessRating(0);
-      setProductQualityRating(0);
-      setDeliverySpeedRating(0);
-      setCommunicationRating(0);
-      setComments("");
-      setWouldRecommend(null);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar'
-          ? 'فشل إرسال الملاحظات'
-          : 'Failed to submit feedback',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    submitMutation.mutate();
   };
 
   const StarRating = ({ value, onChange, label }: { value: number; onChange: (val: number) => void; label: string }) => (
@@ -230,8 +228,8 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
           >
             {language === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? (
+          <Button onClick={handleSubmit} disabled={submitMutation.isPending}>
+            {submitMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 {language === 'ar' ? 'جاري الإرسال...' : 'Submitting...'}

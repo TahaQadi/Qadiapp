@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface MicroFeedbackWidgetProps {
   touchpoint: string;
@@ -34,14 +35,7 @@ export function MicroFeedbackWidget({
       quickResponse?: string;
       context?: Record<string, any>;
     }) => {
-      const res = await fetch('/api/feedback/micro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to submit feedback');
-      return res.json();
+      return apiRequest('POST', '/api/feedback/micro', data);
     },
     onSuccess: () => {
       setSubmitted(true);
