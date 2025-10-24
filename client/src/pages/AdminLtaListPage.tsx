@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ArrowLeft, Plus, Pencil, Trash2, Eye, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Eye, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { PaginationControls } from '@/components/PaginationControls';

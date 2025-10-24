@@ -474,7 +474,7 @@ export default function AdminOrdersPage() {
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(order.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.pipefyCardId?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Hide done (delivered) and cancelled if toggle is on
     const shouldShow = !hideDoneAndCancelled || (order.status !== 'delivered' && order.status !== 'cancelled');
 
@@ -906,8 +906,7 @@ export default function AdminOrdersPage() {
                         disabled={currentPage === 1}
                         data-testid="button-prev-page"
                       >
-                        <ChevronLeft className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'السابق' : 'Previous'}
+                        {language === 'ar' ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                       </Button>
                       <Button
                         variant="outline"
@@ -916,8 +915,7 @@ export default function AdminOrdersPage() {
                         disabled={currentPage === totalPages}
                         data-testid="button-next-page"
                       >
-                        {language === 'ar' ? 'التالي' : 'Next'}
-                        <ChevronRight className="h-4 w-4 ms-1" />
+                        {language === 'ar' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>

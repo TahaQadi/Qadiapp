@@ -666,7 +666,7 @@ export default function AdminProductsPage() {
                       const vendor = vendors.find(v => v.id === vendorId);
                       return vendor ? (
                         <SelectItem key={vendor.id} value={vendor.id}>
-                          {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                          {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
                         </SelectItem>
                       ) : null;
                     })}
@@ -781,12 +781,33 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Pagination */}
-                <PaginationControls
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  language={language}
-                />
+                <div className="flex justify-between items-center py-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="gap-1"
+                  >
+                    {language === 'ar' ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                    {language === 'ar' ? 'السابق' : 'Previous'}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {language === 'ar' 
+                      ? `صفحة ${currentPage} من ${totalPages}` 
+                      : `Page ${currentPage} of ${totalPages}`}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="gap-1"
+                  >
+                    {language === 'ar' ? 'التالي' : 'Next'}
+                    {language === 'ar' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>

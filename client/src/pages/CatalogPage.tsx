@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package, X, Send, Loader2, Trash2, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { ArrowLeft, Search, ChevronRight, ShoppingCart, Heart, Package, X, Send, Loader2, Trash2, ChevronDown, ChevronUp, FileText, ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Product, Lta } from '@shared/schema';
 import { SEO } from "@/components/SEO";
@@ -270,7 +270,7 @@ export default function CatalogPage() {
               className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
             />
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary-600 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                 {language === 'ar' ? 'الكتالوج' : 'Product Catalog'}
               </h1>
             </div>
@@ -528,6 +528,72 @@ export default function CatalogPage() {
                       </Card>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Subcategories Grid */}
+            {selectedMainCategory && !searchQuery && (
+              <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setSelectedMainCategory(null)}
+                  >
+                    {language === 'ar' ? <ChevronRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                  </Button>
+                  {selectedMainCategory}
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                  {getSubCategories(selectedMainCategory).map((subCat, index) => (
+                    <Card
+                      key={subCat}
+                      className="relative overflow-hidden cursor-pointer group
+                        bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
+                        border-border/50 dark:border-[#d4af37]/20 
+                        hover:border-primary dark:hover:border-[#d4af37] 
+                        hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                        transition-all duration-500 ease-out
+                        hover:scale-105 hover:-translate-y-2
+                        animate-fade-in"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                      onClick={() => {
+                        setSelectedSubCategory(subCat);
+                      }}
+                    >
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/10 
+                        group-hover:from-purple-500/30 group-hover:to-indigo-500/20
+                        transition-all duration-500 opacity-0 group-hover:opacity-100" />
+
+                      {/* Shimmer Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+                      <CardContent className="p-6 flex flex-col items-center justify-center min-h-[140px] relative z-10">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/10
+                          group-hover:scale-110 group-hover:rotate-6
+                          transition-all duration-500 flex-shrink-0
+                          border border-white/10 mb-3">
+                          <Package className="h-8 w-8 text-primary dark:text-[#d4af37]
+                            group-hover:text-primary dark:group-hover:text-[#f9c800]
+                            transition-colors duration-300" />
+                        </div>
+                        <h3 className="font-semibold text-lg text-foreground dark:text-white mb-1">{subCat}</h3>
+                        <p className="text-sm text-muted-foreground dark:text-gray-400">
+                          {products.filter(p => p.subCategory === subCat).length}{' '}
+                          {language === 'ar' ? 'منتج' : 'products'}
+                        </p>
+                      </CardContent>
+
+                      {/* Bottom accent line */}
+                      <div className="absolute bottom-0 left-0 right-0 h-1 
+                        bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
+                        transition-all duration-500
+                        opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
+                    </Card>
+                  ))}
                 </div>
               </div>
             )}
