@@ -29,13 +29,7 @@ router.post('/api/demo-request', async (req: Request, res: Response) => {
       status: 'pending',
     }).returning();
 
-    // Log for admin notification
-      id: request.id,
-      name: request.name,
-      company: request.company,
-      email: request.email,
-      phone: request.phone,
-    });
+    // Log for admin notification (could be enhanced with actual notification system)
 
     res.json({ success: true, requestId: request.id });
   } catch (error) {
