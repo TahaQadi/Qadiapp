@@ -932,7 +932,7 @@ KB-001,89.99,SAR`;
                           <TableCell className="font-medium">
                             {language === 'ar' ? doc.nameAr : doc.nameEn}
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{doc.fileType.split('/').pop()?.toUpperCase()}</TableCell>
+                          <TableCell className="font-mono text-sm">{doc.fileType?.split('/').pop()?.toUpperCase() || 'N/A'}</TableCell>
                           <TableCell className="text-sm">{formatFileSize(doc.fileSize)}</TableCell>
                           <TableCell className="text-sm">{formatDate(doc.createdAt)}</TableCell>
                           <TableCell className="text-end">
