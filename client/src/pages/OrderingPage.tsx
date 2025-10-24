@@ -767,10 +767,6 @@ export default function OrderingPage() {
                 <p className="text-lg font-bold font-mono text-primary" data-testid={`text-price-${product.id}`}>
                   {product.contractPrice} <span className="text-xs font-normal">{product.currency}</span>
                 </p>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <DollarSign className="w-2.5 h-2.5" />
-                  {language === 'ar' ? 'سعر العقد' : 'Contract Price'}
-                </p>
               </div>
             ) : product.sellingPricePiece ? (
               <div className="space-y-0.5">
