@@ -561,7 +561,6 @@ export default function FeedbackDashboardPage() {
           </div>
         </CardContent>
         </Card>
-        </div>
       </main>
     </div>
   );
