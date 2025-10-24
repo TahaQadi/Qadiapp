@@ -10,7 +10,7 @@ import { seedData } from "./seed";
 const PgStore = connectPgSimple(session);
 const sessionStore = new PgStore({
   conString: process.env.DATABASE_URL,
-  createTableIfMissing: true,
+  createTableIfMissing: false, // Table is created by Drizzle migrations
 });
 
 // Handle uncaught errors in production
