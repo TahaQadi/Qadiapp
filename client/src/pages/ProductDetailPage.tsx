@@ -234,9 +234,14 @@ export default function ProductDetailPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={user ? '/ordering' : '/'}>
-              <ArrowLeft className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+          >
+            <Link href={user ? '/ordering' : '/landing'}>
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Link>
           </Button>
           <div className="flex items-center gap-2">

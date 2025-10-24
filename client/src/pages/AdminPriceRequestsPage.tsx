@@ -95,7 +95,7 @@ export default function AdminPriceRequestsPage() {
   const handleCreateOffer = (request: PriceRequest) => {
     // Navigate to price management with request ID
     setLocation(`/admin/price-management?requestId=${request.id}`);
-    
+
     // Show linking indicator
     toast({
       title: language === "ar" ? "إنشاء عرض من الطلب" : "Creating Offer from Request",
