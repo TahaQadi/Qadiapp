@@ -79,7 +79,7 @@
       "type": "body",
       "order": 8,
       "content": {
-        "textAr": "المجموع الفرعي (قبل الضريبة): {{subtotal}} ريال سعودي\nضريبة القيمة المضافة (15%): {{vatAmount}} ريال سعودي\nالمبلغ الإجمالي المستحق: {{totalAmount}} ريال سعودي"
+        "textAr": "المبلغ الإجمالي المستحق: {{totalAmount}} ريال سعودي\n(الأسعار شاملة ضريبة القيمة المضافة 15%)"
       }
     },
     {
@@ -163,8 +163,6 @@
     "clientAddressAr",
     "clientTaxNumber",
     "items",
-    "subtotal",
-    "vatAmount",
     "totalAmount",
     "amountInWords",
     "paymentDays",

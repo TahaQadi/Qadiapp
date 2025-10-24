@@ -44,8 +44,8 @@
     {
       "type": "body",
       "content": {
-        "textEn": "Order Total: {{totalAmount}} SAR\nStatus: {{status}}",
-        "textAr": "إجمالي الطلب: {{totalAmount}} ريال\nالحالة: {{statusAr}}"
+        "textEn": "Order Total: {{totalAmount}} SAR (Tax Included)\nStatus: {{status}}",
+        "textAr": "إجمالي الطلب: {{totalAmount}} ريال (شامل الضريبة)\nالحالة: {{statusAr}}"
       }
     },
     {

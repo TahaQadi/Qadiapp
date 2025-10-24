@@ -368,6 +368,7 @@ export default function OrderingPage() {
   }, [cart, toast, language]);
 
   const handleConfirmOrder = useCallback(() => {
+    // Calculate total - prices already include tax
     const total = cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
     const items = cart.map(item => ({
       productId: item.productId,

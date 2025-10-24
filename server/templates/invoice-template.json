@@ -46,8 +46,8 @@
     {
       "type": "body",
       "content": {
-        "textEn": "Subtotal: {{subtotal}} SAR\nVAT (15%): {{vatAmount}} SAR\nTotal Amount: {{totalAmount}} SAR",
-        "textAr": "المجموع الفرعي: {{subtotal}} ريال\nضريبة القيمة المضافة (15%): {{vatAmount}} ريال\nالمبلغ الإجمالي: {{totalAmount}} ريال"
+        "textEn": "Total Amount: {{totalAmount}} SAR\n(Prices include 15% VAT)",
+        "textAr": "المبلغ الإجمالي: {{totalAmount}} ريال\n(الأسعار شاملة ضريبة القيمة المضافة 15%)"
       }
     },
     {
@@ -78,8 +78,6 @@
     "clientNameAr",
     "dueDate",
     "items",
-    "subtotal",
-    "vatAmount",
     "totalAmount",
     "taxNumber"
   ],

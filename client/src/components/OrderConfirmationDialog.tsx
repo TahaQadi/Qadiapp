@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
-import { Package, DollarSign, AlertCircle, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { Package, DollarSign, AlertCircle, ShoppingCart, ArrowLeft, FileText } from 'lucide-react';
 
 export interface OrderConfirmationItem {
   productId: string;
@@ -49,8 +48,12 @@ export function OrderConfirmationDialog({
   const { t } = useTranslation();
   const { language } = useLanguage();
 
-  const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
-  const tax = subtotal * 0.15; // 15% tax
+  // Assume ltaContract is available if ltaName is provided, and has nameAr/nameEn properties.
+  // In a real scenario, you might need to fetch or pass the full ltaContract object.
+  const ltaContract = ltaName ? { nameEn: ltaName, nameAr: ltaName } : null;
+
+
+  const total = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,14 +72,16 @@ export function OrderConfirmationDialog({
 
         <div className="space-y-6 py-4">
           {/* LTA Information */}
-          {ltaName && (
+          {ltaContract && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
               <Package className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
                 <p className="text-sm font-medium">
                   {language === 'ar' ? 'اتفاقية العقد' : 'LTA Contract'}
                 </p>
-                <p className="text-sm text-muted-foreground">{ltaName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? ltaContract.nameAr : ltaContract.nameEn}
+                </p>
               </div>
             </div>
           )}
@@ -128,14 +133,7 @@ export function OrderConfirmationDialog({
                 <span className="text-muted-foreground">
                   {language === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}
                 </span>
-                <span className="font-mono">{currency} {subtotal.toFixed(2)}</span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {language === 'ar' ? 'الضريبة (15%)' : 'Tax (15%)'}
-                </span>
-                <span className="font-mono">{currency} {tax.toFixed(2)}</span>
+                <span className="font-mono">{currency} {total.toFixed(2)}</span>
               </div>
 
               <Separator />
@@ -147,6 +145,9 @@ export function OrderConfirmationDialog({
                 <div className="text-end">
                   <p className="text-2xl font-bold font-mono text-primary">
                     {currency} {totalAmount.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === 'ar' ? 'الأسعار شاملة الضريبة' : 'Prices include tax'}
                   </p>
                 </div>
               </div>
