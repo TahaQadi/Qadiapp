@@ -208,7 +208,7 @@ export default function LandingPage() {
             </div>
 
             <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 sm:mb-6 leading-tight px-4">
-              <span className="bg-gradient-to-r from-[#d4af37] via-[#f9c800] to-[#d4af37] bg-clip-text text-transparent text-[65px]">
+              <span className="bg-gradient-to-r from-[#d4af37] via-[#f9c800] to-[#d4af37] bg-clip-text text-transparent text-[52px]">
                 {isArabic ? 'إدارة طلباتك أسهل' : 'Order Management Made Easy'}
               </span>
               <br />
