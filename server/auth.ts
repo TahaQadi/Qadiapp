@@ -42,11 +42,14 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: storage.sessionStore,
     rolling: true, // Reset expiration on each request to keep active users logged in
+    name: 'alqadi.sid', // Custom session name for security
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // Default: 24 hours of inactivity
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
       httpOnly: true, // Prevent XSS attacks
       sameSite: 'lax', // CSRF protection
+      path: '/', // Explicit path
+      domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined, // Domain restriction in production
     }
   };
 

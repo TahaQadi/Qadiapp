@@ -15,6 +15,49 @@ process.on('uncaughtException', (error) => {
 });
 
 const app = express();
+
+// Security headers middleware
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
+  // Enable XSS protection
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Referrer policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Note: unsafe-inline needed for Vite in dev
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https: wss:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests"
+  ].join('; ');
+  
+  res.setHeader('Content-Security-Policy', csp);
+  
+  // HSTS (HTTP Strict Transport Security) - only in production
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  
+  // Remove X-Powered-By header
+  res.removeHeader('X-Powered-By');
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -65,12 +108,32 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Error handling middleware
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    
+    // Log error details
+    console.error(`Error ${status} on ${req.method} ${req.path}:`, {
+      message: err.message,
+      stack: err.stack,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      user: (req as any).user?.id || 'anonymous',
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
 
-    res.status(status).json({ message });
-    throw err;
+    // Don't expose internal errors in production
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const errorResponse = {
+      message: isDevelopment ? message : 'Something went wrong',
+      ...(isDevelopment && { stack: err.stack, details: err })
+    };
+
+    res.status(status).json(errorResponse);
   });
 
   // importantly only setup vite in development and after
