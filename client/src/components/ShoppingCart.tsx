@@ -155,8 +155,6 @@ export function ShoppingCart({
   const isMobile = useIsMobile();
 
   const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
-  const tax = subtotal * 0.15; // 15% tax
-  const total = subtotal + tax;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -206,25 +204,15 @@ export function ShoppingCart({
 
             <div className="p-6 pt-4 border-t space-y-4">
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t('subtotal')}</span>
-                  <span className="font-mono" data-testid="text-subtotal">
-                    {currency} {subtotal.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t('tax')}</span>
-                  <span className="font-mono" data-testid="text-tax">
-                    {currency} {tax.toFixed(2)}
-                  </span>
-                </div>
-                <Separator />
                 <div className="flex justify-between font-medium">
                   <span>{t('total')}</span>
                   <span className="font-mono text-lg" data-testid="text-total">
-                    {currency} {total.toFixed(2)}
+                    {currency} {subtotal.toFixed(2)}
                   </span>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'الأسعار شاملة الضريبة' : 'Prices include tax'}
+                </p>
               </div>
 
               <div className="flex flex-col gap-2">
