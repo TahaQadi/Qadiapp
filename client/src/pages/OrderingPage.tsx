@@ -696,12 +696,18 @@ export default function OrderingPage() {
                 alt={primaryName}
                 className="w-full h-full object-cover"
                 data-testid={`img-product-${product.id}`}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
-              </div>
-            )}
+            ) : null}
+            <div className={cn(
+              "w-full h-full flex items-center justify-center",
+              product.imageUrl && "hidden"
+            )}>
+              <Package className="w-16 h-16 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
+            </div>
           </div>
         </div>
 
@@ -788,7 +794,7 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-4 pt-0 gap-2 relative z-20 flex-col">
+        <CardFooter className="p-0 gap-2 relative z-20 flex-col">
           {product.hasPrice ? (
             <>
               {cartItem ? (

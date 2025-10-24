@@ -132,8 +132,6 @@ const uploadDocument = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
-
-
   // Onboarding routes (public)
   app.use('/api', onboardingRoutes);
 
