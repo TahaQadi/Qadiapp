@@ -181,7 +181,7 @@ export default function AdminPage() {
               data-testid="button-ordering"
             >
               <Link href="/ordering">
-                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+                <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
 
@@ -230,7 +230,7 @@ export default function AdminPage() {
                         className="w-full justify-start gap-3 h-11"
                         data-testid="sidebar-ordering"
                       >
-                        <ShoppingCart className="h-5 w-5" />
+                        <ClipboardList className="h-5 w-5" />
                         <span>{language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}</span>
                       </Button>
                     </Link>
