@@ -1,5 +1,6 @@
 import { useRoute, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Helmet } from 'react-helmet-async';
@@ -24,6 +25,20 @@ export default function ProductDetailPage() {
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
+  const [priceRequestList, setPriceRequestList] = useState<string[]>([]);
+
+  // Load price request list from sessionStorage on mount
+  useState(() => {
+    const existingList = sessionStorage.getItem('priceRequestList');
+    if (existingList) {
+      try {
+        const parsed = JSON.parse(existingList);
+        setPriceRequestList(parsed.map((item: any) => item.productId));
+      } catch (e) {
+        console.error('Failed to parse price request list:', e);
+      }
+    }
+  });
 
   // Fetch all products and find by name slug
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
@@ -58,10 +73,10 @@ export default function ProductDetailPage() {
     if (!product?.hasPrice) {
       // Add to price request list in sessionStorage
       const existingList = sessionStorage.getItem('priceRequestList');
-      const priceRequestList = existingList ? JSON.parse(existingList) : [];
+      const currentList = existingList ? JSON.parse(existingList) : [];
 
       // Check if product already exists
-      const exists = priceRequestList.some((item: any) => item.productId === product.id);
+      const exists = currentList.some((item: any) => item.productId === product.id);
 
       if (exists) {
         toast({
@@ -73,7 +88,7 @@ export default function ProductDetailPage() {
       }
 
       // Add new product to list
-      priceRequestList.push({
+      currentList.push({
         productId: product.id,
         productSku: product.sku,
         productNameEn: product.nameEn,
@@ -81,7 +96,10 @@ export default function ProductDetailPage() {
       });
 
       // Save updated list to sessionStorage
-      sessionStorage.setItem('priceRequestList', JSON.stringify(priceRequestList));
+      sessionStorage.setItem('priceRequestList', JSON.stringify(currentList));
+
+      // Update local state to trigger re-render
+      setPriceRequestList(prev => [...prev, product.id]);
 
       toast({
         description: language === 'ar'
@@ -363,9 +381,18 @@ export default function ProductDetailPage() {
                         }
                       </p>
                     </div>
-                    <Button onClick={handleAddToCart} variant="outline" size="lg" className="w-full">
-                      <Heart className="w-5 h-5 me-2" />
-                      {language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request'}
+                    <Button 
+                      onClick={handleAddToCart} 
+                      variant={priceRequestList.includes(product.id) ? "default" : "outline"}
+                      size="lg" 
+                      className="w-full"
+                      disabled={priceRequestList.includes(product.id)}
+                    >
+                      <Heart className={`w-5 h-5 me-2 ${priceRequestList.includes(product.id) ? 'fill-current' : ''}`} />
+                      {priceRequestList.includes(product.id)
+                        ? (language === 'ar' ? 'تمت الإضافة' : 'Added')
+                        : (language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request')
+                      }
                     </Button>
                   </>
                 )}
