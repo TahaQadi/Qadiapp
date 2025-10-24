@@ -1188,6 +1188,11 @@ function ClientDetailsCard({
                           {dept.contactEmail}
                         </div>
                       )}
+                      {dept.contactPhone && (
+                        <div className="text-sm text-muted-foreground">
+                          {dept.contactPhone}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1224,6 +1229,16 @@ function ClientDetailsCard({
                       {(loc.city || loc.country) && (
                         <div className="text-sm text-muted-foreground">
                           {[loc.city, loc.country].filter(Boolean).join(', ')}
+                        </div>
+                      )}
+                      {loc.phone && (
+                        <div className="text-sm text-muted-foreground">
+                          {language === 'ar' ? 'الهاتف: ' : 'Phone: '}{loc.phone}
+                        </div>
+                      )}
+                      {(loc.latitude && loc.longitude) && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {language === 'ar' ? 'الإحداثيات: ' : 'GPS: '}{loc.latitude}, {loc.longitude}
                         </div>
                       )}
                     </div>
