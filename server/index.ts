@@ -10,6 +10,7 @@ import { seedData } from "./seed";
 const PgStore = connectPgSimple(session);
 const sessionStore = new PgStore({
   conString: process.env.DATABASE_URL,
+  tableName: 'sessions', // Match the table name in schema.ts
   createTableIfMissing: false, // Table is created by Drizzle migrations
 });
 
