@@ -136,8 +136,8 @@ export default function CatalogPage() {
 
     if (exists) {
       toast({
-        description: language === 'ar' 
-          ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار' 
+        description: language === 'ar'
+          ? 'المنتج موجود بالفعل في قائمة طلبات الأسعار'
           : 'Product already in price request list'
       });
       return;
@@ -212,7 +212,7 @@ export default function CatalogPage() {
 
   // Filter products based on search and category
   const filteredProducts = products.filter(p => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.nameAr.includes(searchQuery) ||
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -226,7 +226,7 @@ export default function CatalogPage() {
     return matchesSearch;
   });
 
-  const pageTitle = category && category !== 'all' 
+  const pageTitle = category && category !== 'all'
     ? `${category} - ${language === 'ar' ? 'الكتالوج' : 'Catalog'}`
     : (language === 'ar' ? 'الكتالوج' : 'Product Catalog');
 
@@ -234,7 +234,7 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      <SEO 
+      <SEO
         title={pageTitle}
         description={pageDescription}
         keywords={`${category || 'products'}, catalog, shop, ${language === 'ar' ? 'منتجات، كتالوج، تسوق' : 'products, catalog, shop'}`}
@@ -269,9 +269,9 @@ export default function CatalogPage() {
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
-            <img 
-              src="/logo.png" 
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
+            <img
+              src="/logo.png"
+              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
               className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
             />
             <div className="min-w-0">
@@ -292,8 +292,8 @@ export default function CatalogPage() {
             {language === 'ar' ? 'كتالوج المنتجات' : 'Product Catalog'}
           </h2>
           <p className="text-muted-foreground">
-            {language === 'ar' 
-              ? 'تصفح منتجاتنا واختر ما تحتاجه' 
+            {language === 'ar'
+              ? 'تصفح منتجاتنا واختر ما تحتاجه'
               : 'Browse our products and find what you need'}
           </p>
         </div>
@@ -302,114 +302,114 @@ export default function CatalogPage() {
         {priceRequestList.length > 0 && (
           <Card className="mb-6 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20 border-pink-200 dark:border-pink-800 overflow-hidden transition-all duration-300 hover:shadow-lg animate-slide-down shadow-md">
             <CardContent className="p-0">
-                {/* Compact Header */}
-                <div 
-                  className="flex items-center justify-between gap-4 p-4 cursor-pointer hover:bg-pink-100/50 dark:hover:bg-pink-900/20 transition-colors"
-                  onClick={() => setPriceRequestExpanded(!priceRequestExpanded)}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="p-2 rounded-full bg-pink-100 dark:bg-pink-900 animate-pulse">
-                      <Heart className="h-5 w-5 text-pink-600 dark:text-pink-400 fill-current" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm flex items-center gap-2">
-                        {language === 'ar' ? 'قائمة طلب السعر' : 'Price Request List'}
-                        <Badge variant="secondary" className="text-xs">
-                          {priceRequestList.length}
-                        </Badge>
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {language === 'ar' 
-                          ? `${priceRequestList.length} منتج في القائمة` 
-                          : `${priceRequestList.length} items in list`}
-                      </p>
-                    </div>
+              {/* Compact Header */}
+              <div
+                className="flex items-center justify-between gap-4 p-4 cursor-pointer hover:bg-pink-100/50 dark:hover:bg-pink-900/20 transition-colors"
+                onClick={() => setPriceRequestExpanded(!priceRequestExpanded)}
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="p-2 rounded-full bg-pink-100 dark:bg-pink-900 animate-pulse">
+                    <Heart className="h-5 w-5 text-pink-600 dark:text-pink-400 fill-current" />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      {language === 'ar' ? 'قائمة طلب السعر' : 'Price Request List'}
+                      <Badge variant="secondary" className="text-xs">
+                        {priceRequestList.length}
+                      </Badge>
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'ar'
+                        ? `${priceRequestList.length} منتج في القائمة`
+                        : `${priceRequestList.length} items in list`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPriceRequestDialogOpen(true);
+                    }}
+                    className="bg-pink-600 hover:bg-pink-700 text-white"
+                  >
+                    <FileText className="h-4 w-4 me-1" />
+                    {language === 'ar' ? 'إرسال' : 'Submit'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPriceRequestExpanded(!priceRequestExpanded);
+                    }}
+                    className="h-8 w-8"
+                  >
+                    {priceRequestExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Expandable Content */}
+              {priceRequestExpanded && (
+                <div className="border-t border-pink-200 dark:border-pink-800 bg-background/50 backdrop-blur-sm animate-slide-down">
+                  <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                    {priceRequestList.map((item) => (
+                      <div
+                        key={item.productId}
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {language === 'ar' ? item.productNameAr : item.productNameEn}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            SKU: {item.productSku} • {language === 'ar' ? 'الكمية:' : 'Qty:'} {item.quantity}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleRemoveFromPriceRequest(item.productId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-4 border-t border-border/50 bg-muted/30 flex items-center justify-between gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPriceRequestList([]);
+                        setPriceRequestExpanded(false);
+                      }}
+                      className="flex-1"
+                    >
+                      <Trash2 className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'مسح الكل' : 'Clear All'}
+                    </Button>
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPriceRequestDialogOpen(true);
-                      }}
-                      className="bg-pink-600 hover:bg-pink-700 text-white"
+                      onClick={() => setPriceRequestDialogOpen(true)}
+                      className="flex-1 bg-pink-600 hover:bg-pink-700"
                     >
                       <FileText className="h-4 w-4 me-1" />
-                      {language === 'ar' ? 'إرسال' : 'Submit'}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPriceRequestExpanded(!priceRequestExpanded);
-                      }}
-                      className="h-8 w-8"
-                    >
-                      {priceRequestExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
+                      {language === 'ar' ? 'إرسال الطلب' : 'Submit Request'}
                     </Button>
                   </div>
                 </div>
-
-                {/* Expandable Content */}
-                {priceRequestExpanded && (
-                  <div className="border-t border-pink-200 dark:border-pink-800 bg-background/50 backdrop-blur-sm animate-slide-down">
-                    <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
-                      {priceRequestList.map((item) => (
-                        <div 
-                          key={item.productId} 
-                          className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {language === 'ar' ? item.productNameAr : item.productNameEn}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              SKU: {item.productSku} • {language === 'ar' ? 'الكمية:' : 'Qty:'} {item.quantity}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => handleRemoveFromPriceRequest(item.productId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="p-4 border-t border-border/50 bg-muted/30 flex items-center justify-between gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setPriceRequestList([]);
-                          setPriceRequestExpanded(false);
-                        }}
-                        className="flex-1"
-                      >
-                        <Trash2 className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'مسح الكل' : 'Clear All'}
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => setPriceRequestDialogOpen(true)}
-                        className="flex-1 bg-pink-600 hover:bg-pink-700"
-                      >
-                        <FileText className="h-4 w-4 me-1" />
-                        {language === 'ar' ? 'إرسال الطلب' : 'Submit Request'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
+              )}
+            </CardContent>
           </Card>
         )}
 
@@ -491,10 +491,10 @@ export default function CatalogPage() {
                       <Card
                         key={mainCat}
                         className="relative overflow-hidden cursor-pointer group
-                          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
-                          border-border/50 dark:border-[#d4af37]/20 
-                          hover:border-primary dark:hover:border-[#d4af37] 
-                          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
+                          border-border/50 dark:border-[#d4af37]/20
+                          hover:border-primary dark:hover:border-[#d4af37]
+                          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20
                           transition-all duration-500 ease-out
                           hover:scale-105 hover:-translate-y-2
                           animate-fade-in"
@@ -502,7 +502,7 @@ export default function CatalogPage() {
                         onClick={() => setSelectedMainCategory(mainCat)}
                       >
                         {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/10 
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/10
                           group-hover:from-blue-500/30 group-hover:to-cyan-500/20
                           transition-all duration-500 opacity-0 group-hover:opacity-100" />
 
@@ -526,7 +526,7 @@ export default function CatalogPage() {
                         </CardContent>
 
                         {/* Bottom accent line */}
-                        <div className="absolute bottom-0 left-0 right-0 h-1 
+                        <div className="absolute bottom-0 left-0 right-0 h-1
                           bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
                           transition-all duration-500
                           opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
@@ -556,10 +556,10 @@ export default function CatalogPage() {
                     <Card
                       key={subCat}
                       className="relative overflow-hidden cursor-pointer group
-                        bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
-                        border-border/50 dark:border-[#d4af37]/20 
-                        hover:border-primary dark:hover:border-[#d4af37] 
-                        hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                        bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
+                        border-border/50 dark:border-[#d4af37]/20
+                        hover:border-primary dark:hover:border-[#d4af37]
+                        hover:shadow-2xl dark:hover:shadow-[#d4af37]/20
                         transition-all duration-500 ease-out
                         hover:scale-105 hover:-translate-y-2
                         animate-fade-in"
@@ -569,7 +569,7 @@ export default function CatalogPage() {
                       }}
                     >
                       {/* Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/10 
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/10
                         group-hover:from-purple-500/30 group-hover:to-indigo-500/20
                         transition-all duration-500 opacity-0 group-hover:opacity-100" />
 
@@ -593,7 +593,7 @@ export default function CatalogPage() {
                       </CardContent>
 
                       {/* Bottom accent line */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1 
+                      <div className="absolute bottom-0 left-0 right-0 h-1
                         bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
                         transition-all duration-500
                         opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
@@ -624,18 +624,18 @@ export default function CatalogPage() {
                     return (
                       <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
                         <Card className="h-full relative overflow-hidden cursor-pointer group
-                          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
-                          border-border/50 dark:border-[#d4af37]/20 
-                          hover:border-primary dark:hover:border-[#d4af37] 
-                          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+                          bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
+                          border-border/50 dark:border-[#d4af37]/20
+                          hover:border-primary dark:hover:border-[#d4af37]
+                          hover:shadow-2xl dark:hover:shadow-[#d4af37]/20
                           transition-all duration-500 ease-out
                           hover:scale-105 hover:-translate-y-2
-                          animate-fade-in" 
+                          animate-fade-in"
                           style={{ animationDelay: `${index * 50}ms` }}
                           data-testid={`card-product-${product.id}`}>
 
                           {/* Gradient Overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/10 
+                          <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/10
                             group-hover:from-green-500/30 group-hover:to-emerald-500/20
                             transition-all duration-500 opacity-0 group-hover:opacity-100" />
 
@@ -704,23 +704,27 @@ export default function CatalogPage() {
                               ) : (
                                 <Button
                                   size="sm"
-                                  variant="outline"
+                                  variant={priceRequestList.some(item => item.productId === product.id) ? "default" : "outline"}
                                   className="w-full"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     handleRequestPrice(product);
                                   }}
+                                  disabled={priceRequestList.some(item => item.productId === product.id)}
                                 >
-                                  <Heart className="h-3 w-3 me-2" />
-                                  {language === 'ar' ? 'طلب سعر' : 'Request Price'}
+                                  <Heart className={`h-3 w-3 me-2 ${priceRequestList.some(item => item.productId === product.id) ? 'fill-current' : ''}`} />
+                                  {priceRequestList.some(item => item.productId === product.id)
+                                    ? (language === 'ar' ? 'تمت الإضافة' : 'Added')
+                                    : (language === 'ar' ? 'طلب سعر' : 'Request Price')
+                                  }
                                 </Button>
                               )}
                             </CardFooter>
                           )}
 
                           {/* Bottom accent line */}
-                          <div className="absolute bottom-0 left-0 right-0 h-1 
+                          <div className="absolute bottom-0 left-0 right-0 h-1
                             bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
                             transition-all duration-500
                             opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
@@ -734,10 +738,10 @@ export default function CatalogPage() {
 
             {/* No Products Found */}
             {filteredProducts.length === 0 && (selectedSubCategory || searchQuery) && (
-              <Card className="p-12 text-center bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
-                border-border/50 dark:border-[#d4af37]/20 
-                hover:border-primary dark:hover:border-[#d4af37] 
-                hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
+              <Card className="p-12 text-center bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
+                border-border/50 dark:border-[#d4af37]/20
+                hover:border-primary dark:hover:border-[#d4af37]
+                hover:shadow-2xl dark:hover:shadow-[#d4af37]/20
                 transition-all duration-500 animate-fade-in">
                 <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
                 <h3 className="text-xl font-semibold mb-2 text-foreground dark:text-white">
@@ -762,7 +766,7 @@ export default function CatalogPage() {
               </DialogTitle>
             </DialogHeader>
             <p id="price-request-description" className="sr-only">
-              {language === 'ar' 
+              {language === 'ar'
                 ? 'عرض وإدارة قائمة المنتجات التي تريد طلب أسعار لها'
                 : 'View and manage your list of products to request prices for'}
             </p>
