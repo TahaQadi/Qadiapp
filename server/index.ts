@@ -1,8 +1,19 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import session from 'express-session'; // Assuming session is imported elsewhere or needs to be added
+import connectRedis from 'connect-redis'; // Assuming connect-redis is used for session store
+import { createClient } from 'redis'; // Assuming redis client is used
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
+
+// Assuming redisClient and sessionStore are defined elsewhere or need to be initialized
+const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+redisClient.connect().catch(console.error);
+const RedisStore = connectRedis(session);
+const sessionStore = new RedisStore({
+  client: redisClient,
+});
 
 // Handle uncaught errors in production
 process.on('unhandledRejection', (reason, promise) => {
@@ -17,6 +28,33 @@ process.on('uncaughtException', (error) => {
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
+  );
+  next();
+});
+
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    },
+    store: sessionStore
+  })
+);
 
 // Serve static files from attached_assets directory BEFORE other middlewares
 app.use('/attached_assets', express.static('attached_assets'));

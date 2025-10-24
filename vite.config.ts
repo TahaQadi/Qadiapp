@@ -37,4 +37,9 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+  css: {
+    postcss: {
+      plugins: []
+    }
+  }
 });
