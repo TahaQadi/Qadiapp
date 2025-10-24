@@ -235,7 +235,7 @@ export default function FeedbackDashboardPage() {
             <p className="text-muted-foreground text-sm">
               {language === 'ar' ? 'رؤى شاملة حول تجربة العملاء' : 'Comprehensive insights into customer experience'}
             </p>
-          {stats.isEmpty && (
+          {stats.totalFeedback === 0 && (
             <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 {language === 'ar' 
@@ -265,9 +265,8 @@ export default function FeedbackDashboardPage() {
               </Button>
             </div>
           </div>
-        </div>
 
-      {/* Key Metrics */}
+          {/* Key Metrics */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
