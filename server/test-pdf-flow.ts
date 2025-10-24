@@ -5,20 +5,16 @@ import { PDFAccessControl } from './pdf-access-control';
 import crypto from 'crypto';
 
 async function testPDFFlow() {
-  console.log('=== Testing Complete PDF Generation Flow ===\n');
 
   try {
     // Step 1: Fetch a template
-    console.log('Step 1: Fetching price offer template...');
     const templates = await TemplateStorage.getTemplates('price_offer');
     if (templates.length === 0) {
       throw new Error('No price offer template found');
     }
     const template = templates[0];
-    console.log(`✓ Found template: ${template.nameEn} (ID: ${template.id})\n`);
 
     // Step 2: Prepare variables (mock data)
-    console.log('Step 2: Preparing mock data...');
     const variables = {
       clientName: 'ABC Corporation',
       clientNameAr: 'شركة ABC',
@@ -34,10 +30,8 @@ async function testPDFFlow() {
       ltaNumber: 'LTA-2025-001',
       offerNumber: 'PO-2025-001'
     };
-    console.log('✓ Mock data prepared\n');
 
     // Step 3: Generate simple PDF (mock - minimal valid PDF)
-    console.log('Step 3: Generating PDF content...');
     // Minimal valid PDF structure
     const pdfContent = `%PDF-1.4
 1 0 obj
@@ -80,10 +74,8 @@ startxref
 489
 %%EOF`;
     const pdfBuffer = Buffer.from(pdfContent, 'utf-8');
-    console.log(`✓ PDF generated (${pdfBuffer.length} bytes)\n`);
 
     // Step 4: Upload to object storage
-    console.log('Step 4: Uploading to object storage...');
     const fileName = `price-offer-${Date.now()}.pdf`;
     const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'PRICE_OFFER');
     if (!uploadResult.ok) {
@@ -91,10 +83,8 @@ startxref
     }
     const fileUrl = uploadResult.fileName || 'unknown';
     const fileChecksum = uploadResult.checksum || '';
-    console.log(`✓ Uploaded to: ${fileUrl}\n`);
 
     // Step 5: Create database record
-    console.log('Step 5: Creating document record in database...');
     const checksum = fileChecksum;
     
     const document = await storage.createDocumentMetadata({
@@ -113,37 +103,20 @@ startxref
         variables: variables
       }
     });
-    console.log(`✓ Document created with ID: ${document.id}\n`);
 
     // Step 6: Generate secure download token
-    console.log('Step 6: Generating secure download token...');
     const token = PDFAccessControl.generateDownloadToken(document.id, 'client-test-123');
-    console.log(`✓ Token generated: ${token.substring(0, 40)}...\n`);
 
     // Step 7: Log access (skip for test since we don't have a real client)
-    console.log('Step 7: Skipping access log (test client doesn\'t exist)');
-    console.log('✓ Skipped\n');
 
     // Step 8: Increment view count
-    console.log('Step 8: Testing view count increment...');
     await storage.incrementDocumentViewCount(document.id);
     const updatedDoc = await storage.getDocumentById(document.id);
-    console.log(`✓ View count: ${updatedDoc?.viewCount}\n`);
 
     // Step 9: Verify access logs
-    console.log('Step 9: Retrieving access logs...');
     const logs = await storage.getDocumentAccessLogs(document.id);
-    console.log(`✓ Found ${logs.length} access log(s)\n`);
 
     // Final summary
-    console.log('=== Test Summary ===');
-    console.log(`Document ID: ${document.id}`);
-    console.log(`File URL: ${fileUrl}`);
-    console.log(`File Size: ${document.fileSize} bytes`);
-    console.log(`Checksum: ${checksum.substring(0, 16)}...`);
-    console.log(`View Count: ${updatedDoc?.viewCount}`);
-    console.log(`Access Logs: ${logs.length}`);
-    console.log('\n✓ ALL TESTS PASSED!\n');
 
   } catch (error) {
     console.error('\n✗ Test failed:', error);

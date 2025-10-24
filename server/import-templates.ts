@@ -15,14 +15,12 @@ async function importTemplates() {
     'contract-template.json'
   ];
 
-  console.log('Starting template import...\n');
 
   for (const file of templateFiles) {
     try {
       const filePath = path.join(templatesDir, file);
       const templateData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
-      console.log(`Importing: ${templateData.nameEn} (${templateData.nameAr})`);
       
       const template = await TemplateStorage.createTemplate({
         nameEn: templateData.nameEn,
@@ -37,13 +35,11 @@ async function importTemplates() {
         isActive: templateData.isActive
       });
 
-      console.log(`✓ Successfully imported template ID: ${template.id}\n`);
     } catch (error) {
       console.error(`✗ Failed to import ${file}:`, error);
     }
   }
 
-  console.log('Template import complete!');
   process.exit(0);
 }
 

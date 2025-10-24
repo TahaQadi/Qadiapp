@@ -5,11 +5,9 @@ export async function seedData() {
   // Check if data already exists
   const existingClients = await storage.getClients();
   if (existingClients.length > 0) {
-    console.log('Data already seeded');
     return;
   }
 
-  console.log('Seeding database...');
 
   // Create admin user
   const adminUser = await storage.createClient({
@@ -235,24 +233,9 @@ export async function seedData() {
     clientId: testClient.id,
   });
 
-  console.log('\nSeeding completed successfully!');
-  console.log('\nLTAs created:');
-  console.log(`  - ${lta1.nameEn} (${lta1.status})`);
-  console.log(`  - ${lta2.nameEn} (${lta2.status})`);
-  console.log(`  - ${lta3.nameEn} (${lta3.status})`);
-  console.log('\nTest client has access to:');
-  console.log(`  - ${lta1.nameEn} (4 products)`);
-  console.log(`  - ${lta2.nameEn} (3 products)`);
-  console.log('\nAdmin credentials:');
-  console.log('  Username: admin');
-  console.log('  Password: admin123');
-  console.log('\nTest client credentials:');
-  console.log('  Username: test');
-  console.log('  Password: test123');
 
   // Create default templates
   await seedDefaultTemplates();
-  console.log('\nDefault templates created');
 }
 
 async function seedDefaultTemplates() {

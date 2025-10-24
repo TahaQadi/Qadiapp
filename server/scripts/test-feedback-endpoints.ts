@@ -4,11 +4,9 @@ import { orderFeedback, issueReports, orders, clients } from '../../shared/schem
 import { eq } from 'drizzle-orm';
 
 async function testFeedbackEndpoints() {
-  console.log('🧪 Testing Feedback Split Features...\n');
 
   try {
     // 1. Create test data
-    console.log('1️⃣ Creating test data...');
     const [client] = await db.insert(clients).values({
       nameEn: 'Test Client',
       nameAr: 'عميل تجريبي',
@@ -44,14 +42,8 @@ async function testFeedbackEndpoints() {
       status: 'open',
     }).returning();
 
-    console.log('✅ Test data created');
-    console.log(`   - Client ID: ${client.id}`);
-    console.log(`   - Order ID: ${order.id}`);
-    console.log(`   - Feedback ID: ${feedback.id}`);
-    console.log(`   - Issue ID: ${issue.id}\n`);
 
     // 2. Test admin response
-    console.log('2️⃣ Testing admin response to feedback...');
     const [updatedFeedback] = await db
       .update(orderFeedback)
       .set({
@@ -62,12 +54,8 @@ async function testFeedbackEndpoints() {
       .where(eq(orderFeedback.id, feedback.id))
       .returning();
 
-    console.log('✅ Admin response added');
-    console.log(`   - Response: ${updatedFeedback.adminResponse}`);
-    console.log(`   - Responded at: ${updatedFeedback.adminResponseAt}\n`);
 
     // 3. Test priority update
-    console.log('3️⃣ Testing issue priority updates...');
     
     const priorities = ['low', 'medium', 'high', 'critical'] as const;
     for (const priority of priorities) {
@@ -77,12 +65,9 @@ async function testFeedbackEndpoints() {
         .where(eq(issueReports.id, issue.id))
         .returning();
       
-      console.log(`   ✓ Updated priority to: ${updated.priority}`);
     }
-    console.log('✅ All priority levels tested\n');
 
     // 4. Test querying with new fields
-    console.log('4️⃣ Testing queries with new fields...');
     
     const feedbackWithResponse = await db
       .select()
@@ -90,26 +75,19 @@ async function testFeedbackEndpoints() {
       .where(eq(orderFeedback.id, feedback.id))
       .limit(1);
     
-    console.log('✅ Feedback query successful');
-    console.log(`   - Has admin response: ${!!feedbackWithResponse[0].adminResponse}`);
     
     const criticalIssues = await db
       .select()
       .from(issueReports)
       .where(eq(issueReports.priority, 'critical'));
     
-    console.log(`✅ Priority query successful`);
-    console.log(`   - Critical issues found: ${criticalIssues.length}\n`);
 
     // Cleanup
-    console.log('5️⃣ Cleaning up test data...');
     await db.delete(orderFeedback).where(eq(orderFeedback.id, feedback.id));
     await db.delete(issueReports).where(eq(issueReports.id, issue.id));
     await db.delete(orders).where(eq(orders.id, order.id));
     await db.delete(clients).where(eq(clients.id, client.id));
-    console.log('✅ Cleanup complete\n');
 
-    console.log('🎉 All tests passed successfully!');
 
   } catch (error) {
     console.error('❌ Test failed:', error);
@@ -118,6 +96,5 @@ async function testFeedbackEndpoints() {
 }
 
 testFeedbackEndpoints().then(() => {
-  console.log('\n✨ Testing complete');
   process.exit(0);
 });

@@ -1640,10 +1640,8 @@ export class MemStorage implements IStorage {
 
   // Order Feedback
   async createOrderFeedback(data: InsertOrderFeedback): Promise<OrderFeedback> {
-    console.log('Storage: Creating order feedback with data:', data);
     try {
       const [feedback] = await db.insert(orderFeedback).values(data).returning();
-      console.log('Storage: Feedback created:', feedback);
       return feedback;
     } catch (error) {
       console.error('Storage: Error creating feedback:', error);

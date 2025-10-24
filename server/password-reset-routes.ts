@@ -180,8 +180,6 @@ router.post('/password/forgot', async (req, res) => {
 
     // TODO: Send email with reset link
     // For now, log the token (in production, this should be sent via email)
-    console.log(`Password reset token for ${email}: ${token}`);
-    console.log(`Reset link: ${process.env.VITE_APP_URL || 'http://localhost:5000'}/reset-password?token=${token}`);
 
     res.json({
       success: true,

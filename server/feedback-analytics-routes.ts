@@ -9,7 +9,6 @@ const router = Router();
 
 router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
   try {
-    console.log('[Feedback Analytics] Request received:', { range: req.query.range, user: req.client?.id });
     const range = req.query.range as string || '30d';
     
     // Validate range parameter
@@ -189,7 +188,6 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       isEmpty: totalFeedback === 0
     };
     
-    console.log('[Feedback Analytics] Sending response:', { totalFeedback, averageRating, npsScore, isEmpty: totalFeedback === 0 });
     res.json(response);
   } catch (error) {
     console.error('[Feedback Analytics] Error details:', {

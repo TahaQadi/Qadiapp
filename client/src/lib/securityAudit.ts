@@ -124,13 +124,10 @@ class SecurityAudit {
 
   printReport() {
     console.group('🔒 Security Audit Report');
-    console.log(`Score: ${this.getSecurityScore()}%`);
-    console.log('---');
 
     this.checks.forEach((check) => {
       const icon = check.passed ? '✅' : '❌';
       const severity = check.passed ? '' : `[${check.severity.toUpperCase()}]`;
-      console.log(`${icon} ${check.name} ${severity}: ${check.message}`);
     });
 
     console.groupEnd();

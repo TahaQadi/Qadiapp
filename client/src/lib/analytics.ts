@@ -23,7 +23,6 @@ class Analytics {
     if (!this.enabled) return;
 
     // You can integrate with Google Analytics, Plausible, etc.
-    console.log('[Analytics] Page View:', { path, title });
 
     // Example: Send to your analytics backend
     this.sendEvent({
@@ -37,7 +36,6 @@ class Analytics {
   trackEvent(event: AnalyticsEvent) {
     if (!this.enabled) return;
 
-    console.log('[Analytics] Event:', event);
     this.sendEvent(event);
   }
 

@@ -25,7 +25,6 @@ export function usePerformance(pageName: string) {
 
       // Log to console in development
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[Performance - ${pageName}]`, metrics);
       }
 
       // Send to analytics in production

@@ -13,7 +13,6 @@ const MicroFeedbackWidget = ({ query, onClose }: { query: string; onClose: () =>
 
   const handleSubmit = () => {
     // In a real application, you would send this feedback to a backend
-    console.log('Feedback submitted:', { query, rating, feedback });
     onClose();
   };
 

@@ -31,7 +31,6 @@ router.post('/analytics', async (req, res) => {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics]', event);
     }
 
     // In production, you would send to your analytics service

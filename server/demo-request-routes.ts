@@ -30,7 +30,6 @@ router.post('/api/demo-request', async (req: Request, res: Response) => {
     }).returning();
 
     // Log for admin notification
-    console.log('Demo request received:', {
       id: request.id,
       name: request.name,
       company: request.company,

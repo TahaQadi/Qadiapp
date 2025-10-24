@@ -5,7 +5,6 @@ import fs from 'fs';
 import path from 'path';
 
 async function importArabicTemplates() {
-  console.log('🚀 Starting Arabic templates import...\n');
 
   const templatesDir = path.join(process.cwd(), 'server', 'templates', 'arabic');
   const templateFiles = [
@@ -23,7 +22,6 @@ async function importArabicTemplates() {
     
     try {
       if (!fs.existsSync(filePath)) {
-        console.log(`⚠️  File not found: ${file}`);
         skipped++;
         continue;
       }
@@ -36,7 +34,6 @@ async function importArabicTemplates() {
       });
 
       if (existing) {
-        console.log(`⏭️  Skipped: ${templateData.nameAr} (already exists)`);
         skipped++;
         continue;
       }
@@ -57,7 +54,6 @@ async function importArabicTemplates() {
         tags: templateData.tags || []
       });
 
-      console.log(`✅ Imported: ${templateData.nameAr} (${templateData.category})`);
       imported++;
 
     } catch (error) {
@@ -66,11 +62,6 @@ async function importArabicTemplates() {
     }
   }
 
-  console.log('\n📊 Import Summary:');
-  console.log(`   ✅ Imported: ${imported}`);
-  console.log(`   ⏭️  Skipped: ${skipped}`);
-  console.log(`   ❌ Errors: ${errors}`);
-  console.log('\n✨ Arabic templates import completed!\n');
 }
 
 importArabicTemplates()

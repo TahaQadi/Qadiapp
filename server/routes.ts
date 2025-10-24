@@ -156,7 +156,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Feedback routes
   app.use('/api', feedbackRoutes);
   app.use('/api', feedbackAnalyticsRoutes);
-  console.log('[Routes] Feedback routes registered successfully');
 
   // Auth endpoint - returns authenticated user data
   app.get('/api/auth/user', isAuthenticated, async (req: Request, res: Response) => {
@@ -537,7 +536,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             } catch (error) {
               // Ignore duplicate product errors
-              console.log('Product already assigned to LTA or error:', error);
             }
           }
         }
@@ -3094,7 +3092,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('Downloading PDF:', fileName);
       const downloadResult = await PDFStorage.downloadPDF(fileName);
 
       if (!downloadResult.ok || !downloadResult.data) {
@@ -3114,7 +3111,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? downloadResult.data
         : Buffer.from(downloadResult.data);
 
-      console.log('PDF downloaded successfully, size:', pdfBuffer.length, 'bytes');
 
       // Validate buffer has PDF header
       const pdfHeader = pdfBuffer.slice(0, 4).toString();

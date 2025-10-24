@@ -206,7 +206,6 @@ function AppWithProviders() {
       window.addEventListener('load', () => {
         setTimeout(() => {
           const metrics = performanceMonitoring.getMetrics();
-          console.log('[Performance] Core Web Vitals:', metrics);
         }, 3000);
       });
 

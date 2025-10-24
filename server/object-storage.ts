@@ -83,7 +83,6 @@ export class PDFStorage {
       return await operation();
     } catch (error) {
       if (retries > 0) {
-        console.log(`Operation failed, retrying... (${retries} attempts left)`);
         await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
         return this.retryOperation(operation, retries - 1);
       }
@@ -97,7 +96,6 @@ export class PDFStorage {
     category: keyof typeof PDFStorage.CATEGORIES = 'PRICE_OFFER'
   ): Promise<{ ok: boolean; fileName?: string; error?: string; checksum?: string }> {
     try {
-      console.log(`Starting PDF upload: ${fileName}, category: ${category}, size: ${pdfBuffer.length} bytes`);
 
       // Validate buffer
       const validation = this.validateBuffer(pdfBuffer);
@@ -108,11 +106,9 @@ export class PDFStorage {
 
       // Calculate checksum
       const checksum = this.calculateChecksum(pdfBuffer);
-      console.log(`Buffer checksum: ${checksum}`);
 
       // Generate organized path
       const fullPath = this.generateFilePath(category, fileName);
-      console.log(`Organized path: ${fullPath}`);
       
       // Convert Buffer to Uint8Array for Object Storage
       const uint8Array = new Uint8Array(pdfBuffer);
@@ -127,7 +123,6 @@ export class PDFStorage {
         return { ok: false, error: error?.message || 'Upload failed' };
       }
 
-      console.log(`Successfully uploaded: ${fullPath}`);
       return { ok: true, fileName: fullPath, checksum };
     } catch (error: any) {
       console.error('Upload exception:', error);
@@ -140,7 +135,6 @@ export class PDFStorage {
     expectedChecksum?: string
   ): Promise<{ ok: boolean; data?: Buffer; error?: string; checksum?: string }> {
     try {
-      console.log('Attempting to download from Object Storage:', fileName);
 
       // Download with retry logic
       const { ok, value, error } = await this.retryOperation(async () => {
@@ -159,7 +153,6 @@ export class PDFStorage {
 
       // Convert Uint8Array to Buffer
       const buffer = Buffer.from(value);
-      console.log('Successfully downloaded buffer of size:', buffer.length, 'bytes');
 
       // Validate downloaded buffer
       const validation = this.validateBuffer(buffer);
@@ -175,7 +168,6 @@ export class PDFStorage {
         return { ok: false, error: 'File corrupted - checksum mismatch' };
       }
 
-      console.log(`Download verified successfully. Checksum: ${checksum}`);
       return { ok: true, data: buffer, checksum };
     } catch (error: any) {
       console.error('Exception during PDF download:', error);
@@ -206,7 +198,6 @@ export class PDFStorage {
 
   static async deletePDF(fileName: string): Promise<{ ok: boolean; error?: string }> {
     try {
-      console.log(`Deleting file: ${fileName}`);
       
       const { ok, error } = await this.retryOperation(async () => {
         return await client.delete(fileName);
@@ -217,7 +208,6 @@ export class PDFStorage {
         return { ok: false, error: error?.message || 'Delete failed' };
       }
 
-      console.log(`Successfully deleted: ${fileName}`);
       return { ok: true };
     } catch (error: any) {
       console.error('Delete exception:', error);

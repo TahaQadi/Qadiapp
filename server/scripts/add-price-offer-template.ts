@@ -6,7 +6,6 @@ async function addPriceOfferTemplate() {
     const existing = await TemplateStorage.getTemplates('price_offer');
     
     if (existing.length > 0) {
-      console.log('Price offer template already exists. Updating to latest version...');
       const template = existing[0];
       await TemplateStorage.updateTemplate(template.id, {
         nameEn: 'Official Price Offer Template (RTL)',
@@ -88,9 +87,7 @@ async function addPriceOfferTemplate() {
           textColor: '#000000'
         }
       });
-      console.log('✅ Price offer template updated successfully!');
     } else {
-      console.log('Creating new price offer template...');
       await TemplateStorage.createTemplate({
         nameEn: 'Official Price Offer Template (RTL)',
         nameAr: 'قالب عرض السعر الرسمي (RTL)',
@@ -173,7 +170,6 @@ async function addPriceOfferTemplate() {
           textColor: '#000000'
         }
       });
-      console.log('✅ Price offer template created successfully!');
     }
   } catch (error) {
     console.error('❌ Error adding price offer template:', error);

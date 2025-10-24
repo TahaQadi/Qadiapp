@@ -38,9 +38,6 @@ router.post('/feedback/order/:orderId', requireAuth, async (req: AuthenticatedRe
   try {
     const { orderId } = req.params;
 
-    console.log('Feedback submission for order:', orderId);
-    console.log('Request body:', req.body);
-    console.log('Client ID:', req.client.id);
 
     // Check if feedback already exists
     const [existingFeedback] = await db
@@ -50,7 +47,6 @@ router.post('/feedback/order/:orderId', requireAuth, async (req: AuthenticatedRe
       .limit(1);
 
     if (existingFeedback) {
-      console.log('Feedback already exists for order:', orderId);
       return res.status(409).json({
         message: 'Feedback already submitted for this order',
         messageAr: 'تم تقديم ملاحظات لهذا الطلب بالفعل'
@@ -82,14 +78,12 @@ router.post('/feedback/order/:orderId', requireAuth, async (req: AuthenticatedRe
     }
 
     // Create feedback
-    console.log('Creating feedback with data:', { ...feedbackData, orderId, clientId: req.client.id });
     const feedback = await storage.createOrderFeedback({
       ...feedbackData,
       orderId,
       clientId: req.client.id
     });
 
-    console.log('Feedback created successfully:', feedback);
 
     res.json({
       message: 'Feedback submitted successfully',
