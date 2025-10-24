@@ -17,8 +17,8 @@ export default function LandingPage() {
     "@type": "Organization",
     "name": "Al Qadi Co.",
     "alternateName": isArabic ? "شركة القاضي" : "Al Qadi Company",
-    "url": window.location.origin,
-    "logo": `${window.location.origin}/logo.png`,
+    "url": typeof window !== 'undefined' ? window.location.origin : '',
+    "logo": typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : '',
     "description": isArabic
       ? "شركة القاضي للتوريدات - نظام متكامل لإدارة الطلبات والعقود"
       : "Al Qadi Supplies - Complete order and contract management system",

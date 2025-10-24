@@ -126,14 +126,16 @@ export default function OrderingPage() {
 
   // Ref to store scroll position for restoration after cart updates
   const scrollPositionRef = useRef<number | null>(null);
+  const cartLengthRef = useRef(cart.length);
 
   // Restore scroll position after cart updates
   useEffect(() => {
-    if (scrollPositionRef.current !== null) {
+    if (scrollPositionRef.current !== null && cartLengthRef.current !== cart.length) {
       // Use setTimeout to ensure DOM has fully updated
       const timeoutId = setTimeout(() => {
         window.scrollTo(0, scrollPositionRef.current!);
         scrollPositionRef.current = null; // Reset after restoration
+        cartLengthRef.current = cart.length;
       }, 0);
       return () => clearTimeout(timeoutId);
     }
@@ -305,8 +307,6 @@ export default function OrderingPage() {
 
         // Remove item if quantity becomes 0 or less
         if (newQuantity <= 0) {
-          // Preserve scroll position before state change
-          scrollPositionRef.current = window.scrollY;
           newCart.splice(existingItemIndex, 1);
           if (newCart.length === 0) {
             setActiveLtaId(null);
@@ -314,8 +314,6 @@ export default function OrderingPage() {
           return newCart;
         }
 
-        // Preserve scroll position before state change
-        scrollPositionRef.current = window.scrollY;
         newCart[existingItemIndex] = {
           ...newCart[existingItemIndex],
           quantity: newQuantity
@@ -325,8 +323,6 @@ export default function OrderingPage() {
 
       // Add new item only if quantity is positive
       if (quantityChange > 0 && product.contractPrice && product.ltaId) {
-        // Preserve scroll position before state change
-        scrollPositionRef.current = window.scrollY;
         return [...prevCart, {
           productId: product.id,
           productSku: product.sku,
@@ -339,7 +335,6 @@ export default function OrderingPage() {
         }];
       }
 
-      // No change to cart, don't set scroll ref
       return prevCart;
     });
 
