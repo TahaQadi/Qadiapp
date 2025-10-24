@@ -226,12 +226,12 @@ export default function PriceOfferCreationDialog({
       form.setValue('ltaId', priceRequest.ltaId || '');
       form.setValue('clientId', priceRequest.clientId);
       form.setValue('notes', priceRequest.notes || '');
-      
+
       // Add products from request
-      const products = typeof priceRequest.products === 'string' 
-        ? JSON.parse(priceRequest.products) 
+      const products = typeof priceRequest.products === 'string'
+        ? JSON.parse(priceRequest.products)
         : priceRequest.products || [];
-      
+
       const items = products.map((product: any) => ({
         productId: product.id,
         nameEn: product.nameEn,
@@ -241,7 +241,7 @@ export default function PriceOfferCreationDialog({
         unitPrice: product.contractPrice || '0',
         currency: 'USD', // Will be updated when LTA loads
       }));
-      
+
       form.setValue('items', items);
       setSelectedProducts(products);
     }
@@ -262,7 +262,7 @@ export default function PriceOfferCreationDialog({
   const handleAddProduct = (product: Product) => {
     const currentItems = form.getValues('items');
     const existingItem = currentItems.find(item => item.productId === product.id);
-    
+
     if (existingItem) {
       toast({
         variant: 'destructive',
@@ -274,9 +274,9 @@ export default function PriceOfferCreationDialog({
 
     const newItem = {
       productId: product.id,
-      nameEn: product.nameEn,
-      nameAr: product.nameAr,
-      sku: product.sku,
+      nameEn: product.nameEn || product.nameAr || 'Unknown Product',
+      nameAr: product.nameAr || product.nameEn || 'منتج غير معروف',
+      sku: product.sku || 'N/A',
       quantity: 1,
       unitPrice: product.contractPrice || '0',
       currency: selectedLta?.currency || product.currency || 'USD', // Use LTA currency first
@@ -491,7 +491,7 @@ export default function PriceOfferCreationDialog({
                           {currentItems.map((item) => {
                             const product = selectedProducts.find(p => p.id === item.productId);
                             const total = (parseFloat(item.unitPrice) || 0) * item.quantity;
-                            
+
                             return (
                               <TableRow key={item.productId}>
                                 <TableCell>
@@ -552,7 +552,7 @@ export default function PriceOfferCreationDialog({
                       {currentItems.map((item) => {
                         const product = selectedProducts.find(p => p.id === item.productId);
                         const total = (parseFloat(item.unitPrice) || 0) * item.quantity;
-                        
+
                         return (
                           <div key={item.productId} className="border rounded-lg p-3 space-y-3">
                             <div className="flex items-start justify-between">
@@ -574,7 +574,7 @@ export default function PriceOfferCreationDialog({
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <Label className="text-xs text-muted-foreground">
@@ -605,7 +605,7 @@ export default function PriceOfferCreationDialog({
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div className="flex justify-between items-center pt-2 border-t">
                               <span className="text-sm font-medium">
                                 {language === 'ar' ? 'المجموع' : 'Total'}
@@ -618,7 +618,7 @@ export default function PriceOfferCreationDialog({
                         );
                       })}
                     </div>
-                    
+
                     <div className="p-4 border-t">
                       <div className="flex justify-between items-center text-base font-semibold">
                         <span>{language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}:</span>
