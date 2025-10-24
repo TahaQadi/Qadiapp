@@ -193,7 +193,7 @@ export default function AdminPage() {
                   size="icon"
                   className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
                 >
-                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
