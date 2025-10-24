@@ -278,6 +278,21 @@ export interface IStorage {
 
   // Order Feedback
   createOrderFeedback(data: InsertOrderFeedback): Promise<OrderFeedback>;
+
+  // LTA Documents
+  createLtaDocument(data: {
+    ltaId: string;
+    nameEn: string;
+    nameAr: string;
+    fileName: string;
+    fileUrl: string;
+    fileSize: number;
+    fileType: string;
+    uploadedBy: string;
+  }): Promise<any>;
+  getLtaDocuments(ltaId: string): Promise<any[]>;
+  getLtaDocument(id: string): Promise<any | undefined>;
+  deleteLtaDocument(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -1634,6 +1649,54 @@ export class MemStorage implements IStorage {
       console.error('Storage: Error creating feedback:', error);
       throw error;
     }
+  }
+
+  // LTA Documents
+  async createLtaDocument(data: {
+    ltaId: string;
+    nameEn: string;
+    nameAr: string;
+    fileName: string;
+    fileUrl: string;
+    fileSize: number;
+    fileType: string;
+    uploadedBy: string;
+  }): Promise<any> {
+    const result = await this.db.execute(sql`
+      INSERT INTO lta_documents (
+        id, lta_id, name_en, name_ar, file_name, file_url,
+        file_size, file_type, uploaded_by, created_at
+      ) VALUES (
+        gen_random_uuid(), ${data.ltaId}, ${data.nameEn}, ${data.nameAr},
+        ${data.fileName}, ${data.fileUrl}, ${data.fileSize}, ${data.fileType},
+        ${data.uploadedBy}, NOW()
+      )
+      RETURNING *
+    `);
+    return result.rows[0];
+  }
+
+  async getLtaDocuments(ltaId: string): Promise<any[]> {
+    const result = await this.db.execute(sql`
+      SELECT * FROM lta_documents 
+      WHERE lta_id = ${ltaId}
+      ORDER BY created_at DESC
+    `);
+    return result.rows;
+  }
+
+  async getLtaDocument(id: string): Promise<any | undefined> {
+    const result = await this.db.execute(sql`
+      SELECT * FROM lta_documents WHERE id = ${id}
+    `);
+    return result.rows[0];
+  }
+
+  async deleteLtaDocument(id: string): Promise<boolean> {
+    await this.db.execute(sql`
+      DELETE FROM lta_documents WHERE id = ${id}
+    `);
+    return true;
   }
 }
 
