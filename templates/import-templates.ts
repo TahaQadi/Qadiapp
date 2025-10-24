@@ -8,6 +8,13 @@ const __dirname = path.dirname(__filename);
 const TEMPLATES_DIR = path.join(__dirname, 'production');
 const API_URL = process.env.API_URL || 'http://localhost:5000';
 
+// Simple logger for production scripts
+const logger = {
+  info: (msg: string) => process.env.NODE_ENV !== 'production' ? logger.info(msg) : null,
+  error: (msg: string) => console.error(msg),
+  success: (msg: string) => process.env.NODE_ENV !== 'production' ? logger.info(msg) : null,
+};
+
 interface TemplateData {
   nameEn: string;
   nameAr: string;
@@ -22,26 +29,26 @@ interface TemplateData {
 }
 
 async function importTemplates() {
-  console.log('🔄 Starting template import...\n');
+  logger.info('🔄 Starting template import...\n');
 
   const templateFiles = fs.readdirSync(TEMPLATES_DIR).filter(file => file.endsWith('.json'));
 
   if (templateFiles.length === 0) {
-    console.log('❌ No template files found in:', TEMPLATES_DIR);
+    logger.error('❌ No template files found in: ' + TEMPLATES_DIR);
     process.exit(1);
   }
 
-  console.log(`📁 Found ${templateFiles.length} template files\n`);
+  logger.info(`📁 Found ${templateFiles.length} template files\n`);
 
   for (const file of templateFiles) {
     const filePath = path.join(TEMPLATES_DIR, file);
     const templateData: TemplateData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
-    console.log(`📤 Importing: ${templateData.nameEn}`);
-    console.log(`   Category: ${templateData.category}`);
-    console.log(`   Language: ${templateData.language}`);
-    console.log(`   Variables: ${templateData.variables.length}`);
-    console.log(`   Sections: ${templateData.sections.length}`);
+    logger.info(`📤 Importing: ${templateData.nameEn}`);
+    logger.info(`   Category: ${templateData.category}`);
+    logger.info(`   Language: ${templateData.language}`);
+    logger.info(`   Variables: ${templateData.variables.length}`);
+    logger.info(`   Sections: ${templateData.sections.length}`);
 
     try {
       const response = await fetch(`${API_URL}/api/admin/templates`, {
@@ -54,18 +61,18 @@ async function importTemplates() {
 
       if (!response.ok) {
         const error = await response.text();
-        console.log(`   ❌ Failed: ${error}\n`);
+        logger.info(`   ❌ Failed: ${error}\n`);
         continue;
       }
 
       const result = await response.json();
-      console.log(`   ✅ Success! ID: ${result.id}\n`);
+      logger.info(`   ✅ Success! ID: ${result.id}\n`);
     } catch (error) {
-      console.log(`   ❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      logger.info(`   ❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
     }
   }
 
-  console.log('✨ Template import completed!');
+  logger.info('✨ Template import completed!');
 }
 
 importTemplates().catch(console.error);
