@@ -174,9 +174,9 @@ export default function LandingPage() {
               variant="outline"
               size="sm"
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className="border-2 border-primary/50 bg-black/50 text-primary hover:bg-primary/10 hover:border-primary hover:text-primary backdrop-blur-sm transition-all duration-300 text-sm font-sans font-semibold"
+              className="border-2 border-primary/50 bg-black/50 text-primary hover:bg-primary/10 hover:border-primary hover:text-primary backdrop-blur-sm transition-all duration-300 text-sm font-sans font-semibold pl-[3px] pr-[3px]"
             >
-              {language === 'en' ? 'العربية' : 'English'}
+              {language === 'en' ? 'العربية' : 'En'}
             </Button>
             <Button 
               onClick={handleLogin}
@@ -208,8 +208,8 @@ export default function LandingPage() {
             </div>
 
             <h2 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 sm:mb-6 leading-tight px-4">
-              <span className="bg-gradient-to-r from-[#d4af37] via-[#f9c800] to-[#d4af37] bg-clip-text text-transparent">
-                {isArabic ? 'إدارة طلباتك أصبحت أسهل' : 'Order Management Made Easy'}
+              <span className="bg-gradient-to-r from-[#d4af37] via-[#f9c800] to-[#d4af37] bg-clip-text text-transparent text-[65px]">
+                {isArabic ? 'إدارة طلباتك أسهل' : 'Order Management Made Easy'}
               </span>
               <br />
               <span className="text-white/90">
