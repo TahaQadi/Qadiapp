@@ -658,7 +658,45 @@ export default function CustomerFeedbackPage() {
                         <TableCell>{issue.companyName}</TableCell>
                         <TableCell>{issue.issueType}</TableCell>
                         <TableCell>{getSeverityBadge(issue.severity)}</TableCell>
-                        <TableCell>{getStatusBadge(issue.status)}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={issue.status}
+                            onValueChange={(status) => updateStatusMutation.mutate({ id: issue.id, status })}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <SelectTrigger className="w-40" data-testid={`select-issue-status-${issue.id}`}>
+                              <SelectValue>
+                                {getStatusBadge(issue.status)}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="open">
+                                <div className="flex items-center gap-2">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {language === 'ar' ? 'مفتوح' : 'Open'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="in_progress">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-3 w-3" />
+                                  {language === 'ar' ? 'قيد المعالجة' : 'In Progress'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="resolved">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-3 w-3" />
+                                  {language === 'ar' ? 'تم الحل' : 'Resolved'}
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="closed">
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-3 w-3" />
+                                  {language === 'ar' ? 'مغلق' : 'Closed'}
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
