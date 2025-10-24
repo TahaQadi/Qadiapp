@@ -1,0 +1,56 @@
+I extracted the full route table from client/src/App.tsx, scanned all Link/setLocation/href usages, and reviewed headers for back buttons across key pages.
+
+Report: wrong/illogical links and missing back buttons
+Routes defined
+
+Public: /landing, /login, /onboarding, /logout, /products/:subCategory/:productName, /catalog/:category, /catalog
+Redirect/root: / redirects to /admin if admin else /ordering
+Auth-protected: /ordering, /orders, /profile, /price-request, /price-offers
+Admin: /admin, /admin/products, /admin/vendors, /admin/clients, /admin/price-management, /admin/price-requests, /admin/orders, /admin/order-modifications, /admin/issue-reports, /admin/feedback, /admin/error-logs, /admin/templates/documents, /admin/documents, /admin/ltas/:id, /admin/ltas, /admin/reports, /admin/demo-requests
+Catch-all: NotFound
+Wrong or illogical internal links
+
+ClientPriceOffersPage header back link points to /:
+Expected: For authenticated users, home redirects; but a more logical back target is /ordering (client area) or previous page. Current link may cause a flicker via root redirects.
+Current: <Link href="/"> in header.
+Suggested: <Link href="/ordering"> for signed-in clients; or use useLocation go back pattern.
+CatalogPage header back link points to /:
+Current: <Link href="/">
+Suggested: If reached from ordering flow, back to /ordering feels more consistent. Alternatively keep to / if intentional as “home”; but note / immediately redirects and can be jarring.
+ProductDetailPage header back link uses conditional:
+Current: <Link href={user ? '/ordering' : '/'}>
+Minor: For unauthenticated, / redirects to /landing. Consider linking directly to /landing for clarity. Breadcrumb also links /catalog labelled with product.mainCategory, which is acceptable but note /catalog/:category route also exists; linking to /catalog/${product.mainCategory} would be more specific.
+AdminPriceRequestsPage: CTA link to /admin/price-offers
+Route table has no /admin/price-offers. The only “price offers” page in routes is client-side /price-offers.
+This link is likely broken. If an admin price offers management page is intended, add route and page; if not, change link or remove.
+AdminPage dashboard links are all valid to declared routes.
+Pages missing or inconsistent back buttons
+
+Many admin pages correctly include back to /admin with an ArrowLeft:
+AdminProductsPage, AdminVendorsPage, AdminReportsPage, AdminTemplatesPage, AdminOrdersPage, AdminLtaListPage, AdminLtaDetailPage, AdminDocumentsPage all have a back button to /admin. Good.
+Client pages:
+OrdersPage: back to /ordering present. Good.
+ClientPriceOffersPage: back to / (see above). Recommend /ordering.
+ClientProfilePage: no header back button. Consider adding back to /ordering for consistency with other client pages.
+PriceRequestPage: back present to / (same consideration; suggest /ordering).
+CatalogPage: back to / (see above).
+ProductDetailPage: back present (conditional). Good.
+OrderingPage, LandingPage, LoginPage, OnboardingPage: contexts where back may be optional; Onboarding has its own previous-step control and is fine.
+External links and anchors
+
+LandingPage contains external mailto:, tel:, and https://wa.me links. These are fine and not internal routes.
+Recommendations
+Fix broken admin link
+
+In client/src/pages/AdminPriceRequestsPage.tsx, change:
+From: <Link href="/admin/price-offers">
+To one of:
+If an admin offers index exists or will be added: add matching route and page (/admin/price-offers), or
+If intent is to view client-facing offers, change to /price-offers but ensure this is appropriate for admins.
+Normalize client back targets to avoid root redirect
+
+ClientPriceOffersPage, CatalogPage, PriceRequestPage: change header back link target to /ordering.
+ProductDetailPage: change unauthenticated back link from / to /landing, and breadcrumb “catalog” link from /catalog to /catalog/${product.mainCategory} when available.
+Add missing back button
+
+ClientProfilePage: add a header back button to /ordering for consistency.
