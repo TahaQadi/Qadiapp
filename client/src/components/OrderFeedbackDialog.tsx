@@ -224,7 +224,7 @@ function OrderFeedbackDialog({ open, onOpenChange, orderId }: OrderFeedbackDialo
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={submitting}
+            disabled={submitMutation.isPending}
           >
             {language === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
