@@ -26,17 +26,102 @@ interface PriceOfferData {
   language: 'en' | 'ar';
 }
 
+// Shared styling constants
+const STYLES = {
+  colors: {
+    primary: '#1a365d',
+    accent: '#d4af37',
+    lightBg: '#f8f9fa',
+    border: '#e0e0e0',
+    text: '#000000',
+    lightText: '#4a5568',
+    white: '#ffffff',
+    gray: '#b0b0b0'
+  },
+  fonts: {
+    bold: 'Helvetica-Bold',
+    regular: 'Helvetica'
+  },
+  header: { height: 100, accentHeight: 3 },
+  footer: { height: 60 }
+};
+
+const COMPANY = {
+  nameEn: 'Al Qadi Trading Company',
+  nameAr: 'شركة القاضي التجارية',
+  addressEn: 'Riyadh, Kingdom of Saudi Arabia',
+  addressAr: 'الرياض، المملكة العربية السعودية',
+  phone: '+966 XX XXX XXXX',
+  email: 'info@alqadi.com',
+  website: 'www.alqadi.com'
+};
+
 export class PDFGenerator {
   private static readonly LOGO_PATH = path.join(process.cwd(), 'client', 'public', 'logo.png');
 
-  // Company information constants
-  private static readonly COMPANY_NAME_EN = 'Al Qadi Trading Company';
-  private static readonly COMPANY_NAME_AR = 'شركة القاضي التجارية';
-  private static readonly COMPANY_ADDRESS_EN = 'Riyadh, Kingdom of Saudi Arabia';
-  private static readonly COMPANY_ADDRESS_AR = 'الرياض، المملكة العربية السعودية';
-  private static readonly COMPANY_PHONE = '+966 XX XXX XXXX';
-  private static readonly COMPANY_EMAIL = 'info@alqadi.com';
-  private static readonly COMPANY_WEBSITE = 'www.alqadi.com';
+  // Shared header renderer
+  private static drawHeader(doc: PDFKit.PDFDocument, language: 'en' | 'ar') {
+    const { colors, header, fonts } = STYLES;
+
+    doc.rect(0, 0, 595, header.height).fillAndStroke(colors.primary, colors.primary);
+    doc.rect(0, header.height, 595, header.accentHeight).fillAndStroke(colors.accent, colors.accent);
+
+    try {
+      if (fs.existsSync(this.LOGO_PATH)) {
+        doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
+      }
+    } catch {}
+
+    doc.fontSize(18).fillColor(colors.white).font(fonts.bold)
+      .text(language === 'ar' ? COMPANY.nameAr : COMPANY.nameEn, 130, 35, { align: 'left' });
+
+    doc.fontSize(8).fillColor(colors.border).font(fonts.regular)
+      .text(language === 'ar' ? COMPANY.addressAr : COMPANY.addressEn, 130, 60)
+      .text(`${language === 'ar' ? 'هاتف:' : 'Tel:'} ${COMPANY.phone} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${COMPANY.email}`, 130, 75)
+      .text(COMPANY.website, 130, 87);
+  }
+
+  // Shared footer renderer
+  private static drawFooter(doc: PDFKit.PDFDocument, language: 'en' | 'ar', pageHeight: number) {
+    const { colors, footer, fonts } = STYLES;
+    const footerY = pageHeight - footer.height;
+
+    doc.rect(0, footerY, 595, 2).fillAndStroke(colors.accent, colors.accent);
+    doc.rect(0, footerY + 2, 595, footer.height).fillAndStroke(colors.primary, colors.primary);
+
+    doc.fontSize(8).fillColor(colors.white).font(fonts.regular)
+      .text(
+        language === 'ar' ? `${COMPANY.nameAr} | ${COMPANY.addressAr}` : `${COMPANY.nameEn} | ${COMPANY.addressEn}`,
+        50, footerY + 15, { align: 'center', width: 495 }
+      )
+      .text(
+        `${language === 'ar' ? 'هاتف:' : 'Tel:'} ${COMPANY.phone} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${COMPANY.email} | ${COMPANY.website}`,
+        50, footerY + 30, { align: 'center', width: 495 }
+      );
+
+    doc.fontSize(7).fillColor(colors.gray)
+      .text(
+        language === 'ar'
+          ? `تم إنشاء هذا المستند تلقائياً في ${new Date().toLocaleDateString('ar-EG')}`
+          : `Generated automatically on ${new Date().toLocaleDateString('en-US')}`,
+        50, footerY + 45, { align: 'center', width: 495 }
+      );
+  }
+
+  // Shared info box renderer
+  private static drawInfoBox(doc: PDFKit.PDFDocument, items: Array<{label: string, value: string, x?: number, y?: number}>, startY: number, height: number = 80) {
+    const { colors, fonts } = STYLES;
+
+    doc.roundedRect(50, startY, 495, height, 5).fillAndStroke(colors.lightBg, colors.border);
+
+    items.forEach(({ label, value, x = 60, y = 15 }) => {
+      doc.fontSize(10).fillColor(colors.text).font(fonts.bold)
+        .text(label, x, startY + y, { continued: true })
+        .font(fonts.regular).text(value);
+    });
+
+    return startY + height;
+  }
 
   static async generatePriceOffer(data: PriceOfferData): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -45,742 +130,80 @@ export class PDFGenerator {
           size: 'A4',
           margins: { top: 120, bottom: 80, left: 50, right: 50 },
           bufferPages: true,
-          autoFirstPage: true,
           compress: true
         });
 
         const chunks: Buffer[] = [];
+        doc.on('data', chunks.push.bind(chunks));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
 
-        doc.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        doc.on('end', () => {
-          try {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(pdfBuffer);
-          } catch (err) {
-            reject(err);
-          }
-        });
-
-        doc.on('error', (err: Error) => {
-          reject(err);
-        });
-
-        // Draw professional header with letterhead design
         this.drawHeader(doc, data.language);
-
-        // Main content starts after header
-        doc.y = 140;
-
-        // Title with decorative line
-        doc.fontSize(22)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(
-            data.language === 'ar' ? 'عرض سعر رسمي' : 'OFFICIAL PRICE OFFER', 
-            50, 
-            doc.y,
-            { align: 'center' }
-          );
-
-        // Decorative line under title
-        doc.moveTo(200, doc.y + 5)
-          .lineTo(400, doc.y + 5)
-          .lineWidth(2)
-          .strokeColor('#d4af37')
-          .stroke();
-
-        doc.moveDown(2);
-        doc.fillColor('#000000');
-
-        // Offer Details in a styled box
-        const detailsY = doc.y;
-        doc.roundedRect(50, detailsY, 495, 60, 5)
-          .fillAndStroke('#f8f9fa', '#e0e0e0');
-
-        doc.fontSize(10)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'رقم العرض:' : 'Offer No:'} `, 60, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.offerId);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 32, { continued: true })
-          .font('Helvetica')
-          .text(data.offerDate);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'ساري حتى:' : 'Valid Until:'} `, 300, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.validUntil);
-
-        doc.y = detailsY + 70;
-        doc.moveDown();
-
-        // Client Information Section
-        doc.fontSize(13)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(data.language === 'ar' ? 'إلى العميل الكريم:' : 'TO:', 50, doc.y);
-
-        doc.fontSize(11)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? data.clientNameAr : data.clientNameEn, 50, doc.y + 5);
-
-        doc.fontSize(10)
-          .font('Helvetica')
-          .fillColor('#4a5568');
-
-        if (data.clientEmail) {
-          doc.text(`${data.language === 'ar' ? 'البريد:' : 'Email:'} ${data.clientEmail}`);
-        }
-        if (data.clientPhone) {
-          doc.text(`${data.language === 'ar' ? 'الهاتف:' : 'Phone:'} ${data.clientPhone}`);
-        }
-
-        doc.moveDown();
-        doc.fillColor('#000000');
-
-        // LTA Information
-        doc.fontSize(10)
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'بموجب الاتفاقية:' : 'As per Agreement:'} `, { continued: true })
-          .font('Helvetica')
-          .text(data.language === 'ar' ? data.ltaNameAr : data.ltaNameEn);
-
-        doc.moveDown(1.5);
-
-        // Items Table with professional styling
-        const tableTop = doc.y;
-
-        // Table header with background
-        doc.rect(50, tableTop, 495, 25)
-          .fillAndStroke('#1a365d', '#1a365d');
-
-        doc.fontSize(10)
-          .fillColor('#ffffff')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
-          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
-          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product Name', 190, tableTop + 8, { width: 200 })
-          .text(data.language === 'ar' ? 'السعر' : 'Unit Price', 400, tableTop + 8, { width: 70, align: 'right' })
-          .text(data.language === 'ar' ? 'العملة' : 'Currency', 480, tableTop + 8, { width: 55 });
-
-        // Items with alternating row colors
-        let yPosition = tableTop + 25;
-        doc.fillColor('#000000');
-        doc.font('Helvetica');
-        let itemNumber = 1;
-
-        for (const item of data.items) {
-          if (yPosition > 680) {
-            this.drawFooter(doc, data.language, doc.page.height);
-            doc.addPage();
-            this.drawHeader(doc, data.language);
-            yPosition = 140;
-          }
-
-          // Alternating row background
-          if (itemNumber % 2 === 0) {
-            doc.rect(50, yPosition, 495, 22)
-              .fillAndStroke('#f8f9fa', '#f8f9fa');
-          }
-
-          doc.fillColor('#000000')
-            .fontSize(9)
-            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
-            .text(item.sku, 100, yPosition + 6, { width: 80 })
-            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 200 })
-            .text(item.contractPrice, 400, yPosition + 6, { width: 70, align: 'right' })
-            .text(item.currency, 480, yPosition + 6, { width: 55 });
-
-          yPosition += 22;
-          itemNumber++;
-        }
-
-        // Bottom border of table
-        doc.moveTo(50, yPosition)
-          .lineTo(545, yPosition)
-          .strokeColor('#1a365d')
-          .lineWidth(2)
-          .stroke();
-
-        doc.y = yPosition + 15;
-
-        // Notes Section
-        if (data.notes) {
-          doc.moveDown(1);
-          doc.fontSize(11)
-            .font('Helvetica-Bold')
-            .fillColor('#1a365d')
-            .text(data.language === 'ar' ? 'ملاحظات:' : 'Notes:', 50, doc.y);
-
-          doc.fontSize(10)
-            .fillColor('#4a5568')
-            .font('Helvetica')
-            .text(data.notes, 50, doc.y + 5, { align: 'justify' });
-        }
-
-        // Terms & Conditions in a box
-        doc.moveDown(2);
-        const termsY = doc.y;
-
-        doc.fontSize(11)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(data.language === 'ar' ? 'الشروط والأحكام:' : 'Terms & Conditions:', 50, termsY);
-
-        doc.fontSize(9)
-          .fillColor('#4a5568')
-          .font('Helvetica')
-          .text(data.language === 'ar' 
-            ? '١. هذا العرض ساري المفعول حتى التاريخ المذكور أعلاه.\n٢. الأسعار المذكورة نهائية وتشمل جميع الضرائب والرسوم.\n٣. شروط الدفع حسب الاتفاقية طويلة الأجل المبرمة.\n٤. يجب تأكيد الطلب كتابياً قبل التوريد.\n٥. نحتفظ بالحق في تعديل الأسعار حسب تقلبات السوق.'
-            : '1. This offer is valid until the date mentioned above.\n2. All prices are final and include applicable taxes and fees.\n3. Payment terms as per the Long-Term Agreement.\n4. Order confirmation required in writing before delivery.\n5. We reserve the right to adjust prices based on market fluctuations.',
-            50,
-            termsY + 25,
-            { lineGap: 3 }
-          );
-
-        // Signature Section
-        doc.moveDown(3);
-        const signatureY = Math.max(doc.y, 650);
-        doc.fillColor('#000000');
-
-        // Signature line and text (no image needed)
-        doc.fontSize(10)
-          .font('Helvetica-Bold')
-          .text('_____________________', 80, signatureY)
-          .text(data.language === 'ar' ? 'التوقيع المعتمد' : 'Authorized Signature', 80, signatureY + 15, { align: 'center', width: 120 });
-
-        // Draw footer on first/last page
-        this.drawFooter(doc, data.language, doc.page.height);
-
-        // Finalize the PDF
-        doc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  // Draw professional header with letterhead
-  private static drawHeader(doc: PDFKit.PDFDocument, language: 'en' | 'ar') {
-    // Header background with gradient effect
-    doc.rect(0, 0, 595, 100)
-      .fillAndStroke('#1a365d', '#1a365d');
-
-    // Gold accent line
-    doc.rect(0, 100, 595, 3)
-      .fillAndStroke('#d4af37', '#d4af37');
-
-    // Add logo if exists
-    try {
-      if (fs.existsSync(this.LOGO_PATH)) {
-        doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
-      }
-    } catch (logoError) {
-      // Continue without logo
-    }
-
-    // Company name
-    doc.fontSize(18)
-      .fillColor('#ffffff')
-      .font('Helvetica-Bold')
-      .text(
-        language === 'ar' ? this.COMPANY_NAME_AR : this.COMPANY_NAME_EN,
-        130,
-        35,
-        { align: 'left' }
-      );
-
-    // Company info
-    doc.fontSize(8)
-      .fillColor('#e0e0e0')
-      .font('Helvetica')
-      .text(language === 'ar' ? this.COMPANY_ADDRESS_AR : this.COMPANY_ADDRESS_EN, 130, 60)
-      .text(`${language === 'ar' ? 'هاتف:' : 'Tel:'} ${this.COMPANY_PHONE} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${this.COMPANY_EMAIL}`, 130, 75)
-      .text(this.COMPANY_WEBSITE, 130, 87);
-  }
-
-  // Draw professional footer
-  private static drawFooter(doc: PDFKit.PDFDocument, language: 'en' | 'ar', pageHeight: number) {
-    const footerY = pageHeight - 60;
-
-    // Gold accent line above footer
-    doc.rect(0, footerY, 595, 2)
-      .fillAndStroke('#d4af37', '#d4af37');
-
-    // Footer background
-    doc.rect(0, footerY + 2, 595, 60)
-      .fillAndStroke('#1a365d', '#1a365d');
-
-    // Footer text
-    doc.fontSize(8)
-      .fillColor('#ffffff')
-      .font('Helvetica')
-      .text(
-        language === 'ar' 
-          ? `${this.COMPANY_NAME_AR} | ${this.COMPANY_ADDRESS_AR}`
-          : `${this.COMPANY_NAME_EN} | ${this.COMPANY_ADDRESS_EN}`,
-        50,
-        footerY + 15,
-        { align: 'center', width: 495 }
-      );
-
-    doc.text(
-      `${language === 'ar' ? 'هاتف:' : 'Tel:'} ${this.COMPANY_PHONE} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${this.COMPANY_EMAIL} | ${this.COMPANY_WEBSITE}`,
-      50,
-      footerY + 30,
-      { align: 'center', width: 495 }
-    );
-
-    // Generated timestamp
-    doc.fontSize(7)
-      .fillColor('#b0b0b0')
-      .text(
-        language === 'ar' 
-          ? `تم إنشاء هذا المستند تلقائياً في ${new Date().toLocaleDateString('ar-EG')}`
-          : `Generated automatically on ${new Date().toLocaleDateString('en-US')}`,
-        50,
-        footerY + 45,
-        { align: 'center', width: 495 }
-      );
-  }
-
-  static async generateOrderPDF(data: {
-    order: any;
-    client: any;
-    lta: any;
-    items: any[];
-    language: 'en' | 'ar';
-  }): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({
-          size: 'A4',
-          margins: { top: 120, bottom: 80, left: 50, right: 50 },
-          bufferPages: true,
-          autoFirstPage: true,
-          compress: true
-        });
-
-        const chunks: Buffer[] = [];
-
-        doc.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        doc.on('end', () => {
-          try {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(pdfBuffer);
-          } catch (err) {
-            reject(err);
-          }
-        });
-
-        doc.on('error', (err: Error) => {
-          reject(err);
-        });
-
-        // Draw header
-        this.drawHeader(doc, data.language);
-
         doc.y = 140;
 
         // Title
-        doc.fontSize(22)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(
-            data.language === 'ar' ? 'تفاصيل الطلب' : 'ORDER DETAILS', 
-            50, 
-            doc.y,
-            { align: 'center' }
-          );
+        doc.fontSize(22).font(STYLES.fonts.bold).fillColor(STYLES.colors.primary)
+          .text(data.language === 'ar' ? 'عرض سعر رسمي' : 'OFFICIAL PRICE OFFER', 50, doc.y, { align: 'center' });
 
-        doc.moveDown(2);
-        doc.fillColor('#000000');
+        doc.moveTo(200, doc.y + 5).lineTo(400, doc.y + 5).lineWidth(2).strokeColor(STYLES.colors.accent).stroke();
+        doc.moveDown(2).fillColor(STYLES.colors.text);
 
-        // Order info box
+        // Offer details box
         const detailsY = doc.y;
-        doc.roundedRect(50, detailsY, 495, 80, 5)
-          .fillAndStroke('#f8f9fa', '#e0e0e0');
+        this.drawInfoBox(doc, [
+          { label: `${data.language === 'ar' ? 'رقم العرض:' : 'Offer No:'} `, value: data.offerId, y: 15 },
+          { label: `${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, value: data.offerDate, y: 32 },
+          { label: `${data.language === 'ar' ? 'ساري حتى:' : 'Valid Until:'} `, value: data.validUntil, x: 300, y: 15 }
+        ], detailsY, 60);
 
-        doc.fontSize(10)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'رقم الطلب:' : 'Order ID:'} `, 60, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.order.id);
+        doc.y += 10;
 
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 35, { continued: true })
-          .font('Helvetica')
-          .text(data.order.createdAt);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'الحالة:' : 'Status:'} `, 60, detailsY + 55, { continued: true })
-          .font('Helvetica')
-          .text(data.order.status);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'العميل:' : 'Client:'} `, 300, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.language === 'ar' ? data.client?.nameAr : data.client?.nameEn);
-
-        if (data.lta) {
-          doc.font('Helvetica-Bold')
-            .text(`${data.language === 'ar' ? 'الاتفاقية:' : 'LTA:'} `, 300, detailsY + 35, { continued: true })
-            .font('Helvetica')
-            .text(data.language === 'ar' ? data.lta.nameAr : data.lta.nameEn);
-        }
-
-        doc.y = detailsY + 90;
-        doc.moveDown();
-
-        // Items table
-        const tableTop = doc.y;
-
-        doc.rect(50, tableTop, 495, 25)
-          .fillAndStroke('#1a365d', '#1a365d');
-
-        doc.fontSize(10)
-          .fillColor('#ffffff')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
-          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
-          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product', 190, tableTop + 8, { width: 150 })
-          .text(data.language === 'ar' ? 'الكمية' : 'Qty', 350, tableTop + 8, { width: 50 })
-          .text(data.language === 'ar' ? 'السعر' : 'Price', 410, tableTop + 8, { width: 60, align: 'right' })
-          .text(data.language === 'ar' ? 'المجموع' : 'Total', 480, tableTop + 8, { width: 55, align: 'right' });
-
-        let yPosition = tableTop + 25;
-        doc.fillColor('#000000');
-        doc.font('Helvetica');
-        let itemNumber = 1;
-
-        for (const item of data.items) {
-          if (yPosition > 680) {
-            this.drawFooter(doc, data.language, doc.page.height);
-            doc.addPage();
-            this.drawHeader(doc, data.language);
-            yPosition = 140;
-          }
-
-          if (itemNumber % 2 === 0) {
-            doc.rect(50, yPosition, 495, 22)
-              .fillAndStroke('#f8f9fa', '#f8f9fa');
-          }
-
-          const total = (parseFloat(item.price) * item.quantity).toFixed(2);
-
-          doc.fillColor('#000000')
-            .fontSize(9)
-            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
-            .text(item.sku, 100, yPosition + 6, { width: 80 })
-            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 150 })
-            .text(item.quantity.toString(), 350, yPosition + 6, { width: 50 })
-            .text(item.price, 410, yPosition + 6, { width: 60, align: 'right' })
-            .text(total, 480, yPosition + 6, { width: 55, align: 'right' });
-
-          yPosition += 22;
-          itemNumber++;
-        }
-
-        doc.moveTo(50, yPosition)
-          .lineTo(545, yPosition)
-          .strokeColor('#1a365d')
-          .lineWidth(2)
-          .stroke();
-
-        doc.y = yPosition + 15;
-        doc.moveDown();
-
-        // Total
-        doc.fontSize(14)
-          .font('Helvetica-Bold')
-          .text(
-            `${data.language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'} ${data.order.totalAmount}`,
-            50,
-            doc.y,
-            { align: 'right' }
-          );
-
-        this.drawFooter(doc, data.language, doc.page.height);
-        doc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-}
-```import PDFKit from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
-
-interface PriceOfferItem {
-  sku: string;
-  nameEn: string;
-  nameAr: string;
-  quantity?: number;
-  contractPrice: string;
-  currency: string;
-}
-
-interface PriceOfferData {
-  offerId: string;
-  offerDate: string;
-  clientNameEn: string;
-  clientNameAr: string;
-  clientEmail?: string;
-  clientPhone?: string;
-  ltaNameEn: string;
-  ltaNameAr: string;
-  items: PriceOfferItem[];
-  validUntil: string;
-  notes?: string;
-  language: 'en' | 'ar';
-}
-
-export class PDFGenerator {
-  private static readonly LOGO_PATH = path.join(process.cwd(), 'client', 'public', 'logo.png');
-
-  // Company information constants
-  private static readonly COMPANY_NAME_EN = 'Al Qadi Trading Company';
-  private static readonly COMPANY_NAME_AR = 'شركة القاضي التجارية';
-  private static readonly COMPANY_ADDRESS_EN = 'Riyadh, Kingdom of Saudi Arabia';
-  private static readonly COMPANY_ADDRESS_AR = 'الرياض، المملكة العربية السعودية';
-  private static readonly COMPANY_PHONE = '+966 XX XXX XXXX';
-  private static readonly COMPANY_EMAIL = 'info@alqadi.com';
-  private static readonly COMPANY_WEBSITE = 'www.alqadi.com';
-
-  static async generatePriceOffer(data: PriceOfferData): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({
-          size: 'A4',
-          margins: { top: 120, bottom: 80, left: 50, right: 50 },
-          bufferPages: true,
-          autoFirstPage: true,
-          compress: true
-        });
-
-        const chunks: Buffer[] = [];
-
-        doc.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        doc.on('end', () => {
-          try {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(pdfBuffer);
-          } catch (err) {
-            reject(err);
-          }
-        });
-
-        doc.on('error', (err: Error) => {
-          reject(err);
-        });
-
-        // Draw professional header with letterhead design
-        this.drawHeader(doc, data.language);
-
-        // Main content starts after header
-        doc.y = 140;
-
-        // Title with decorative line
-        doc.fontSize(22)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(
-            data.language === 'ar' ? 'عرض سعر رسمي' : 'OFFICIAL PRICE OFFER', 
-            50, 
-            doc.y,
-            { align: 'center' }
-          );
-
-        // Decorative line under title
-        doc.moveTo(200, doc.y + 5)
-          .lineTo(400, doc.y + 5)
-          .lineWidth(2)
-          .strokeColor('#d4af37')
-          .stroke();
-
-        doc.moveDown(2);
-        doc.fillColor('#000000');
-
-        // Offer Details in a styled box
-        const detailsY = doc.y;
-        doc.roundedRect(50, detailsY, 495, 60, 5)
-          .fillAndStroke('#f8f9fa', '#e0e0e0');
-
-        doc.fontSize(10)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'رقم العرض:' : 'Offer No:'} `, 60, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.offerId);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 32, { continued: true })
-          .font('Helvetica')
-          .text(data.offerDate);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'ساري حتى:' : 'Valid Until:'} `, 300, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.validUntil);
-
-        doc.y = detailsY + 70;
-        doc.moveDown();
-
-        // Client Information Section
-        doc.fontSize(13)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
+        // Client info
+        doc.fontSize(13).font(STYLES.fonts.bold).fillColor(STYLES.colors.primary)
           .text(data.language === 'ar' ? 'إلى العميل الكريم:' : 'TO:', 50, doc.y);
-
-        doc.fontSize(11)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
+        doc.fontSize(11).fillColor(STYLES.colors.text)
           .text(data.language === 'ar' ? data.clientNameAr : data.clientNameEn, 50, doc.y + 5);
 
-        doc.fontSize(10)
-          .font('Helvetica')
-          .fillColor('#4a5568');
+        doc.fontSize(10).font(STYLES.fonts.regular).fillColor(STYLES.colors.lightText);
+        if (data.clientEmail) doc.text(`${data.language === 'ar' ? 'البريد:' : 'Email:'} ${data.clientEmail}`);
+        if (data.clientPhone) doc.text(`${data.language === 'ar' ? 'الهاتف:' : 'Phone:'} ${data.clientPhone}`);
 
-        if (data.clientEmail) {
-          doc.text(`${data.language === 'ar' ? 'البريد:' : 'Email:'} ${data.clientEmail}`);
-        }
-        if (data.clientPhone) {
-          doc.text(`${data.language === 'ar' ? 'الهاتف:' : 'Phone:'} ${data.clientPhone}`);
-        }
-
-        doc.moveDown();
-        doc.fillColor('#000000');
-
-        // LTA Information
-        doc.fontSize(10)
-          .font('Helvetica-Bold')
+        doc.moveDown().fillColor(STYLES.colors.text).fontSize(10).font(STYLES.fonts.bold)
           .text(`${data.language === 'ar' ? 'بموجب الاتفاقية:' : 'As per Agreement:'} `, { continued: true })
-          .font('Helvetica')
-          .text(data.language === 'ar' ? data.ltaNameAr : data.ltaNameEn);
+          .font(STYLES.fonts.regular).text(data.language === 'ar' ? data.ltaNameAr : data.ltaNameEn);
 
         doc.moveDown(1.5);
 
-        // Items Table with professional styling
-        const tableTop = doc.y;
+        // Items table
+        this.renderItemsTable(doc, data.items, data.language, ['#', 'SKU', 'Product Name', 'Unit Price', 'Currency']);
 
-        // Table header with background
-        doc.rect(50, tableTop, 495, 25)
-          .fillAndStroke('#1a365d', '#1a365d');
-
-        doc.fontSize(10)
-          .fillColor('#ffffff')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
-          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
-          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product Name', 190, tableTop + 8, { width: 200 })
-          .text(data.language === 'ar' ? 'السعر' : 'Unit Price', 400, tableTop + 8, { width: 70, align: 'right' })
-          .text(data.language === 'ar' ? 'العملة' : 'Currency', 480, tableTop + 8, { width: 55 });
-
-        // Items with alternating row colors
-        let yPosition = tableTop + 25;
-        doc.fillColor('#000000');
-        doc.font('Helvetica');
-        let itemNumber = 1;
-
-        for (const item of data.items) {
-          if (yPosition > 680) {
-            this.drawFooter(doc, data.language, doc.page.height);
-            doc.addPage();
-            this.drawHeader(doc, data.language);
-            yPosition = 140;
-          }
-
-          // Alternating row background
-          if (itemNumber % 2 === 0) {
-            doc.rect(50, yPosition, 495, 22)
-              .fillAndStroke('#f8f9fa', '#f8f9fa');
-          }
-
-          doc.fillColor('#000000')
-            .fontSize(9)
-            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
-            .text(item.sku, 100, yPosition + 6, { width: 80 })
-            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 200 })
-            .text(item.contractPrice, 400, yPosition + 6, { width: 70, align: 'right' })
-            .text(item.currency, 480, yPosition + 6, { width: 55 });
-
-          yPosition += 22;
-          itemNumber++;
-        }
-
-        // Bottom border of table
-        doc.moveTo(50, yPosition)
-          .lineTo(545, yPosition)
-          .strokeColor('#1a365d')
-          .lineWidth(2)
-          .stroke();
-
-        doc.y = yPosition + 15;
-
-        // Notes Section
+        // Notes & Terms
         if (data.notes) {
-          doc.moveDown(1);
-          doc.fontSize(11)
-            .font('Helvetica-Bold')
-            .fillColor('#1a365d')
+          doc.moveDown().fontSize(11).font(STYLES.fonts.bold).fillColor(STYLES.colors.primary)
             .text(data.language === 'ar' ? 'ملاحظات:' : 'Notes:', 50, doc.y);
-
-          doc.fontSize(10)
-            .fillColor('#4a5568')
-            .font('Helvetica')
+          doc.fontSize(10).fillColor(STYLES.colors.lightText).font(STYLES.fonts.regular)
             .text(data.notes, 50, doc.y + 5, { align: 'justify' });
         }
 
-        // Terms & Conditions in a box
         doc.moveDown(2);
         const termsY = doc.y;
-
-        doc.fontSize(11)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
+        doc.fontSize(11).font(STYLES.fonts.bold).fillColor(STYLES.colors.primary)
           .text(data.language === 'ar' ? 'الشروط والأحكام:' : 'Terms & Conditions:', 50, termsY);
-
-        doc.fontSize(9)
-          .fillColor('#4a5568')
-          .font('Helvetica')
-          .text(data.language === 'ar' 
+        doc.fontSize(9).fillColor(STYLES.colors.lightText).font(STYLES.fonts.regular)
+          .text(data.language === 'ar'
             ? '١. هذا العرض ساري المفعول حتى التاريخ المذكور أعلاه.\n٢. الأسعار المذكورة نهائية وتشمل جميع الضرائب والرسوم.\n٣. شروط الدفع حسب الاتفاقية طويلة الأجل المبرمة.\n٤. يجب تأكيد الطلب كتابياً قبل التوريد.\n٥. نحتفظ بالحق في تعديل الأسعار حسب تقلبات السوق.'
             : '1. This offer is valid until the date mentioned above.\n2. All prices are final and include applicable taxes and fees.\n3. Payment terms as per the Long-Term Agreement.\n4. Order confirmation required in writing before delivery.\n5. We reserve the right to adjust prices based on market fluctuations.',
-            50,
-            termsY + 25,
-            { lineGap: 3 }
+            50, termsY + 25, { lineGap: 3 }
           );
 
-        // Signature Section
+        // Signature
         doc.moveDown(3);
         const signatureY = Math.max(doc.y, 650);
-        doc.fillColor('#000000');
-
-        // Signature line and text (no image needed)
-        doc.fontSize(10)
-          .font('Helvetica-Bold')
+        doc.fillColor(STYLES.colors.text).fontSize(10).font(STYLES.fonts.bold)
           .text('_____________________', 80, signatureY)
           .text(data.language === 'ar' ? 'التوقيع المعتمد' : 'Authorized Signature', 80, signatureY + 15, { align: 'center', width: 120 });
 
-        // Draw footer on first/last page
         this.drawFooter(doc, data.language, doc.page.height);
-
-        // Finalize the PDF
         doc.end();
       } catch (error) {
         reject(error);
@@ -788,249 +211,55 @@ export class PDFGenerator {
     });
   }
 
-  // Draw professional header with letterhead
-  private static drawHeader(doc: PDFKit.PDFDocument, language: 'en' | 'ar') {
-    // Header background with gradient effect
-    doc.rect(0, 0, 595, 100)
-      .fillAndStroke('#1a365d', '#1a365d');
-
-    // Gold accent line
-    doc.rect(0, 100, 595, 3)
-      .fillAndStroke('#d4af37', '#d4af37');
-
-    // Add logo if exists
-    try {
-      if (fs.existsSync(this.LOGO_PATH)) {
-        doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
-      }
-    } catch (logoError) {
-      // Continue without logo
-    }
-
-    // Company name
-    doc.fontSize(18)
-      .fillColor('#ffffff')
-      .font('Helvetica-Bold')
-      .text(
-        language === 'ar' ? this.COMPANY_NAME_AR : this.COMPANY_NAME_EN,
-        130,
-        35,
-        { align: 'left' }
-      );
-
-    // Company info
-    doc.fontSize(8)
-      .fillColor('#e0e0e0')
-      .font('Helvetica')
-      .text(language === 'ar' ? this.COMPANY_ADDRESS_AR : this.COMPANY_ADDRESS_EN, 130, 60)
-      .text(`${language === 'ar' ? 'هاتف:' : 'Tel:'} ${this.COMPANY_PHONE} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${this.COMPANY_EMAIL}`, 130, 75)
-      .text(this.COMPANY_WEBSITE, 130, 87);
-  }
-
-  // Draw professional footer
-  private static drawFooter(doc: PDFKit.PDFDocument, language: 'en' | 'ar', pageHeight: number) {
-    const footerY = pageHeight - 60;
-
-    // Gold accent line above footer
-    doc.rect(0, footerY, 595, 2)
-      .fillAndStroke('#d4af37', '#d4af37');
-
-    // Footer background
-    doc.rect(0, footerY + 2, 595, 60)
-      .fillAndStroke('#1a365d', '#1a365d');
-
-    // Footer text
-    doc.fontSize(8)
-      .fillColor('#ffffff')
-      .font('Helvetica')
-      .text(
-        language === 'ar' 
-          ? `${this.COMPANY_NAME_AR} | ${this.COMPANY_ADDRESS_AR}`
-          : `${this.COMPANY_NAME_EN} | ${this.COMPANY_ADDRESS_EN}`,
-        50,
-        footerY + 15,
-        { align: 'center', width: 495 }
-      );
-
-    doc.text(
-      `${language === 'ar' ? 'هاتف:' : 'Tel:'} ${this.COMPANY_PHONE} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${this.COMPANY_EMAIL} | ${this.COMPANY_WEBSITE}`,
-      50,
-      footerY + 30,
-      { align: 'center', width: 495 }
-    );
-
-    // Generated timestamp
-    doc.fontSize(7)
-      .fillColor('#b0b0b0')
-      .text(
-        language === 'ar' 
-          ? `تم إنشاء هذا المستند تلقائياً في ${new Date().toLocaleDateString('ar-EG')}`
-          : `Generated automatically on ${new Date().toLocaleDateString('en-US')}`,
-        50,
-        footerY + 45,
-        { align: 'center', width: 495 }
-      );
-  }
-
-  static async generateOrderPDF(data: {
-    order: any;
-    client: any;
-    lta: any;
-    items: any[];
-    language: 'en' | 'ar';
-  }): Promise<Buffer> {
+  static async generateOrderPDF(data: { order: any; client: any; lta: any; items: any[]; language: 'en' | 'ar' }): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
         const doc = new PDFDocument({
           size: 'A4',
           margins: { top: 120, bottom: 80, left: 50, right: 50 },
           bufferPages: true,
-          autoFirstPage: true,
           compress: true
         });
 
         const chunks: Buffer[] = [];
+        doc.on('data', chunks.push.bind(chunks));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
 
-        doc.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        doc.on('end', () => {
-          try {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(pdfBuffer);
-          } catch (err) {
-            reject(err);
-          }
-        });
-
-        doc.on('error', (err: Error) => {
-          reject(err);
-        });
-
-        // Draw header
         this.drawHeader(doc, data.language);
-
         doc.y = 140;
 
-        // Title
-        doc.fontSize(22)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(
-            data.language === 'ar' ? 'تفاصيل الطلب' : 'ORDER DETAILS', 
-            50, 
-            doc.y,
-            { align: 'center' }
-          );
+        doc.fontSize(22).font(STYLES.fonts.bold).fillColor(STYLES.colors.primary)
+          .text(data.language === 'ar' ? 'تفاصيل الطلب' : 'ORDER DETAILS', 50, doc.y, { align: 'center' });
 
-        doc.moveDown(2);
-        doc.fillColor('#000000');
+        doc.moveDown(2).fillColor(STYLES.colors.text);
 
-        // Order info box
+        // Order details box
         const detailsY = doc.y;
-        doc.roundedRect(50, detailsY, 495, 80, 5)
-          .fillAndStroke('#f8f9fa', '#e0e0e0');
-
-        doc.fontSize(10)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'رقم الطلب:' : 'Order ID:'} `, 60, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.order.id);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 35, { continued: true })
-          .font('Helvetica')
-          .text(data.order.createdAt);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'الحالة:' : 'Status:'} `, 60, detailsY + 55, { continued: true })
-          .font('Helvetica')
-          .text(data.order.status);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'العميل:' : 'Client:'} `, 300, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.language === 'ar' ? data.client?.nameAr : data.client?.nameEn);
+        const infoItems = [
+          { label: `${data.language === 'ar' ? 'رقم الطلب:' : 'Order ID:'} `, value: data.order.id, y: 15 },
+          { label: `${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, value: data.order.createdAt, y: 35 },
+          { label: `${data.language === 'ar' ? 'الحالة:' : 'Status:'} `, value: data.order.status, y: 55 },
+          { label: `${data.language === 'ar' ? 'العميل:' : 'Client:'} `, value: data.language === 'ar' ? data.client?.nameAr : data.client?.nameEn, x: 300, y: 15 }
+        ];
 
         if (data.lta) {
-          doc.font('Helvetica-Bold')
-            .text(`${data.language === 'ar' ? 'الاتفاقية:' : 'LTA:'} `, 300, detailsY + 35, { continued: true })
-            .font('Helvetica')
-            .text(data.language === 'ar' ? data.lta.nameAr : data.lta.nameEn);
+          infoItems.push({
+            label: `${data.language === 'ar' ? 'الاتفاقية:' : 'LTA:'} `,
+            value: data.language === 'ar' ? data.lta.nameAr : data.lta.nameEn,
+            x: 300,
+            y: 35
+          });
         }
 
-        doc.y = detailsY + 90;
-        doc.moveDown();
+        this.drawInfoBox(doc, infoItems, detailsY, 80);
+        doc.y += 10;
 
-        // Items table
-        const tableTop = doc.y;
+        // Items table with totals
+        this.renderItemsTable(doc, data.items, data.language, ['#', 'SKU', 'Product', 'Qty', 'Price', 'Total'], true);
 
-        doc.rect(50, tableTop, 495, 25)
-          .fillAndStroke('#1a365d', '#1a365d');
-
-        doc.fontSize(10)
-          .fillColor('#ffffff')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
-          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
-          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product', 190, tableTop + 8, { width: 150 })
-          .text(data.language === 'ar' ? 'الكمية' : 'Qty', 350, tableTop + 8, { width: 50 })
-          .text(data.language === 'ar' ? 'السعر' : 'Price', 410, tableTop + 8, { width: 60, align: 'right' })
-          .text(data.language === 'ar' ? 'المجموع' : 'Total', 480, tableTop + 8, { width: 55, align: 'right' });
-
-        let yPosition = tableTop + 25;
-        doc.fillColor('#000000');
-        doc.font('Helvetica');
-        let itemNumber = 1;
-
-        for (const item of data.items) {
-          if (yPosition > 680) {
-            this.drawFooter(doc, data.language, doc.page.height);
-            doc.addPage();
-            this.drawHeader(doc, data.language);
-            yPosition = 140;
-          }
-
-          if (itemNumber % 2 === 0) {
-            doc.rect(50, yPosition, 495, 22)
-              .fillAndStroke('#f8f9fa', '#f8f9fa');
-          }
-
-          const total = (parseFloat(item.price) * item.quantity).toFixed(2);
-
-          doc.fillColor('#000000')
-            .fontSize(9)
-            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
-            .text(item.sku, 100, yPosition + 6, { width: 80 })
-            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 150 })
-            .text(item.quantity.toString(), 350, yPosition + 6, { width: 50 })
-            .text(item.price, 410, yPosition + 6, { width: 60, align: 'right' })
-            .text(total, 480, yPosition + 6, { width: 55, align: 'right' });
-
-          yPosition += 22;
-          itemNumber++;
-        }
-
-        doc.moveTo(50, yPosition)
-          .lineTo(545, yPosition)
-          .strokeColor('#1a365d')
-          .lineWidth(2)
-          .stroke();
-
-        doc.y = yPosition + 15;
-        doc.moveDown();
-
-        // Total
-        doc.fontSize(14)
-          .font('Helvetica-Bold')
-          .text(
-            `${data.language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'} ${data.order.totalAmount}`,
-            50,
-            doc.y,
-            { align: 'right' }
-          );
+        doc.moveDown().fontSize(14).font(STYLES.fonts.bold)
+          .text(`${data.language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'} ${data.order.totalAmount}`, 50, doc.y, { align: 'right' });
 
         this.drawFooter(doc, data.language, doc.page.height);
         doc.end();
@@ -1039,524 +268,72 @@ export class PDFGenerator {
       }
     });
   }
-}import PDFKit from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
 
-interface PriceOfferItem {
-  sku: string;
-  nameEn: string;
-  nameAr: string;
-  quantity?: number;
-  contractPrice: string;
-  currency: string;
-}
+  // Shared table renderer
+  private static renderItemsTable(
+    doc: PDFKit.PDFDocument,
+    items: any[],
+    language: 'en' | 'ar',
+    headers: string[],
+    showTotals: boolean = false
+  ) {
+    const { colors, fonts } = STYLES;
+    const tableTop = doc.y;
+    const colWidths = showTotals ? [30, 80, 150, 50, 60, 55] : [30, 80, 200, 70, 55];
+    const colX = [60, 100, 190, showTotals ? 350 : 400, showTotals ? 410 : 480, 480];
 
-interface PriceOfferData {
-  offerId: string;
-  offerDate: string;
-  clientNameEn: string;
-  clientNameAr: string;
-  clientEmail?: string;
-  clientPhone?: string;
-  ltaNameEn: string;
-  ltaNameAr: string;
-  items: PriceOfferItem[];
-  validUntil: string;
-  notes?: string;
-  language: 'en' | 'ar';
-}
+    // Header
+    doc.rect(50, tableTop, 495, 25).fillAndStroke(colors.primary, colors.primary);
+    doc.fontSize(10).fillColor(colors.white).font(fonts.bold);
 
-export class PDFGenerator {
-  private static readonly LOGO_PATH = path.join(process.cwd(), 'client', 'public', 'logo.png');
-
-  // Company information constants
-  private static readonly COMPANY_NAME_EN = 'Al Qadi Trading Company';
-  private static readonly COMPANY_NAME_AR = 'شركة القاضي التجارية';
-  private static readonly COMPANY_ADDRESS_EN = 'Riyadh, Kingdom of Saudi Arabia';
-  private static readonly COMPANY_ADDRESS_AR = 'الرياض، المملكة العربية السعودية';
-  private static readonly COMPANY_PHONE = '+966 XX XXX XXXX';
-  private static readonly COMPANY_EMAIL = 'info@alqadi.com';
-  private static readonly COMPANY_WEBSITE = 'www.alqadi.com';
-
-  static async generatePriceOffer(data: PriceOfferData): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({
-          size: 'A4',
-          margins: { top: 120, bottom: 80, left: 50, right: 50 },
-          bufferPages: true,
-          autoFirstPage: true,
-          compress: true
-        });
-
-        const chunks: Buffer[] = [];
-
-        doc.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        doc.on('end', () => {
-          try {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(pdfBuffer);
-          } catch (err) {
-            reject(err);
-          }
-        });
-
-        doc.on('error', (err: Error) => {
-          reject(err);
-        });
-
-        // Draw professional header with letterhead design
-        this.drawHeader(doc, data.language);
-
-        // Main content starts after header
-        doc.y = 140;
-
-        // Title with decorative line
-        doc.fontSize(22)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(
-            data.language === 'ar' ? 'عرض سعر رسمي' : 'OFFICIAL PRICE OFFER', 
-            50, 
-            doc.y,
-            { align: 'center' }
-          );
-
-        // Decorative line under title
-        doc.moveTo(200, doc.y + 5)
-          .lineTo(400, doc.y + 5)
-          .lineWidth(2)
-          .strokeColor('#d4af37')
-          .stroke();
-
-        doc.moveDown(2);
-        doc.fillColor('#000000');
-
-        // Offer Details in a styled box
-        const detailsY = doc.y;
-        doc.roundedRect(50, detailsY, 495, 60, 5)
-          .fillAndStroke('#f8f9fa', '#e0e0e0');
-
-        doc.fontSize(10)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'رقم العرض:' : 'Offer No:'} `, 60, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.offerId);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 32, { continued: true })
-          .font('Helvetica')
-          .text(data.offerDate);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'ساري حتى:' : 'Valid Until:'} `, 300, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.validUntil);
-
-        doc.y = detailsY + 70;
-        doc.moveDown();
-
-        // Client Information Section
-        doc.fontSize(13)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(data.language === 'ar' ? 'إلى العميل الكريم:' : 'TO:', 50, doc.y);
-
-        doc.fontSize(11)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? data.clientNameAr : data.clientNameEn, 50, doc.y + 5);
-
-        doc.fontSize(10)
-          .font('Helvetica')
-          .fillColor('#4a5568');
-
-        if (data.clientEmail) {
-          doc.text(`${data.language === 'ar' ? 'البريد:' : 'Email:'} ${data.clientEmail}`);
-        }
-        if (data.clientPhone) {
-          doc.text(`${data.language === 'ar' ? 'الهاتف:' : 'Phone:'} ${data.clientPhone}`);
-        }
-
-        doc.moveDown();
-        doc.fillColor('#000000');
-
-        // LTA Information
-        doc.fontSize(10)
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'بموجب الاتفاقية:' : 'As per Agreement:'} `, { continued: true })
-          .font('Helvetica')
-          .text(data.language === 'ar' ? data.ltaNameAr : data.ltaNameEn);
-
-        doc.moveDown(1.5);
-
-        // Items Table with professional styling
-        const tableTop = doc.y;
-
-        // Table header with background
-        doc.rect(50, tableTop, 495, 25)
-          .fillAndStroke('#1a365d', '#1a365d');
-
-        doc.fontSize(10)
-          .fillColor('#ffffff')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
-          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
-          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product Name', 190, tableTop + 8, { width: 200 })
-          .text(data.language === 'ar' ? 'السعر' : 'Unit Price', 400, tableTop + 8, { width: 70, align: 'right' })
-          .text(data.language === 'ar' ? 'العملة' : 'Currency', 480, tableTop + 8, { width: 55 });
-
-        // Items with alternating row colors
-        let yPosition = tableTop + 25;
-        doc.fillColor('#000000');
-        doc.font('Helvetica');
-        let itemNumber = 1;
-
-        for (const item of data.items) {
-          if (yPosition > 680) {
-            this.drawFooter(doc, data.language, doc.page.height);
-            doc.addPage();
-            this.drawHeader(doc, data.language);
-            yPosition = 140;
-          }
-
-          // Alternating row background
-          if (itemNumber % 2 === 0) {
-            doc.rect(50, yPosition, 495, 22)
-              .fillAndStroke('#f8f9fa', '#f8f9fa');
-          }
-
-          doc.fillColor('#000000')
-            .fontSize(9)
-            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
-            .text(item.sku, 100, yPosition + 6, { width: 80 })
-            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 200 })
-            .text(item.contractPrice, 400, yPosition + 6, { width: 70, align: 'right' })
-            .text(item.currency, 480, yPosition + 6, { width: 55 });
-
-          yPosition += 22;
-          itemNumber++;
-        }
-
-        // Bottom border of table
-        doc.moveTo(50, yPosition)
-          .lineTo(545, yPosition)
-          .strokeColor('#1a365d')
-          .lineWidth(2)
-          .stroke();
-
-        doc.y = yPosition + 15;
-
-        // Notes Section
-        if (data.notes) {
-          doc.moveDown(1);
-          doc.fontSize(11)
-            .font('Helvetica-Bold')
-            .fillColor('#1a365d')
-            .text(data.language === 'ar' ? 'ملاحظات:' : 'Notes:', 50, doc.y);
-
-          doc.fontSize(10)
-            .fillColor('#4a5568')
-            .font('Helvetica')
-            .text(data.notes, 50, doc.y + 5, { align: 'justify' });
-        }
-
-        // Terms & Conditions in a box
-        doc.moveDown(2);
-        const termsY = doc.y;
-
-        doc.fontSize(11)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(data.language === 'ar' ? 'الشروط والأحكام:' : 'Terms & Conditions:', 50, termsY);
-
-        doc.fontSize(9)
-          .fillColor('#4a5568')
-          .font('Helvetica')
-          .text(data.language === 'ar' 
-            ? '١. هذا العرض ساري المفعول حتى التاريخ المذكور أعلاه.\n٢. الأسعار المذكورة نهائية وتشمل جميع الضرائب والرسوم.\n٣. شروط الدفع حسب الاتفاقية طويلة الأجل المبرمة.\n٤. يجب تأكيد الطلب كتابياً قبل التوريد.\n٥. نحتفظ بالحق في تعديل الأسعار حسب تقلبات السوق.'
-            : '1. This offer is valid until the date mentioned above.\n2. All prices are final and include applicable taxes and fees.\n3. Payment terms as per the Long-Term Agreement.\n4. Order confirmation required in writing before delivery.\n5. We reserve the right to adjust prices based on market fluctuations.',
-            50,
-            termsY + 25,
-            { lineGap: 3 }
-          );
-
-        // Signature Section
-        doc.moveDown(3);
-        const signatureY = Math.max(doc.y, 650);
-        doc.fillColor('#000000');
-
-        // Signature line and text (no image needed)
-        doc.fontSize(10)
-          .font('Helvetica-Bold')
-          .text('_____________________', 80, signatureY)
-          .text(data.language === 'ar' ? 'التوقيع المعتمد' : 'Authorized Signature', 80, signatureY + 15, { align: 'center', width: 120 });
-
-        // Draw footer on first/last page
-        this.drawFooter(doc, data.language, doc.page.height);
-
-        // Finalize the PDF
-        doc.end();
-      } catch (error) {
-        reject(error);
-      }
+    headers.forEach((header, i) => {
+      const text = language === 'ar' ? this.translateHeader(header) : header;
+      doc.text(text, colX[i], tableTop + 8, { width: colWidths[i], align: i > 2 ? 'right' : 'left' });
     });
-  }
 
-  // Draw professional header with letterhead
-  private static drawHeader(doc: PDFKit.PDFDocument, language: 'en' | 'ar') {
-    // Header background with gradient effect
-    doc.rect(0, 0, 595, 100)
-      .fillAndStroke('#1a365d', '#1a365d');
+    // Rows
+    let yPos = tableTop + 25;
+    doc.fillColor(colors.text).font(fonts.regular);
 
-    // Gold accent line
-    doc.rect(0, 100, 595, 3)
-      .fillAndStroke('#d4af37', '#d4af37');
-
-    // Add logo if exists
-    try {
-      if (fs.existsSync(this.LOGO_PATH)) {
-        doc.image(this.LOGO_PATH, 50, 25, { width: 60, height: 60 });
+    items.forEach((item, idx) => {
+      if (yPos > 680) {
+        this.drawFooter(doc, language, doc.page.height);
+        doc.addPage();
+        this.drawHeader(doc, language);
+        yPos = 140;
       }
-    } catch (logoError) {
-      // Continue without logo
-    }
 
-    // Company name
-    doc.fontSize(18)
-      .fillColor('#ffffff')
-      .font('Helvetica-Bold')
-      .text(
-        language === 'ar' ? this.COMPANY_NAME_AR : this.COMPANY_NAME_EN,
-        130,
-        35,
-        { align: 'left' }
-      );
-
-    // Company info
-    doc.fontSize(8)
-      .fillColor('#e0e0e0')
-      .font('Helvetica')
-      .text(language === 'ar' ? this.COMPANY_ADDRESS_AR : this.COMPANY_ADDRESS_EN, 130, 60)
-      .text(`${language === 'ar' ? 'هاتف:' : 'Tel:'} ${this.COMPANY_PHONE} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${this.COMPANY_EMAIL}`, 130, 75)
-      .text(this.COMPANY_WEBSITE, 130, 87);
-  }
-
-  // Draw professional footer
-  private static drawFooter(doc: PDFKit.PDFDocument, language: 'en' | 'ar', pageHeight: number) {
-    const footerY = pageHeight - 60;
-
-    // Gold accent line above footer
-    doc.rect(0, footerY, 595, 2)
-      .fillAndStroke('#d4af37', '#d4af37');
-
-    // Footer background
-    doc.rect(0, footerY + 2, 595, 60)
-      .fillAndStroke('#1a365d', '#1a365d');
-
-    // Footer text
-    doc.fontSize(8)
-      .fillColor('#ffffff')
-      .font('Helvetica')
-      .text(
-        language === 'ar' 
-          ? `${this.COMPANY_NAME_AR} | ${this.COMPANY_ADDRESS_AR}`
-          : `${this.COMPANY_NAME_EN} | ${this.COMPANY_ADDRESS_EN}`,
-        50,
-        footerY + 15,
-        { align: 'center', width: 495 }
-      );
-
-    doc.text(
-      `${language === 'ar' ? 'هاتف:' : 'Tel:'} ${this.COMPANY_PHONE} | ${language === 'ar' ? 'بريد:' : 'Email:'} ${this.COMPANY_EMAIL} | ${this.COMPANY_WEBSITE}`,
-      50,
-      footerY + 30,
-      { align: 'center', width: 495 }
-    );
-
-    // Generated timestamp
-    doc.fontSize(7)
-      .fillColor('#b0b0b0')
-      .text(
-        language === 'ar' 
-          ? `تم إنشاء هذا المستند تلقائياً في ${new Date().toLocaleDateString('ar-EG')}`
-          : `Generated automatically on ${new Date().toLocaleDateString('en-US')}`,
-        50,
-        footerY + 45,
-        { align: 'center', width: 495 }
-      );
-  }
-
-  static async generateOrderPDF(data: {
-    order: any;
-    client: any;
-    lta: any;
-    items: any[];
-    language: 'en' | 'ar';
-  }): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({
-          size: 'A4',
-          margins: { top: 120, bottom: 80, left: 50, right: 50 },
-          bufferPages: true,
-          autoFirstPage: true,
-          compress: true
-        });
-
-        const chunks: Buffer[] = [];
-
-        doc.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        doc.on('end', () => {
-          try {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(pdfBuffer);
-          } catch (err) {
-            reject(err);
-          }
-        });
-
-        doc.on('error', (err: Error) => {
-          reject(err);
-        });
-
-        // Draw header
-        this.drawHeader(doc, data.language);
-
-        doc.y = 140;
-
-        // Title
-        doc.fontSize(22)
-          .font('Helvetica-Bold')
-          .fillColor('#1a365d')
-          .text(
-            data.language === 'ar' ? 'تفاصيل الطلب' : 'ORDER DETAILS', 
-            50, 
-            doc.y,
-            { align: 'center' }
-          );
-
-        doc.moveDown(2);
-        doc.fillColor('#000000');
-
-        // Order info box
-        const detailsY = doc.y;
-        doc.roundedRect(50, detailsY, 495, 80, 5)
-          .fillAndStroke('#f8f9fa', '#e0e0e0');
-
-        doc.fontSize(10)
-          .fillColor('#000000')
-          .font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'رقم الطلب:' : 'Order ID:'} `, 60, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.order.id);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'التاريخ:' : 'Date:'} `, 60, detailsY + 35, { continued: true })
-          .font('Helvetica')
-          .text(data.order.createdAt);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'الحالة:' : 'Status:'} `, 60, detailsY + 55, { continued: true })
-          .font('Helvetica')
-          .text(data.order.status);
-
-        doc.font('Helvetica-Bold')
-          .text(`${data.language === 'ar' ? 'العميل:' : 'Client:'} `, 300, detailsY + 15, { continued: true })
-          .font('Helvetica')
-          .text(data.language === 'ar' ? data.client?.nameAr : data.client?.nameEn);
-
-        if (data.lta) {
-          doc.font('Helvetica-Bold')
-            .text(`${data.language === 'ar' ? 'الاتفاقية:' : 'LTA:'} `, 300, detailsY + 35, { continued: true })
-            .font('Helvetica')
-            .text(data.language === 'ar' ? data.lta.nameAr : data.lta.nameEn);
-        }
-
-        doc.y = detailsY + 90;
-        doc.moveDown();
-
-        // Items table
-        const tableTop = doc.y;
-
-        doc.rect(50, tableTop, 495, 25)
-          .fillAndStroke('#1a365d', '#1a365d');
-
-        doc.fontSize(10)
-          .fillColor('#ffffff')
-          .font('Helvetica-Bold')
-          .text(data.language === 'ar' ? '#' : 'No.', 60, tableTop + 8, { width: 30 })
-          .text(data.language === 'ar' ? 'رمز المنتج' : 'SKU', 100, tableTop + 8, { width: 80 })
-          .text(data.language === 'ar' ? 'اسم المنتج' : 'Product', 190, tableTop + 8, { width: 150 })
-          .text(data.language === 'ar' ? 'الكمية' : 'Qty', 350, tableTop + 8, { width: 50 })
-          .text(data.language === 'ar' ? 'السعر' : 'Price', 410, tableTop + 8, { width: 60, align: 'right' })
-          .text(data.language === 'ar' ? 'المجموع' : 'Total', 480, tableTop + 8, { width: 55, align: 'right' });
-
-        let yPosition = tableTop + 25;
-        doc.fillColor('#000000');
-        doc.font('Helvetica');
-        let itemNumber = 1;
-
-        for (const item of data.items) {
-          if (yPosition > 680) {
-            this.drawFooter(doc, data.language, doc.page.height);
-            doc.addPage();
-            this.drawHeader(doc, data.language);
-            yPosition = 140;
-          }
-
-          if (itemNumber % 2 === 0) {
-            doc.rect(50, yPosition, 495, 22)
-              .fillAndStroke('#f8f9fa', '#f8f9fa');
-          }
-
-          const total = (parseFloat(item.price) * item.quantity).toFixed(2);
-
-          doc.fillColor('#000000')
-            .fontSize(9)
-            .text(itemNumber.toString(), 60, yPosition + 6, { width: 30 })
-            .text(item.sku, 100, yPosition + 6, { width: 80 })
-            .text(data.language === 'ar' ? item.nameAr : item.nameEn, 190, yPosition + 6, { width: 150 })
-            .text(item.quantity.toString(), 350, yPosition + 6, { width: 50 })
-            .text(item.price, 410, yPosition + 6, { width: 60, align: 'right' })
-            .text(total, 480, yPosition + 6, { width: 55, align: 'right' });
-
-          yPosition += 22;
-          itemNumber++;
-        }
-
-        doc.moveTo(50, yPosition)
-          .lineTo(545, yPosition)
-          .strokeColor('#1a365d')
-          .lineWidth(2)
-          .stroke();
-
-        doc.y = yPosition + 15;
-        doc.moveDown();
-
-        // Total
-        doc.fontSize(14)
-          .font('Helvetica-Bold')
-          .text(
-            `${data.language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'} ${data.order.totalAmount}`,
-            50,
-            doc.y,
-            { align: 'right' }
-          );
-
-        this.drawFooter(doc, data.language, doc.page.height);
-        doc.end();
-      } catch (error) {
-        reject(error);
+      if ((idx + 1) % 2 === 0) {
+        doc.rect(50, yPos, 495, 22).fillAndStroke(colors.lightBg, colors.lightBg);
       }
+
+      doc.fillColor(colors.text).fontSize(9)
+        .text((idx + 1).toString(), colX[0], yPos + 6, { width: colWidths[0] })
+        .text(item.sku, colX[1], yPos + 6, { width: colWidths[1] })
+        .text(language === 'ar' ? item.nameAr : item.nameEn, colX[2], yPos + 6, { width: colWidths[2] });
+
+      if (showTotals) {
+        const total = (parseFloat(item.price) * item.quantity).toFixed(2);
+        doc.text(item.quantity.toString(), colX[3], yPos + 6, { width: colWidths[3] })
+          .text(item.price, colX[4], yPos + 6, { width: colWidths[4], align: 'right' })
+          .text(total, colX[5], yPos + 6, { width: colWidths[5], align: 'right' });
+      } else {
+        doc.text(item.contractPrice, colX[3], yPos + 6, { width: colWidths[3], align: 'right' })
+          .text(item.currency, colX[4], yPos + 6, { width: colWidths[4] });
+      }
+
+      yPos += 22;
     });
+
+    doc.moveTo(50, yPos).lineTo(545, yPos).strokeColor(colors.primary).lineWidth(2).stroke();
+    doc.y = yPos + 15;
+  }
+
+  private static translateHeader(header: string): string {
+    const translations: Record<string, string> = {
+      '#': '#', 'SKU': 'رمز المنتج', 'Product Name': 'اسم المنتج', 'Unit Price': 'السعر',
+      'Currency': 'العملة', 'Product': 'اسم المنتج', 'Qty': 'الكمية', 'Price': 'السعر', 'Total': 'المجموع'
+    };
+    return translations[header] || header;
   }
 }
