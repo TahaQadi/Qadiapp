@@ -1662,18 +1662,18 @@ export class MemStorage implements IStorage {
     fileType: string;
     uploadedBy: string;
   }): Promise<any> {
-    const [doc] = await this.db.execute(sql`
+    const result = await this.db.execute(sql`
       INSERT INTO lta_documents (
-        id, lta_id, name_en, name_ar, file_name, file_url, 
+        id, lta_id, name_en, name_ar, file_name, file_url,
         file_size, file_type, uploaded_by, created_at
       ) VALUES (
-        gen_random_uuid(), ${data.ltaId}, ${data.nameEn}, ${data.nameAr}, 
+        gen_random_uuid(), ${data.ltaId}, ${data.nameEn}, ${data.nameAr},
         ${data.fileName}, ${data.fileUrl}, ${data.fileSize}, ${data.fileType},
         ${data.uploadedBy}, NOW()
       )
       RETURNING *
     `);
-    return doc;
+    return result.rows[0];
   }
 
   async getLtaDocuments(ltaId: string): Promise<any[]> {

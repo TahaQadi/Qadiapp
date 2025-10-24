@@ -2940,8 +2940,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Delete file from disk
-      const filePath = path.join(process.cwd(), document.fileUrl);
+      // Delete file from disk - normalize absolute URL to local path
+      const relativePath = document.fileUrl.startsWith('/')
+        ? document.fileUrl.slice(1)
+        : document.fileUrl;
+      const filePath = path.join(process.cwd(), relativePath);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -3163,6 +3166,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء جلب الاتفاقيات"
+      });
+    }
+  });
+
+  // Client: Get documents for an assigned LTA
+  app.get('/api/client/ltas/:ltaId/documents', requireAuth, async (req: any, res) => {
+    try {
+      const { ltaId } = req.params;
+      // Ensure the requesting client is assigned to this LTA (or is admin)
+      const assignedLtas = await storage.getClientLtas(req.client.id);
+      const isAssigned = assignedLtas.some((l: any) => l.id === ltaId);
+
+      if (!isAssigned && !req.client.isAdmin) {
+        return res.status(403).json({
+          message: 'Access denied to LTA documents',
+          messageAr: 'غير مصرح بالوصول إلى مستندات الاتفاقية'
+        });
+      }
+
+      const docs = await storage.getLtaDocuments(ltaId);
+      res.json(docs);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء جلب مستندات الاتفاقية'
       });
     }
   });
