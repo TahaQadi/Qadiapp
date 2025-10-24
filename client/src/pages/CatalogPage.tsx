@@ -43,7 +43,19 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
-  const [priceRequestList, setPriceRequestList] = useState<PriceRequestItem[]>([]);
+  const [priceRequestList, setPriceRequestList] = useState<PriceRequestItem[]>(() => {
+    // Load initial state from sessionStorage
+    const savedList = sessionStorage.getItem('priceRequestList');
+    if (savedList) {
+      try {
+        return JSON.parse(savedList);
+      } catch (error) {
+        console.error('Error loading price request list:', error);
+        return [];
+      }
+    }
+    return [];
+  });
   const [priceRequestDialogOpen, setPriceRequestDialogOpen] = useState(false);
   const [priceRequestExpanded, setPriceRequestExpanded] = useState(false);
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
@@ -58,19 +70,14 @@ export default function CatalogPage() {
     enabled: !!user,
   });
 
-  // Load price request list from sessionStorage on mount
+  // Persist price request list to sessionStorage whenever it changes
   useEffect(() => {
-    const savedList = sessionStorage.getItem('priceRequestList');
-    if (savedList) {
-      try {
-        const parsedList = JSON.parse(savedList);
-        setPriceRequestList(parsedList);
-        sessionStorage.removeItem('priceRequestList');
-      } catch (error) {
-        console.error('Error loading price request list:', error);
-      }
+    if (priceRequestList.length > 0) {
+      sessionStorage.setItem('priceRequestList', JSON.stringify(priceRequestList));
+    } else {
+      sessionStorage.removeItem('priceRequestList');
     }
-  }, []);
+  }, [priceRequestList]);
 
   // Set default LTA when loaded
   useEffect(() => {
@@ -92,6 +99,7 @@ export default function CatalogPage() {
       setPriceRequestList([]);
       setPriceRequestMessage('');
       setPriceRequestDialogOpen(false);
+      sessionStorage.removeItem('priceRequestList');
       queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     },
