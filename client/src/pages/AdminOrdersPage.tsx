@@ -134,8 +134,26 @@ export default function AdminOrdersPage() {
       const res = await apiRequest('PATCH', `/api/admin/orders/${orderId}/status`, { status });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Invalidate both paginated and all orders queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(
+        ['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery],
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            orders: oldData.orders.map((order: Order) =>
+              order.id === variables.orderId
+                ? { ...order, status: variables.status }
+                : order
+            ),
+          };
+        }
+      );
+      
       toast({
         title: language === 'ar' ? 'تم تحديث الحالة' : 'Status Updated',
         description: language === 'ar' ? 'تم تحديث حالة الطلب بنجاح' : 'Order status updated successfully',
