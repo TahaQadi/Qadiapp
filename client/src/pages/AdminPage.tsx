@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -383,11 +383,19 @@ export default function AdminPage() {
                         )}
                       </div>
                     </div>
-                    <ChevronRight className={`
-                      h-5 w-5 text-muted-foreground flex-shrink-0
-                      transition-all duration-300
-                      ${isHovered ? 'translate-x-1 text-primary dark:text-[#d4af37]' : ''}
-                    `} />
+                    {language === 'ar' ? (
+                      <ChevronLeft className={`
+                        h-5 w-5 text-muted-foreground flex-shrink-0
+                        transition-all duration-300
+                        ${isHovered ? '-translate-x-1 text-primary dark:text-[#d4af37]' : ''}
+                      `} />
+                    ) : (
+                      <ChevronRight className={`
+                        h-5 w-5 text-muted-foreground flex-shrink-0
+                        transition-all duration-300
+                        ${isHovered ? 'translate-x-1 text-primary dark:text-[#d4af37]' : ''}
+                      `} />
+                    )}
                   </div>
                 </CardHeader>
 
