@@ -720,17 +720,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Validate and enrich items with product names
+      const enrichedItems = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Check if names are missing
+        if (!item.nameEn || !item.nameAr) {
+          const product = await storage.getProduct(item.productId);
+          
+          if (!product) {
+            return res.status(400).json({
+              message: `Product not found for item ${i + 1}`,
+              messageAr: `المنتج غير موجود للعنصر ${i + 1}`
+            });
+          }
+          
+          // Enrich with product names
+          enrichedItems.push({
+            ...item,
+            nameEn: item.nameEn || product.nameEn || 'Unknown Product',
+            nameAr: item.nameAr || product.nameAr || 'منتج غير معروف',
+            sku: item.sku || product.sku || 'N/A'
+          });
+        } else {
+          enrichedItems.push(item);
+        }
+      }
+
       // Generate offer number
       const count = (await storage.getAllPriceOffers()).length + 1;
       const offerNumber = `PO-${Date.now()}-${count.toString().padStart(4, '0')}`;
 
-      // Create price offer
+      // Create price offer with enriched items
       const offer = await storage.createPriceOffer({
         offerNumber,
         requestId: requestId || null,
         clientId,
         ltaId,
-        items,
+        items: enrichedItems,
         subtotal: typeof subtotal === 'number' ? subtotal.toString() : subtotal.toString(),
         tax: tax !== undefined && tax !== null ? (typeof tax === 'number' ? tax.toString() : tax.toString()) : '0',
         total: typeof total === 'number' ? total.toString() : total.toString(),
