@@ -539,19 +539,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const newStatus = action === 'accept' ? 'accepted' : 'rejected';ض"
-        });
-      }
-
-      // Update offer status
-      await storage.updatePriceOffer(req.params.id, {
-        status,
-        respondedAt: new Date(),
-        responseNote: note || null
-      });
+      const newStatus = action === 'accept' ? 'accepted' : 'rejected';
 
       // Auto-activate draft LTA if offer is accepted
-      if (status === 'accepted' && offer.ltaId) {
+      if (newStatus === 'accepted' && offer.ltaId) {
         const lta = await storage.getLta(offer.ltaId);
 
         if (lta && lta.status === 'draft') {
