@@ -53,20 +53,27 @@ export default function PriceRequestPage() {
   const products = selectedLtaId ? ltaProducts : (allProducts as any);
 
   const requestMutation = useMutation({
-    mutationFn: async (data: { ltaId: string; products: { productId: string; quantity: number }[]; notes?: string }) => {
+    mutationFn: async (data: { ltaId?: string; products: { productId: string; quantity: number }[]; notes?: string }) => {
       const res = await apiRequest("POST", "/api/price-requests", data);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error?.message || errorData.message || "Failed to submit request");
+      }
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: language === "ar" ? "تم إرسال الطلب" : "Request Submitted",
-        description: language === "ar" ? "تم إرسال طلب السعر بنجاح" : "Price request submitted successfully",
+        description: data.messageAr && language === "ar" ? data.messageAr : (data.message || (language === "ar" ? "تم إرسال طلب السعر بنجاح" : "Price request submitted successfully")),
       });
       setSelectedProducts(new Map());
       setNotes("");
+      setSelectedLtaId("");
       queryClient.invalidateQueries({ queryKey: ["/api/price-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/notifications"] });
     },
     onError: (error: any) => {
+      console.error("Price request error:", error);
       toast({
         title: language === "ar" ? "خطأ" : "Error",
         description: error.message || (language === "ar" ? "فشل إرسال الطلب" : "Failed to submit request"),
@@ -103,6 +110,16 @@ export default function PriceRequestPage() {
       return;
     }
 
+    // For bootstrap flow (no active LTAs), we need at least an LTA selection or allow without it
+    if (activeLtas.length > 0 && !selectedLtaId) {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar" ? "يرجى اختيار اتفاقية" : "Please select an agreement",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const productsArray = Array.from(selectedProducts.entries()).map(([productId, quantity]) => ({
       productId,
       quantity,
@@ -122,6 +139,7 @@ export default function PriceRequestPage() {
       requestData.notes = notes;
     }
 
+    console.log("Submitting price request:", requestData);
     requestMutation.mutate(requestData);
   };
 
