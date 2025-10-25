@@ -17,14 +17,38 @@ import {
   Wifi, 
   Router, 
   Package,
+  Cog,
+  Sparkles,
+  UtensilsCrossed,
+  ShoppingBag,
+  Shield,
+  FileText,
+  Droplets,
+  Apple,
+  Grid3x3,
   LucideIcon
 } from 'lucide-react';
 
 /**
  * Category icon mapping configuration
- * Maps category keywords to their corresponding Lucide icons
+ * Maps category names (exact match) and keywords to their corresponding Lucide icons
  */
 const categoryIconMap: Record<string, LucideIcon> = {
+  // Arabic category names (exact match)
+  'أجهزة وموزعات': Cog,
+  'أدوات تنظيف احترافية': Sparkles,
+  'أدوات تنظيف عامة': Sparkles,
+  'أدوات مائدة': UtensilsCrossed,
+  'أكياس نايلون وبلاستيك': ShoppingBag,
+  'تعبئة وتغليف': Package,
+  'عناية شخصية': Sparkles,
+  'ملابس ومستلزمات وقاية': Shield,
+  'منتجات ورقية صحية': FileText,
+  'مواد تنظيف': Droplets,
+  'مواد غذائية ومشروبات': Apple,
+  'نثريات ومستهلكات': Grid3x3,
+  
+  // English keywords (partial match)
   'computer': Laptop,
   'laptop': Laptop,
   'printer': Printer,
@@ -51,19 +75,38 @@ const categoryIconMap: Record<string, LucideIcon> = {
   'network': Wifi,
   'wifi': Wifi,
   'router': Router,
+  'devices': Cog,
+  'cleaning': Sparkles,
+  'tableware': UtensilsCrossed,
+  'dining': UtensilsCrossed,
+  'bags': ShoppingBag,
+  'packaging': Package,
+  'personal care': Sparkles,
+  'protective': Shield,
+  'safety': Shield,
+  'paper': FileText,
+  'sanitary': FileText,
+  'food': Apple,
+  'beverages': Apple,
+  'drink': Apple,
+  'miscellaneous': Grid3x3,
 };
 
 /**
- * Get the appropriate icon for a category based on keyword matching
+ * Get the appropriate icon for a category based on exact match or keyword matching
  * @param category - Category name to match
  * @returns Lucide icon component
  */
 export function getCategoryIcon(category: string): LucideIcon {
-  const categoryLower = category.toLowerCase();
+  // First try exact match (for Arabic categories)
+  if (categoryIconMap[category]) {
+    return categoryIconMap[category];
+  }
   
-  // Find first matching keyword in the category name
+  // Then try keyword matching (for English or partial matches)
+  const categoryLower = category.toLowerCase();
   const matchedKey = Object.keys(categoryIconMap).find(key => 
-    categoryLower.includes(key)
+    categoryLower.includes(key.toLowerCase())
   );
   
   return matchedKey ? categoryIconMap[matchedKey] : Package;
