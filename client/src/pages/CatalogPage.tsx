@@ -61,8 +61,19 @@ export default function CatalogPage() {
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [selectedLtaId, setSelectedLtaId] = useState('');
 
-  const { data: products = [], isLoading } = useQuery<ProductWithLtaPrice[]>({
+  const { data: products = [], isLoading, error } = useQuery<ProductWithLtaPrice[]>({
     queryKey: user ? ['/api/products'] : ['/api/products/public'],
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  // Debug logging
+  console.log('Products data:', { 
+    productsCount: products.length, 
+    isLoading, 
+    error,
+    user: !!user,
+    firstProduct: products[0]
   });
 
   const { data: clientLtas = [] } = useQuery<Lta[]>({
@@ -220,16 +231,23 @@ export default function CatalogPage() {
 
   // Filter products based on search and category
   const filteredProducts = products.filter(p => {
+    // Handle null/undefined values
+    const nameEn = p.nameEn || '';
+    const nameAr = p.nameAr || '';
+    const sku = p.sku || '';
+    const category = p.category || '';
+    const mainCategory = p.mainCategory || '';
+    
     const matchesSearch = searchQuery === '' ||
-      p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.nameAr.includes(searchQuery) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+      nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      nameAr.includes(searchQuery) ||
+      sku.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (selectedSubCategory) {
-      return matchesSearch && p.category === selectedSubCategory;
+      return matchesSearch && category === selectedSubCategory;
     }
     if (selectedMainCategory) {
-      return matchesSearch && p.mainCategory === selectedMainCategory;
+      return matchesSearch && mainCategory === selectedMainCategory;
     }
     return matchesSearch;
   });
@@ -472,7 +490,16 @@ export default function CatalogPage() {
           </div>
         )}
 
-        {isLoading ? (
+        {error ? (
+          <Card className="p-12 text-center">
+            <p className="text-xl font-semibold mb-2 text-destructive">
+              {language === 'ar' ? 'حدث خطأ في تحميل المنتجات' : 'Error loading products'}
+            </p>
+            <p className="text-muted-foreground">
+              {error instanceof Error ? error.message : 'Unknown error'}
+            </p>
+          </Card>
+        ) : isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <Card key={i}>
@@ -484,6 +511,16 @@ export default function CatalogPage() {
               </Card>
             ))}
           </div>
+        ) : products.length === 0 ? (
+          <Card className="p-12 text-center">
+            <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-xl font-semibold mb-2">
+              {language === 'ar' ? 'لا توجد منتجات' : 'No Products Available'}
+            </h3>
+            <p className="text-muted-foreground">
+              {language === 'ar' ? 'لم يتم إضافة أي منتجات بعد' : 'No products have been added yet'}
+            </p>
+          </Card>
         ) : (
           <>
             {/* Main Categories Grid */}

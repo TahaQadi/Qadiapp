@@ -1973,18 +1973,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all products (public for catalog)
+  // Get all products (public for catalog) - with caching
   app.get("/api/products/public", async (req, res) => {
     try {
+      // Set cache headers for better performance
+      res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+      
       const allProducts = await storage.getProducts();
 
+      // Optimize response by only sending necessary fields
       const productsWithoutPricing = allProducts.map(p => ({
-        ...p,
+        id: p.id,
+        sku: p.sku,
+        nameEn: p.nameEn,
+        nameAr: p.nameAr,
+        descriptionEn: p.descriptionEn,
+        descriptionAr: p.descriptionAr,
+        mainCategory: p.mainCategory,
+        category: p.category,
+        unitType: p.unitType,
+        imageUrl: p.imageUrl,
         hasPrice: false,
       }));
 
       res.json(productsWithoutPricing);
     } catch (error) {
+      console.error('Error fetching public products:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
