@@ -22,7 +22,6 @@ import AdminClientsPage from "@/pages/AdminClientsPage";
 import AdminLtaListPage from "@/pages/AdminLtaListPage";
 import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import AdminPriceRequestsPage from './pages/AdminPriceRequestsPage';
-import AdminPriceOffersPage from './pages/AdminPriceOffersPage';
 import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
@@ -32,6 +31,7 @@ import OrderModificationsPage from './pages/admin/OrderModificationsPage';
 import OrdersPage from './pages/OrdersPage';
 import PriceRequestPage from '@/pages/PriceRequestPage';
 import ClientPriceOffersPage from '@/pages/ClientPriceOffersPage';
+import ClientDocumentsPage from '@/pages/ClientDocumentsPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import CatalogPage from '@/pages/CatalogPage';
 import AdminReportsPage from './pages/AdminReportsPage';
@@ -61,7 +61,7 @@ function AdminRoute({
   component: Component,
 }: {
   path: string;
-  component: () => React.JSX.Element;
+  component: React.ComponentType<any>;
 }) {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -102,7 +102,13 @@ function AdminRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-border" /></div>}>
+        <Component />
+      </Suspense>
+    </Route>
+  );
 }
 
 function Router() {
@@ -164,6 +170,7 @@ function Router() {
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />
+      <ProtectedRoute path="/documents" component={ClientDocumentsPage} />
 
       <Route component={NotFoundPage} />
     </Switch>
