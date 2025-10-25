@@ -8,7 +8,7 @@ import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Loader2, FileText, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface Template {
   id: string;
@@ -41,6 +41,7 @@ export function GenerateDocumentDialog({
   ltaId,
   onDocumentGenerated
 }: GenerateDocumentDialogProps) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
