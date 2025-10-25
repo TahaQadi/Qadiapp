@@ -1723,7 +1723,7 @@ export default function OrderingPage() {
           onClearCart={handleClearCart}
           onSubmitOrder={handleSubmitOrder}
           onSaveTemplate={() => setSaveTemplateDialogOpen(true)}
-          currency={cart[0]?.currency || 'USD'}
+          currency={cart[0]?.currency || 'ILS'}
         />
 
         {/* Save Template Dialog */}
@@ -1756,7 +1756,7 @@ export default function OrderingPage() {
             price: item.price,
           }))}
           totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) * 1.15}
-          currency={cart[0]?.currency || 'USD'}
+          currency={cart[0]?.currency || 'ILS'}
           ltaContract={clientLtas.find(lta => lta.id === activeLtaId)}
           onConfirm={handleConfirmOrder}
           onEdit={() => {

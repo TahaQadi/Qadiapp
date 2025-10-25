@@ -607,7 +607,7 @@ export default function AdminLtaDetailPage() {
 
   const downloadCSVTemplate = () => {
     const csvContent = `SKU,Contract Price,Currency
-CHAIR-001,299.99,USD
+CHAIR-001,299.99,ILS
 DESK-001,549.99,EUR
 KB-001,89.99,SAR`;
 
