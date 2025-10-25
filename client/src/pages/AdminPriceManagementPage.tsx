@@ -119,6 +119,8 @@ export default function AdminPriceManagementPage() {
   const [linkedRequestId, setLinkedRequestId] = useState<string | null>(null);
   const [createOfferDialogOpen, setCreateOfferDialogOpen] = useState(false);
   const [selectedRequestForOffer, setSelectedRequestForOffer] = useState<PriceRequest | null>(null);
+  const [viewOfferDialogOpen, setViewOfferDialogOpen] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<PriceOffer | null>(null);
 
   const { data: notifications = [], isLoading: isLoadingRequests } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -431,6 +433,11 @@ export default function AdminPriceManagementPage() {
     updateOfferStatusMutation.mutate({ offerId, status: newStatus });
   };
 
+  const handleViewOffer = (offer: PriceOffer) => {
+    setSelectedOffer(offer);
+    setViewOfferDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       {/* Animated background elements */}
@@ -722,6 +729,7 @@ export default function AdminPriceManagementPage() {
                             <TableHead>{language === 'ar' ? 'رقم العرض' : 'Offer #'}</TableHead>
                             <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
                             <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
+                            <TableHead>{language === 'ar' ? 'المنتجات' : 'Items'}</TableHead>
                             <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
                             <TableHead>{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</TableHead>
                             <TableHead>{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</TableHead>
@@ -750,6 +758,38 @@ export default function AdminPriceManagementPage() {
                                 </TableCell>
                                 <TableCell>{getClientName(offer.clientId)}</TableCell>
                                 <TableCell>{getLtaName(offer.ltaId)}</TableCell>
+                                <TableCell>
+                                  <div className="max-w-xs">
+                                    {(() => {
+                                      const items = typeof offer.items === 'string' 
+                                        ? JSON.parse(offer.items) 
+                                        : offer.items || [];
+                                      return items.length > 0 ? (
+                                        <div className="space-y-1">
+                                          {items.slice(0, 2).map((item: any, idx: number) => (
+                                            <div key={idx} className="text-sm">
+                                              <div className="font-medium truncate">
+                                                {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
+                                              </div>
+                                              <div className="text-xs text-muted-foreground">
+                                                {item.quantity}x {item.unitPrice} {item.currency || 'ILS'}
+                                              </div>
+                                            </div>
+                                          ))}
+                                          {items.length > 2 && (
+                                            <div className="text-xs text-muted-foreground">
+                                              +{items.length - 2} {language === 'ar' ? 'أخرى' : 'more'}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted-foreground text-sm">
+                                          {language === 'ar' ? 'لا توجد منتجات' : 'No items'}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+                                </TableCell>
                                 <TableCell>
                                   <Select
                                     value={offer.status}
@@ -785,6 +825,14 @@ export default function AdminPriceManagementPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center gap-2 justify-end">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleViewOffer(offer)}
+                                      title={language === 'ar' ? 'عرض تفاصيل العرض' : 'View offer details'}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
                                     {linkedRequest && (
                                       <Button
                                         variant="ghost"
@@ -792,7 +840,7 @@ export default function AdminPriceManagementPage() {
                                         onClick={() => handleViewRequest(linkedRequest)}
                                         title={language === 'ar' ? 'عرض الطلب الأصلي' : 'View original request'}
                                       >
-                                        <Eye className="h-4 w-4" />
+                                        <FileText className="h-4 w-4" />
                                       </Button>
                                     )}
                                     <Button
@@ -852,6 +900,17 @@ export default function AdminPriceManagementPage() {
                               <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
                               <span className="font-medium">{getLtaName(offer.ltaId)}</span>
                             </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'ar' ? 'المنتجات' : 'Items'}:</span>
+                              <span className="font-medium">
+                                {(() => {
+                                  const items = typeof offer.items === 'string' 
+                                    ? JSON.parse(offer.items) 
+                                    : offer.items || [];
+                                  return items.length > 0 ? `${items.length} ${language === 'ar' ? 'منتج' : 'items'}` : (language === 'ar' ? 'لا توجد' : 'None');
+                                })()}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Status Selector */}
@@ -897,6 +956,15 @@ export default function AdminPriceManagementPage() {
 
                           {/* Actions */}
                           <div className="flex gap-2 pt-2 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewOffer(offer)}
+                              className="flex-1"
+                            >
+                              <Eye className="h-4 w-4 me-2" />
+                              {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                            </Button>
                             {linkedRequest && (
                               <Button
                                 variant="outline"
@@ -904,7 +972,7 @@ export default function AdminPriceManagementPage() {
                                 onClick={() => handleViewRequest(linkedRequest)}
                                 className="flex-1"
                               >
-                                <Eye className="h-4 w-4 me-2" />
+                                <FileText className="h-4 w-4 me-2" />
                                 {language === 'ar' ? 'عرض الطلب' : 'View Request'}
                               </Button>
                             )}
@@ -1234,6 +1302,150 @@ export default function AdminPriceManagementPage() {
               }
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Offer Details Dialog */}
+      <Dialog open={viewOfferDialogOpen} onOpenChange={setViewOfferDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {language === 'ar' ? 'تفاصيل عرض السعر' : 'Price Offer Details'}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedOffer && (
+            <div className="space-y-6">
+              {/* Offer Info */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'رقم العرض' : 'Offer Number'}:</span>
+                  <div className="mt-1 font-medium font-mono">{selectedOffer.offerNumber}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}:</span>
+                  <div className="mt-1">
+                    {getStatusBadge(selectedOffer.status)}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
+                  <div className="mt-1 font-medium">{getClientName(selectedOffer.clientId)}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
+                  <div className="mt-1 font-medium">{getLtaName(selectedOffer.ltaId)}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}:</span>
+                  <div className="mt-1 font-medium">
+                    {new Date(selectedOffer.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}:</span>
+                  <div className="mt-1 font-medium">
+                    {new Date(selectedOffer.validUntil).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="border rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  {language === 'ar' ? 'منتجات العرض' : 'Offer Items'}
+                </h4>
+                <div className="space-y-2">
+                  {(() => {
+                    const items = typeof selectedOffer.items === 'string' 
+                      ? JSON.parse(selectedOffer.items) 
+                      : selectedOffer.items || [];
+                    return items.length > 0 ? (
+                      items.map((item: any, idx: number) => {
+                        const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                        const itemQuantity = Number(item.quantity) || 0;
+                        const total = itemPrice * itemQuantity;
+                        
+                        return (
+                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                            <div className="flex-1">
+                              <div className="font-medium text-base mb-1">
+                                {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                SKU: {item.sku || 'N/A'}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-lg">
+                                {item.quantity || 1} × {item.unitPrice || '0'} {item.currency || 'ILS'}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                = {total.toFixed(2)} {item.currency || 'ILS'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        {language === 'ar' ? 'لا توجد منتجات في هذا العرض' : 'No items in this offer'}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Totals */}
+              {(() => {
+                const items = typeof selectedOffer.items === 'string' 
+                  ? JSON.parse(selectedOffer.items) 
+                  : selectedOffer.items || [];
+                if (items.length > 0) {
+                  const subtotal = items.reduce((sum: number, item: any) => {
+                    const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                    const quantity = Number(item.quantity) || 0;
+                    return sum + (price * quantity);
+                  }, 0);
+                  
+                  return (
+                    <div className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center text-lg font-semibold">
+                        <span>{language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}:</span>
+                        <span>{selectedOffer.total || subtotal.toFixed(2)} {items[0]?.currency || 'ILS'}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Notes */}
+              {selectedOffer.notes && (
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">{language === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedOffer.notes}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setViewOfferDialogOpen(false)}
+                >
+                  {language === 'ar' ? 'إغلاق' : 'Close'}
+                </Button>
+                <Button
+                  onClick={() => handleDownload(selectedOffer.pdfFileName)}
+                >
+                  <Download className="h-4 w-4 me-2" />
+                  {language === 'ar' ? 'تحميل PDF' : 'Download PDF'}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
