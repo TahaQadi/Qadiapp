@@ -587,7 +587,7 @@ export default function CatalogPage() {
                         data-testid={`tab-subcategory-${subCat}`}
                       >
                         <span className="flex items-center gap-1.5 sm:gap-2">
-                          <span className="line-clamp-1">{subCat}</span>
+                          <span className="truncate">{subCat}</span>
                           <Badge 
                             variant={isActive ? "secondary" : "outline"} 
                             className={`text-xs flex-shrink-0 ${isActive ? 'bg-primary-foreground/20 dark:bg-black/20' : ''}`}
