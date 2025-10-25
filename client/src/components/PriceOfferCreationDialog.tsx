@@ -253,6 +253,9 @@ export default function PriceOfferCreationDialog({
                    isLoadingPriceRequest || isLoadingLtaProducts || 
                    isLoadingSelectedLta || isLoadingLtaClients;
 
+  // Extract primitive value to avoid object reference issues
+  const selectedLtaCurrency = selectedLta?.currency;
+
   // Update available products - always show all products
   // (price offers can add new products to LTA)
   useEffect(() => {
@@ -275,32 +278,32 @@ export default function PriceOfferCreationDialog({
           sku: product.sku || 'N/A',
           quantity: product.quantity || 1,
           unitPrice: product.contractPrice || '0',
-          currency: priceRequest.lta?.currency || selectedLta?.currency || 'ILS',
+          currency: priceRequest.lta?.currency || selectedLtaCurrency || 'ILS',
         }));
 
         form.setValue('items', items);
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open]);
+  }, [priceRequest, open, selectedLtaCurrency]);
 
   // Update currency for all items when LTA changes
   useEffect(() => {
-    if (selectedLta?.currency && open) {
+    if (selectedLtaCurrency && open) {
       // Only sync if currency has changed
-      if (lastSyncedCurrencyRef.current !== selectedLta.currency) {
+      if (lastSyncedCurrencyRef.current !== selectedLtaCurrency) {
         const currentItems = form.getValues('items');
-        if (currentItems.length > 0 && currentItems[0].currency !== selectedLta.currency) {
+        if (currentItems.length > 0 && currentItems[0].currency !== selectedLtaCurrency) {
           const updatedItems = currentItems.map(item => ({
             ...item,
-            currency: selectedLta.currency || 'ILS'
+            currency: selectedLtaCurrency || 'ILS'
           }));
           form.setValue('items', updatedItems);
         }
-        lastSyncedCurrencyRef.current = selectedLta.currency;
+        lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLta?.currency, open]);
+  }, [selectedLtaCurrency, open]);
   
   // Reset currency sync when dialog closes
   useEffect(() => {
