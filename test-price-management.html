@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Management Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .code { background-color: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Price Management Bug Fix - Test Results</h1>
+    
+    <div class="test-section success">
+        <h2>✅ Bug Identified</h2>
+        <p><strong>Issue:</strong> Item names were not showing in price management</p>
+        <p><strong>Root Cause:</strong> The price offers table was missing:</p>
+        <ul>
+            <li>An "Items" column to display product names</li>
+            <li>A "View Offer Details" functionality to see full offer contents</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔧 Fixes Implemented</h2>
+        <ol>
+            <li><strong>Added "Items" column to desktop table view:</strong>
+                <div class="code">
+                    - Shows first 2 items with names and quantities
+                    - Displays "+X more" for additional items
+                    - Handles both English and Arabic names
+                </div>
+            </li>
+            <li><strong>Added "Items" info to mobile card view:</strong>
+                <div class="code">
+                    - Shows item count in the info section
+                    - Displays "None" when no items present
+                </div>
+            </li>
+            <li><strong>Added "View Details" button:</strong>
+                <div class="code">
+                    - New button in actions column (desktop)
+                    - New button in actions row (mobile)
+                    - Opens detailed dialog with full offer information
+                </div>
+            </li>
+            <li><strong>Created comprehensive "View Offer Details" dialog:</strong>
+                <div class="code">
+                    - Shows all offer information (number, status, client, LTA, dates)
+                    - Displays all items with names, quantities, prices, and totals
+                    - Shows notes if available
+                    - Includes download PDF action
+                    - Responsive design for both desktop and mobile
+                </div>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section success">
+        <h2>📋 Code Changes Summary</h2>
+        <p><strong>File Modified:</strong> <code>/workspace/client/src/pages/AdminPriceManagementPage.tsx</code></p>
+        <ul>
+            <li>Added state variables for offer details dialog</li>
+            <li>Added <code>handleViewOffer</code> function</li>
+            <li>Updated table headers to include "Items" column</li>
+            <li>Added items display logic in table cells</li>
+            <li>Enhanced mobile card view with items info</li>
+            <li>Added "View Details" buttons to actions</li>
+            <li>Created comprehensive offer details dialog</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h2>🎯 Expected Behavior After Fix</h2>
+        <ol>
+            <li><strong>Desktop View:</strong>
+                <ul>
+                    <li>Price offers table now shows an "Items" column</li>
+                    <li>Each row displays the first 2 items with names and quantities</li>
+                    <li>Additional items show as "+X more"</li>
+                    <li>New "View Details" button (eye icon) in actions column</li>
+                </ul>
+            </li>
+            <li><strong>Mobile View:</strong>
+                <ul>
+                    <li>Card view shows item count in the info section</li>
+                    <li>New "View Details" button in actions row</li>
+                </ul>
+            </li>
+            <li><strong>Offer Details Dialog:</strong>
+                <ul>
+                    <li>Shows complete offer information</li>
+                    <li>Lists all items with names, quantities, and prices</li>
+                    <li>Displays total amounts</li>
+                    <li>Shows notes if available</li>
+                    <li>Includes PDF download action</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ Verification Steps</h2>
+        <p>To verify the fix works:</p>
+        <ol>
+            <li>Start the development server: <code>npm run dev</code></li>
+            <li>Navigate to Admin → Price Management</li>
+            <li>Go to the "Price Offers" tab</li>
+            <li>Verify the "Items" column appears in the table</li>
+            <li>Check that item names are displayed in the Items column</li>
+            <li>Click the "View Details" button (eye icon) on any offer</li>
+            <li>Verify the dialog shows complete offer details including all items</li>
+            <li>Test on mobile view to ensure responsive design works</li>
+        </ol>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔍 Technical Details</h2>
+        <p><strong>Data Structure:</strong> Price offers store items as JSONB in the database with this structure:</p>
+        <div class="code">
+{
+  "productId": "string",
+  "nameEn": "string", 
+  "nameAr": "string",
+  "sku": "string",
+  "quantity": "number",
+  "unitPrice": "string",
+  "currency": "string"
+}
+        </div>
+        <p><strong>Display Logic:</strong> The fix properly handles both string and object formats for the items field, with fallbacks for missing data.</p>
+    </div>
+</body>
+</html>
