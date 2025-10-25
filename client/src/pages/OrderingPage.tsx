@@ -127,6 +127,7 @@ export default function OrderingPage() {
   // Fetch price offers for client
   const { data: priceOffers = [], isLoading: priceOffersLoading } = useQuery<any[]>({
     queryKey: ['/api/price-offers'],
+    enabled: !!user,
   });
 
   // Ref to store scroll position for restoration after cart updates
@@ -1486,8 +1487,8 @@ export default function OrderingPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {priceOffers.map((offer) => {
                     const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
-                    const isExpired = offer.status === 'expired';
-                    const canRespond = offer.status === 'sent' || offer.status === 'viewed';
+                    const isExpired = new Date(offer.validUntil) < new Date();
+                    const canRespond = (offer.status === 'sent' || offer.status === 'viewed') && !isExpired;
 
                     return (
                       <Card key={offer.id} className={cn("border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm", isExpired && "opacity-60")}>
@@ -1506,15 +1507,17 @@ export default function OrderingPage() {
                             <Badge variant={
                               offer.status === 'accepted' ? 'default' :
                               offer.status === 'rejected' ? 'destructive' :
-                              offer.status === 'expired' ? 'secondary' : 'outline'
+                              isExpired ? 'secondary' : 
+                              offer.status === 'draft' ? 'outline' : 'outline'
                             }>
                               {language === 'ar' ? 
-                                (offer.status === 'sent' ? 'مرسل' :
+                                (offer.status === 'draft' ? 'مسودة' :
+                                 offer.status === 'sent' ? 'مرسل' :
                                  offer.status === 'viewed' ? 'تمت المشاهدة' :
                                  offer.status === 'accepted' ? 'مقبول' :
                                  offer.status === 'rejected' ? 'مرفوض' :
-                                 offer.status === 'expired' ? 'منتهي' : offer.status) :
-                                offer.status.charAt(0).toUpperCase() + offer.status.slice(1)
+                                 isExpired ? 'منتهي' : offer.status) :
+                                (isExpired ? 'Expired' : offer.status.charAt(0).toUpperCase() + offer.status.slice(1))
                               }
                             </Badge>
                           </div>
@@ -1524,20 +1527,20 @@ export default function OrderingPage() {
                             <span className="text-muted-foreground">
                               {language === 'ar' ? 'عدد المنتجات' : 'Products'}
                             </span>
-                            <span className="font-medium">{items.length}</span>
+                            <span className="font-medium">{items?.length || 0}</span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">
                               {language === 'ar' ? 'الإجمالي' : 'Total'}
                             </span>
-                            <span className="font-bold text-lg">${offer.total}</span>
+                            <span className="font-bold text-lg">${offer.total || '0.00'}</span>
                           </div>
                           {offer.validUntil && (
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">
                                 {language === 'ar' ? 'صالح حتى' : 'Valid Until'}
                               </span>
-                              <span className="font-medium">
+                              <span className={cn("font-medium", isExpired && "text-destructive")}>
                                 {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                               </span>
                             </div>

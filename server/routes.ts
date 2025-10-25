@@ -469,8 +469,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/price-offers", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const offers = await storage.getPriceOffersByClient(req.client.id);
+      console.log(`[Price Offers] Client ${req.client.id} has ${offers.length} offers`);
       res.json(offers);
     } catch (error) {
+      console.error('[Price Offers] Error fetching offers:', error);
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });

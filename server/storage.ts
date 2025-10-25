@@ -1421,7 +1421,11 @@ export class MemStorage implements IStorage {
       .where(eq(priceOffers.clientId, clientId))
       .orderBy(desc(priceOffers.createdAt))
       .execute();
-    return result;
+    
+    // Filter out draft offers - clients should only see sent/viewed/accepted/rejected offers
+    const visibleOffers = result.filter(offer => offer.status !== 'draft');
+    console.log(`[Storage] Client ${clientId}: ${result.length} total, ${visibleOffers.length} visible (excluding drafts)`);
+    return visibleOffers;
   }
 
   async getAllPriceOffers(): Promise<PriceOffer[]> {
