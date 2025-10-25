@@ -344,7 +344,7 @@ export default function AdminPriceManagementPage() {
     ? offers 
     : offers.filter(o => o.status === offerStatusFilter);
 
-  const handleAssignPrice = (product: any, request: Notification) => {
+  const handleAssignPrice = (product: any, request: PriceRequest) => {
     setSelectedProduct(product);
     setSelectedRequest(request);
     setPriceDialogOpen(true);
@@ -360,13 +360,12 @@ export default function AdminPriceManagementPage() {
       return;
     }
 
-    const metadata = selectedRequest ? parseMetadata(selectedRequest.metadata) : null;
     assignProductMutation.mutate({
       ltaId: selectedLtaId,
       productId: selectedProduct.id,
       contractPrice,
       currency,
-      clientId: metadata?.clientId,
+      clientId: selectedRequest?.clientId,
     });
   };
 
