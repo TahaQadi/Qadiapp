@@ -545,68 +545,66 @@ export default function CatalogPage() {
               </div>
             )}
 
-            {/* Subcategories Grid */}
+            {/* Subcategories Tabs */}
             {selectedMainCategory && !searchQuery && (
-              <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+              <div className="animate-fade-in mb-8" style={{ animationDelay: '200ms' }}>
+                <div className="flex items-center gap-3 mb-4">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-9 w-9 flex-shrink-0 hover-elevate"
                     onClick={() => setSelectedMainCategory(null)}
                   >
-                    {language === 'ar' ? <ChevronRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                    {language === 'ar' ? <ChevronRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
                   </Button>
-                  {selectedMainCategory}
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                  {getSubCategories(selectedMainCategory).map((subCat, index) => (
-                    <Card
-                      key={subCat}
-                      className="relative overflow-hidden cursor-pointer group
-                        bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
-                        border-border/50 dark:border-[#d4af37]/20
-                        hover:border-primary dark:hover:border-[#d4af37]
-                        hover:shadow-2xl dark:hover:shadow-[#d4af37]/20
-                        transition-all duration-500 ease-out
-                        hover:scale-105 hover:-translate-y-2
-                        animate-fade-in"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                      onClick={() => {
-                        setSelectedSubCategory(subCat);
-                      }}
-                    >
-                      {/* Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/10
-                        group-hover:from-purple-500/30 group-hover:to-indigo-500/20
-                        transition-all duration-500 opacity-0 group-hover:opacity-100" />
-
-                      {/* Shimmer Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-
-                      <CardContent className="p-6 flex flex-col items-center justify-center min-h-[140px] relative z-10">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/10
-                          group-hover:scale-110 group-hover:rotate-6
-                          transition-all duration-500 flex-shrink-0
-                          border border-white/10 mb-3">
-                          <Package className="h-8 w-8 text-primary dark:text-[#d4af37]
-                            group-hover:text-primary dark:group-hover:text-[#f9c800]
-                            transition-colors duration-300" />
-                        </div>
-                        <h3 className="font-semibold text-lg text-foreground dark:text-white mb-1">{subCat}</h3>
-                        <p className="text-sm text-muted-foreground dark:text-gray-400">
-                          {products.filter(p => p.category === subCat).length}{' '}
-                          {language === 'ar' ? 'منتج' : 'products'}
-                        </p>
-                      </CardContent>
-
-                      {/* Bottom accent line */}
-                      <div className="absolute bottom-0 left-0 right-0 h-1
-                        bg-gradient-to-r from-transparent via-primary dark:via-[#d4af37] to-transparent
-                        transition-all duration-500
-                        opacity-0 group-hover:opacity-100 scale-x-0 group-hover:scale-x-100" />
-                    </Card>
-                  ))}
+                  <h2 className="text-xl font-semibold">
+                    {selectedMainCategory}
+                  </h2>
+                </div>
+                
+                {/* Horizontal scrollable tabs */}
+                <div className="relative">
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+                    {getSubCategories(selectedMainCategory).map((subCat, index) => {
+                      const isActive = selectedSubCategory === subCat;
+                      const count = products.filter(p => p.category === subCat).length;
+                      
+                      return (
+                        <button
+                          key={subCat}
+                          onClick={() => setSelectedSubCategory(subCat)}
+                          className={`
+                            relative flex-shrink-0 px-4 py-2.5 rounded-lg
+                            font-medium text-sm whitespace-nowrap
+                            transition-all duration-300
+                            border-2
+                            animate-fade-in
+                            ${isActive 
+                              ? 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black border-primary dark:border-[#d4af37] shadow-lg' 
+                              : 'bg-card/50 dark:bg-[#222222]/50 text-foreground border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-card dark:hover:bg-[#2a2a2a]'
+                            }
+                          `}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                          data-testid={`tab-subcategory-${subCat}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {subCat}
+                            <Badge 
+                              variant={isActive ? "secondary" : "outline"} 
+                              className={`text-xs ${isActive ? 'bg-primary-foreground/20 dark:bg-black/20' : ''}`}
+                            >
+                              {count}
+                            </Badge>
+                          </span>
+                          
+                          {/* Active indicator line */}
+                          {isActive && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-foreground dark:bg-black rounded-full" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
