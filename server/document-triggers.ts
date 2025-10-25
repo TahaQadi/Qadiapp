@@ -102,13 +102,19 @@ export class DocumentTriggerService {
   private async handleOrderPlaced(event: DocumentGenerationEvent): Promise<DocumentGenerationResult> {
     const { data: order } = event;
     
-    // Get order confirmation template
-    const templates = await TemplateStorage.getTemplates('order');
-    const template = templates.find(t => t.isActive && t.language === 'both');
+    // Get order confirmation template - try 'order' first, then fallback to 'invoice'
+    let templates = await TemplateStorage.getTemplates('order');
+    let template = templates.find(t => t.isActive && t.language === 'both');
     
     if (!template) {
-      console.warn('⚠️ No active order template found');
-      return { success: false, error: 'No active order template found' };
+      console.log('ℹ️ No active order template found, trying invoice template...');
+      templates = await TemplateStorage.getTemplates('invoice');
+      template = templates.find(t => t.isActive && t.language === 'both');
+    }
+    
+    if (!template) {
+      console.warn('⚠️ No active order or invoice template found');
+      return { success: false, error: 'No active order or invoice template found' };
     }
 
     // Prepare variables
@@ -123,7 +129,7 @@ export class DocumentTriggerService {
 
     // Upload to storage
     const fileName = `order_confirmation_${order.id}_${Date.now()}.pdf`;
-    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'order');
+    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'ORDER');
     
     if (!uploadResult.success) {
       throw new Error('Failed to upload PDF to storage');
@@ -170,10 +176,10 @@ export class DocumentTriggerService {
     
     // Only generate documents for certain status changes
     const statusChangeTriggers = {
-      'confirmed': 'order_confirmation',
-      'shipped': 'shipping_notification',
-      'delivered': 'delivery_confirmation',
-      'cancelled': 'cancellation_notice'
+      'confirmed': 'order',
+      'shipped': 'order',
+      'delivered': 'order',
+      'cancelled': 'order'
     };
 
     const templateCategory = statusChangeTriggers[newStatus as keyof typeof statusChangeTriggers];
@@ -182,13 +188,19 @@ export class DocumentTriggerService {
       return { success: true };
     }
 
-    // Get appropriate template
-    const templates = await TemplateStorage.getTemplates(templateCategory);
-    const template = templates.find(t => t.isActive && t.language === 'both');
+    // Get appropriate template - try specific category first, then fallback to 'invoice'
+    let templates = await TemplateStorage.getTemplates(templateCategory);
+    let template = templates.find(t => t.isActive && t.language === 'both');
     
     if (!template) {
-      console.warn(`⚠️ No active ${templateCategory} template found`);
-      return { success: false, error: `No active ${templateCategory} template found` };
+      console.log(`ℹ️ No active ${templateCategory} template found, trying invoice template...`);
+      templates = await TemplateStorage.getTemplates('invoice');
+      template = templates.find(t => t.isActive && t.language === 'both');
+    }
+    
+    if (!template) {
+      console.warn(`⚠️ No active ${templateCategory} or invoice template found`);
+      return { success: false, error: `No active ${templateCategory} or invoice template found` };
     }
 
     // Prepare variables
@@ -206,8 +218,8 @@ export class DocumentTriggerService {
     });
 
     // Upload to storage
-    const fileName = `${templateCategory}_${order.id}_${newStatus}_${Date.now()}.pdf`;
-    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, templateCategory as any);
+    const fileName = `order_${order.id}_${newStatus}_${Date.now()}.pdf`;
+    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'ORDER');
     
     if (!uploadResult.success) {
       throw new Error('Failed to upload PDF to storage');
@@ -215,7 +227,7 @@ export class DocumentTriggerService {
 
     // Create document record
     const document = await storage.createDocumentMetadata({
-      documentType: templateCategory as any,
+      documentType: 'order',
       fileName,
       fileUrl: uploadResult.fileName!,
       fileSize: pdfBuffer.length,
@@ -240,7 +252,7 @@ export class DocumentTriggerService {
       userAgent: 'DocumentTriggerService'
     });
 
-    console.log(`✅ ${templateCategory} generated: ${document.id}`);
+    console.log(`✅ Order document generated: ${document.id}`);
     return {
       success: true,
       documentId: document.id,
@@ -275,7 +287,7 @@ export class DocumentTriggerService {
 
     // Upload to storage
     const fileName = `price_offer_${priceOffer.id}_${Date.now()}.pdf`;
-    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'price_offer');
+    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'PRICE_OFFER');
     
     if (!uploadResult.success) {
       throw new Error('Failed to upload PDF to storage');
@@ -341,7 +353,7 @@ export class DocumentTriggerService {
 
     // Upload to storage
     const fileName = `lta_contract_${lta.id}_${Date.now()}.pdf`;
-    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'contract');
+    const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'CONTRACT');
     
     if (!uploadResult.success) {
       throw new Error('Failed to upload PDF to storage');
@@ -385,7 +397,7 @@ export class DocumentTriggerService {
    */
   private async prepareOrderVariables(order: any, clientId: string, additionalData?: any): Promise<Array<{ key: string; value: any }>> {
     // Get client information
-    const client = await storage.getClientById(clientId);
+    const client = await storage.getClient(clientId);
     if (!client) {
       throw new Error('Client not found');
     }
@@ -427,7 +439,7 @@ export class DocumentTriggerService {
    */
   private async preparePriceOfferVariables(priceOffer: any, clientId: string): Promise<Array<{ key: string; value: any }>> {
     // Get client information
-    const client = await storage.getClientById(clientId);
+    const client = await storage.getClient(clientId);
     if (!client) {
       throw new Error('Client not found');
     }
@@ -463,7 +475,7 @@ export class DocumentTriggerService {
    */
   private async prepareLtaVariables(lta: any, clientId: string): Promise<Array<{ key: string; value: any }>> {
     // Get client information
-    const client = await storage.getClientById(clientId);
+    const client = await storage.getClient(clientId);
     if (!client) {
       throw new Error('Client not found');
     }
