@@ -1455,7 +1455,7 @@ export default function AdminPriceManagementPage() {
 
       {/* View Offer Details Dialog */}
       <Dialog open={viewOfferDialogOpen} onOpenChange={setViewOfferDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -1464,47 +1464,148 @@ export default function AdminPriceManagementPage() {
           </DialogHeader>
           {selectedOffer && (
             <div className="space-y-4 sm:space-y-6">
-              {/* Offer Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                <div>
-                  <span className="text-muted-foreground">{language === 'ar' ? 'رقم العرض' : 'Offer Number'}:</span>
-                  <div className="mt-1 font-medium font-mono text-sm sm:text-base">{selectedOffer.offerNumber}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}:</span>
-                  <div className="mt-1">
-                    {getStatusBadge(selectedOffer.status)}
+              {/* Header Card with Key Info */}
+              <Card className="border-l-4 border-l-primary dark:border-l-[#d4af37] bg-gradient-to-r from-primary/5 to-transparent dark:from-[#d4af37]/5">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="text-2xl font-bold font-mono mb-1">
+                        {selectedOffer.offerNumber}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getStatusBadge(selectedOffer.status)}
+                        {new Date(selectedOffer.validUntil) < new Date() && (
+                          <Badge variant="destructive" className="text-xs">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            {language === 'ar' ? 'منتهي' : 'Expired'}
+                          </Badge>
+                        )}
+                        {selectedOffer.requestId && (
+                          <Badge variant="outline" className="text-xs">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {language === 'ar' ? 'من طلب' : 'From Request'}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {language === 'ar' ? 'تم الإنشاء في' : 'Created on'}
+                      </div>
+                      <div className="text-sm font-medium">
+                        {new Date(selectedOffer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
-                  <div className="mt-1 font-medium text-sm sm:text-base">{getClientName(selectedOffer.clientId)}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
-                  <div className="mt-1 font-medium text-sm sm:text-base">{getLtaName(selectedOffer.ltaId)}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}:</span>
-                  <div className="mt-1 font-medium text-sm sm:text-base">
-                    {new Date(selectedOffer.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}:</span>
-                  <div className="mt-1 font-medium text-sm sm:text-base">
-                    {new Date(selectedOffer.validUntil).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
-                  </div>
-                </div>
+                </CardContent>
+              </Card>
+
+              {/* Offer Info Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}</span>
+                    </div>
+                    <div className="font-medium text-sm">{getClientName(selectedOffer.clientId)}</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}</span>
+                    </div>
+                    <div className="font-medium text-sm">{getLtaName(selectedOffer.ltaId)}</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</span>
+                    </div>
+                    <div className={`font-medium text-sm ${new Date(selectedOffer.validUntil) < new Date() ? 'text-destructive' : ''}`}>
+                      {new Date(selectedOffer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {selectedOffer.sentAt && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</span>
+                      </div>
+                      <div className="font-medium text-sm">
+                        {new Date(selectedOffer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {selectedOffer.viewedAt && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تاريخ المشاهدة' : 'Viewed Date'}</span>
+                      </div>
+                      <div className="font-medium text-sm">
+                        {new Date(selectedOffer.viewedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {selectedOffer.respondedAt && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تاريخ الرد' : 'Response Date'}</span>
+                      </div>
+                      <div className="font-medium text-sm">
+                        {new Date(selectedOffer.respondedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
-              {/* Items */}
-              <div className="border rounded-lg p-3 sm:p-4 space-y-3">
-                <h4 className="font-semibold flex items-center gap-2 text-sm sm:text-base">
-                  <Package className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {language === 'ar' ? 'منتجات العرض' : 'Offer Items'}
-                </h4>
-                <div className="space-y-2">
+              {/* Items Table */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Package className="h-5 w-5" />
+                    {language === 'ar' ? 'منتجات العرض' : 'Offer Items'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
                   {(() => {
                     try {
                       const items = typeof selectedOffer.items === 'string' 
@@ -1519,95 +1620,245 @@ export default function AdminPriceManagementPage() {
                         );
                       }
 
-                      return items.map((item: any, idx: number) => {
-                        const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
-                        const itemQuantity = Number(item.quantity) || 0;
-                        const total = itemPrice * itemQuantity;
-                        const name = language === 'ar' 
-                          ? (item.nameAr || item.nameEn || 'Unnamed Product')
-                          : (item.nameEn || item.nameAr || 'Unnamed Product');
+                      // Get currency (assume all items have same currency)
+                      const currency = items[0]?.currency || 'ILS';
 
-                        return (
-                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm sm:text-base mb-1 truncate">
-                                {name}
-                              </div>
-                              <div className="text-xs sm:text-sm text-muted-foreground">
-                                SKU: {item.sku || 'N/A'}
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <div className="font-semibold text-sm sm:text-base">
-                                {item.quantity || 1} × {item.unitPrice || '0'} {item.currency || 'ILS'}
-                              </div>
-                              <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                                = {total.toFixed(2)} {item.currency || 'ILS'}
-                              </div>
-                            </div>
+                      return (
+                        <>
+                          {/* Desktop Table */}
+                          <div className="hidden md:block">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-12">#</TableHead>
+                                  <TableHead>{language === 'ar' ? 'المنتج' : 'Product'}</TableHead>
+                                  <TableHead className="w-32">{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
+                                  <TableHead className="w-24 text-right">{language === 'ar' ? 'الكمية' : 'Qty'}</TableHead>
+                                  <TableHead className="w-32 text-right">{language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</TableHead>
+                                  <TableHead className="w-32 text-right">{language === 'ar' ? 'المجموع' : 'Total'}</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {items.map((item: any, idx: number) => {
+                                  const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                                  const itemQuantity = Number(item.quantity) || 0;
+                                  const total = itemPrice * itemQuantity;
+                                  const name = language === 'ar' 
+                                    ? (item.nameAr || item.nameEn || 'Unnamed Product')
+                                    : (item.nameEn || item.nameAr || 'Unnamed Product');
+
+                                  return (
+                                    <TableRow key={idx}>
+                                      <TableCell className="font-medium">{idx + 1}</TableCell>
+                                      <TableCell>
+                                        <div className="font-medium">{name}</div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <code className="text-xs bg-muted px-2 py-1 rounded">{item.sku || 'N/A'}</code>
+                                      </TableCell>
+                                      <TableCell className="text-right font-medium">{itemQuantity}</TableCell>
+                                      <TableCell className="text-right">
+                                        {itemPrice.toFixed(2)} {item.currency || currency}
+                                      </TableCell>
+                                      <TableCell className="text-right font-semibold">
+                                        {total.toFixed(2)} {item.currency || currency}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
                           </div>
-                        );
-                      });
+
+                          {/* Mobile Cards */}
+                          <div className="md:hidden space-y-3 p-4">
+                            {items.map((item: any, idx: number) => {
+                              const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                              const itemQuantity = Number(item.quantity) || 0;
+                              const total = itemPrice * itemQuantity;
+                              const name = language === 'ar' 
+                                ? (item.nameAr || item.nameEn || 'Unnamed Product')
+                                : (item.nameEn || item.nameAr || 'Unnamed Product');
+
+                              return (
+                                <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/30">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="outline" className="text-xs shrink-0">#{idx + 1}</Badge>
+                                        <div className="font-medium text-sm truncate">{name}</div>
+                                      </div>
+                                      <code className="text-xs bg-background px-2 py-1 rounded">
+                                        {item.sku || 'N/A'}
+                                      </code>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <div className="text-center p-2 bg-background rounded">
+                                      <div className="text-muted-foreground mb-1">{language === 'ar' ? 'الكمية' : 'Qty'}</div>
+                                      <div className="font-semibold">{itemQuantity}</div>
+                                    </div>
+                                    <div className="text-center p-2 bg-background rounded">
+                                      <div className="text-muted-foreground mb-1">{language === 'ar' ? 'السعر' : 'Price'}</div>
+                                      <div className="font-semibold">{itemPrice.toFixed(2)}</div>
+                                    </div>
+                                    <div className="text-center p-2 bg-primary/10 dark:bg-[#d4af37]/10 rounded">
+                                      <div className="text-muted-foreground mb-1">{language === 'ar' ? 'المجموع' : 'Total'}</div>
+                                      <div className="font-bold">{total.toFixed(2)}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      );
                     } catch (error) {
                       console.error('Error parsing offer items:', error);
                       return (
-                        <div className="text-center py-8 text-sm text-muted-foreground">
+                        <div className="text-center py-8 text-sm text-muted-foreground p-4">
                           {language === 'ar' ? 'خطأ في عرض المنتجات' : 'Error displaying items'}
                         </div>
                       );
                     }
                   })()}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
-              {/* Totals */}
+              {/* Financial Summary */}
               {(() => {
                 const items = typeof selectedOffer.items === 'string' 
                   ? JSON.parse(selectedOffer.items) 
                   : selectedOffer.items || [];
                 if (items.length > 0) {
+                  const currency = items[0]?.currency || 'ILS';
                   const subtotal = items.reduce((sum: number, item: any) => {
                     const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
                     const quantity = Number(item.quantity) || 0;
                     return sum + (price * quantity);
                   }, 0);
+                  const tax = parseFloat(selectedOffer.tax || '0');
+                  const total = parseFloat(selectedOffer.total || subtotal.toString());
 
                   return (
-                    <div className="border rounded-lg p-3 sm:p-4">
-                      <div className="flex justify-between items-center text-base sm:text-lg font-semibold">
-                        <span>{language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}:</span>
-                        <span className="whitespace-nowrap">{subtotal.toFixed(2)} {items[0]?.currency || 'ILS'}</span>
-                      </div>
-                    </div>
+                    <Card className="border-2 border-primary/20 dark:border-[#d4af37]/20 bg-gradient-to-br from-primary/5 to-transparent dark:from-[#d4af37]/5">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <DollarSign className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+                            <h4 className="font-semibold">{language === 'ar' ? 'الملخص المالي' : 'Financial Summary'}</h4>
+                          </div>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">{language === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}:</span>
+                              <span className="font-medium">{subtotal.toFixed(2)} {currency}</span>
+                            </div>
+                            {tax > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">{language === 'ar' ? 'الضريبة' : 'Tax'}:</span>
+                                <span className="font-medium">{tax.toFixed(2)} {currency}</span>
+                              </div>
+                            )}
+                            <div className="border-t pt-2 flex justify-between items-center text-lg font-bold">
+                              <span>{language === 'ar' ? 'المجموع الإجمالي' : 'Total Amount'}:</span>
+                              <span className="text-primary dark:text-[#d4af37]">{total.toFixed(2)} {currency}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground pt-2 border-t">
+                            {language === 'ar' 
+                              ? `${items.length} منتج • إجمالي ${items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)} وحدة`
+                              : `${items.length} item${items.length !== 1 ? 's' : ''} • ${items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)} total units`
+                            }
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   );
                 }
                 return null;
               })()}
 
-              {/* Notes */}
-              {selectedOffer.notes && (
-                <div className="border rounded-lg p-3 sm:p-4">
-                  <h4 className="font-semibold mb-2 text-sm sm:text-base">{language === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">{selectedOffer.notes}</p>
-                </div>
-              )}
+              {/* Notes and Response */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedOffer.notes && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        {language === 'ar' ? 'ملاحظات العرض' : 'Offer Notes'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
+                        {selectedOffer.notes}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {selectedOffer.responseNote && (
+                  <Card className={selectedOffer.status === 'accepted' ? 'border-green-200 dark:border-green-900' : 'border-red-200 dark:border-red-900'}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        {selectedOffer.status === 'accepted' ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                        {language === 'ar' ? 'رد العميل' : 'Client Response'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
+                        {selectedOffer.responseNote}
+                      </p>
+                      {selectedOffer.respondedAt && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {new Date(selectedOffer.respondedAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
               {/* Actions */}
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => setViewOfferDialogOpen(false)}
-                  className="w-full sm:w-auto"
-                >
-                  {language === 'ar' ? 'إغلاق' : 'Close'}
-                </Button>
-                <Button
-                  onClick={() => handleDownload(selectedOffer.pdfFileName)}
-                  className="w-full sm:w-auto"
-                >
-                  <Download className="h-4 w-4 me-2" />
-                  {language === 'ar' ? 'تحميل PDF' : 'Download PDF'}
-                </Button>
+              <div className="flex flex-col sm:flex-row justify-between gap-2 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {selectedOffer.requestId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const request = priceRequests.find(r => r.id === selectedOffer.requestId);
+                        if (request) {
+                          handleViewRequest(request);
+                          setViewOfferDialogOpen(false);
+                        }
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      <FileText className="h-4 w-4 me-2" />
+                      {language === 'ar' ? 'عرض الطلب الأصلي' : 'View Original Request'}
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewOfferDialogOpen(false)}
+                    className="w-full sm:w-auto"
+                  >
+                    {language === 'ar' ? 'إغلاق' : 'Close'}
+                  </Button>
+                  <Button
+                    onClick={() => handleDownload(selectedOffer.pdfFileName)}
+                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90"
+                  >
+                    <Download className="h-4 w-4 me-2" />
+                    {language === 'ar' ? 'تحميل PDF' : 'Download PDF'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
