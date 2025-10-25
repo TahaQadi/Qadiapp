@@ -1,5 +1,6 @@
 
-import { analytics } from './analytics';
+// Performance monitoring is independent of analytics
+// If you need to send performance metrics to analytics, import it where needed
 
 interface PerformanceMetric {
   name: string;
