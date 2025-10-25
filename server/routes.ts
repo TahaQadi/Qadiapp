@@ -4081,38 +4081,6 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   // END DOCUMENT ROUTES
   // ======================
 
-  // Admin: Clear all price data
-  app.delete('/api/admin/clear-price-data', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      // Delete all price offers
-      const allOffers = await storage.getAllPriceOffers();
-      for (const offer of allOffers) {
-        await storage.deletePriceOffer(offer.id);
-      }
-
-      // Delete all price requests
-      const allRequests = await storage.getAllPriceRequests();
-      for (const request of allRequests) {
-        await db.delete(priceRequests).where(eq(priceRequests.id, request.id));
-      }
-
-      res.json({
-        success: true,
-        message: `Successfully cleared ${allOffers.length} price offers and ${allRequests.length} price requests`,
-        messageAr: `تم مسح ${allOffers.length} عروض أسعار و ${allRequests.length} طلبات أسعار بنجاح`,
-        deletedOffers: allOffers.length,
-        deletedRequests: allRequests.length
-      });
-    } catch (error) {
-      console.error('Clear price data error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to clear price data',
-        messageAr: 'فشل مسح بيانات الأسعار'
-      });
-    }
-  });
-
   // Demo request endpoint
   app.post('/api/demo-request', async (req: Request, res: Response) => {
     try {
