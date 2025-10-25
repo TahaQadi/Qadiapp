@@ -213,7 +213,7 @@ export default function CatalogPage() {
   const getSubCategories = (mainCat: string) => {
     return Array.from(new Set(products
       .filter(p => p.mainCategory === mainCat)
-      .map(p => p.subCategory)
+      .map(p => p.category)
       .filter(Boolean)));
   };
 
@@ -226,7 +226,7 @@ export default function CatalogPage() {
       p.sku.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (selectedSubCategory) {
-      return matchesSearch && p.subCategory === selectedSubCategory;
+      return matchesSearch && p.category === selectedSubCategory;
     }
     if (selectedMainCategory) {
       return matchesSearch && p.mainCategory === selectedMainCategory;
@@ -494,7 +494,7 @@ export default function CatalogPage() {
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
                   {mainCategories.map((mainCat, index) => {
-                    const IconComponent = getCategoryIcon(mainCat);
+                    const IconComponent = getCategoryIcon(mainCat || '');
                     return (
                       <Card
                         key={mainCat}
@@ -595,7 +595,7 @@ export default function CatalogPage() {
                         </div>
                         <h3 className="font-semibold text-lg text-foreground dark:text-white mb-1">{subCat}</h3>
                         <p className="text-sm text-muted-foreground dark:text-gray-400">
-                          {products.filter(p => p.subCategory === subCat).length}{' '}
+                          {products.filter(p => p.category === subCat).length}{' '}
                           {language === 'ar' ? 'منتج' : 'products'}
                         </p>
                       </CardContent>
@@ -626,11 +626,11 @@ export default function CatalogPage() {
                     const slugifiedName = product.nameEn.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
-                    const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
+                    const slugifiedCategory = (product.category || 'products').toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
                     return (
-                      <Link key={product.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
+                      <Link key={product.id} href={`/products/${slugifiedCategory}/${slugifiedName}`}>
                         <Card className="h-full relative overflow-hidden cursor-pointer group
                           bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
                           border-border/50 dark:border-[#d4af37]/20
@@ -664,9 +664,9 @@ export default function CatalogPage() {
                                 <Package className="w-12 h-12 text-muted-foreground/30" />
                               </div>
                             )}
-                            {product.subCategory && (
+                            {product.category && (
                               <Badge className="absolute top-2 left-2 text-xs bg-background/80 backdrop-blur-sm" variant="secondary">
-                                {product.subCategory}
+                                {product.category}
                               </Badge>
                             )}
                             {product.hasPrice && product.contractPrice && (
