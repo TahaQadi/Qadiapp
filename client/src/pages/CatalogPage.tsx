@@ -562,49 +562,47 @@ export default function CatalogPage() {
                   </h2>
                 </div>
                 
-                {/* Horizontal scrollable tabs */}
-                <div className="relative">
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {getSubCategories(selectedMainCategory).map((subCat, index) => {
-                      const isActive = selectedSubCategory === subCat;
-                      const count = products.filter(p => p.category === subCat).length;
-                      
-                      return (
-                        <button
-                          key={subCat}
-                          onClick={() => setSelectedSubCategory(subCat)}
-                          className={`
-                            relative flex-shrink-0 px-4 py-2.5 rounded-lg
-                            font-medium text-sm whitespace-nowrap
-                            transition-all duration-300
-                            border-2
-                            animate-fade-in
-                            ${isActive 
-                              ? 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black border-primary dark:border-[#d4af37] shadow-lg' 
-                              : 'bg-card/50 dark:bg-[#222222]/50 text-foreground border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-card dark:hover:bg-[#2a2a2a]'
-                            }
-                          `}
-                          style={{ animationDelay: `${index * 50}ms` }}
-                          data-testid={`tab-subcategory-${subCat}`}
-                        >
-                          <span className="flex items-center gap-2">
-                            {subCat}
-                            <Badge 
-                              variant={isActive ? "secondary" : "outline"} 
-                              className={`text-xs ${isActive ? 'bg-primary-foreground/20 dark:bg-black/20' : ''}`}
-                            >
-                              {count}
-                            </Badge>
-                          </span>
-                          
-                          {/* Active indicator line */}
-                          {isActive && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-foreground dark:bg-black rounded-full" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                {/* Wrapped tabs - optimized for mobile */}
+                <div className="flex flex-wrap gap-2">
+                  {getSubCategories(selectedMainCategory).map((subCat, index) => {
+                    const isActive = selectedSubCategory === subCat;
+                    const count = products.filter(p => p.category === subCat).length;
+                    
+                    return (
+                      <button
+                        key={subCat}
+                        onClick={() => setSelectedSubCategory(subCat)}
+                        className={`
+                          relative px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg
+                          font-medium text-xs sm:text-sm
+                          transition-all duration-300
+                          border-2
+                          animate-fade-in
+                          ${isActive 
+                            ? 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black border-primary dark:border-[#d4af37] shadow-lg' 
+                            : 'bg-card/50 dark:bg-[#222222]/50 text-foreground border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-card dark:hover:bg-[#2a2a2a]'
+                          }
+                        `}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                        data-testid={`tab-subcategory-${subCat}`}
+                      >
+                        <span className="flex items-center gap-1.5 sm:gap-2">
+                          <span className="line-clamp-1">{subCat}</span>
+                          <Badge 
+                            variant={isActive ? "secondary" : "outline"} 
+                            className={`text-xs flex-shrink-0 ${isActive ? 'bg-primary-foreground/20 dark:bg-black/20' : ''}`}
+                          >
+                            {count}
+                          </Badge>
+                        </span>
+                        
+                        {/* Active indicator line */}
+                        {isActive && (
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-foreground dark:bg-black rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
