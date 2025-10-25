@@ -724,10 +724,24 @@ export default function AdminPriceManagementPage() {
 
           {/* Price Offers Tab */}
           <TabsContent value="offers" className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Filter Bar with Stats */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-primary/5 to-primary/10 dark:from-[#d4af37]/5 dark:to-[#d4af37]/10 rounded-lg border border-primary/20 dark:border-[#d4af37]/20">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-[#d4af37]/10 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground dark:text-white">
+                    {language === 'ar' ? 'عروض الأسعار' : 'Price Offers'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {language === 'ar' ? `${filteredOffers.length} عرض` : `${filteredOffers.length} offers`}
+                  </p>
+                </div>
+              </div>
               <div className="w-full sm:w-auto">
                 <Select value={offerStatusFilter} onValueChange={setOfferStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-56 h-10 border-primary/30 dark:border-[#d4af37]/30 focus:border-primary dark:focus:border-[#d4af37] shadow-sm">
+                  <SelectTrigger className="w-full sm:w-56 h-10 border-primary/30 dark:border-[#d4af37]/30 focus:border-primary dark:focus:border-[#d4af37] shadow-sm bg-background">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -735,6 +749,12 @@ export default function AdminPriceManagementPage() {
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70" />
                         {language === 'ar' ? 'جميع العروض' : 'All Offers'}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="draft">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-gray-500" />
+                        {language === 'ar' ? 'مسودة' : 'Draft'}
                       </div>
                     </SelectItem>
                     <SelectItem value="sent">
@@ -759,12 +779,6 @@ export default function AdminPriceManagementPage() {
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-red-500" />
                         {language === 'ar' ? 'مرفوض' : 'Rejected'}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="expired">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-gray-500" />
-                        {language === 'ar' ? 'منتهي' : 'Expired'}
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -959,7 +973,7 @@ export default function AdminPriceManagementPage() {
                 </Card>
 
                 {/* Mobile Card View */}
-                <div className="md:hidden grid gap-4">
+                <div className="md:hidden grid gap-3">
                   {filteredOffers.map((offer) => {
                     const linkedRequest = offer.requestId 
                       ? priceRequests.find(r => r.id === offer.requestId)
@@ -967,39 +981,48 @@ export default function AdminPriceManagementPage() {
                     const isExpired = new Date(offer.validUntil) < new Date();
 
                     return (
-                      <Card key={offer.id} className="hover-elevate border-l-4 border-l-primary dark:border-l-[#d4af37] shadow-sm hover:shadow-md transition-all duration-300">
-                        <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-                          {/* Header */}
-                          <div className="flex items-start justify-between gap-3">
+                      <Card key={offer.id} className="overflow-hidden border-l-4 border-l-primary dark:border-l-[#d4af37] shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-accent/5 dark:from-black dark:to-[#d4af37]/5">
+                        <CardContent className="p-4 space-y-4">
+                          {/* Header with Gradient Background */}
+                          <div className="flex items-start justify-between gap-3 pb-3 border-b border-border/50 dark:border-[#d4af37]/20">
                             <div className="flex-1 min-w-0">
-                              <div className="font-mono font-semibold text-sm sm:text-base mb-2 bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
+                              <div className="font-mono font-bold text-base mb-2 bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
                                 {offer.offerNumber}
                               </div>
                               {linkedRequest && (
-                                <Badge variant="outline" className="text-xs border-primary/50 dark:border-[#d4af37]/50">
+                                <Badge variant="outline" className="text-xs border-primary/50 dark:border-[#d4af37]/50 bg-primary/5 dark:bg-[#d4af37]/5">
                                   <FileText className="h-3 w-3 mr-1" />
                                   {linkedRequest.requestNumber}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#d4af37]/10 flex items-center justify-center border-2 border-primary/30 dark:border-[#d4af37]/30">
                               {getOfferStatusIcon(isExpired ? 'expired' : offer.status)}
                             </div>
                           </div>
 
-                          {/* Client & LTA Info */}
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
-                              <span className="font-medium">{getClientName(offer.clientId)}</span>
+                          {/* Client & LTA Info - Enhanced */}
+                          <div className="space-y-3 p-3 bg-muted/30 dark:bg-muted/10 rounded-lg border border-border/50 dark:border-[#d4af37]/10">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Users className="h-4 w-4" />
+                                <span className="text-xs">{language === 'ar' ? 'العميل' : 'Client'}</span>
+                              </div>
+                              <span className="font-medium text-sm text-right">{getClientName(offer.clientId)}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
-                              <span className="font-medium">{getLtaName(offer.ltaId)}</span>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Package className="h-4 w-4" />
+                                <span className="text-xs">{language === 'ar' ? 'الاتفاقية' : 'LTA'}</span>
+                              </div>
+                              <span className="font-medium text-sm text-right">{getLtaName(offer.ltaId)}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{language === 'ar' ? 'المنتجات' : 'Items'}:</span>
-                              <span className="font-medium">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <FileText className="h-4 w-4" />
+                                <span className="text-xs">{language === 'ar' ? 'المنتجات' : 'Items'}</span>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">
                                 {(() => {
                                   try {
                                     const items = typeof offer.items === 'string' 
@@ -1010,20 +1033,21 @@ export default function AdminPriceManagementPage() {
                                     return language === 'ar' ? 'خطأ' : 'Error';
                                   }
                                 })()}
-                              </span>
+                              </Badge>
                             </div>
                           </div>
 
-                          {/* Status Selector */}
-                          <div className="space-y-2">
-                            <Label className="text-sm text-muted-foreground">
-                              {language === 'ar' ? 'الحالة' : 'Status'}
+                          {/* Status Selector - Enhanced */}
+                          <div className="space-y-2 p-3 bg-primary/5 dark:bg-[#d4af37]/5 rounded-lg border border-primary/20 dark:border-[#d4af37]/20">
+                            <Label className="text-xs font-semibold text-foreground dark:text-white flex items-center gap-2">
+                              <AlertCircle className="h-3 w-3" />
+                              {language === 'ar' ? 'حالة العرض' : 'Offer Status'}
                             </Label>
                             <Select
                               value={offer.status}
                               onValueChange={(newStatus) => handleUpdateOfferStatus(offer.id, newStatus)}
                             >
-                              <SelectTrigger className="w-full">
+                              <SelectTrigger className="w-full h-10 border-primary/30 dark:border-[#d4af37]/30 bg-background">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1036,56 +1060,72 @@ export default function AdminPriceManagementPage() {
                             </Select>
                           </div>
 
-                          {/* Dates */}
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ الإرسال' : 'Sent'}:</span>
-                              <span>{offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}</span>
+                          {/* Dates - Enhanced */}
+                          <div className="space-y-3 p-3 bg-muted/30 dark:bg-muted/10 rounded-lg border border-border/50 dark:border-[#d4af37]/10">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                <span className="text-xs">{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</span>
+                              </div>
+                              <span className="text-sm font-medium">
+                                {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                }) : '-'}
+                              </span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}:</span>
-                              <span className={isExpired ? 'text-destructive font-medium' : ''}>
-                                {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <CalendarIcon className="h-4 w-4" />
+                                <span className="text-xs">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</span>
+                              </div>
+                              <span className={`text-sm font-medium ${isExpired ? 'text-destructive' : ''}`}>
+                                {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
                               </span>
                             </div>
                             {isExpired && (
-                              <Badge variant="destructive" className="w-full justify-center">
+                              <Badge variant="destructive" className="w-full justify-center text-xs py-1.5">
+                                <XCircle className="h-3 w-3 mr-1" />
                                 {language === 'ar' ? 'منتهي الصلاحية' : 'Expired'}
                               </Badge>
                             )}
                           </div>
 
-                          {/* Actions */}
-                          <div className="flex gap-2 pt-2 border-t">
+                          {/* Actions - Enhanced with Touch Targets */}
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/20 dark:border-[#d4af37]/20">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewOffer(offer)}
-                              className="flex-1"
+                              className="h-10 border-primary/30 dark:border-[#d4af37]/30 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all"
                             >
-                              <Eye className="h-4 w-4 me-2" />
-                              {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                              <Eye className="h-4 w-4 me-1.5" />
+                              <span className="text-xs">{language === 'ar' ? 'التفاصيل' : 'Details'}</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleDownload(offer.pdfFileName)}
+                              className="h-10 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 shadow-sm hover:shadow-md transition-all"
+                            >
+                              <Download className="h-4 w-4 me-1.5" />
+                              <span className="text-xs">{language === 'ar' ? 'تحميل' : 'Download'}</span>
                             </Button>
                             {linkedRequest && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleViewRequest(linkedRequest)}
-                                className="flex-1"
+                                className="col-span-2 h-10 border-primary/30 dark:border-[#d4af37]/30 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all"
                               >
-                                <FileText className="h-4 w-4 me-2" />
-                                {language === 'ar' ? 'عرض الطلب' : 'View Request'}
+                                <FileText className="h-4 w-4 me-1.5" />
+                                <span className="text-xs">{language === 'ar' ? 'عرض الطلب الأصلي' : 'View Original Request'}</span>
                               </Button>
                             )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(offer.pdfFileName)}
-                              className="flex-1"
-                            >
-                              <Download className="h-4 w-4 me-2" />
-                              {language === 'ar' ? 'تحميل' : 'Download'}
-                            </Button>
                           </div>
                         </CardContent>
                       </Card>
