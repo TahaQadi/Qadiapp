@@ -190,18 +190,14 @@ export default function PriceOfferCreationDialog({
 
   const calculateSubtotal = (items: PriceOfferFormValues['items']) => {
     return items.reduce((sum, item) => {
-      // Clean price string: remove any non-numeric characters except decimal point and minus
-      const cleanPrice = String(item.unitPrice || '0').replace(/[^\d.-]/g, '');
-      const price = parseFloat(cleanPrice) || 0;
-      const quantity = Math.max(0, Number(item.quantity) || 0);
+      const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+      const quantity = Number(item.quantity) || 0;
       return sum + (price * quantity);
     }, 0);
   };
 
   const calculateTotal = (items: PriceOfferFormValues['items']) => {
-    const subtotal = calculateSubtotal(items);
-    // Round to 2 decimal places to avoid floating point errors
-    return Math.round(subtotal * 100) / 100;
+    return calculateSubtotal(items);
   };
 
   // Update available products when LTA changes
@@ -494,10 +490,9 @@ export default function PriceOfferCreationDialog({
                         </TableHeader>
                         <TableBody>
                           {currentItems.map((item) => {
-                            const cleanPrice = String(item.unitPrice || '0').replace(/[^\d.-]/g, '');
-                            const itemPrice = parseFloat(cleanPrice) || 0;
-                            const itemQuantity = Math.max(0, Number(item.quantity) || 0);
-                            const itemTotal = Math.round(itemPrice * itemQuantity * 100) / 100;
+                            const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                            const itemQuantity = Number(item.quantity) || 0;
+                            const total = itemPrice * itemQuantity;
 
                             return (
                               <TableRow key={item.productId}>
@@ -514,41 +509,28 @@ export default function PriceOfferCreationDialog({
                                 <TableCell>
                                   <Input
                                     type="number"
-                                    inputMode="numeric"
                                     min="1"
                                     value={item.quantity}
-                                    onChange={(e) => {
-                                      const value = parseInt(e.target.value);
-                                      handleQuantityChange(item.productId, value > 0 ? value : 1);
-                                    }}
-                                    className="w-16 h-9 text-sm touch-manipulation"
+                                    onChange={(e) => handleQuantityChange(item.productId, parseInt(e.target.value) || 1)}
+                                    className="w-16 h-8 text-sm"
                                   />
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1">
                                     <Input
-                                      type="text"
-                                      inputMode="decimal"
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
                                       value={item.unitPrice}
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        // Allow only numbers and decimal point
-                                        if (/^\d*\.?\d*$/.test(value) || value === '') {
-                                          handlePriceChange(item.productId, value);
-                                        }
-                                      }}
-                                      onBlur={(e) => {
-                                        const value = parseFloat(e.target.value) || 0;
-                                        handlePriceChange(item.productId, value.toFixed(2));
-                                      }}
-                                      className="w-24 h-9 text-sm"
+                                      onChange={(e) => handlePriceChange(item.productId, e.target.value)}
+                                      className="w-24 h-8 text-sm"
                                       placeholder="0.00"
                                     />
-                                    <span className="text-xs text-muted-foreground whitespace-nowrap">{currentCurrency}</span>
+                                    <span className="text-xs text-muted-foreground">{currentCurrency}</span>
                                   </div>
                                 </TableCell>
                                 <TableCell className="font-medium text-sm">
-                                  {currentCurrency} {itemTotal.toFixed(2)}
+                                  {currentCurrency} {total.toFixed(2)}
                                 </TableCell>
                                 <TableCell>
                                   <Button
@@ -571,10 +553,9 @@ export default function PriceOfferCreationDialog({
                     {/* Mobile Card View */}
                     <div className="sm:hidden space-y-3 p-4">
                       {currentItems.map((item) => {
-                        const cleanPrice = String(item.unitPrice || '0').replace(/[^\d.-]/g, '');
-                        const itemPrice = parseFloat(cleanPrice) || 0;
-                        const itemQuantity = Math.max(0, Number(item.quantity) || 0);
-                        const itemTotal = Math.round(itemPrice * itemQuantity * 100) / 100;
+                        const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                        const itemQuantity = Number(item.quantity) || 0;
+                        const total = itemPrice * itemQuantity;
 
                         return (
                           <div key={item.productId} className="border rounded-lg p-3 space-y-3">
@@ -605,40 +586,27 @@ export default function PriceOfferCreationDialog({
                                 </Label>
                                 <Input
                                   type="number"
-                                  inputMode="numeric"
                                   min="1"
                                   value={item.quantity}
-                                  onChange={(e) => {
-                                    const value = parseInt(e.target.value);
-                                    handleQuantityChange(item.productId, value > 0 ? value : 1);
-                                  }}
-                                  className="h-10 text-sm touch-manipulation"
+                                  onChange={(e) => handleQuantityChange(item.productId, parseInt(e.target.value) || 1)}
+                                  className="h-8 text-sm"
                                 />
                               </div>
                               <div>
                                 <Label className="text-xs text-muted-foreground">
                                   {language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}
                                 </Label>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                   <Input
-                                    type="text"
-                                    inputMode="decimal"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
                                     value={item.unitPrice}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      // Allow only numbers and decimal point
-                                      if (/^\d*\.?\d*$/.test(value) || value === '') {
-                                        handlePriceChange(item.productId, value);
-                                      }
-                                    }}
-                                    onBlur={(e) => {
-                                      const value = parseFloat(e.target.value) || 0;
-                                      handlePriceChange(item.productId, value.toFixed(2));
-                                    }}
-                                    className="h-10 text-sm touch-manipulation"
+                                    onChange={(e) => handlePriceChange(item.productId, e.target.value)}
+                                    className="h-8 text-sm"
                                     placeholder="0.00"
                                   />
-                                  <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">{currentCurrency}</span>
+                                  <span className="text-xs text-muted-foreground">{currentCurrency}</span>
                                 </div>
                               </div>
                             </div>
@@ -648,7 +616,7 @@ export default function PriceOfferCreationDialog({
                                 {language === 'ar' ? 'المجموع' : 'Total'}
                               </span>
                               <span className="font-semibold text-sm">
-                                {currentCurrency} {itemTotal.toFixed(2)}
+                                {currentCurrency} {total.toFixed(2)}
                               </span>
                             </div>
                           </div>
