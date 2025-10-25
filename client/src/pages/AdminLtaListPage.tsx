@@ -35,6 +35,7 @@ const ltaFormSchema = z.object({
   startDate: z.date(),
   endDate: z.date(),
   status: z.enum(['active', 'inactive']),
+  currency: z.string().min(1, 'Currency is required'),
 }).refine(data => data.endDate > data.startDate, {
   message: 'End date must be after start date',
   path: ['endDate'],
@@ -99,6 +100,7 @@ export default function AdminLtaListPage() {
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       status: 'active',
+      currency: 'USD',
     },
   });
 
@@ -112,6 +114,7 @@ export default function AdminLtaListPage() {
       startDate: new Date(),
       endDate: new Date(),
       status: 'active',
+      currency: 'USD',
     },
   });
 
@@ -195,6 +198,7 @@ export default function AdminLtaListPage() {
       startDate: new Date(lta.startDate),
       endDate: new Date(lta.endDate),
       status: lta.status,
+      currency: (lta as any).currency || 'USD',
     });
     setEditDialogOpen(true);
   };
@@ -570,6 +574,30 @@ export default function AdminLtaListPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={createForm.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'العملة' : 'Currency'}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-currency">
+                          <SelectValue placeholder={language === 'ar' ? 'اختر العملة' : 'Select currency'} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="SAR">SAR</SelectItem>
+                        <SelectItem value="AED">AED</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter>
                 <Button
                   type="button"
@@ -743,6 +771,30 @@ export default function AdminLtaListPage() {
                       <SelectContent>
                         <SelectItem value="active">{language === 'ar' ? 'نشط' : 'Active'}</SelectItem>
                         <SelectItem value="inactive">{language === 'ar' ? 'غير نشط' : 'Inactive'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{language === 'ar' ? 'العملة' : 'Currency'}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-edit-currency">
+                          <SelectValue placeholder={language === 'ar' ? 'اختر العملة' : 'Select currency'} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="SAR">SAR</SelectItem>
+                        <SelectItem value="AED">AED</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
