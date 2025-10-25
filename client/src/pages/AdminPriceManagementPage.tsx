@@ -21,6 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { safeJsonParse } from '@/lib/safeJson';
 import PriceOfferCreationDialog from '@/components/PriceOfferCreationDialog';
+import { GenerateDocumentDialog } from '@/components/GenerateDocumentDialog';
 
 interface Notification {
   id: string;
@@ -746,6 +747,21 @@ export default function AdminPriceManagementPage() {
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                   )}
+                                  <GenerateDocumentDialog
+                                    documentType="price_offer"
+                                    priceOfferId={offer.id}
+                                    clientId={offer.clientId}
+                                    ltaId={offer.ltaId}
+                                    trigger={
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        title={language === 'ar' ? 'إنشاء مستند من قالب' : 'Generate from template'}
+                                      >
+                                        <FileText className="h-4 w-4" />
+                                      </Button>
+                                    }
+                                  />
                                   <Button
                                     variant="outline"
                                     size="sm"

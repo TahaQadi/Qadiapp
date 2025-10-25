@@ -23,17 +23,38 @@ export class TemplateStorage {
   }
 
   static async getTemplates(category?: string) {
+    let results;
     if (category) {
-      return await db.select().from(templates).where(eq(templates.category, category as any)).orderBy(templates.createdAt);
+      results = await db.select().from(templates).where(eq(templates.category, category as any)).orderBy(templates.createdAt);
+    } else {
+      results = await db.select().from(templates).orderBy(templates.createdAt);
     }
     
-    return await db.select().from(templates).orderBy(templates.createdAt);
+    // Parse JSON fields for all templates
+    return results.map(template => ({
+      ...template,
+      sections: typeof template.sections === 'string' ? JSON.parse(template.sections) : template.sections,
+      variables: typeof template.variables === 'string' ? JSON.parse(template.variables) : template.variables,
+      styles: typeof template.styles === 'string' ? JSON.parse(template.styles) : template.styles,
+    }));
   }
 
   static async getTemplate(id: string) {
-    return await db.query.templates.findFirst({
+    const template = await db.query.templates.findFirst({
       where: eq(templates.id, id),
     });
+    
+    if (template) {
+      // Parse JSON fields
+      return {
+        ...template,
+        sections: typeof template.sections === 'string' ? JSON.parse(template.sections) : template.sections,
+        variables: typeof template.variables === 'string' ? JSON.parse(template.variables) : template.variables,
+        styles: typeof template.styles === 'string' ? JSON.parse(template.styles) : template.styles,
+      };
+    }
+    
+    return template;
   }
 
   static async updateTemplate(id: string, data: UpdateTemplateInput) {

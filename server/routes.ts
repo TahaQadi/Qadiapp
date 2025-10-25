@@ -18,7 +18,7 @@ import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
 import { PDFStorage } from "./object-storage";
 import { TemplateStorage } from "./template-storage";
-import { TemplatePDFGenerator } from "./template-pdf-generator";
+import { TemplateGenerator } from "./template-generator";
 import { PDFAccessControl } from "./pdf-access-control";
 import {
   loginSchema,
@@ -820,10 +820,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Generate PDF
-      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(
+      const pdfBuffer = await TemplateGenerator.generateFromTemplate(
         activeTemplate,
-        templateVariables,
-        'en'
+        templateVariables
       );
 
       if (!pdfBuffer || pdfBuffer.length < 100) {
@@ -3647,7 +3646,7 @@ Sitemap: ${baseUrl}/sitemap.xml`;
       }
 
       // Generate PDF
-      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(template as any, variables, language);
+      const pdfBuffer = await TemplateGenerator.generateFromTemplate(template as any, variables);
 
       // Upload to object storage
       const category = template.category.toUpperCase().replace('_', '_') as any;
@@ -3915,11 +3914,10 @@ Please contact them to schedule a demo.
         return res.status(404).json({ message: "Template not found" });
       }
 
-      const pdfBuffer = await TemplatePDFGenerator.generate({
+      const pdfBuffer = await TemplateGenerator.generateFromTemplate(
         template,
-        variables,
-        language: language || 'en',
-      });
+        variables
+      );
 
       const fileName = `${template.nameEn.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
 
@@ -3958,11 +3956,10 @@ Please contact them to schedule a demo.
         return res.status(404).json({ message: "Template not found" });
       }
 
-      const pdfBuffer = await TemplatePDFGenerator.generate({
+      const pdfBuffer = await TemplateGenerator.generateFromTemplate(
         template,
-        variables: variables || [],
-        language: language || 'en',
-      });
+        variables || []
+      );
 
       const fileName = `${template.nameEn.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
 
