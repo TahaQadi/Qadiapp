@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -54,6 +54,8 @@ interface PriceOffer {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  tax?: string | null;
+  total?: string | null;
 }
 
 interface PriceRequestMetadata {
@@ -82,6 +84,8 @@ interface PriceRequest {
     sku: string;
     nameEn: string;
     nameAr: string;
+    productNameEn?: string; // Added for potential alternate names
+    productNameAr?: string;
   }>;
   notes: string | null;
 }
@@ -869,8 +873,8 @@ export default function AdminPriceManagementPage() {
                                           <div className="space-y-1">
                                             {items.slice(0, 2).map((item: any, idx: number) => {
                                               const name = language === 'ar' 
-                                                ? (item.nameAr || item.nameEn || 'Unnamed')
-                                                : (item.nameEn || item.nameAr || 'Unnamed');
+                                                ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
+                                                : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
 
                                               return (
                                                 <div key={idx} className="text-sm">
@@ -1315,7 +1319,7 @@ export default function AdminPriceManagementPage() {
                       const productName = language === 'ar' 
                         ? (product.nameAr || product.nameEn || product.name || 'منتج غير معروف')
                         : (product.nameEn || product.nameAr || product.name || 'Unknown Product');
-                      
+
                       return (
                         <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
                           <div className="flex-1 min-w-0">
@@ -1651,8 +1655,8 @@ export default function AdminPriceManagementPage() {
                                   const itemQuantity = Number(item.quantity) || 0;
                                   const total = itemPrice * itemQuantity;
                                   const name = language === 'ar' 
-                                    ? (item.nameAr || item.nameEn || 'Unnamed Product')
-                                    : (item.nameEn || item.nameAr || 'Unnamed Product');
+                                    ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
+                                    : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
 
                                   return (
                                     <TableRow key={idx}>
@@ -1684,8 +1688,8 @@ export default function AdminPriceManagementPage() {
                               const itemQuantity = Number(item.quantity) || 0;
                               const total = itemPrice * itemQuantity;
                               const name = language === 'ar' 
-                                ? (item.nameAr || item.nameEn || 'Unnamed Product')
-                                : (item.nameEn || item.nameAr || 'Unnamed Product');
+                                ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
+                                : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
 
                               return (
                                 <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/30">
