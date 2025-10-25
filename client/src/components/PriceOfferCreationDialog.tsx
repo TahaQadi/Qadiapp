@@ -29,13 +29,18 @@ const priceOfferSchema = z.object({
   validUntil: z.date(),
   notes: z.string().optional(),
   items: z.array(z.object({
-    productId: z.string(),
-    nameEn: z.string(),
-    nameAr: z.string(),
-    sku: z.string(),
-    quantity: z.number().min(1),
-    unitPrice: z.string().min(1, 'Unit price is required'),
-    currency: z.string().default('USD'),
+    productId: z.string().min(1, 'Product is required'),
+    nameEn: z.string().min(1, 'Product name is required'),
+    nameAr: z.string().min(1, 'Product name is required'),
+    sku: z.string().min(1, 'SKU is required'),
+    quantity: z.number().min(1, 'Quantity must be at least 1'),
+    unitPrice: z.string()
+      .min(1, 'Unit price is required')
+      .refine((val) => {
+        const num = parseFloat(val);
+        return !isNaN(num) && num > 0;
+      }, 'Unit price must be a valid positive number'),
+    currency: z.string().min(1, 'Currency is required').default('USD'),
   })).min(1, 'At least one product is required'),
 });
 
@@ -48,7 +53,7 @@ interface LTA {
   descriptionEn?: string | null;
   descriptionAr?: string | null;
   status: 'active' | 'inactive';
-  currency?: string; // LTA currency
+  currency: string; // LTA currency - now required
 }
 
 interface Client {
@@ -85,6 +90,7 @@ export default function PriceOfferCreationDialog({
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -97,23 +103,26 @@ export default function PriceOfferCreationDialog({
     },
   });
 
-  const { data: ltas = [] } = useQuery<LTA[]>({
+  const { data: ltas = [], isLoading: isLoadingLtas } = useQuery<LTA[]>({
     queryKey: ['/api/admin/ltas'],
   });
 
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clients = [], isLoading: isLoadingClients } = useQuery<Client[]>({
     queryKey: ['/api/admin/clients'],
   });
 
-  const { data: allProducts = [] } = useQuery<Product[]>({
+  const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
   });
 
-  const { data: priceRequest } = useQuery({
+  const { data: priceRequest, isLoading: isLoadingPriceRequest } = useQuery({
     queryKey: ['/api/admin/price-requests', requestId],
     queryFn: async () => {
       if (!requestId) return null;
       const res = await apiRequest('GET', `/api/admin/price-requests/${requestId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch price request');
+      }
       return res.json();
     },
     enabled: !!requestId,
@@ -121,33 +130,42 @@ export default function PriceOfferCreationDialog({
 
   // Load LTA products when LTA is selected
   const selectedLtaId = form.watch('ltaId');
-  const { data: ltaProducts = [] } = useQuery<Product[]>({
+  const { data: ltaProducts = [], isLoading: isLoadingLtaProducts } = useQuery<Product[]>({
     queryKey: ['/api/admin/ltas', selectedLtaId, 'products'],
     queryFn: async () => {
       if (!selectedLtaId) return [];
       const res = await apiRequest('GET', `/api/admin/ltas/${selectedLtaId}/products`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch LTA products');
+      }
       return res.json();
     },
     enabled: !!selectedLtaId,
   });
 
   // Get LTA details to fetch currency
-  const { data: selectedLta } = useQuery<LTA>({
+  const { data: selectedLta, isLoading: isLoadingSelectedLta } = useQuery<LTA>({
     queryKey: ['/api/admin/ltas', selectedLtaId],
     queryFn: async () => {
       if (!selectedLtaId) return null;
       const res = await apiRequest('GET', `/api/admin/ltas/${selectedLtaId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch LTA details');
+      }
       return res.json();
     },
     enabled: !!selectedLtaId,
   });
 
   // Load LTA clients when LTA is selected
-  const { data: ltaClients = [] } = useQuery<Client[]>({
+  const { data: ltaClients = [], isLoading: isLoadingLtaClients } = useQuery<Client[]>({
     queryKey: ['/api/admin/ltas', selectedLtaId, 'clients'],
     queryFn: async () => {
       if (!selectedLtaId) return [];
       const res = await apiRequest('GET', `/api/admin/ltas/${selectedLtaId}/clients`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch LTA clients');
+      }
       return res.json();
     },
     enabled: !!selectedLtaId,
@@ -155,18 +173,48 @@ export default function PriceOfferCreationDialog({
 
   const createPriceOfferMutation = useMutation({
     mutationFn: async (data: PriceOfferFormValues) => {
-      const res = await apiRequest('POST', '/api/admin/price-offers', {
-        requestId: requestId || null,
-        clientId: data.clientId,
-        ltaId: data.ltaId,
-        items: data.items,
-        subtotal: calculateSubtotal(data.items),
-        tax: 0, // Can be calculated later if needed
-        total: calculateTotal(data.items),
-        notes: data.notes,
-        validUntil: data.validUntil.toISOString(),
-      });
-      return res.json();
+      try {
+        // Validate business rules
+        if (!data.ltaId || !data.clientId) {
+          throw new Error('LTA and Client are required');
+        }
+
+        // Validate that client belongs to selected LTA
+        const isClientInLta = ltaClients.some(client => client.id === data.clientId);
+        if (!isClientInLta) {
+          throw new Error('Selected client is not assigned to the selected LTA');
+        }
+
+        // Validate that all products are available in the LTA
+        const productIds = data.items.map(item => item.productId);
+        const availableProductIds = ltaProducts.map(product => product.id);
+        const invalidProducts = productIds.filter(id => !availableProductIds.includes(id));
+        if (invalidProducts.length > 0) {
+          throw new Error('Some selected products are not available in the selected LTA');
+        }
+
+        const res = await apiRequest('POST', '/api/admin/price-offers', {
+          requestId: requestId || null,
+          clientId: data.clientId,
+          ltaId: data.ltaId,
+          items: data.items,
+          subtotal: calculateSubtotal(data.items),
+          tax: 0, // Can be calculated later if needed
+          total: calculateTotal(data.items),
+          notes: data.notes,
+          validUntil: data.validUntil.toISOString(),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to create price offer');
+        }
+
+        return res.json();
+      } catch (error) {
+        console.error('Price offer creation error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -180,6 +228,7 @@ export default function PriceOfferCreationDialog({
       onSuccess?.();
     },
     onError: (error: any) => {
+      console.error('Price offer creation error:', error);
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ في إنشاء عرض السعر' : 'Error Creating Price Offer',
@@ -199,6 +248,11 @@ export default function PriceOfferCreationDialog({
   const calculateTotal = (items: PriceOfferFormValues['items']) => {
     return calculateSubtotal(items);
   };
+
+  // Calculate loading state
+  const isLoading = isLoadingLtas || isLoadingClients || isLoadingProducts || 
+                   isLoadingPriceRequest || isLoadingLtaProducts || 
+                   isLoadingSelectedLta || isLoadingLtaClients;
 
   // Update available products when LTA changes
   useEffect(() => {
@@ -228,23 +282,21 @@ export default function PriceOfferCreationDialog({
       form.setValue('clientId', priceRequest.clientId);
       form.setValue('notes', priceRequest.notes || '');
 
-      // Add products from request
-      const products = typeof priceRequest.products === 'string'
-        ? JSON.parse(priceRequest.products)
-        : priceRequest.products || [];
+      // Add products from request - now using the enhanced API that returns full product details
+      if (priceRequest.products && Array.isArray(priceRequest.products)) {
+        const items = priceRequest.products.map((product: any) => ({
+          productId: product.id,
+          nameEn: product.nameEn || 'Unknown Product',
+          nameAr: product.nameAr || 'منتج غير معروف',
+          sku: product.sku || 'N/A',
+          quantity: product.quantity || 1,
+          unitPrice: product.contractPrice || '0',
+          currency: priceRequest.lta?.currency || 'USD', // Use LTA currency if available
+        }));
 
-      const items = products.map((product: any) => ({
-        productId: product.id || product.productId,
-        nameEn: product.nameEn || 'Unknown Product',
-        nameAr: product.nameAr || 'منتج غير معروف',
-        sku: product.sku || 'N/A',
-        quantity: product.quantity || 1,
-        unitPrice: product.contractPrice || product.unitPrice || '0',
-        currency: 'USD', // Will be updated when LTA loads
-      }));
-
-      form.setValue('items', items);
-      setSelectedProducts(products);
+        form.setValue('items', items);
+        setSelectedProducts(priceRequest.products);
+      }
     }
   }, [priceRequest, open, form]);
 

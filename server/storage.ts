@@ -177,6 +177,7 @@ export interface IStorage {
   // Product queries for LTA context
   getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>>;
   getProductsForClient(clientId: string): Promise<Array<Product & { contractPrice: string; currency: string; ltaId: string }>>;
+  getClientsForLta(ltaId: string): Promise<Client[]>;
 
   // Bulk operations
   bulkAssignProductsToLta(ltaId: string, products: Array<{ sku: string; contractPrice: string; currency: string }>): Promise<{ success: number; failed: Array<{ sku: string; error: string }> }>;
@@ -208,6 +209,11 @@ export interface IStorage {
   getPriceRequestsByClient(clientId: string): Promise<PriceRequest[]>;
   getAllPriceRequests(): Promise<PriceRequest[]>;
   updatePriceRequestStatus(id: string, status: string): Promise<PriceRequest | null>;
+  getPriceRequestWithDetails(id: string): Promise<PriceRequest & { 
+    client: Client; 
+    lta?: Lta; 
+    products: Array<Product & { quantity: number }> 
+  } | null>;
 
   // Price Offers
   createPriceOffer(data: InsertPriceOffer): Promise<PriceOffer>;
@@ -1058,6 +1064,61 @@ export class MemStorage implements IStorage {
     }
 
     return productsWithPricing;
+  }
+
+  // Get clients assigned to a specific LTA with full client details
+  async getClientsForLta(ltaId: string): Promise<Client[]> {
+    const ltaClients = await this.getLtaClients(ltaId);
+    const clients: Client[] = [];
+
+    for (const ltaClient of ltaClients) {
+      const client = await this.getClient(ltaClient.clientId);
+      if (client) {
+        clients.push(client);
+      }
+    }
+
+    return clients;
+  }
+
+  // Get price request with full product details
+  async getPriceRequestWithDetails(id: string): Promise<PriceRequest & { 
+    client: Client; 
+    lta?: Lta; 
+    products: Array<Product & { quantity: number }> 
+  } | null> {
+    const request = await this.getPriceRequest(id);
+    if (!request) return null;
+
+    const client = await this.getClient(request.clientId);
+    if (!client) return null;
+
+    let lta: Lta | undefined;
+    if (request.ltaId) {
+      lta = await this.getLta(request.ltaId);
+    }
+
+    const products: Array<Product & { quantity: number }> = [];
+    if (request.products && Array.isArray(request.products)) {
+      for (const item of request.products) {
+        if (item.productId && item.quantity) {
+          const product = await this.getProduct(item.productId);
+          if (product) {
+            products.push({
+              ...product,
+              quantity: item.quantity
+            });
+          }
+        }
+      }
+    }
+
+    return {
+      ...request,
+      client,
+      lta,
+      products
+    };
   }
 
   // Get all products with client's LTA prices (if assigned) - OPTIMIZED

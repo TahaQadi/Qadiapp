@@ -615,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get single price request
   app.get("/api/admin/price-requests/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
-      const request = await storage.getPriceRequest(req.params.id);
+      const request = await storage.getPriceRequestWithDetails(req.params.id);
       if (!request) {
         return res.status(404).json({
           message: "Price request not found",
@@ -2892,22 +2892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/ltas/:ltaId/clients', requireAdmin, async (req: any, res) => {
     try {
-      const ltaClients = await storage.getLtaClients(req.params.ltaId);
-      const clients = [];
-
-      for (const ltaClient of ltaClients) {
-        const client = await storage.getClient(ltaClient.clientId);
-        if (client) {
-          clients.push({
-            id: client.id,
-            nameEn: client.nameEn,
-            nameAr: client.nameAr,
-            email: client.email,
-            phone: client.phone,
-          });
-        }
-      }
-
+      const clients = await storage.getClientsForLta(req.params.ltaId);
       res.json(clients);
     } catch (error) {
       res.status(500).json({

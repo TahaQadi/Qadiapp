@@ -132,6 +132,7 @@ export const ltas = pgTable("ltas", {
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   status: text("status", { enum: ["draft", "active", "expired"] }).notNull().default("active"),
+  currency: text("currency").notNull().default("USD"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
