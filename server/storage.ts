@@ -63,7 +63,7 @@ import {
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { eq, desc, and, inArray, gte, lte, sql } from "drizzle-orm"; // Added gte, lte for searchDocuments
+import { eq, sql, desc, and, gte, lte, or, like, isNull, inArray } from 'drizzle-orm';
 import crypto from "crypto";
 import { db } from "./db";
 
@@ -132,8 +132,7 @@ export interface IStorage {
   deleteOrderTemplate(id: string): Promise<void>;
 
   // Orders
-  getOrders(clientId: string): Promise<Order[]>;
-  getOrders(): Promise<Order[]>; // Added for admin panel
+  getOrders(clientId?: string): Promise<Order[]>;
   getOrder(orderId: string): Promise<Order | undefined>;
   updateOrderStatus(orderId: string, status: string): Promise<Order | undefined>; // Added for admin panel
   updateOrder(orderId: string, updates: Partial<InsertOrder>): Promise<Order | undefined>;

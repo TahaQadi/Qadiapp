@@ -2578,6 +2578,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client LTA Routes - Get LTAs assigned to client
+  app.get('/api/client/ltas', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ltas = await storage.getClientLtas(req.client.id);
+      res.json(ltas);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء جلب الاتفاقيات"
+      });
+    }
+  });
+
+  // Client LTA Products - Get products for a specific LTA
+  app.get('/api/ltas/:ltaId/products', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      // Verify client has access to this LTA
+      const clientLtas = await storage.getClientLtas(req.client.id);
+      const hasAccess = clientLtas.some(lta => lta.id === req.params.ltaId);
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          message: "You don't have access to this LTA",
+          messageAr: "ليس لديك صلاحية الوصول لهذه الاتفاقية"
+        });
+      }
+
+      const products = await storage.getProductsForLta(req.params.ltaId);
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: "حدث خطأ أثناء جلب المنتجات"
+      });
+    }
+  });
+
   // LTA Management Endpoints (Admin)
   app.post('/api/admin/ltas', requireAdmin, async (req: any, res) => {
     try {
