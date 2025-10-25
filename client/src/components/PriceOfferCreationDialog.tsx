@@ -271,6 +271,7 @@ export default function PriceOfferCreationDialog({
 
       // Add products from request - now using the enhanced API that returns full product details
       if (priceRequest.products && Array.isArray(priceRequest.products)) {
+        const ltaCurrency = priceRequest.lta?.currency || selectedLtaCurrency || 'ILS';
         const items = priceRequest.products.map((product: any) => ({
           productId: product.id,
           nameEn: product.nameEn || 'Unknown Product',
@@ -278,14 +279,14 @@ export default function PriceOfferCreationDialog({
           sku: product.sku || 'N/A',
           quantity: product.quantity || 1,
           unitPrice: product.contractPrice || '0',
-          currency: priceRequest.lta?.currency || selectedLtaCurrency || 'ILS',
+          currency: ltaCurrency,
         }));
 
         form.setValue('items', items);
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open, selectedLtaCurrency]);
+  }, [priceRequest, open]);
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -309,6 +310,8 @@ export default function PriceOfferCreationDialog({
   useEffect(() => {
     if (!open) {
       lastSyncedCurrencyRef.current = null;
+      form.reset();
+      setSelectedProducts([]);
     }
   }, [open]);
 
