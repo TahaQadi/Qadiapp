@@ -151,19 +151,19 @@ export default function AdminPriceManagementPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const requestId = params.get('requestId');
-    
+
     if (requestId && priceRequests.length > 0) {
       const request = priceRequests.find(r => r.id === requestId);
       if (request) {
         // Set the selected request for the dialog
         setSelectedRequestForOffer(request);
         setCreateOfferDialogOpen(true);
-        
+
         // Clear the URL parameter
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('requestId');
         window.history.replaceState({}, '', newUrl.toString());
-        
+
         toast({
           title: language === 'ar' ? 'تم تحميل طلب السعر' : 'Price Request Loaded',
           description: language === 'ar' 
@@ -461,7 +461,7 @@ export default function AdminPriceManagementPage() {
             </CardContent>
           </Card>
         )}
-        
+
         <Tabs defaultValue="requests" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2 h-auto p-1">
             <TabsTrigger value="requests" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -558,7 +558,7 @@ export default function AdminPriceManagementPage() {
                     ? JSON.parse(request.products) 
                     : request.products || [];
                   const isCompleted = isRequestCompleted(request);
-                  
+
                   // Find linked offer
                   const linkedOffer = offers.find(o => o.requestId === request.id);
 
@@ -706,7 +706,7 @@ export default function AdminPriceManagementPage() {
                           const linkedRequest = offer.requestId 
                             ? priceRequests.find(r => r.id === offer.requestId)
                             : null;
-                          
+
                           return (
                             <TableRow key={offer.id}>
                               <TableCell className="font-medium font-mono">
