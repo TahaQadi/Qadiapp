@@ -7,6 +7,8 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { Client, AuthUser } from "@shared/schema";
 import { AuthenticatedRequest, AdminRequest } from "./types";
+import { createErrorResponse, ErrorCode } from "@shared/api-types";
+import { errors } from "./error-handler";
 
 declare global {
   namespace Express {
@@ -171,19 +173,25 @@ export function setupAuth(app: Express) {
   });
 }
 
-// Middleware for protecting authenticated routes
+/**
+ * Standard authentication middleware
+ * Checks if user is authenticated and returns standardized error response
+ */
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(401).json({ message: "Unauthorized" });
+  res.status(401).json(createErrorResponse(ErrorCode.UNAUTHORIZED));
 }
 
-// Middleware to attach client data from authenticated user
+/**
+ * Middleware to attach client data from authenticated user
+ * Internal helper for requireAuth
+ */
 async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json(createErrorResponse(ErrorCode.UNAUTHORIZED));
     }
 
     // req.user is already an AuthUser from Passport Local Strategy
@@ -192,25 +200,28 @@ async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next:
     next();
   } catch (error) {
     console.error("Error in getClientFromAuth:", error);
-    res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    next(errors.internal("Failed to authenticate user", { error: error instanceof Error ? error.message : 'Unknown error' }));
   }
 }
 
-// Require auth middleware
+/**
+ * Standard authentication middleware with client attachment
+ * Use this for all authenticated routes
+ */
 export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   isAuthenticated(req, res, async () => {
     await getClientFromAuth(req, res, next);
   });
 }
 
-// Require admin middleware
+/**
+ * Admin authorization middleware
+ * Requires authentication and admin privileges
+ */
 export async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction) {
   await requireAuth(req, res, () => {
     if (!req.client?.isAdmin) {
-      return res.status(403).json({
-        message: "Unauthorized - Admin access required",
-        messageAr: "غير مصرح - مطلوب صلاحيات المسؤول"
-      });
+      return res.status(403).json(createErrorResponse(ErrorCode.FORBIDDEN));
     }
     next();
   });
