@@ -275,33 +275,36 @@ export default function ProductDetailPage() {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">
-            {language === 'ar' ? 'الرئيسية' : 'Home'}
-          </Link>
-          {product.mainCategory && (
-            <>
-              <span className="mx-2">/</span>
-              <Link href="/catalog" className="hover:text-foreground">
-                {product.mainCategory}
-              </Link>
-            </>
-          )}
-          {product.subCategory && (
-            <>
-              <span className="mx-2">/</span>
-              <span className="text-foreground">{product.subCategory}</span>
-            </>
-          )}
-          <span className="mx-2">/</span>
-          <span className="text-foreground">{name}</span>
-        </nav>
+        {product && (
+          <nav className="mb-6 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground">
+              {language === 'ar' ? 'الرئيسية' : 'Home'}
+            </Link>
+            {product.mainCategory && (
+              <>
+                <span className="mx-2">/</span>
+                <Link href="/catalog" className="hover:text-foreground">
+                  {product.mainCategory}
+                </Link>
+              </>
+            )}
+            {product.category && (
+              <>
+                <span className="mx-2">/</span>
+                <span className="text-foreground">{product.category}</span>
+              </>
+            )}
+            <span className="mx-2">/</span>
+            <span className="text-foreground">{name}</span>
+          </nav>
+        )}
 
         {/* Product Details */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Product Image */}
-          <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-            {product.imageUrl ? (
+        {product && (
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Product Image */}
+            <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+              {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={name}
@@ -422,9 +425,11 @@ export default function ProductDetailPage() {
             )}
           </div>
         </div>
+        )
+        }
 
         {/* Related Products */}
-        {relatedProducts.filter(p => p.id !== product.id).length > 0 && (
+        {product && relatedProducts.filter(p => p.id !== product.id).length > 0 && (
           <div>
             <h2 className="text-2xl font-bold mb-6">
               {language === 'ar' ? 'منتجات ذات صلة' : 'Related Products'}
@@ -438,11 +443,8 @@ export default function ProductDetailPage() {
                   const slugifiedName = relatedProduct.nameEn.toLowerCase()
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-+|-+$/g, '');
-                  const slugifiedSubCategory = (relatedProduct.subCategory || 'products').toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
                   return (
-                    <Link key={relatedProduct.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
+                    <Link key={relatedProduct.id} href={`/products/${slugifiedName}`}>
                       <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                         <div className="aspect-square bg-muted">
                           {relatedProduct.imageUrl ? (
