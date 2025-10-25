@@ -100,7 +100,7 @@ export default function AdminLtaListPage() {
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       status: 'active',
-      currency: 'USD',
+      currency: 'ILS',
     },
   });
 
@@ -114,7 +114,7 @@ export default function AdminLtaListPage() {
       startDate: new Date(),
       endDate: new Date(),
       status: 'active',
-      currency: 'USD',
+      currency: 'ILS',
     },
   });
 
@@ -198,7 +198,7 @@ export default function AdminLtaListPage() {
       startDate: new Date(lta.startDate),
       endDate: new Date(lta.endDate),
       status: lta.status,
-      currency: (lta as any).currency || 'USD',
+      currency: (lta as any).currency || 'ILS',
     });
     setEditDialogOpen(true);
   };

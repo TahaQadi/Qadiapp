@@ -261,7 +261,7 @@ export default function PriceOfferCreationDialog({
       const currentItems = form.getValues('items');
       const updatedItems = currentItems.map(item => ({
         ...item,
-        currency: selectedLta.currency || 'USD'
+        currency: selectedLta.currency || 'ILS'
       }));
       form.setValue('items', updatedItems);
     }
@@ -283,7 +283,7 @@ export default function PriceOfferCreationDialog({
           sku: product.sku || 'N/A',
           quantity: product.quantity || 1,
           unitPrice: product.contractPrice || '0',
-          currency: priceRequest.lta?.currency || 'USD', // Use LTA currency if available
+          currency: priceRequest.lta?.currency || 'ILS', // Use LTA currency if available
         }));
 
         form.setValue('items', items);
@@ -298,7 +298,7 @@ export default function PriceOfferCreationDialog({
       const currentItems = form.getValues('items');
       const updatedItems = currentItems.map(item => ({
         ...item,
-        currency: selectedLta.currency || 'USD'
+        currency: selectedLta.currency || 'ILS'
       }));
       form.setValue('items', updatedItems);
     }
@@ -324,7 +324,7 @@ export default function PriceOfferCreationDialog({
       sku: product.sku || 'N/A',
       quantity: 1,
       unitPrice: product.contractPrice || '0',
-      currency: selectedLta?.currency || product.currency || 'USD',
+      currency: selectedLta?.currency || product.currency || 'ILS',
     };
 
     const updatedItems = [...currentItems, newItem];
@@ -356,7 +356,7 @@ export default function PriceOfferCreationDialog({
   };
 
   // Get the current currency (from LTA or default)
-  const currentCurrency = selectedLta?.currency || 'USD';
+  const currentCurrency = selectedLta?.currency || 'ILS';
 
   const onSubmit = (data: PriceOfferFormValues) => {
     createPriceOfferMutation.mutate(data);

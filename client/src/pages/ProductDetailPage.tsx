@@ -204,7 +204,7 @@ export default function ProductDetailPage() {
               "offers": {
                 "@type": "Offer",
                 "price": product.contractPrice,
-                "priceCurrency": product.currency || "USD",
+                "priceCurrency": product.currency || "ILS",
                 "availability": "https://schema.org/InStock",
                 "seller": {
                   "@type": "Organization",

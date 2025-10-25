@@ -107,7 +107,7 @@ export default function AdminPriceManagementPage() {
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [contractPrice, setContractPrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('ILS');
   const [selectedLtaId, setSelectedLtaId] = useState('');
   const [requestStatusFilter, setRequestStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [offerStatusFilter, setOfferStatusFilter] = useState<string>('all');

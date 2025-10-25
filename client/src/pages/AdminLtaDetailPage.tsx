@@ -205,14 +205,14 @@ export default function AdminLtaDetailPage() {
     defaultValues: {
       productId: '',
       contractPrice: '',
-      currency: 'USD',
+      currency: 'ILS',
     },
   });
 
   const editPriceForm = useForm<{ contractPrice: string; currency: string }>({
     defaultValues: {
       contractPrice: '',
-      currency: 'USD',
+      currency: 'ILS',
     },
   });
 
@@ -570,7 +570,7 @@ export default function AdminLtaDetailPage() {
           return {
             sku,
             contractPrice,
-            currency: currency || 'USD',
+            currency: currency || 'ILS',
           };
         }).filter(p => p.sku && p.contractPrice);
 

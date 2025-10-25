@@ -387,7 +387,7 @@ export default function OrderingPage() {
     submitOrderMutation.mutate({
       items,
       totalAmount: total.toFixed(2),
-      currency: cart[0]?.currency || 'USD',
+      currency: cart[0]?.currency || 'ILS',
     });
     setOrderConfirmationOpen(false);
   }, [cart, submitOrderMutation]);
