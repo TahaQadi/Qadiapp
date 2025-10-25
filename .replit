@@ -580,6 +580,155 @@ args = "echo \"\""
 task = "shell.exec"
 args = "echo \"💾 Backup saved to: $BACKUP_FILE\""
 
+[[workflows.workflow]]
+name = "Test - Quick Check"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"⚡ Running quick tests (auth + ordering)...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm test -- --testPathPattern=\"(auth|ordering)\" --maxWorkers=2"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Quick tests completed!\""
+
+[[workflows.workflow]]
+name = "Test - Accessibility"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"♿ Running accessibility tests...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm test -- --testPathPattern=\"accessibility\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Accessibility check completed!\""
+
+[[workflows.workflow]]
+name = "DB - Inspect Schema"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📊 Database Schema Information\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Tables:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = '''tsx -e "import { db } from './server/db'; const tables = await db.execute('SELECT tablename FROM pg_tables WHERE schemaname = \\'public\\' ORDER BY tablename'); console.table(tables.rows);"'''
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Recent migrations:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run db:push -- --dry-run"
+
+[[workflows.workflow]]
+name = "Dev - Full Stack (Safe)"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔍 Pre-flight checks...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Checking TypeScript...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run check"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Checks passed! Starting servers...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "DB - Safe Migrate"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"⚠️  Running migrations with backup...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 1: Creating backup...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mkdir -p backups"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "BACKUP_FILE=\"backups/pre-migration-$(date +%Y%m%d_%H%M%S).sql\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pg_dump $DATABASE_URL > $BACKUP_FILE"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Backup created: $BACKUP_FILE\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Step 2: Running migrations...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run db:push"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Migration completed!\""
+
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_database:1.0.0"]
 
