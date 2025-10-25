@@ -389,6 +389,32 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Mobile optimization utilities */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .mobile-text-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .mobile-text-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .mobile-text-lg {
+    @apply text-base sm:text-lg;
+  }
 }
 
 @keyframes pulse-slow {
@@ -490,7 +516,7 @@
   }
 }
 
-/* Gold glow effect for dark mode */
+/* Gold glow effects for dark mode */
 .gold-glow {
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
 }

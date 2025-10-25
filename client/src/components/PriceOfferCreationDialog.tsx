@@ -255,18 +255,6 @@ export default function PriceOfferCreationDialog({
     setAvailableProducts(allProducts);
   }, [allProducts]);
 
-  // Update currency for all items when LTA changes
-  useEffect(() => {
-    if (selectedLta?.currency) {
-      const currentItems = form.getValues('items');
-      const updatedItems = currentItems.map(item => ({
-        ...item,
-        currency: selectedLta.currency || 'ILS'
-      }));
-      form.setValue('items', updatedItems);
-    }
-  }, [selectedLta?.currency, form]);
-
   // Auto-fill from price request if provided
   useEffect(() => {
     if (priceRequest && open) {
@@ -283,26 +271,28 @@ export default function PriceOfferCreationDialog({
           sku: product.sku || 'N/A',
           quantity: product.quantity || 1,
           unitPrice: product.contractPrice || '0',
-          currency: priceRequest.lta?.currency || 'ILS', // Use LTA currency if available
+          currency: priceRequest.lta?.currency || selectedLta?.currency || 'ILS',
         }));
 
         form.setValue('items', items);
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open, form]);
+  }, [priceRequest, open]);
 
-  // Update currency when LTA is loaded
+  // Update currency for all items when LTA changes
   useEffect(() => {
-    if (selectedLta?.currency && priceRequest && open) {
+    if (selectedLta?.currency && open) {
       const currentItems = form.getValues('items');
-      const updatedItems = currentItems.map(item => ({
-        ...item,
-        currency: selectedLta.currency || 'ILS'
-      }));
-      form.setValue('items', updatedItems);
+      if (currentItems.length > 0 && currentItems[0].currency !== selectedLta.currency) {
+        const updatedItems = currentItems.map(item => ({
+          ...item,
+          currency: selectedLta.currency || 'ILS'
+        }));
+        form.setValue('items', updatedItems);
+      }
     }
-  }, [selectedLta?.currency, priceRequest, open, form]);
+  }, [selectedLta?.currency, open]);
 
   const handleAddProduct = (product: Product) => {
     const currentItems = form.getValues('items');

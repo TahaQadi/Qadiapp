@@ -449,29 +449,37 @@ export default function AdminPriceManagementPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              asChild 
+              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary dark:hover:text-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300 shrink-0"
+            >
               <Link href="/admin">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
-            <div className="flex items-center gap-2 min-w-0">
-              <FileText className="h-5 w-5 text-primary dark:text-[#d4af37] shrink-0" />
-              <h1 className="text-xl font-semibold truncate">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37] shrink-0" />
+              <h1 className="text-base sm:text-xl font-semibold truncate bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
                 {language === 'ar' ? 'إدارة الأسعار' : 'Price Management'}
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Button
               onClick={handleCreateOfferFromScratch}
-              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black"
+              size="sm"
+              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-md hover:shadow-lg transition-all duration-300 h-9 sm:h-10 px-2 sm:px-4"
             >
-              <Plus className="h-4 w-4 me-2" />
-              {language === 'ar' ? 'إنشاء عرض سعر' : 'Create Price Offer'}
+              <Plus className="h-4 w-4 sm:me-2" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}</span>
             </Button>
-            <LanguageToggle />
-            <ThemeToggle />
+            <div className="hidden sm:flex items-center gap-2">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>
@@ -493,22 +501,26 @@ export default function AdminPriceManagementPage() {
           </Card>
         )}
 
-        <Tabs defaultValue="requests" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-auto p-1">
-            <TabsTrigger value="requests" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">{language === 'ar' ? 'طلبات الأسعار' : 'Price Requests'}</span>
-              <span className="sm:hidden">{language === 'ar' ? 'طلبات' : 'Requests'}</span>
+        <Tabs defaultValue="requests" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50 dark:bg-muted/30 shadow-sm">
+            <TabsTrigger 
+              value="requests" 
+              className="gap-1.5 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-[#d4af37] dark:data-[state=active]:text-black data-[state=active]:shadow-md transition-all duration-300 py-2.5 sm:py-3 text-xs sm:text-sm"
+            >
+              <Package className="h-4 w-4 shrink-0" />
+              <span className="truncate">{language === 'ar' ? 'الطلبات' : 'Requests'}</span>
               {priceRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1">{priceRequests.length}</Badge>
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">{priceRequests.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">{language === 'ar' ? 'عروض الأسعار' : 'Price Offers'}</span>
-              <span className="sm:hidden">{language === 'ar' ? 'عروض' : 'Offers'}</span>
+            <TabsTrigger 
+              value="offers" 
+              className="gap-1.5 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-[#d4af37] dark:data-[state=active]:text-black data-[state=active]:shadow-md transition-all duration-300 py-2.5 sm:py-3 text-xs sm:text-sm"
+            >
+              <FileText className="h-4 w-4 shrink-0" />
+              <span className="truncate">{language === 'ar' ? 'العروض' : 'Offers'}</span>
               {offers.length > 0 && (
-                <Badge variant="secondary" className="ml-1">{offers.length}</Badge>
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">{offers.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -517,37 +529,58 @@ export default function AdminPriceManagementPage() {
           <TabsContent value="requests" className="space-y-4">
             {/* Filter Tabs */}
             {priceRequests.length > 0 && (
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <Button
                   variant={requestStatusFilter === 'all' ? 'default' : 'outline'}
                   onClick={() => setRequestStatusFilter('all')}
-                  className="gap-2 shrink-0"
+                  className={`gap-1.5 shrink-0 transition-all duration-300 ${
+                    requestStatusFilter === 'all' 
+                      ? 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black shadow-md' 
+                      : 'hover:bg-primary/10 dark:hover:bg-[#d4af37]/10'
+                  }`}
                   size="sm"
                 >
-                  {language === 'ar' ? 'الكل' : 'All'}
-                  <Badge variant={requestStatusFilter === 'all' ? 'secondary' : 'outline'}>
+                  <span className="text-xs sm:text-sm">{language === 'ar' ? 'الكل' : 'All'}</span>
+                  <Badge 
+                    variant={requestStatusFilter === 'all' ? 'secondary' : 'outline'}
+                    className="h-5 min-w-5 px-1.5 text-xs"
+                  >
                     {priceRequests.length}
                   </Badge>
                 </Button>
                 <Button
                   variant={requestStatusFilter === 'pending' ? 'default' : 'outline'}
                   onClick={() => setRequestStatusFilter('pending')}
-                  className="gap-2 shrink-0"
+                  className={`gap-1.5 shrink-0 transition-all duration-300 ${
+                    requestStatusFilter === 'pending' 
+                      ? 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black shadow-md' 
+                      : 'hover:bg-primary/10 dark:hover:bg-[#d4af37]/10'
+                  }`}
                   size="sm"
                 >
-                  {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
-                  <Badge variant={requestStatusFilter === 'pending' ? 'secondary' : 'outline'}>
+                  <span className="text-xs sm:text-sm">{language === 'ar' ? 'قيد الانتظار' : 'Pending'}</span>
+                  <Badge 
+                    variant={requestStatusFilter === 'pending' ? 'secondary' : 'outline'}
+                    className="h-5 min-w-5 px-1.5 text-xs"
+                  >
                     {priceRequests.filter(r => r.status === 'pending').length}
                   </Badge>
                 </Button>
                 <Button
                   variant={requestStatusFilter === 'completed' ? 'default' : 'outline'}
                   onClick={() => setRequestStatusFilter('completed')}
-                  className="gap-2 shrink-0"
+                  className={`gap-1.5 shrink-0 transition-all duration-300 ${
+                    requestStatusFilter === 'completed' 
+                      ? 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black shadow-md' 
+                      : 'hover:bg-primary/10 dark:hover:bg-[#d4af37]/10'
+                  }`}
                   size="sm"
                 >
-                  {language === 'ar' ? 'مكتمل' : 'Completed'}
-                  <Badge variant={requestStatusFilter === 'completed' ? 'secondary' : 'outline'}>
+                  <span className="text-xs sm:text-sm">{language === 'ar' ? 'مكتمل' : 'Completed'}</span>
+                  <Badge 
+                    variant={requestStatusFilter === 'completed' ? 'secondary' : 'outline'}
+                    className="h-5 min-w-5 px-1.5 text-xs"
+                  >
                     {priceRequests.filter(isRequestCompleted).length}
                   </Badge>
                 </Button>
@@ -597,75 +630,87 @@ export default function AdminPriceManagementPage() {
                   const lta = ltas.find(l => l.id === request.ltaId);
 
                   return (
-                    <Card key={request.id} className="hover-elevate">
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 mt-1">
+                    <Card key={request.id} className="hover-elevate border-l-4 border-l-primary dark:border-l-[#d4af37] shadow-sm hover:shadow-md transition-all duration-300">
+                      <CardContent className="p-3 sm:p-6">
+                        <div className="flex flex-col gap-3 sm:gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                                isCompleted 
+                                  ? 'bg-green-100 dark:bg-green-900/30' 
+                                  : 'bg-yellow-100 dark:bg-yellow-900/30'
+                              }`}>
                                 {isCompleted ? (
-                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                                 ) : (
-                                  <Clock className="h-5 w-5 text-yellow-600" />
+                                  <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                                 )}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-semibold text-base sm:text-lg">
-                                    {request.requestNumber}
-                                  </h3>
-                                  {linkedOffer && (
-                                    <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700">
-                                      <CheckCircle className="h-3 w-3 mr-1" />
-                                      {linkedOffer.offerNumber}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm font-medium">
-                                  {client?.nameEn || client?.nameAr || 'Unknown Client'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {language === 'ar' ? 'الاتفاقية:' : 'LTA:'} {lta?.nameEn || lta?.nameAr || 'Unknown LTA'}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {new Date(request.requestedAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
-                                </p>
-                              </div>
                             </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant={isCompleted ? 'secondary' : 'default'}>
-                                {isCompleted 
-                                  ? (language === 'ar' ? 'مكتمل' : 'Completed')
-                                  : (language === 'ar' ? 'قيد الانتظار' : 'Pending')}
-                              </Badge>
-                              <Badge variant="outline">
-                                {products.length} {language === 'ar' ? 'منتج' : 'products'}
-                              </Badge>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h3 className="font-semibold text-sm sm:text-base font-mono">
+                                  {request.requestNumber}
+                                </h3>
+                                {linkedOffer && (
+                                  <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 dark:bg-green-700">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    {linkedOffer.offerNumber}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm font-medium text-foreground mb-1">
+                                {client?.nameEn || client?.nameAr || 'Unknown Client'}
+                              </p>
+                              <p className="text-xs text-muted-foreground mb-1">
+                                {language === 'ar' ? 'الاتفاقية:' : 'LTA:'} {lta?.nameEn || lta?.nameAr || 'Unknown LTA'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(request.requestedAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </p>
                             </div>
                           </div>
 
-                          <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge 
+                              variant={isCompleted ? 'secondary' : 'default'}
+                              className={isCompleted 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                                : 'bg-primary dark:bg-[#d4af37] text-primary-foreground dark:text-black'}
+                            >
+                              {isCompleted 
+                                ? (language === 'ar' ? 'مكتمل' : 'Completed')
+                                : (language === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                            </Badge>
+                            <Badge variant="outline" className="border-primary/50 dark:border-[#d4af37]/50">
+                              <Package className="h-3 w-3 mr-1" />
+                              {products.length} {language === 'ar' ? 'منتج' : 'items'}
+                            </Badge>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border/50">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewRequest(request)}
-                              className="w-full sm:w-auto"
+                              className="w-full sm:w-auto hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-colors text-xs sm:text-sm"
                             >
                               <Eye className="h-4 w-4 me-2" />
-                              {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                              {language === 'ar' ? 'التفاصيل' : 'Details'}
                             </Button>
                             {!isCompleted && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleCreateOffer(request)}
-                                  className="w-full sm:w-auto"
-                                >
-                                  <FileText className="h-4 w-4 me-2" />
-                                  {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
-                                </Button>
-                              </>
+                              <Button
+                                size="sm"
+                                onClick={() => handleCreateOffer(request)}
+                                className="w-full sm:w-auto bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
+                              >
+                                <FileText className="h-4 w-4 me-2" />
+                                {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -680,19 +725,51 @@ export default function AdminPriceManagementPage() {
           {/* Price Offers Tab */}
           <TabsContent value="offers" className="space-y-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <Select value={offerStatusFilter} onValueChange={setOfferStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                  <SelectItem value="sent">{language === 'ar' ? 'مُرسل' : 'Sent'}</SelectItem>
-                  <SelectItem value="viewed">{language === 'ar' ? 'مُشاهد' : 'Viewed'}</SelectItem>
-                  <SelectItem value="accepted">{language === 'ar' ? 'مقبول' : 'Accepted'}</SelectItem>
-                  <SelectItem value="rejected">{language === 'ar' ? 'مرفوض' : 'Rejected'}</SelectItem>
-                  <SelectItem value="expired">{language === 'ar' ? 'منتهي' : 'Expired'}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="w-full sm:w-auto">
+                <Select value={offerStatusFilter} onValueChange={setOfferStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-56 h-10 border-primary/30 dark:border-[#d4af37]/30 focus:border-primary dark:focus:border-[#d4af37] shadow-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70" />
+                        {language === 'ar' ? 'جميع العروض' : 'All Offers'}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sent">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                        {language === 'ar' ? 'مُرسل' : 'Sent'}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="viewed">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-purple-500" />
+                        {language === 'ar' ? 'مُشاهد' : 'Viewed'}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="accepted">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        {language === 'ar' ? 'مقبول' : 'Accepted'}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="rejected">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                        {language === 'ar' ? 'مرفوض' : 'Rejected'}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="expired">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-gray-500" />
+                        {language === 'ar' ? 'منتهي' : 'Expired'}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {isLoadingOffers ? (
@@ -761,32 +838,52 @@ export default function AdminPriceManagementPage() {
                                 <TableCell>
                                   <div className="max-w-xs">
                                     {(() => {
-                                      const items = typeof offer.items === 'string' 
-                                        ? JSON.parse(offer.items) 
-                                        : offer.items || [];
-                                      return items.length > 0 ? (
-                                        <div className="space-y-1">
-                                          {items.slice(0, 2).map((item: any, idx: number) => (
-                                            <div key={idx} className="text-sm">
-                                              <div className="font-medium truncate">
-                                                {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
-                                              </div>
+                                      try {
+                                        const items = typeof offer.items === 'string' 
+                                          ? JSON.parse(offer.items) 
+                                          : (Array.isArray(offer.items) ? offer.items : []);
+                                        
+                                        if (!Array.isArray(items) || items.length === 0) {
+                                          return (
+                                            <span className="text-muted-foreground text-sm">
+                                              {language === 'ar' ? 'لا توجد منتجات' : 'No items'}
+                                            </span>
+                                          );
+                                        }
+                                        
+                                        return (
+                                          <div className="space-y-1">
+                                            {items.slice(0, 2).map((item: any, idx: number) => {
+                                              const name = language === 'ar' 
+                                                ? (item.nameAr || item.nameEn || item.name || 'Unnamed')
+                                                : (item.nameEn || item.nameAr || item.name || 'Unnamed');
+                                              
+                                              return (
+                                                <div key={idx} className="text-sm">
+                                                  <div className="font-medium truncate">
+                                                    {name}
+                                                  </div>
+                                                  <div className="text-xs text-muted-foreground">
+                                                    {item.quantity || 1}x {item.unitPrice || '0.00'} {item.currency || 'ILS'}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                            {items.length > 2 && (
                                               <div className="text-xs text-muted-foreground">
-                                                {item.quantity}x {item.unitPrice} {item.currency || 'ILS'}
+                                                +{items.length - 2} {language === 'ar' ? 'أخرى' : 'more'}
                                               </div>
-                                            </div>
-                                          ))}
-                                          {items.length > 2 && (
-                                            <div className="text-xs text-muted-foreground">
-                                              +{items.length - 2} {language === 'ar' ? 'أخرى' : 'more'}
-                                            </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <span className="text-muted-foreground text-sm">
-                                          {language === 'ar' ? 'لا توجد منتجات' : 'No items'}
-                                        </span>
-                                      );
+                                            )}
+                                          </div>
+                                        );
+                                      } catch (error) {
+                                        console.error('Error parsing items:', error);
+                                        return (
+                                          <span className="text-muted-foreground text-sm">
+                                            {language === 'ar' ? 'خطأ في عرض المنتجات' : 'Error displaying items'}
+                                          </span>
+                                        );
+                                      }
                                     })()}
                                   </div>
                                 </TableCell>
@@ -870,22 +967,22 @@ export default function AdminPriceManagementPage() {
                     const isExpired = new Date(offer.validUntil) < new Date();
 
                     return (
-                      <Card key={offer.id} className="hover-elevate">
-                        <CardContent className="p-4 space-y-4">
+                      <Card key={offer.id} className="hover-elevate border-l-4 border-l-primary dark:border-l-[#d4af37] shadow-sm hover:shadow-md transition-all duration-300">
+                        <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                           {/* Header */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
-                              <div className="font-mono font-semibold text-base mb-1">
+                              <div className="font-mono font-semibold text-sm sm:text-base mb-2 bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
                                 {offer.offerNumber}
                               </div>
                               {linkedRequest && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-primary/50 dark:border-[#d4af37]/50">
                                   <FileText className="h-3 w-3 mr-1" />
                                   {linkedRequest.requestNumber}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                               {getOfferStatusIcon(isExpired ? 'expired' : offer.status)}
                             </div>
                           </div>
@@ -904,10 +1001,14 @@ export default function AdminPriceManagementPage() {
                               <span className="text-muted-foreground">{language === 'ar' ? 'المنتجات' : 'Items'}:</span>
                               <span className="font-medium">
                                 {(() => {
-                                  const items = typeof offer.items === 'string' 
-                                    ? JSON.parse(offer.items) 
-                                    : offer.items || [];
-                                  return items.length > 0 ? `${items.length} ${language === 'ar' ? 'منتج' : 'items'}` : (language === 'ar' ? 'لا توجد' : 'None');
+                                  try {
+                                    const items = typeof offer.items === 'string' 
+                                      ? JSON.parse(offer.items) 
+                                      : (Array.isArray(offer.items) ? offer.items : []);
+                                    return items.length > 0 ? `${items.length} ${language === 'ar' ? 'منتج' : 'items'}` : (language === 'ar' ? 'لا توجد' : 'None');
+                                  } catch {
+                                    return language === 'ar' ? 'خطأ' : 'Error';
+                                  }
                                 })()}
                               </span>
                             </div>
@@ -1020,33 +1121,33 @@ export default function AdminPriceManagementPage() {
 
       {/* Assign Price Dialog */}
       <Dialog open={priceDialogOpen} onOpenChange={setPriceDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {language === 'ar' ? 'تعيين سعر للمنتج' : 'Assign Product Price'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {language === 'ar' ? 'المنتج' : 'Product'}
               </p>
               <div className="space-y-1 p-3 bg-muted/50 rounded-lg">
-                <p className="font-medium text-base">
+                <p className="font-medium text-sm sm:text-base">
                   {selectedProduct && (language === 'ar' ? selectedProduct.nameAr : selectedProduct?.nameEn)}
                 </p>
-                <p className="text-sm text-muted-foreground font-mono">
+                <p className="text-xs sm:text-sm text-muted-foreground font-mono">
                   SKU: {selectedProduct?.sku}
                 </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lta-select">
+              <Label htmlFor="lta-select" className="text-xs sm:text-sm">
                 {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
               </Label>
               <Select value={selectedLtaId} onValueChange={setSelectedLtaId}>
-                <SelectTrigger id="lta-select">
+                <SelectTrigger id="lta-select" className="h-10 text-sm">
                   <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -1060,7 +1161,7 @@ export default function AdminPriceManagementPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contract-price">
+              <Label htmlFor="contract-price" className="text-xs sm:text-sm">
                 {language === 'ar' ? 'السعر التعاقدي' : 'Contract Price'}
               </Label>
               <Input
@@ -1070,16 +1171,16 @@ export default function AdminPriceManagementPage() {
                 value={contractPrice}
                 onChange={(e) => setContractPrice(e.target.value)}
                 placeholder="0.00"
-                className="font-mono"
+                className="font-mono h-10 text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="currency">
+              <Label htmlFor="currency" className="text-xs sm:text-sm">
                 {language === 'ar' ? 'العملة' : 'Currency'}
               </Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger id="currency">
+                <SelectTrigger id="currency" className="h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1091,16 +1192,18 @@ export default function AdminPriceManagementPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setPriceDialogOpen(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               {language === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button
               onClick={handleSubmitPrice}
               disabled={assignProductMutation.isPending}
+              className="w-full sm:w-auto order-1 sm:order-2"
             >
               {assignProductMutation.isPending
                 ? (language === 'ar' ? 'جاري الإضافة...' : 'Adding...')
@@ -1113,23 +1216,23 @@ export default function AdminPriceManagementPage() {
 
       {/* View Request Dialog */}
       <Dialog open={viewRequestDialogOpen} onOpenChange={setViewRequestDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {language === 'ar' ? 'تفاصيل طلب السعر' : 'Price Request Details'}
             </DialogTitle>
           </DialogHeader>
           {selectedRequest && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'رقم الطلب' : 'Request Number'}:</span>
-                  <div className="mt-1 font-medium font-mono">{selectedRequest.requestNumber}</div>
+                  <div className="mt-1 font-medium font-mono text-sm sm:text-base">{selectedRequest.requestNumber}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}:</span>
                   <div className="mt-1">
-                    <Badge variant={selectedRequest.status === 'pending' ? 'default' : 'secondary'}>
+                    <Badge variant={selectedRequest.status === 'pending' ? 'default' : 'secondary'} className="text-xs">
                       {selectedRequest.status === 'pending' 
                         ? (language === 'ar' ? 'قيد الانتظار' : 'Pending')
                         : (language === 'ar' ? 'تمت المعالجة' : 'Processed')}
@@ -1138,15 +1241,15 @@ export default function AdminPriceManagementPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
-                  <div className="mt-1 font-medium">{getClientName(selectedRequest.clientId)}</div>
+                  <div className="mt-1 font-medium text-sm sm:text-base">{getClientName(selectedRequest.clientId)}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
-                  <div className="mt-1 font-medium">{getLtaName(selectedRequest.ltaId)}</div>
+                  <div className="mt-1 font-medium text-sm sm:text-base">{getLtaName(selectedRequest.ltaId)}</div>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <span className="text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}:</span>
-                  <div className="mt-1 font-medium">
+                  <div className="mt-1 font-medium text-sm sm:text-base">
                     {new Date(selectedRequest.requestedAt).toLocaleString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -1159,21 +1262,21 @@ export default function AdminPriceManagementPage() {
                 </div>
               </div>
 
-              <div className="border rounded-lg p-4 space-y-3">
-                <h4 className="font-semibold flex items-center gap-2">
-                  <Package className="h-5 w-5" />
+              <div className="border rounded-lg p-3 sm:p-4 space-y-3">
+                <h4 className="font-semibold flex items-center gap-2 text-sm sm:text-base">
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                   {language === 'ar' ? 'المنتجات المطلوبة' : 'Requested Products'}
                 </h4>
                 <div className="space-y-2">
                   {(typeof selectedRequest.products === 'string' 
                     ? JSON.parse(selectedRequest.products) 
                     : selectedRequest.products || []).map((product: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                      <div className="flex-1">
-                        <div className="font-medium text-base mb-1">
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm sm:text-base mb-1 truncate">
                           {language === 'ar' ? product.nameAr : product.nameEn}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs sm:text-sm text-muted-foreground">
                           SKU: {product.sku}
                         </div>
                         {product.unit && (
@@ -1182,9 +1285,9 @@ export default function AdminPriceManagementPage() {
                           </div>
                         )}
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-lg">{product.quantity || 1}</div>
-                        <div className="text-xs text-muted-foreground">{language === 'ar' ? 'الكمية' : 'Quantity'}</div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-semibold text-base sm:text-lg">{product.quantity || 1}</div>
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">{language === 'ar' ? 'الكمية' : 'Quantity'}</div>
                       </div>
                     </div>
                   ))}
@@ -1199,14 +1302,15 @@ export default function AdminPriceManagementPage() {
               )}
 
               {selectedRequest.status === 'pending' && (
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
                   <Button
                     variant="outline"
                     onClick={() => setViewRequestDialogOpen(false)}
+                    className="w-full sm:w-auto"
                   >
                     {language === 'ar' ? 'إغلاق' : 'Close'}
                   </Button>
-                  <Button onClick={() => handleCreateOffer(selectedRequest)}>
+                  <Button onClick={() => handleCreateOffer(selectedRequest)} className="w-full sm:w-auto">
                     <FileText className="h-4 w-4 me-2" />
                     {language === 'ar' ? 'إنشاء عرض سعر' : 'Create Offer'}
                   </Button>
@@ -1219,19 +1323,19 @@ export default function AdminPriceManagementPage() {
 
       {/* PDF Generation Dialog */}
       <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {language === 'ar' ? 'إنشاء مستند عرض السعر' : 'Generate Price Offer Document'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="pdf-lta-select">
+              <Label htmlFor="pdf-lta-select" className="text-xs sm:text-sm">
                 {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
               </Label>
               <Select value={pdfLtaId} onValueChange={setPdfLtaId}>
-                <SelectTrigger id="pdf-lta-select">
+                <SelectTrigger id="pdf-lta-select" className="h-10 text-sm">
                   <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -1245,7 +1349,7 @@ export default function AdminPriceManagementPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="validity-days">
+              <Label htmlFor="validity-days" className="text-xs sm:text-sm">
                 {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Offer Validity (days)'}
               </Label>
               <Input
@@ -1254,11 +1358,12 @@ export default function AdminPriceManagementPage() {
                 value={pdfValidityDays}
                 onChange={(e) => setPdfValidityDays(e.target.value)}
                 placeholder="30"
+                className="h-10 text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pdf-notes">
+              <Label htmlFor="pdf-notes" className="text-xs sm:text-sm">
                 {language === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Additional Notes (Optional)'}
               </Label>
               <Textarea
@@ -1267,13 +1372,15 @@ export default function AdminPriceManagementPage() {
                 onChange={(e) => setPdfNotes(e.target.value)}
                 placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
                 rows={4}
+                className="text-sm"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setPdfDialogOpen(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               {language === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
@@ -1295,6 +1402,7 @@ export default function AdminPriceManagementPage() {
                 });
               }}
               disabled={generatePdfMutation.isPending}
+              className="w-full sm:w-auto order-1 sm:order-2"
             >
               {generatePdfMutation.isPending
                 ? (language === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
@@ -1307,20 +1415,20 @@ export default function AdminPriceManagementPage() {
 
       {/* View Offer Details Dialog */}
       <Dialog open={viewOfferDialogOpen} onOpenChange={setViewOfferDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
               {language === 'ar' ? 'تفاصيل عرض السعر' : 'Price Offer Details'}
             </DialogTitle>
           </DialogHeader>
           {selectedOffer && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Offer Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'رقم العرض' : 'Offer Number'}:</span>
-                  <div className="mt-1 font-medium font-mono">{selectedOffer.offerNumber}</div>
+                  <div className="mt-1 font-medium font-mono text-sm sm:text-base">{selectedOffer.offerNumber}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}:</span>
@@ -1330,69 +1438,84 @@ export default function AdminPriceManagementPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
-                  <div className="mt-1 font-medium">{getClientName(selectedOffer.clientId)}</div>
+                  <div className="mt-1 font-medium text-sm sm:text-base">{getClientName(selectedOffer.clientId)}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
-                  <div className="mt-1 font-medium">{getLtaName(selectedOffer.ltaId)}</div>
+                  <div className="mt-1 font-medium text-sm sm:text-base">{getLtaName(selectedOffer.ltaId)}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ الإنشاء' : 'Created'}:</span>
-                  <div className="mt-1 font-medium">
+                  <div className="mt-1 font-medium text-sm sm:text-base">
                     {new Date(selectedOffer.createdAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
                   </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}:</span>
-                  <div className="mt-1 font-medium">
+                  <div className="mt-1 font-medium text-sm sm:text-base">
                     {new Date(selectedOffer.validUntil).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
                   </div>
                 </div>
               </div>
 
               {/* Items */}
-              <div className="border rounded-lg p-4 space-y-3">
-                <h4 className="font-semibold flex items-center gap-2">
-                  <Package className="h-5 w-5" />
+              <div className="border rounded-lg p-3 sm:p-4 space-y-3">
+                <h4 className="font-semibold flex items-center gap-2 text-sm sm:text-base">
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                   {language === 'ar' ? 'منتجات العرض' : 'Offer Items'}
                 </h4>
                 <div className="space-y-2">
                   {(() => {
-                    const items = typeof selectedOffer.items === 'string' 
-                      ? JSON.parse(selectedOffer.items) 
-                      : selectedOffer.items || [];
-                    return items.length > 0 ? (
-                      items.map((item: any, idx: number) => {
+                    try {
+                      const items = typeof selectedOffer.items === 'string' 
+                        ? JSON.parse(selectedOffer.items) 
+                        : (Array.isArray(selectedOffer.items) ? selectedOffer.items : []);
+                      
+                      if (!Array.isArray(items) || items.length === 0) {
+                        return (
+                          <div className="text-center py-8 text-sm text-muted-foreground">
+                            {language === 'ar' ? 'لا توجد منتجات في هذا العرض' : 'No items in this offer'}
+                          </div>
+                        );
+                      }
+                      
+                      return items.map((item: any, idx: number) => {
                         const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
                         const itemQuantity = Number(item.quantity) || 0;
                         const total = itemPrice * itemQuantity;
+                        const name = language === 'ar' 
+                          ? (item.nameAr || item.nameEn || item.name || 'Unnamed Product')
+                          : (item.nameEn || item.nameAr || item.name || 'Unnamed Product');
                         
                         return (
-                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                            <div className="flex-1">
-                              <div className="font-medium text-base mb-1">
-                                {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
+                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm sm:text-base mb-1 truncate">
+                                {name}
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-xs sm:text-sm text-muted-foreground">
                                 SKU: {item.sku || 'N/A'}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="font-semibold text-lg">
+                            <div className="text-right flex-shrink-0">
+                              <div className="font-semibold text-sm sm:text-base">
                                 {item.quantity || 1} × {item.unitPrice || '0'} {item.currency || 'ILS'}
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                                 = {total.toFixed(2)} {item.currency || 'ILS'}
                               </div>
                             </div>
                           </div>
                         );
-                      })
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        {language === 'ar' ? 'لا توجد منتجات في هذا العرض' : 'No items in this offer'}
-                      </div>
-                    );
+                      });
+                    } catch (error) {
+                      console.error('Error parsing offer items:', error);
+                      return (
+                        <div className="text-center py-8 text-sm text-muted-foreground">
+                          {language === 'ar' ? 'خطأ في عرض المنتجات' : 'Error displaying items'}
+                        </div>
+                      );
+                    }
                   })()}
                 </div>
               </div>
@@ -1410,10 +1533,10 @@ export default function AdminPriceManagementPage() {
                   }, 0);
                   
                   return (
-                    <div className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center text-lg font-semibold">
+                    <div className="border rounded-lg p-3 sm:p-4">
+                      <div className="flex justify-between items-center text-base sm:text-lg font-semibold">
                         <span>{language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}:</span>
-                        <span>{selectedOffer.total || subtotal.toFixed(2)} {items[0]?.currency || 'ILS'}</span>
+                        <span className="whitespace-nowrap">{selectedOffer.total || subtotal.toFixed(2)} {items[0]?.currency || 'ILS'}</span>
                       </div>
                     </div>
                   );
@@ -1423,22 +1546,24 @@ export default function AdminPriceManagementPage() {
 
               {/* Notes */}
               {selectedOffer.notes && (
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-semibold mb-2">{language === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedOffer.notes}</p>
+                <div className="border rounded-lg p-3 sm:p-4">
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">{language === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">{selectedOffer.notes}</p>
                 </div>
               )}
 
               {/* Actions */}
-              <div className="flex justify-end gap-2 pt-4 border-t">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
                   onClick={() => setViewOfferDialogOpen(false)}
+                  className="w-full sm:w-auto"
                 >
                   {language === 'ar' ? 'إغلاق' : 'Close'}
                 </Button>
                 <Button
                   onClick={() => handleDownload(selectedOffer.pdfFileName)}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="h-4 w-4 me-2" />
                   {language === 'ar' ? 'تحميل PDF' : 'Download PDF'}
