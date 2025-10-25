@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -91,6 +91,7 @@ export default function PriceOfferCreationDialog({
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const lastSyncedCurrencyRef = useRef<string | null>(null);
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -283,16 +284,27 @@ export default function PriceOfferCreationDialog({
   // Update currency for all items when LTA changes
   useEffect(() => {
     if (selectedLta?.currency && open) {
-      const currentItems = form.getValues('items');
-      if (currentItems.length > 0 && currentItems[0].currency !== selectedLta.currency) {
-        const updatedItems = currentItems.map(item => ({
-          ...item,
-          currency: selectedLta.currency || 'ILS'
-        }));
-        form.setValue('items', updatedItems);
+      // Only sync if currency has changed
+      if (lastSyncedCurrencyRef.current !== selectedLta.currency) {
+        const currentItems = form.getValues('items');
+        if (currentItems.length > 0 && currentItems[0].currency !== selectedLta.currency) {
+          const updatedItems = currentItems.map(item => ({
+            ...item,
+            currency: selectedLta.currency || 'ILS'
+          }));
+          form.setValue('items', updatedItems);
+        }
+        lastSyncedCurrencyRef.current = selectedLta.currency;
       }
     }
-  }, [selectedLta?.currency, open]);
+  }, [selectedLta?.currency, open, form]);
+  
+  // Reset currency sync when dialog closes
+  useEffect(() => {
+    if (!open) {
+      lastSyncedCurrencyRef.current = null;
+    }
+  }, [open]);
 
   const handleAddProduct = (product: Product) => {
     const currentItems = form.getValues('items');
