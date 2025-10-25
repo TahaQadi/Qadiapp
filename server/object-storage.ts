@@ -109,13 +109,10 @@ export class PDFStorage {
 
       // Generate organized path
       const fullPath = this.generateFilePath(category, fileName);
-      
-      // Convert Buffer to Uint8Array for Object Storage
-      const uint8Array = new Uint8Array(pdfBuffer);
 
-      // Upload with retry logic
+      // Upload with retry logic (uploadFromBytes expects Buffer)
       const { ok, error } = await this.retryOperation(async () => {
-        return await client.uploadFromBytes(fullPath, uint8Array);
+        return await client.uploadFromBytes(fullPath, pdfBuffer);
       });
       
       if (!ok) {
@@ -136,7 +133,7 @@ export class PDFStorage {
   ): Promise<{ ok: boolean; data?: Buffer; error?: string; checksum?: string }> {
     try {
 
-      // Download with retry logic
+      // Download with retry logic (downloadAsBytes returns Result<[Buffer], Error>)
       const { ok, value, error } = await this.retryOperation(async () => {
         return await client.downloadAsBytes(fileName);
       });
@@ -146,13 +143,13 @@ export class PDFStorage {
         return { ok: false, error: error?.message || 'Download failed' };
       }
 
-      if (!value || value.length === 0) {
+      if (!value || !value[0] || value[0].length === 0) {
         console.error('Downloaded file is empty');
         return { ok: false, error: 'Downloaded file is empty' };
       }
 
-      // Convert Uint8Array to Buffer
-      const buffer = Buffer.from(value);
+      // Extract Buffer from tuple [Buffer]
+      const buffer = value[0];
 
       // Validate downloaded buffer
       const validation = this.validateBuffer(buffer);

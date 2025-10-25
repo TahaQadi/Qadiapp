@@ -1,0 +1,54 @@
+Now let me update the todos and identify the root cause:
+
+Updated todo list
+Based on my investigation, I've identified the root causes of the app crash:
+
+Root Cause Analysis
+Issue 1: Replit Object Storage Connection Failure
+
+The app is trying to connect to Replit's object storage service at 127.0.0.1:1106
+This connection is being refused (ECONNREFUSED)
+The @replit/object-storage client is initialized immediately when the module is imported (line 6 in object-storage.ts)
+This happens during server startup, causing an unhandled promise rejection
+Issue 2: Port Already in Use
+
+The app is trying to use port 26053 which is already occupied
+This suggests there might be another instance of the app running or a port conflict
+Let me check what port the app is actually configured to use:
+
+Searched and ran terminal command
+Perfect! Now I understand the issue. The PORT environment variable is set to 26053, but there's already a process using that port. Let me check what's using it and create a comprehensive fix plan:
+
+Updated todo list
+Root Cause Analysis Summary
+I've identified two critical issues causing the app crash after pull request 8:
+
+Issue 1: Replit Object Storage Connection Failure
+Problem: The @replit/object-storage client is initialized immediately when the module is imported
+Error: ECONNREFUSED 127.0.0.1:1106 - Replit's object storage service is not available
+Impact: Causes unhandled promise rejection during server startup
+Location: server/object-storage.ts line 6: const client = new Client();
+Issue 2: Port Already in Use
+Problem: PORT environment variable is set to 26053, but that port is already occupied
+Error: EADDRINUSE: address already in use 0.0.0.0:26053
+Impact: Server cannot start because the port is unavailable
+Fix Plan
+Updated todo list
+Comprehensive Fix Plan
+1. Fix Replit Object Storage Connection Issue
+Problem: The object storage client is initialized immediately, causing connection failures when Replit services aren't available.
+
+Solution: Implement lazy initialization and proper error handling:
+
+Move client initialization to a lazy getter function
+Add connection retry logic with exponential backoff
+Gracefully handle connection failures without crashing the app
+Add fallback behavior when object storage is unavailable
+2. Fix Port Conflict Issue
+Problem: Port 26053 is already in use, preventing the server from starting.
+
+Solution:
+
+Kill any existing processes using port 26053
+Implement port fallback logic
+Add better error handling for port conflicts
