@@ -54,6 +54,23 @@ Preferred communication style: Simple, everyday language.
 **Client Features:** Responsive product grid, product display (images, names, SKU, descriptions, pricing), single-LTA cart, active contract badge, order templates, order history with reorder, order modification/cancellation requests, price request submission (select LTA products and request quotes), price offer viewing (receive offers, download PDFs, accept/reject), multi-language (EN/AR) with RTL support.
 **System Features:** Full bilingual support (EN/AR with RTL/BiDi), responsive design, dark/light themes, PWA with push notifications, Pipefy webhook integration, comprehensive order modification workflow, template-based PDF generation (price offers, orders, invoices, LTA contracts).
 
+# Recent Improvements (December 2024)
+
+## Phase 1: Critical Fixes ✅ COMPLETED
+- **Standardized API Responses** (`shared/api-types.ts`): All endpoints now return consistent `ApiResponse<T>` format with `{success, data?, error?, meta?}` structure
+- **Error Code System**: 15+ standardized error codes (`ErrorCode` enum) with bilingual messages (EN/AR) for programmatic error handling
+- **Error Handler Middleware** (`server/error-handler.ts`): Centralized error handling with `AppError` class, automatic Zod validation error handling, and helper functions (`errors.unauthorized()`, `errors.notFound()`, etc.)
+- **Authentication Middleware**: Updated `isAuthenticated`, `requireAuth`, `requireAdmin` to use standardized error responses
+- **Type Duplication Cleanup**: Removed duplicate table definitions from `server/db.ts`, consolidated all schemas in `shared/schema.ts`
+- **Middleware Stack**: Correctly ordered middleware (Routes → API 404 Handler → SPA Fallback → Error Handler) ensuring JSON responses for API routes and HTML for client routes
+
+## Phase 2: API Improvements ✅ COMPLETED
+- **Query Key Factory** (`client/src/lib/queryKeys.ts`): Centralized, hierarchical query key system for TanStack Query with type-safe keys for all resources (products, LTAs, clients, orders, templates, price requests/offers, documents, feedback, stats)
+- **API Validation Schemas** (`shared/api-validation.ts`): Comprehensive Zod schemas for all API requests/responses with reusable validators, pagination support, bulk operations, file uploads, and query parameter coercion
+- **Validation Middleware** (`server/validation-middleware.ts`): Express middleware factory for automatic validation of body/query/params with file upload validation, common helpers (`validateId`, `validatePagination`), and standardized error responses
+- **Migration Guide** (`docs/PHASE_2_MIGRATION_GUIDE.md`): Complete guide with before/after examples, CRUD demonstration, and clear distinction between JSON body validation and query parameter validation
+- **Query String Coercion**: Fixed pagination and query parameter validation to properly handle URL query strings with `z.coerce.number()` for automatic type conversion
+
 # External Dependencies
 
 **Database:** Neon Serverless PostgreSQL (`@neondatabase/serverless`).
