@@ -108,11 +108,21 @@ export default function PriceRequestPage() {
       quantity,
     }));
 
-    requestMutation.mutate({
-      ltaId: selectedLtaId || undefined,
+    const requestData: any = {
       products: productsArray,
-      notes: notes || undefined,
-    } as any);
+    };
+
+    // Only include ltaId if one is selected
+    if (selectedLtaId) {
+      requestData.ltaId = selectedLtaId;
+    }
+
+    // Only include notes if provided
+    if (notes && notes.trim()) {
+      requestData.notes = notes;
+    }
+
+    requestMutation.mutate(requestData);
   };
 
   return (
