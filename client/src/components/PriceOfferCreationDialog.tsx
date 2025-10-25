@@ -185,13 +185,8 @@ export default function PriceOfferCreationDialog({
           throw new Error('Selected client is not assigned to the selected LTA');
         }
 
-        // Validate that all products are available in the LTA
-        const productIds = data.items.map(item => item.productId);
-        const availableProductIds = ltaProducts.map(product => product.id);
-        const invalidProducts = productIds.filter(id => !availableProductIds.includes(id));
-        if (invalidProducts.length > 0) {
-          throw new Error('Some selected products are not available in the selected LTA');
-        }
+        // Note: We don't validate products against LTA here because
+        // price offers can be used to add new products to the LTA
 
         const res = await apiRequest('POST', '/api/admin/price-offers', {
           requestId: requestId || null,
@@ -254,14 +249,11 @@ export default function PriceOfferCreationDialog({
                    isLoadingPriceRequest || isLoadingLtaProducts || 
                    isLoadingSelectedLta || isLoadingLtaClients;
 
-  // Update available products when LTA changes
+  // Update available products - always show all products
+  // (price offers can add new products to LTA)
   useEffect(() => {
-    if (selectedLtaId && ltaProducts.length > 0) {
-      setAvailableProducts(ltaProducts);
-    } else {
-      setAvailableProducts(allProducts);
-    }
-  }, [selectedLtaId, ltaProducts, allProducts]);
+    setAvailableProducts(allProducts);
+  }, [allProducts]);
 
   // Update currency for all items when LTA changes
   useEffect(() => {
