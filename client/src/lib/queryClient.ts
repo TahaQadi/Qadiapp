@@ -50,14 +50,57 @@ export const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
       retry: (failureCount, error: any) => {
-        // Don't retry on 4xx errors
-        if (error?.message?.includes('4')) return false;
+        const errorMessage = error?.message || '';
+        
+        // Don't retry on client errors (4xx) except 429 (rate limit)
+        if (errorMessage.includes('429')) {
+          return failureCount < 3; // Retry rate limit errors up to 3 times
+        }
+        if (errorMessage.match(/4\d\d/)) {
+          return false; // Don't retry other 4xx errors
+        }
+        
+        // Retry server errors (5xx) up to 3 times
+        if (errorMessage.match(/5\d\d/)) {
+          return failureCount < 3;
+        }
+        
+        // Retry network errors
         return failureCount < 2;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex, error: any) => {
+        const errorMessage = error?.message || '';
+        
+        // For rate limit errors, use Retry-After header if available
+        if (errorMessage.includes('429')) {
+          // Extract retry-after from error message if present
+          const retryAfterMatch = errorMessage.match(/retry.*?(\d+)/i);
+          if (retryAfterMatch) {
+            return parseInt(retryAfterMatch[1]) * 1000;
+          }
+        }
+        
+        // Exponential backoff: 1s, 2s, 4s, 8s, capped at 30s
+        return Math.min(1000 * 2 ** attemptIndex, 30000);
+      },
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error: any) => {
+        const errorMessage = error?.message || '';
+        
+        // Retry rate limit errors for mutations
+        if (errorMessage.includes('429')) {
+          return failureCount < 2;
+        }
+        
+        // Retry server errors for mutations
+        if (errorMessage.match(/5\d\d/)) {
+          return failureCount < 1; // Only retry once for mutations
+        }
+        
+        return false; // Don't retry other errors for mutations
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
       gcTime: 5 * 60 * 1000,
     },
   },

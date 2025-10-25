@@ -4,6 +4,10 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
 import { errorHandler, notFoundHandler } from "./error-handler";
+import { performanceMonitoringMiddleware } from "./performance-monitoring";
+import { securityHeaders, SecurityPresets } from "./security-headers";
+import { rateLimit, RateLimitPresets } from "./rate-limiting";
+import monitoringRoutes from "./monitoring-routes";
 
 // Handle uncaught errors in production
 process.on('unhandledRejection', (reason, promise) => {
@@ -17,50 +21,20 @@ process.on('uncaughtException', (error) => {
 
 const app = express();
 
-// Security headers middleware
-app.use((req, res, next) => {
-  // Prevent clickjacking
-  res.setHeader('X-Frame-Options', 'DENY');
-  
-  // Prevent MIME type sniffing
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  
-  // Enable XSS protection
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  
-  // Referrer policy
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // Content Security Policy
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Note: unsafe-inline needed for Vite in dev
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https:",
-    "connect-src 'self' https: wss:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
-  ].join('; ');
-  
-  res.setHeader('Content-Security-Policy', csp);
-  
-  // HSTS (HTTP Strict Transport Security) - only in production
-  if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  }
-  
-  // Remove X-Powered-By header
-  res.removeHeader('X-Powered-By');
-  
-  next();
-});
+// Phase 4: Security headers middleware
+const isDev = app.get("env") === "development";
+app.use(securityHeaders(isDev ? SecurityPresets.DEVELOPMENT : SecurityPresets.PRODUCTION));
+
+// Phase 3: Performance monitoring middleware
+app.use(performanceMonitoringMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Phase 4: Rate limiting for API routes (lenient for development)
+if (!isDev) {
+  app.use('/api/', rateLimit(RateLimitPresets.API));
+}
 
 // Serve static files from attached_assets directory BEFORE other middlewares
 app.use('/attached_assets', express.static('attached_assets'));
@@ -108,6 +82,9 @@ app.use((req, res, next) => {
   // await seedData();
 
   const server = await registerRoutes(app);
+
+  // Phase 3 & 4: Monitoring and metrics routes (admin-only)
+  app.use('/api/monitoring', monitoringRoutes);
 
   // API 404 handler - must come BEFORE SPA fallback
   // Catches undefined API routes and returns JSON 404 instead of HTML
