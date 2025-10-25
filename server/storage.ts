@@ -1421,7 +1421,7 @@ export class MemStorage implements IStorage {
       .where(eq(priceOffers.clientId, clientId))
       .orderBy(desc(priceOffers.createdAt))
       .execute();
-    
+
     // Filter out draft offers - clients should only see sent/viewed/accepted/rejected offers
     const visibleOffers = result.filter(offer => offer.status !== 'draft');
     console.log(`[Storage] Client ${clientId}: ${result.length} total, ${visibleOffers.length} visible (excluding drafts)`);
@@ -1429,25 +1429,25 @@ export class MemStorage implements IStorage {
   }
 
   async getAllPriceOffers(): Promise<PriceOffer[]> {
-    const result = await this.db
-      .select()
-      .from(priceOffers)
-      .orderBy(desc(priceOffers.createdAt))
-      .execute();
-    return result;
+    const offers = await db.select().from(priceOffers).orderBy(desc(priceOffers.createdAt));
+    return offers;
   }
 
-  async updatePriceOfferStatus(id: string, status: string, additionalData?: Partial<PriceOffer>): Promise<PriceOffer | null> {
-    await this.db
-      .update(priceOffers)
-      .set({
-        status,
-        ...additionalData
-      })
-      .where(eq(priceOffers.id, id))
-      .execute();
+  async updatePriceOfferStatus(offerId: string, status: string): Promise<PriceOffer | null> {
+    const updateData: any = { status, updatedAt: new Date() };
 
-    return this.getPriceOffer(id);
+    // If changing to sent, set sentAt timestamp
+    if (status === 'sent') {
+      updateData.sentAt = new Date();
+    }
+
+    const [updatedOffer] = await db
+      .update(priceOffers)
+      .set(updateData)
+      .where(eq(priceOffers.id, offerId))
+      .returning();
+
+    return updatedOffer || null;
   }
 
   async updatePriceOffer(id: string, data: Partial<PriceOffer>): Promise<PriceOffer | null> {

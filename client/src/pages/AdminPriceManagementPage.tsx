@@ -264,6 +264,27 @@ export default function AdminPriceManagementPage() {
     },
   });
 
+  const updateOfferStatusMutation = useMutation({
+    mutationFn: async ({ offerId, status }: { offerId: string; status: string }) => {
+      const res = await apiRequest('PATCH', `/api/admin/price-offers/${offerId}/status`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم التحديث' : 'Updated',
+        description: language === 'ar' ? 'تم تحديث حالة العرض بنجاح' : 'Offer status updated successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل تحديث الحالة' : 'Failed to update status'),
+      });
+    },
+  });
+
   const getClientName = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     return client ? (language === 'ar' ? client.nameAr : client.nameEn) : clientId;
@@ -405,6 +426,10 @@ export default function AdminPriceManagementPage() {
   const handleCreateOfferFromScratch = () => {
     setSelectedRequestForOffer(null);
     setCreateOfferDialogOpen(true);
+  };
+
+  const handleUpdateOfferStatus = (offerId: string, newStatus: string) => {
+    updateOfferStatusMutation.mutate({ offerId, status: newStatus });
   };
 
   return (
@@ -648,9 +673,9 @@ export default function AdminPriceManagementPage() {
 
           {/* Price Offers Tab */}
           <TabsContent value="offers" className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Select value={offerStatusFilter} onValueChange={setOfferStatusFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -659,6 +684,7 @@ export default function AdminPriceManagementPage() {
                   <SelectItem value="viewed">{language === 'ar' ? 'مُشاهد' : 'Viewed'}</SelectItem>
                   <SelectItem value="accepted">{language === 'ar' ? 'مقبول' : 'Accepted'}</SelectItem>
                   <SelectItem value="rejected">{language === 'ar' ? 'مرفوض' : 'Rejected'}</SelectItem>
+                  <SelectItem value="expired">{language === 'ar' ? 'منتهي' : 'Expired'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -686,87 +712,223 @@ export default function AdminPriceManagementPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-md hover:shadow-xl dark:hover:shadow-[#d4af37]/20 transition-all duration-300">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{language === 'ar' ? 'رقم العرض' : 'Offer #'}</TableHead>
-                          <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
-                          <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
-                          <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                          <TableHead>{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</TableHead>
-                          <TableHead>{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</TableHead>
-                          <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredOffers.map((offer) => {
-                          const linkedRequest = offer.requestId 
-                            ? priceRequests.find(r => r.id === offer.requestId)
-                            : null;
+              <>
+                {/* Desktop Table View */}
+                <Card className="hidden md:block border-border/50 dark:border-[#d4af37]/20 shadow-md hover:shadow-xl dark:hover:shadow-[#d4af37]/20 transition-all duration-300">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{language === 'ar' ? 'رقم العرض' : 'Offer #'}</TableHead>
+                            <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
+                            <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
+                            <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                            <TableHead>{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</TableHead>
+                            <TableHead>{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</TableHead>
+                            <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredOffers.map((offer) => {
+                            const linkedRequest = offer.requestId 
+                              ? priceRequests.find(r => r.id === offer.requestId)
+                              : null;
+                            const isExpired = new Date(offer.validUntil) < new Date();
 
-                          return (
-                            <TableRow key={offer.id}>
-                              <TableCell className="font-medium font-mono">
-                                <div className="flex items-center gap-2">
-                                  {offer.offerNumber}
-                                  {linkedRequest && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <FileText className="h-3 w-3 mr-1" />
-                                      {linkedRequest.requestNumber}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>{getClientName(offer.clientId)}</TableCell>
-                              <TableCell>{getLtaName(offer.ltaId)}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {getOfferStatusIcon(offer.status)}
-                                  {getStatusBadge(offer.status)}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}
-                              </TableCell>
-                              <TableCell>
-                                {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center gap-2 justify-end">
-                                  {linkedRequest && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleViewRequest(linkedRequest)}
-                                      title={language === 'ar' ? 'عرض الطلب الأصلي' : 'View original request'}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDownload(offer.pdfFileName)}
+                            return (
+                              <TableRow key={offer.id}>
+                                <TableCell className="font-medium font-mono">
+                                  <div className="flex items-center gap-2">
+                                    {offer.offerNumber}
+                                    {linkedRequest && (
+                                      <Badge variant="outline" className="text-xs">
+                                        <FileText className="h-3 w-3 mr-1" />
+                                        {linkedRequest.requestNumber}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>{getClientName(offer.clientId)}</TableCell>
+                                <TableCell>{getLtaName(offer.ltaId)}</TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={offer.status}
+                                    onValueChange={(newStatus) => handleUpdateOfferStatus(offer.id, newStatus)}
                                   >
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+                                    <SelectTrigger className="w-32">
+                                      <div className="flex items-center gap-2">
+                                        {getOfferStatusIcon(isExpired ? 'expired' : offer.status)}
+                                        <SelectValue />
+                                      </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="draft">{language === 'ar' ? 'مسودة' : 'Draft'}</SelectItem>
+                                      <SelectItem value="sent">{language === 'ar' ? 'مُرسل' : 'Sent'}</SelectItem>
+                                      <SelectItem value="viewed">{language === 'ar' ? 'مُشاهد' : 'Viewed'}</SelectItem>
+                                      <SelectItem value="accepted">{language === 'ar' ? 'مقبول' : 'Accepted'}</SelectItem>
+                                      <SelectItem value="rejected">{language === 'ar' ? 'مرفوض' : 'Rejected'}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  {offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}
+                                </TableCell>
+                                <TableCell>
+                                  <div className={isExpired ? 'text-destructive font-medium' : ''}>
+                                    {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                                    {isExpired && (
+                                      <Badge variant="destructive" className="ml-2 text-xs">
+                                        {language === 'ar' ? 'منتهي' : 'Expired'}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center gap-2 justify-end">
+                                    {linkedRequest && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleViewRequest(linkedRequest)}
+                                        title={language === 'ar' ? 'عرض الطلب الأصلي' : 'View original request'}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDownload(offer.pdfFileName)}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden grid gap-4">
+                  {filteredOffers.map((offer) => {
+                    const linkedRequest = offer.requestId 
+                      ? priceRequests.find(r => r.id === offer.requestId)
+                      : null;
+                    const isExpired = new Date(offer.validUntil) < new Date();
+
+                    return (
+                      <Card key={offer.id} className="hover-elevate">
+                        <CardContent className="p-4 space-y-4">
+                          {/* Header */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-mono font-semibold text-base mb-1">
+                                {offer.offerNumber}
+                              </div>
+                              {linkedRequest && (
+                                <Badge variant="outline" className="text-xs">
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  {linkedRequest.requestNumber}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex-shrink-0">
+                              {getOfferStatusIcon(isExpired ? 'expired' : offer.status)}
+                            </div>
+                          </div>
+
+                          {/* Client & LTA Info */}
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}:</span>
+                              <span className="font-medium">{getClientName(offer.clientId)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}:</span>
+                              <span className="font-medium">{getLtaName(offer.ltaId)}</span>
+                            </div>
+                          </div>
+
+                          {/* Status Selector */}
+                          <div className="space-y-2">
+                            <Label className="text-sm text-muted-foreground">
+                              {language === 'ar' ? 'الحالة' : 'Status'}
+                            </Label>
+                            <Select
+                              value={offer.status}
+                              onValueChange={(newStatus) => handleUpdateOfferStatus(offer.id, newStatus)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="draft">{language === 'ar' ? 'مسودة' : 'Draft'}</SelectItem>
+                                <SelectItem value="sent">{language === 'ar' ? 'مُرسل' : 'Sent'}</SelectItem>
+                                <SelectItem value="viewed">{language === 'ar' ? 'مُشاهد' : 'Viewed'}</SelectItem>
+                                <SelectItem value="accepted">{language === 'ar' ? 'مقبول' : 'Accepted'}</SelectItem>
+                                <SelectItem value="rejected">{language === 'ar' ? 'مرفوض' : 'Rejected'}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Dates */}
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ الإرسال' : 'Sent'}:</span>
+                              <span>{offer.sentAt ? new Date(offer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}:</span>
+                              <span className={isExpired ? 'text-destructive font-medium' : ''}>
+                                {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                              </span>
+                            </div>
+                            {isExpired && (
+                              <Badge variant="destructive" className="w-full justify-center">
+                                {language === 'ar' ? 'منتهي الصلاحية' : 'Expired'}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2 pt-2 border-t">
+                            {linkedRequest && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewRequest(linkedRequest)}
+                                className="flex-1"
+                              >
+                                <Eye className="h-4 w-4 me-2" />
+                                {language === 'ar' ? 'عرض الطلب' : 'View Request'}
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(offer.pdfFileName)}
+                              className="flex-1"
+                            >
+                              <Download className="h-4 w-4 me-2" />
+                              {language === 'ar' ? 'تحميل' : 'Download'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             {filteredOffers.length > 0 && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground text-center sm:text-left">
                 {language === 'ar' 
                   ? `إجمالي ${filteredOffers.length} عرض سعر`
                   : `Total ${filteredOffers.length} price offer${filteredOffers.length !== 1 ? 's' : ''}`

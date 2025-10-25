@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/test/document-triggers', async (req: any, res) => {
     try {
       const { eventType, data } = req.body;
-      
+
       if (!eventType || !data) {
         return res.status(400).json({ message: 'eventType and data are required' });
       }
@@ -363,13 +363,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!ltaId) {
         const clientLtas = await storage.getClientLtas(req.client.id);
         const activeLtas = clientLtas.filter(lta => lta.status === 'active');
-        
+
         if (activeLtas.length === 0) {
           // Auto-create draft LTA for this client
           const client = await storage.getClient(req.client.id);
           const ltaCount = (await storage.getLtas()).length + 1;
           const ltaName = `Draft Contract - ${client?.nameEn || 'Client'} - ${new Date().toISOString().split('T')[0]}`;
-          
+
           const newLta = await storage.createLta({
             nameEn: ltaName,
             nameAr: `عقد مسودة - ${client?.nameAr || 'عميل'} - ${new Date().toISOString().split('T')[0]}`,
@@ -377,10 +377,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             descriptionAr: 'عقد مسودة تم إنشاؤه تلقائياً من طلب السعر',
             status: 'draft'
           });
-          
+
           // Assign draft LTA to client
           await storage.assignLtaToClient(newLta.id, req.client.id);
-          
+
           ltaId = newLta.id;
         } else {
           return res.status(400).json({
@@ -549,19 +549,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Auto-activate draft LTA if offer is accepted
       if (status === 'accepted' && offer.ltaId) {
         const lta = await storage.getLta(offer.ltaId);
-        
+
         if (lta && lta.status === 'draft') {
           // Activate the LTA with 1-year validity
           const startDate = new Date();
           const endDate = new Date();
           endDate.setFullYear(endDate.getFullYear() + 1);
-          
+
           await storage.updateLta(offer.ltaId, {
             status: 'active',
             startDate,
             endDate
           });
-          
+
           // Populate lta_products from offer items
           const items = offer.items as any[];
           for (const item of items) {
@@ -630,13 +630,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin: Get all price offers
-  app.get("/api/admin/price-offers", requireAdmin, async (req: AdminRequest, res: Response) => {
+  // Get all price offers for admin
+  app.get('/api/admin/price-offers', requireAdmin, async (req, res) => {
     try {
       const offers = await storage.getAllPriceOffers();
       res.json(offers);
     } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+      console.error('Error fetching price offers:', error);
+      res.status(500).json({ message: 'Failed to fetch price offers' });
+    }
+  });
+
+  // Update price offer status
+  app.patch('/api/admin/price-offers/:id/status', requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!status || !['draft', 'sent', 'viewed', 'accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+
+      const updatedOffer = await storage.updatePriceOfferStatus(id, status);
+
+      if (!updatedOffer) {
+        return res.status(404).json({ message: 'Price offer not found' });
+      }
+
+      res.json(updatedOffer);
+    } catch (error) {
+      console.error('Error updating price offer status:', error);
+      res.status(500).json({ message: 'Failed to update price offer status' });
     }
   });
 
@@ -689,7 +713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If created from request, mark request as processed
       if (requestId) {
         await storage.updatePriceRequestStatus(requestId, 'processed');
-        
+
         // Notify client that their request has been processed
         const request = await storage.getPriceRequest(requestId);
         if (request) {
@@ -1980,7 +2004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Set cache headers for better performance
       res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
-      
+
       const allProducts = await storage.getProducts();
 
       // Optimize response by only sending necessary fields
