@@ -97,6 +97,11 @@ export default function CatalogPage() {
     }
   }, [clientLtas, selectedLtaId]);
 
+  // Reset subcategory when main category changes
+  useEffect(() => {
+    setSelectedSubCategory(null);
+  }, [selectedMainCategory]);
+
   const requestPriceMutation = useMutation({
     mutationFn: async (data: { ltaId: string; products: Array<{ productId: string; quantity: number }>; notes?: string }) => {
       const res = await apiRequest('POST', '/api/price-requests', data);
@@ -645,7 +650,7 @@ export default function CatalogPage() {
             )}
 
             {/* Products Grid */}
-            {(selectedMainCategory || selectedSubCategory || searchQuery) && filteredProducts.length > 0 && (
+            {(selectedMainCategory || searchQuery) && filteredProducts.length > 0 && (
               <>
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-muted-foreground">
@@ -659,11 +664,8 @@ export default function CatalogPage() {
                     const slugifiedName = product.nameEn.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
-                    const slugifiedCategory = (product.category || 'products').toLowerCase()
-                      .replace(/[^a-z0-9]+/g, '-')
-                      .replace(/^-+|-+$/g, '');
                     return (
-                      <Link key={product.id} href={`/products/${slugifiedCategory}/${slugifiedName}`}>
+                      <Link key={product.id} href={`/products/${slugifiedName}`}>
                         <Card className="h-full relative overflow-hidden cursor-pointer group
                           bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
                           border-border/50 dark:border-[#d4af37]/20
@@ -778,7 +780,7 @@ export default function CatalogPage() {
             )}
 
             {/* No Products Found */}
-            {filteredProducts.length === 0 && (selectedSubCategory || searchQuery) && (
+            {filteredProducts.length === 0 && (selectedMainCategory || searchQuery) && (
               <Card className="p-12 text-center bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
                 border-border/50 dark:border-[#d4af37]/20
                 hover:border-primary dark:hover:border-[#d4af37]
