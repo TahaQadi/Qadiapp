@@ -61,19 +61,11 @@ export default function CatalogPage() {
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [selectedLtaId, setSelectedLtaId] = useState('');
 
+  // Always use public endpoint for catalog - it returns prices for authenticated users
   const { data: products = [], isLoading, error } = useQuery<ProductWithLtaPrice[]>({
-    queryKey: user ? ['/api/products'] : ['/api/products/public'],
+    queryKey: ['/api/products/public'],
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
-  });
-
-  // Debug logging
-  console.log('Products data:', { 
-    productsCount: products.length, 
-    isLoading, 
-    error,
-    user: !!user,
-    firstProduct: products[0]
   });
 
   const { data: clientLtas = [] } = useQuery<Lta[]>({
