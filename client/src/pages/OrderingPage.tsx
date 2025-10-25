@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle, Calendar, Check, Save } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle, Calendar, Check, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -123,6 +123,11 @@ export default function OrderingPage() {
 
   // State for active tab
   const [activeTab, setActiveTab] = useState('lta-products'); // Default to 'lta-products'
+
+  // Fetch price offers for client
+  const { data: priceOffers = [], isLoading: priceOffersLoading } = useQuery<any[]>({
+    queryKey: ['/api/price-offers'],
+  });
 
   // Ref to store scroll position for restoration after cart updates
   const scrollPositionRef = useRef<number | null>(null);
@@ -1208,6 +1213,11 @@ export default function OrderingPage() {
                   <span className="hidden xs:inline">{t('templates')}</span>
                   <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
                 </TabsTrigger>
+                <TabsTrigger value="price-offers" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-price-offers">
+                  <FileText className="h-4 w-4 me-1 sm:me-2" />
+                  <span className="hidden xs:inline">{language === 'ar' ? 'عروض الأسعار' : 'Price Offers'}</span>
+                  <span className="xs:hidden">{language === 'ar' ? 'عروض' : 'Offers'}</span>
+                </TabsTrigger>
                 <TabsTrigger value="history" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-history">
                   <History className="h-4 w-4 me-1 sm:me-2" />
                   <span className="hidden xs:inline">{t('history')}</span>
@@ -1445,6 +1455,108 @@ export default function OrderingPage() {
                       onDelete={() => handleDeleteTemplate(template.id)}
                     />
                   ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Price Offers Tab */}
+            <TabsContent value="price-offers" className="space-y-4 sm:space-y-6">
+              {priceOffersLoading ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>
+                      {language === 'ar' ? 'جاري تحميل العروض...' : 'Loading offers...'}
+                    </span>
+                  </div>
+                </div>
+              ) : priceOffers.length === 0 ? (
+                <Card className="border-border/50 dark:border-[#d4af37]/20">
+                  <CardContent className="py-8 sm:py-12">
+                    <EmptyState
+                      icon={FileText}
+                      title={isArabic ? 'لا توجد عروض أسعار' : 'No Price Offers'}
+                      description={isArabic ? 'لم تستلم أي عروض أسعار بعد' : 'You have not received any price offers yet'}
+                      actionLabel={isArabic ? 'طلب عرض سعر' : 'Request Quote'}
+                      onAction={() => window.location.href = '/catalog'}
+                    />
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {priceOffers.map((offer) => {
+                    const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
+                    const isExpired = offer.status === 'expired';
+                    const canRespond = offer.status === 'sent' || offer.status === 'viewed';
+
+                    return (
+                      <Card key={offer.id} className={cn("border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm", isExpired && "opacity-60")}>
+                        <CardHeader>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg">{offer.offerNumber}</CardTitle>
+                              <CardDescription className="text-sm mt-1">
+                                {new Date(offer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </CardDescription>
+                            </div>
+                            <Badge variant={
+                              offer.status === 'accepted' ? 'default' :
+                              offer.status === 'rejected' ? 'destructive' :
+                              offer.status === 'expired' ? 'secondary' : 'outline'
+                            }>
+                              {language === 'ar' ? 
+                                (offer.status === 'sent' ? 'مرسل' :
+                                 offer.status === 'viewed' ? 'تمت المشاهدة' :
+                                 offer.status === 'accepted' ? 'مقبول' :
+                                 offer.status === 'rejected' ? 'مرفوض' :
+                                 offer.status === 'expired' ? 'منتهي' : offer.status) :
+                                offer.status.charAt(0).toUpperCase() + offer.status.slice(1)
+                              }
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              {language === 'ar' ? 'عدد المنتجات' : 'Products'}
+                            </span>
+                            <span className="font-medium">{items.length}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              {language === 'ar' ? 'الإجمالي' : 'Total'}
+                            </span>
+                            <span className="font-bold text-lg">${offer.total}</span>
+                          </div>
+                          {offer.validUntil && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                {language === 'ar' ? 'صالح حتى' : 'Valid Until'}
+                              </span>
+                              <span className="font-medium">
+                                {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                              </span>
+                            </div>
+                          )}
+                        </CardContent>
+                        <CardFooter className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => window.location.href = '/price-offers'}
+                          >
+                            <Eye className="h-4 w-4 me-2" />
+                            {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
