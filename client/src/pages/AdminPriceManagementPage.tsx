@@ -856,7 +856,7 @@ export default function AdminPriceManagementPage() {
                                         const items = typeof offer.items === 'string' 
                                           ? JSON.parse(offer.items) 
                                           : (Array.isArray(offer.items) ? offer.items : []);
-                                        
+
                                         if (!Array.isArray(items) || items.length === 0) {
                                           return (
                                             <span className="text-muted-foreground text-sm">
@@ -864,14 +864,14 @@ export default function AdminPriceManagementPage() {
                                             </span>
                                           );
                                         }
-                                        
+
                                         return (
                                           <div className="space-y-1">
                                             {items.slice(0, 2).map((item: any, idx: number) => {
                                               const name = language === 'ar' 
                                                 ? (item.nameAr || item.nameEn || 'Unnamed')
                                                 : (item.nameEn || item.nameAr || 'Unnamed');
-                                              
+
                                               return (
                                                 <div key={idx} className="text-sm">
                                                   <div className="font-medium truncate">
@@ -1028,7 +1028,7 @@ export default function AdminPriceManagementPage() {
                                     const items = typeof offer.items === 'string' 
                                       ? JSON.parse(offer.items) 
                                       : (Array.isArray(offer.items) ? offer.items : []);
-                                    return items.length > 0 ? `${items.length} ${language === 'ar' ? 'منتج' : 'items'}` : (language === 'ar' ? 'لا توجد' : 'None');
+                                    return Array.isArray(items) && items.length > 0 ? `${items.length} ${language === 'ar' ? 'منتج' : 'items'}` : (language === 'ar' ? 'لا توجد' : 'None');
                                   } catch {
                                     return language === 'ar' ? 'خطأ' : 'Error';
                                   }
@@ -1510,7 +1510,7 @@ export default function AdminPriceManagementPage() {
                       const items = typeof selectedOffer.items === 'string' 
                         ? JSON.parse(selectedOffer.items) 
                         : (Array.isArray(selectedOffer.items) ? selectedOffer.items : []);
-                      
+
                       if (!Array.isArray(items) || items.length === 0) {
                         return (
                           <div className="text-center py-8 text-sm text-muted-foreground">
@@ -1518,7 +1518,7 @@ export default function AdminPriceManagementPage() {
                           </div>
                         );
                       }
-                      
+
                       return items.map((item: any, idx: number) => {
                         const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
                         const itemQuantity = Number(item.quantity) || 0;
@@ -1526,7 +1526,7 @@ export default function AdminPriceManagementPage() {
                         const name = language === 'ar' 
                           ? (item.nameAr || item.nameEn || 'Unnamed Product')
                           : (item.nameEn || item.nameAr || 'Unnamed Product');
-                        
+
                         return (
                           <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
                             <div className="flex-1 min-w-0">
@@ -1571,7 +1571,7 @@ export default function AdminPriceManagementPage() {
                     const quantity = Number(item.quantity) || 0;
                     return sum + (price * quantity);
                   }, 0);
-                  
+
                   return (
                     <div className="border rounded-lg p-3 sm:p-4">
                       <div className="flex justify-between items-center text-base sm:text-lg font-semibold">
