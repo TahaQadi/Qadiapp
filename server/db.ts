@@ -12,13 +12,7 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Use pooler endpoint for better connection management and auto-wake
-const connectionString = process.env.DATABASE_URL.replace('.us-east-2', '-pooler.us-east-2');
-
-export const pool = new Pool({ 
-  connectionString,
-  max: 10 // Connection pool size
-});
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });
 
 // Re-export commonly used tables for convenience
