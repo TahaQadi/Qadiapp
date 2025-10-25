@@ -35,6 +35,8 @@ export class TemplatePDFGenerator {
         // Set font based on language
         if (language === 'ar') {
           doc.font('server/fonts/NotoSansArabic-Regular.ttf');
+        } else {
+          doc.font('Helvetica');
         }
 
         // Sort sections by order
@@ -109,34 +111,61 @@ export class TemplatePDFGenerator {
     // Logo if available
     if (content.logo && content.showLogo !== false) {
       try {
-        doc.image('public/logo.png', 50, y, { width: 60 });
+        const logoPath = content.logoPath || 'public/logo.png';
+        doc.image(logoPath, 50, y, { width: 60 });
       } catch (error) {
-        console.error('Logo not found');
+        console.error('Logo not found:', content.logoPath || 'public/logo.png');
       }
     }
 
-    // Company info
-    const companyInfo = language === 'ar' ? content.companyInfoAr : content.companyInfoEn;
-    if (companyInfo) {
+    // Company info - handle both structured and simple formats
+    let companyName = '';
+    let companyAddress = '';
+    let companyPhone = '';
+    let companyEmail = '';
+    let companyTaxNumber = '';
+
+    if (content.companyInfo || content.companyInfoEn || content.companyInfoAr) {
+      const companyInfo = language === 'ar' ? content.companyInfoAr : (content.companyInfoEn || content.companyInfo);
+      
+      if (typeof companyInfo === 'object') {
+        companyName = companyInfo.name || '';
+        companyAddress = companyInfo.address || '';
+        companyPhone = companyInfo.phone || '';
+        companyEmail = companyInfo.email || '';
+        companyTaxNumber = companyInfo.taxNumber || '';
+      }
+    } else {
+      // Handle simple string fields
+      companyName = this.replaceVariables(content.companyName || '', variables);
+      companyAddress = this.replaceVariables(content.address || content.companyAddress || '', variables);
+      companyPhone = this.replaceVariables(content.phone || content.companyPhone || '', variables);
+      companyEmail = this.replaceVariables(content.email || content.companyEmail || '', variables);
+      companyTaxNumber = this.replaceVariables(content.taxNumber || content.companyTaxNumber || '', variables);
+    }
+
+    // Render company information
+    if (companyName) {
       doc.fontSize(styles.fontSize + 2)
         .fillColor(styles.primaryColor)
-        .text(companyInfo.name || '', 120, y, { align: 'left' });
+        .text(companyName, 120, y, { align: 'left' });
+    }
 
-      doc.fontSize(styles.fontSize - 1)
-        .fillColor(styles.secondaryColor);
+    doc.fontSize(styles.fontSize - 1)
+      .fillColor(styles.secondaryColor);
 
-      if (companyInfo.address) {
-        doc.text(companyInfo.address, 120, doc.y + 2);
-      }
-      if (companyInfo.phone) {
-        doc.text(companyInfo.phone, 120, doc.y + 2);
-      }
-      if (companyInfo.email) {
-        doc.text(companyInfo.email, 120, doc.y + 2);
-      }
-      if (companyInfo.taxNumber) {
-        doc.text(`Tax ID: ${companyInfo.taxNumber}`, 120, doc.y + 2);
-      }
+    if (companyAddress) {
+      doc.text(companyAddress, 120, doc.y + 2);
+    }
+    if (companyPhone) {
+      doc.text(companyPhone, 120, doc.y + 2);
+    }
+    if (companyEmail) {
+      doc.text(companyEmail, 120, doc.y + 2);
+    }
+    if (companyTaxNumber) {
+      const taxLabel = language === 'ar' ? 'الرقم الضريبي:' : 'Tax ID:';
+      doc.text(`${taxLabel} ${companyTaxNumber}`, 120, doc.y + 2);
     }
 
     // Title
@@ -147,6 +176,20 @@ export class TemplatePDFGenerator {
         .fillColor(styles.primaryColor)
         .text(this.replaceVariables(title, variables), { align: 'center' });
     }
+
+    // Additional header fields
+    const headerFields = ['date', 'offerNumber', 'clientName', 'ltaName', 'validUntil'];
+    headerFields.forEach(field => {
+      if (content[field]) {
+        const value = this.replaceVariables(content[field], variables);
+        if (value && value !== content[field]) {
+          const label = language === 'ar' ? this.getArabicLabel(field) : this.getEnglishLabel(field);
+          doc.fontSize(styles.fontSize - 1)
+            .fillColor(styles.secondaryColor)
+            .text(`${label}: ${value}`, { align: 'center' });
+        }
+      }
+    });
 
     doc.moveDown(1);
   }
@@ -160,6 +203,7 @@ export class TemplatePDFGenerator {
   ) {
     const content = section.content as any;
 
+    // Handle section title
     if (content.sectionTitle) {
       const title = language === 'ar' ? content.sectionTitleAr : content.sectionTitle;
       doc.fontSize(styles.fontSize + 2)
@@ -168,16 +212,48 @@ export class TemplatePDFGenerator {
       doc.moveDown(0.5);
     }
 
+    // Handle main text content
     const text = language === 'ar' ? content.textAr : content.textEn || content.text;
     if (text) {
       doc.fontSize(styles.fontSize)
-        .fillColor(styles.secondaryColor)
-        .text(this.replaceVariables(text, variables), {
-          align: content.align || 'left',
-        });
+        .fillColor(styles.secondaryColor);
+      
+      this.renderText(doc, this.replaceVariables(text, variables), {
+        align: content.align || 'left',
+      }, language);
     }
 
-    // Handle additional fields in content
+    // Handle structured data fields (like subtotal, tax, etc.)
+    const structuredFields = ['subtotal', 'tax', 'taxRate', 'discount', 'total', 'currency', 'date', 'offerNumber'];
+    structuredFields.forEach(field => {
+      if (content[field]) {
+        const value = this.replaceVariables(content[field], variables);
+        if (value && value !== content[field]) {
+          const label = language === 'ar' ? this.getArabicLabel(field) : this.getEnglishLabel(field);
+          doc.fontSize(styles.fontSize)
+            .fillColor(styles.secondaryColor)
+            .text(`${label}: ${value}`, {
+              align: content.align || 'left',
+            });
+        }
+      }
+    });
+
+    // Handle client/party information
+    const partyFields = ['clientName', 'clientNameAr', 'ltaName', 'ltaNameAr', 'validUntil'];
+    partyFields.forEach(field => {
+      if (content[field]) {
+        const value = this.replaceVariables(content[field], variables);
+        if (value && value !== content[field]) {
+          const label = language === 'ar' ? this.getArabicLabel(field) : this.getEnglishLabel(field);
+          doc.fontSize(styles.fontSize - 1)
+            .fillColor(styles.secondaryColor)
+            .text(`${label}: ${value}`);
+        }
+      }
+    });
+
+    // Handle any other dynamic fields
     Object.keys(content).forEach(key => {
       if (key.startsWith('party') || key.startsWith('supplier') || key.startsWith('client')) {
         const value = this.replaceVariables(content[key], variables);
@@ -191,6 +267,59 @@ export class TemplatePDFGenerator {
     doc.moveDown(0.5);
   }
 
+  private static getEnglishLabel(field: string): string {
+    const labels: Record<string, string> = {
+      subtotal: 'Subtotal',
+      tax: 'Tax',
+      taxRate: 'Tax Rate',
+      discount: 'Discount',
+      total: 'Total',
+      currency: 'Currency',
+      date: 'Date',
+      offerNumber: 'Offer Number',
+      clientName: 'Client',
+      ltaName: 'LTA Agreement',
+      validUntil: 'Valid Until'
+    };
+    return labels[field] || field;
+  }
+
+  private static getArabicLabel(field: string): string {
+    const labels: Record<string, string> = {
+      subtotal: 'المجموع الفرعي',
+      tax: 'الضريبة',
+      taxRate: 'معدل الضريبة',
+      discount: 'الخصم',
+      total: 'المجموع',
+      currency: 'العملة',
+      date: 'التاريخ',
+      offerNumber: 'رقم العرض',
+      clientName: 'العميل',
+      ltaName: 'الاتفاقية',
+      validUntil: 'صالح حتى'
+    };
+    return labels[field] || field;
+  }
+
+  private static renderText(
+    doc: PDFKit.PDFDocument,
+    text: string,
+    options: any,
+    language: 'en' | 'ar'
+  ) {
+    // Handle RTL for Arabic text
+    if (language === 'ar' && options.align !== 'center') {
+      options.align = 'right';
+    }
+    
+    doc.text(text, options);
+  }
+
+  private static isArabicText(text: string): boolean {
+    // Simple check for Arabic characters
+    return /[\u0600-\u06FF]/.test(text);
+  }
+
   private static renderTable(
     doc: PDFKit.PDFDocument,
     section: TemplateSection,
@@ -202,11 +331,23 @@ export class TemplatePDFGenerator {
     const headers = language === 'ar' ? content.headersAr : content.headers;
     const dataSource = content.dataSource;
 
-    // Get data from variables
-    const dataVar = variables.find(v => v.key === dataSource.replace(/[{}]/g, ''));
-    const data = dataVar?.value || [];
+    if (!headers || !Array.isArray(headers)) {
+      console.warn('Table headers not found or invalid');
+      return;
+    }
 
-    if (!Array.isArray(data) || data.length === 0) return;
+    // Get data from variables - handle both direct variable and nested access
+    let data: any[] = [];
+    if (dataSource) {
+      const cleanDataSource = dataSource.replace(/[{}]/g, '');
+      const dataVar = variables.find(v => v.key === cleanDataSource);
+      data = dataVar?.value || [];
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn('Table data not found or empty');
+      return;
+    }
 
     const tableTop = doc.y;
     const columnWidth = (doc.page.width - 100) / headers.length;
@@ -230,6 +371,13 @@ export class TemplatePDFGenerator {
     data.forEach((row: any, rowIndex: number) => {
       const rowHeight = 20;
 
+      // Check if we need a new page
+      if (currentY + rowHeight > doc.page.height - 100) {
+        this.renderFooter(doc, { content: { text: '', pageNumbers: true } } as any, variables, styles, language);
+        doc.addPage();
+        currentY = 50; // Start after header space
+      }
+
       if (content.alternateRowColors && rowIndex % 2 === 1) {
         doc.rect(50, currentY, doc.page.width - 100, rowHeight)
           .fillOpacity(0.1)
@@ -237,13 +385,21 @@ export class TemplatePDFGenerator {
           .fillOpacity(1);
       }
 
-      Object.values(row).forEach((cell: any, colIndex: number) => {
-        doc.fontSize(styles.fontSize - 1)
-          .fillColor(styles.secondaryColor)
-          .text(String(cell || ''), 50 + colIndex * columnWidth + 5, currentY + 3, {
+      // Handle both object and array row data
+      const rowValues = Array.isArray(row) ? row : Object.values(row);
+      
+      rowValues.forEach((cell: any, colIndex: number) => {
+        if (colIndex < headers.length) {
+          doc.fontSize(styles.fontSize - 1)
+            .fillColor(styles.secondaryColor);
+          
+          this.renderText(doc, String(cell || ''), {
+            x: 50 + colIndex * columnWidth + 5,
+            y: currentY + 3,
             width: columnWidth - 10,
             align: 'center',
-          });
+          }, language);
+        }
       });
 
       if (content.showBorders) {
@@ -414,11 +570,52 @@ export class TemplatePDFGenerator {
     if (!text) return '';
 
     let result = text;
+    
+    // Convert variables array to object for easier access
+    const varMap = new Map<string, any>();
     variables.forEach(variable => {
-      const regex = new RegExp(`{{${variable.key}}}`, 'g');
-      result = result.replace(regex, String(variable.value || ''));
+      varMap.set(variable.key, variable.value);
+    });
+
+    // Handle nested variable access (e.g., {{client.nameEn}})
+    result = result.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+      const value = this.getNestedValue(varMap, path.trim());
+      return value !== undefined ? String(value) : match; // Keep original if not found
     });
 
     return result;
+  }
+
+  private static getNestedValue(varMap: Map<string, any>, path: string): any {
+    // Handle simple variables first
+    if (varMap.has(path)) {
+      return varMap.get(path);
+    }
+
+    // Handle nested access (e.g., "client.nameEn")
+    const parts = path.split('.');
+    if (parts.length === 2) {
+      const [objectKey, propertyKey] = parts;
+      const object = varMap.get(objectKey);
+      
+      if (object && typeof object === 'object') {
+        return object[propertyKey];
+      }
+    }
+
+    // Handle deeper nesting (e.g., "client.address.street")
+    if (parts.length > 2) {
+      let current = varMap.get(parts[0]);
+      for (let i = 1; i < parts.length; i++) {
+        if (current && typeof current === 'object') {
+          current = current[parts[i]];
+        } else {
+          return undefined;
+        }
+      }
+      return current;
+    }
+
+    return undefined;
   }
 }

@@ -13,6 +13,8 @@ import analyticsRoutes from './analytics-routes';
 import demoRequestRoutes from './demo-request-routes';
 import feedbackRoutes from './feedback-routes';
 import feedbackAnalyticsRoutes from './feedback-analytics-routes';
+import { setupDocumentRoutes } from './document-routes';
+import { documentTriggerService } from './document-triggers';
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFGenerator } from "./pdf-generator";
@@ -152,6 +154,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Demo request routes
   app.use('/api', demoRequestRoutes); // Register demo request routes
+
+  // Document routes
+  setupDocumentRoutes(app);
+
+  // Test document triggers endpoint (for development)
+  app.post('/api/test/document-triggers', async (req: any, res) => {
+    try {
+      const { eventType, data } = req.body;
+      
+      if (!eventType || !data) {
+        return res.status(400).json({ message: 'eventType and data are required' });
+      }
+
+      await documentTriggerService.queueEvent({
+        type: eventType,
+        data,
+        clientId: data.clientId || 'test-client',
+        timestamp: new Date()
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'Event queued successfully',
+        queueStatus: documentTriggerService.getQueueStatus()
+      });
+    } catch (error) {
+      console.error('Test document trigger error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
 
   // Feedback routes
   app.use('/api', feedbackRoutes);
@@ -666,6 +701,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             metadata: JSON.stringify({ requestId: request.id, offerId: offer.id })
           });
         }
+      }
+
+      // Trigger document generation for price offer created
+      try {
+        await documentTriggerService.queueEvent({
+          type: 'price_offer_created',
+          data: offer,
+          clientId: offer.clientId,
+          timestamp: new Date()
+        });
+      } catch (docError: any) {
+        console.error('Error triggering document generation:', docError);
+        // Don't fail the offer creation if document generation fails
       }
 
       res.json(offer);
@@ -1775,6 +1823,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error) {
           console.error('Error sending push notification:', error);
         }
+
+        // Trigger document generation for status change
+        try {
+          await documentTriggerService.queueEvent({
+            type: 'order_status_changed',
+            data: {
+              order: fullOrder,
+              oldStatus: fullOrder.status,
+              newStatus: status
+            },
+            clientId: fullOrder.clientId,
+            timestamp: new Date()
+          });
+        } catch (docError: any) {
+          console.error('Error triggering document generation:', docError);
+          // Don't fail the status update if document generation fails
+        }
       }
 
       res.json(order);
@@ -2402,6 +2467,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (notifError: any) {
         console.error('Error creating notification:', notifError);
+      }
+
+      // Trigger document generation for order placed
+      try {
+        await documentTriggerService.queueEvent({
+          type: 'order_placed',
+          data: finalOrder,
+          clientId: req.client.id,
+          timestamp: new Date()
+        });
+      } catch (docError: any) {
+        console.error('Error triggering document generation:', docError);
+        // Don't fail the order creation if document generation fails
       }
 
       res.status(201).json(finalOrder);
