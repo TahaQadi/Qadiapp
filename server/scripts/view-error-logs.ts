@@ -31,18 +31,10 @@ async function viewErrorLogs() {
     }
 
     logs.rows.forEach((log: any, index: number) => {
-      console.log(`\n--- Error Log #${index + 1} ---`);
-      console.log(`Level: ${log.level}`);
-      console.log(`Message: ${log.message}`);
-      console.log(`Timestamp: ${log.timestamp}`);
-      
       if (log.context) {
-        console.log('\nContext:', JSON.stringify(log.context, null, 2));
       }
       if (log.stack) {
-        console.log('\nStack Trace:', log.stack);
       }
-      console.log('---\n');
     });
   } catch (error) {
     console.error('❌ Failed to fetch error logs:', error);

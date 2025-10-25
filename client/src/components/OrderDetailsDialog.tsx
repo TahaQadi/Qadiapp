@@ -22,7 +22,6 @@ import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
 import { OrderTimeline } from './OrderTimeline';
 import { OrderFeedbackDialog } from './OrderFeedbackDialog';
-import { GenerateDocumentDialog } from './GenerateDocumentDialog';
 
 interface OrderItem {
   productId: string;
@@ -261,21 +260,11 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
         </div>
 
       {!showCancelForm && order.status !== "cancelled" && order.status !== "delivered" && (
-        <DialogFooter className="mt-6 gap-2">
-          <GenerateDocumentDialog
-            documentType="order"
-            orderId={order.id}
-            trigger={
-              <Button variant="outline" className="flex-1">
-                <FileText className="h-4 w-4 mr-2" />
-                {language === "ar" ? "إنشاء مستند" : "Generate Document"}
-              </Button>
-            }
-          />
+        <DialogFooter className="mt-6">
           <Button
             variant="destructive"
             onClick={() => setShowCancelForm(true)}
-            className="flex-1 gap-2"
+            className="gap-2"
           >
             <XCircle className="h-4 w-4" />
             {language === "ar" ? "إلغاء الطلب" : "Cancel Order"}

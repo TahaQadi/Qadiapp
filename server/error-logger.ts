@@ -190,7 +190,7 @@ class ErrorLogger {
     try {
       const result = await db.execute(sql`
         DELETE FROM error_logs
-        WHERE timestamp < NOW() - INTERVAL '${sql.raw(daysToKeep.toString())} days'
+        WHERE timestamp < NOW() - INTERVAL '${daysToKeep} days'
       `);
 
       return result.rowCount || 0;

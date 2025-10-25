@@ -19,7 +19,6 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { OrderFilters, OrderFilterState } from "@/components/OrderFilters";
-import { GenerateDocumentDialog } from "@/components/GenerateDocumentDialog";
 
 export default function OrdersPage() {
   const { t, i18n } = useTranslation();
@@ -408,23 +407,6 @@ export default function OrdersPage() {
                       <FileText className="h-3.5 w-3.5 me-1.5" />
                       {language === 'ar' ? 'التفاصيل' : 'Details'}
                     </Button>
-
-                    {/* Generate Document Button */}
-                    <GenerateDocumentDialog
-                      documentType="order"
-                      orderId={order.id}
-                      trigger={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          data-testid={`button-generate-doc-${order.id}`}
-                          className="min-h-[36px] px-3"
-                          title={language === 'ar' ? 'إنشاء مستند من قالب' : 'Generate Document'}
-                        >
-                          <FileText className="h-3.5 w-3.5" />
-                        </Button>
-                      }
-                    />
 
                     {/* Issue Report Icon Button */}
                     <Button

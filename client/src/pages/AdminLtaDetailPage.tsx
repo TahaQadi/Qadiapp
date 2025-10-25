@@ -506,10 +506,8 @@ export default function AdminLtaDetailPage() {
     setRemoveClientDialogOpen(true);
   };
 
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return '-';
+  const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '-';
     return format(date, 'PP', { locale: language === 'ar' ? ar : undefined });
   };
 

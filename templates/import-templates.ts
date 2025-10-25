@@ -10,9 +10,9 @@ const API_URL = process.env.API_URL || 'http://localhost:5000';
 
 // Simple logger for production scripts
 const logger = {
-  info: (msg: string) => process.env.NODE_ENV !== 'production' ? console.log(msg) : null,
+  info: (msg: string) => process.env.NODE_ENV !== 'production' ? logger.info(msg) : null,
   error: (msg: string) => console.error(msg),
-  success: (msg: string) => process.env.NODE_ENV !== 'production' ? console.log(msg) : null,
+  success: (msg: string) => process.env.NODE_ENV !== 'production' ? logger.info(msg) : null,
 };
 
 interface TemplateData {
