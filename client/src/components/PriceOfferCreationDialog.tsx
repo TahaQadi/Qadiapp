@@ -190,13 +190,14 @@ export default function PriceOfferCreationDialog({
 
   const calculateSubtotal = (items: PriceOfferFormValues['items']) => {
     return items.reduce((sum, item) => {
-      const price = parseFloat(item.unitPrice) || 0;
-      return sum + (price * item.quantity);
+      const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+      const quantity = Number(item.quantity) || 0;
+      return sum + (price * quantity);
     }, 0);
   };
 
   const calculateTotal = (items: PriceOfferFormValues['items']) => {
-    return calculateSubtotal(items); // For now, no tax calculation
+    return calculateSubtotal(items);
   };
 
   // Update available products when LTA changes
@@ -279,7 +280,7 @@ export default function PriceOfferCreationDialog({
       sku: product.sku || 'N/A',
       quantity: 1,
       unitPrice: product.contractPrice || '0',
-      currency: selectedLta?.currency || product.currency || 'USD', // Use LTA currency first
+      currency: selectedLta?.currency || product.currency || 'USD',
     };
 
     const updatedItems = [...currentItems, newItem];
@@ -489,18 +490,19 @@ export default function PriceOfferCreationDialog({
                         </TableHeader>
                         <TableBody>
                           {currentItems.map((item) => {
-                            const product = selectedProducts.find(p => p.id === item.productId);
-                            const total = (parseFloat(item.unitPrice) || 0) * item.quantity;
+                            const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                            const itemQuantity = Number(item.quantity) || 0;
+                            const total = itemPrice * itemQuantity;
 
                             return (
                               <TableRow key={item.productId}>
                                 <TableCell>
                                   <div>
                                     <div className="font-medium text-sm">
-                                      {language === 'ar' ? item.nameAr : item.nameEn}
+                                      {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
-                                      SKU: {item.sku}
+                                      SKU: {item.sku || 'N/A'}
                                     </div>
                                   </div>
                                 </TableCell>
@@ -515,19 +517,20 @@ export default function PriceOfferCreationDialog({
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1">
-                                    <DollarSign className="h-3 w-3" />
                                     <Input
                                       type="number"
                                       step="0.01"
+                                      min="0"
                                       value={item.unitPrice}
                                       onChange={(e) => handlePriceChange(item.productId, e.target.value)}
-                                      className="w-20 h-8 text-sm"
+                                      className="w-24 h-8 text-sm"
+                                      placeholder="0.00"
                                     />
                                     <span className="text-xs text-muted-foreground">{currentCurrency}</span>
                                   </div>
                                 </TableCell>
                                 <TableCell className="font-medium text-sm">
-                                  ${total.toFixed(2)}
+                                  {currentCurrency} {total.toFixed(2)}
                                 </TableCell>
                                 <TableCell>
                                   <Button
@@ -550,18 +553,19 @@ export default function PriceOfferCreationDialog({
                     {/* Mobile Card View */}
                     <div className="sm:hidden space-y-3 p-4">
                       {currentItems.map((item) => {
-                        const product = selectedProducts.find(p => p.id === item.productId);
-                        const total = (parseFloat(item.unitPrice) || 0) * item.quantity;
+                        const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                        const itemQuantity = Number(item.quantity) || 0;
+                        const total = itemPrice * itemQuantity;
 
                         return (
                           <div key={item.productId} className="border rounded-lg p-3 space-y-3">
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm">
-                                  {language === 'ar' ? item.nameAr : item.nameEn}
+                                  {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  SKU: {item.sku}
+                                  SKU: {item.sku || 'N/A'}
                                 </div>
                               </div>
                               <Button
@@ -593,13 +597,14 @@ export default function PriceOfferCreationDialog({
                                   {language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}
                                 </Label>
                                 <div className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
                                   <Input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     value={item.unitPrice}
                                     onChange={(e) => handlePriceChange(item.productId, e.target.value)}
                                     className="h-8 text-sm"
+                                    placeholder="0.00"
                                   />
                                   <span className="text-xs text-muted-foreground">{currentCurrency}</span>
                                 </div>
@@ -611,7 +616,7 @@ export default function PriceOfferCreationDialog({
                                 {language === 'ar' ? 'المجموع' : 'Total'}
                               </span>
                               <span className="font-semibold text-sm">
-                                ${total.toFixed(2)}
+                                {currentCurrency} {total.toFixed(2)}
                               </span>
                             </div>
                           </div>
@@ -622,7 +627,7 @@ export default function PriceOfferCreationDialog({
                     <div className="p-4 border-t">
                       <div className="flex justify-between items-center text-base font-semibold">
                         <span>{language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}:</span>
-                        <span>${total.toFixed(2)}</span>
+                        <span>{currentCurrency} {total.toFixed(2)}</span>
                       </div>
                     </div>
                   </CardContent>
