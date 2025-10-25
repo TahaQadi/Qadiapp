@@ -61,10 +61,9 @@ export default function CatalogPage() {
   const [priceRequestMessage, setPriceRequestMessage] = useState('');
   const [selectedLtaId, setSelectedLtaId] = useState('');
 
-  // Use authenticated endpoint for logged-in users to get LTA prices
+  // Always use public endpoint for catalog - it returns prices for authenticated users
   const { data: products = [], isLoading, error } = useQuery<ProductWithLtaPrice[]>({
-    queryKey: user ? ['/api/products'] : ['/api/products/public'],
-    enabled: user ? !!user : true, // Only query if user is loaded
+    queryKey: ['/api/products/public'],
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
   });
