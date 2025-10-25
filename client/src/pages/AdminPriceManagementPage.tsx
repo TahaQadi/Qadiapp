@@ -869,8 +869,8 @@ export default function AdminPriceManagementPage() {
                                           <div className="space-y-1">
                                             {items.slice(0, 2).map((item: any, idx: number) => {
                                               const name = language === 'ar' 
-                                                ? (item.nameAr || item.nameEn || item.name || 'Unnamed')
-                                                : (item.nameEn || item.nameAr || item.name || 'Unnamed');
+                                                ? (item.nameAr || item.nameEn || 'Unnamed')
+                                                : (item.nameEn || item.nameAr || 'Unnamed');
                                               
                                               return (
                                                 <div key={idx} className="text-sm">
@@ -1524,8 +1524,8 @@ export default function AdminPriceManagementPage() {
                         const itemQuantity = Number(item.quantity) || 0;
                         const total = itemPrice * itemQuantity;
                         const name = language === 'ar' 
-                          ? (item.nameAr || item.nameEn || item.name || 'Unnamed Product')
-                          : (item.nameEn || item.nameAr || item.name || 'Unnamed Product');
+                          ? (item.nameAr || item.nameEn || 'Unnamed Product')
+                          : (item.nameEn || item.nameAr || 'Unnamed Product');
                         
                         return (
                           <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
