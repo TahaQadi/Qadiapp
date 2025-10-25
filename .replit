@@ -729,35 +729,6 @@ args = "echo \"\""
 task = "shell.exec"
 args = "echo \"✅ Migration completed!\""
 
-[[workflows.workflow]]
-name = "Start Fresh"
-author = 48391860
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"🧹 Cleaning up port 5000...\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "lsof -ti:5000 | xargs kill -9 2>/dev/null || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"✅ Port cleared\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "echo \"🚀 Starting application...\""
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_database:1.0.0"]
 

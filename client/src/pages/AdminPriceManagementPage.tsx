@@ -1576,7 +1576,7 @@ export default function AdminPriceManagementPage() {
                     <div className="border rounded-lg p-3 sm:p-4">
                       <div className="flex justify-between items-center text-base sm:text-lg font-semibold">
                         <span>{language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}:</span>
-                        <span className="whitespace-nowrap">{selectedOffer.total || subtotal.toFixed(2)} {items[0]?.currency || 'ILS'}</span>
+                        <span className="whitespace-nowrap">{subtotal.toFixed(2)} {items[0]?.currency || 'ILS'}</span>
                       </div>
                     </div>
                   );
