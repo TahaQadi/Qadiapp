@@ -75,7 +75,7 @@ export default function AdminTemplatesPage() {
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   // Fetch templates
-  const { data: templates = [], isLoading } = useQuery<Template[]>({
+  const { data: templatesData, isLoading } = useQuery<Template[]>({
     queryKey: ['/api/admin/templates', selectedCategory],
     queryFn: async () => {
       const url = selectedCategory === 'all'
@@ -85,6 +85,9 @@ export default function AdminTemplatesPage() {
       return res.json();
     },
   });
+
+  // Ensure templates is always an array
+  const templates = Array.isArray(templatesData) ? templatesData : [];
 
   // Computed values with useMemo for performance
   const stats = useMemo(() => ({
