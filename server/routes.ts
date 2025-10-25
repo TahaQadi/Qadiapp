@@ -508,10 +508,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client: Accept/Reject price offer
   app.post("/api/price-offers/:id/respond", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { status, note } = req.body;
+      const { action, note } = req.body;
 
-      if (!['accepted', 'rejected'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status", messageAr: "حالة غير صالحة" });
+      if (!action || !['accept', 'reject'].includes(action)) {
+        return res.status(400).json({ message: "Invalid action", messageAr: "إجراء غير صالح" });
       }
 
       const offer = await storage.getPriceOffer(req.params.id);
@@ -536,6 +536,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({
           message: "Offer has expired",
           messageAr: "انتهت صلاحية العرض"
+        });
+      }
+
+      const newStatus = action === 'accept' ? 'accepted' : 'rejected';ض"
         });
       }
 
@@ -578,6 +582,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Update offer status
+      await storage.updatePriceOffer(req.params.id, {
+        status: newStatus,
+        responseNote: note || null,
+        respondedAt: new Date()
+      });
+
+      // If accepted, add products to LTA if not already there
+      if (action === 'accept') {
+        const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
+        if (offer.ltaId && Array.isArray(items)) {
+          for (const item of items) {
+            try {
+              await storage.assignProductToLta({
+                ltaId: offer.ltaId,
+                productId: item.productId,
+                contractPrice: item.unitPrice.toString(),
+                currency: item.currency || 'USD'
+              });
+            } catch (error) {
+              // Ignore duplicate product errors
+            }
+          }
+        }
+      }
+
       // Notify admins
       const client = await storage.getClient(req.client.id);
       const admins = await storage.getAdminClients();
@@ -586,17 +616,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           clientId: admin.id,
           type: 'system',
-          titleEn: `Price Offer ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
-          titleAr: status === 'accepted' ? 'تم قبول عرض السعر' : 'تم رفض عرض السعر',
-          messageEn: `${client?.nameEn} ${status} offer #${offer.offerNumber}`,
-          messageAr: `${status === 'accepted' ? 'قبل' : 'رفض'} ${client?.nameAr} العرض رقم ${offer.offerNumber}`,
+          titleEn: `Price Offer ${action === 'accept' ? 'Accepted' : 'Rejected'}`,
+          titleAr: action === 'accept' ? 'تم قبول عرض السعر' : 'تم رفض عرض السعر',
+          messageEn: `${client?.nameEn} ${action === 'accept' ? 'accepted' : 'rejected'} offer #${offer.offerNumber}`,
+          messageAr: `${action === 'accept' ? 'قبل' : 'رفض'} ${client?.nameAr} العرض رقم ${offer.offerNumber}`,
           metadata: JSON.stringify({ offerId: offer.id })
         });
       }
 
-      res.json({ message: "Response submitted successfully", messageAr: "تم إرسال الرد بنجاح" });
+      res.json({ 
+        success: true,
+        message: "Response submitted successfully", 
+        messageAr: "تم إرسال الرد بنجاح" 
+      });
     } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+      console.error('Price offer response error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ غير معروف'
+      });
     }
   });
 
