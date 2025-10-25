@@ -22,6 +22,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
 import { OrderTimeline } from './OrderTimeline';
 import { OrderFeedbackDialog } from './OrderFeedbackDialog';
+import { DocumentViewer } from './DocumentViewer';
 
 interface OrderItem {
   productId: string;
@@ -230,6 +231,20 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                 history={orderHistory}
                 currentStatus={order.status}
               />
+              <Separator />
+            </>
+          )}
+
+          {/* Related Documents Section */}
+          <DocumentViewer
+            relatedId={order.id}
+            relatedType="order"
+            showTitle={true}
+            className="mt-6"
+          />
+
+          {orderHistory.length > 0 && (
+            <>
               <Separator />
             </>
           )}

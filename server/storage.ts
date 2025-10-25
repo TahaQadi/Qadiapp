@@ -253,10 +253,12 @@ export interface IStorage {
     documentType?: string;
     clientId?: string;
     ltaId?: string;
+    orderId?: string;
+    priceOfferId?: string;
     startDate?: Date;
     endDate?: Date;
     searchTerm?: string;
-  }): Promise<any[]>;
+  }, page?: number, pageSize?: number): Promise<{ documents: any[], totalCount: number }>;
   updateDocumentMetadata(id: string, updates: {
     viewCount?: number;
     lastViewedAt?: Date;
@@ -1544,11 +1546,14 @@ export class MemStorage implements IStorage {
     documentType?: string;
     clientId?: string;
     ltaId?: string;
+    orderId?: string;
+    priceOfferId?: string;
     startDate?: Date;
     endDate?: Date;
     searchTerm?: string;
-  }): Promise<any[]> {
+  }, page: number = 1, pageSize: number = 20): Promise<{ documents: any[], totalCount: number }> {
     let query = db.select().from(documents);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(documents);
     const conditions = [];
 
     if (filters.documentType) {
@@ -1560,18 +1565,41 @@ export class MemStorage implements IStorage {
     if (filters.ltaId) {
       conditions.push(eq(documents.ltaId, filters.ltaId));
     }
+    if (filters.orderId) {
+      conditions.push(eq(documents.orderId, filters.orderId));
+    }
+    if (filters.priceOfferId) {
+      conditions.push(eq(documents.priceOfferId, filters.priceOfferId));
+    }
     if (filters.startDate) {
       conditions.push(gte(documents.createdAt, filters.startDate));
     }
     if (filters.endDate) {
       conditions.push(lte(documents.createdAt, filters.endDate));
     }
+    if (filters.searchTerm) {
+      conditions.push(
+        sql`(${documents.fileName} ILIKE ${`%${filters.searchTerm}%`} OR 
+            ${documents.documentType} ILIKE ${`%${filters.searchTerm}%`})`
+      );
+    }
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
     }
 
-    return await query.orderBy(desc(documents.createdAt));
+    // Get total count
+    const [{ count: totalCount }] = await countQuery;
+
+    // Apply pagination
+    const offset = (page - 1) * pageSize;
+    const documents = await query
+      .orderBy(desc(documents.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+
+    return { documents, totalCount };
   }
 
   async updateDocumentMetadata(id: string, updates: {

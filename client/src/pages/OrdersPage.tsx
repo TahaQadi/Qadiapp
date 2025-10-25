@@ -11,6 +11,7 @@ import { OrderModificationDialog } from "@/components/OrderModificationDialog";
 import { OrderFeedbackDialog } from "@/components/OrderFeedbackDialog";
 import { IssueReportDialog } from "@/components/IssueReportDialog";
 import { OrderDetailsDialog } from "@/components/OrderDetailsDialog";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";

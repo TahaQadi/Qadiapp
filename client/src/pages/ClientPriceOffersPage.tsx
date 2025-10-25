@@ -15,6 +15,7 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { FileText, Eye, Check, X, ArrowLeft, User, LogOut, Package, Download } from "lucide-react";
 import { Link } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import type { PriceOffer } from "@shared/schema";
 
 export default function ClientPriceOffersPage() {
@@ -343,6 +344,14 @@ export default function ClientPriceOffersPage() {
                   <p className="text-sm text-muted-foreground">{selectedOffer.notes}</p>
                 </div>
               )}
+
+              {/* Related Documents */}
+              <DocumentViewer
+                relatedId={selectedOffer.id}
+                relatedType="priceOffer"
+                showTitle={true}
+                className="mt-4"
+              />
             </div>
           )}
         </DialogContent>
