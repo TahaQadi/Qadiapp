@@ -1016,9 +1016,9 @@ export default function AdminPriceManagementPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="ILS">ILS</SelectItem>
                   <SelectItem value="USD">USD</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="ILS">ILS</SelectItem>
                   <SelectItem value="JOD">JOD</SelectItem>
                 </SelectContent>
               </Select>
@@ -1080,12 +1080,13 @@ export default function AdminPriceManagementPage() {
                 <div className="col-span-2">
                   <span className="text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}:</span>
                   <div className="mt-1 font-medium">
-                    {new Date(selectedRequest.requestedAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                    {new Date(selectedRequest.requestedAt).toLocaleString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
+                      timeZone: 'Asia/Jerusalem'
                     })}
                   </div>
                 </div>

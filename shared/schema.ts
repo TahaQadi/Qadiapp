@@ -132,7 +132,7 @@ export const ltas = pgTable("ltas", {
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   status: text("status", { enum: ["draft", "active", "expired"] }).notNull().default("active"),
-  currency: text("currency").notNull().default("USD"),
+  currency: text("currency").notNull().default("ILS"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -141,7 +141,7 @@ export const ltaProducts = pgTable("lta_products", {
   ltaId: uuid("lta_id").notNull().references(() => ltas.id, { onDelete: "restrict" }),
   productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
   contractPrice: decimal("contract_price", { precision: 10, scale: 2 }).notNull(),
-  currency: text("currency").notNull().default("USD"),
+  currency: text("currency").notNull().default("ILS"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   uniqueLtaProduct: unique().on(table.ltaId, table.productId),
@@ -161,7 +161,7 @@ export const clientPricing = pgTable("client_pricing", {
   clientId: varchar("client_id").notNull(),
   productId: varchar("product_id").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  currency: text("currency").notNull().default("USD"),
+  currency: text("currency").notNull().default("ILS"),
   importedAt: timestamp("imported_at").defaultNow(),
 });
 
@@ -366,7 +366,7 @@ export const loginSchema = z.object({
 export const priceImportRowSchema = z.object({
   sku: z.string(),
   price: z.string(),
-  currency: z.string().optional().default("USD"),
+  currency: z.string().optional().default("ILS"),
 });
 
 // Cart item schema for order validation
@@ -485,7 +485,7 @@ export const bulkAssignProductsSchema = z.object({
   products: z.array(z.object({
     sku: z.string().min(1, 'SKU is required'),
     contractPrice: z.string().min(1, 'Contract price is required'),
-    currency: z.string().default('USD'),
+    currency: z.string().default('ILS'),
   })),
 });
 

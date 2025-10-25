@@ -40,7 +40,7 @@ const priceOfferSchema = z.object({
         const num = parseFloat(val);
         return !isNaN(num) && num > 0;
       }, 'Unit price must be a valid positive number'),
-    currency: z.string().min(1, 'Currency is required').default('USD'),
+    currency: z.string().min(1, 'Currency is required').default('ILS'),
   })).min(1, 'At least one product is required'),
 });
 

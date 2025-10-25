@@ -587,6 +587,7 @@ export default function AdminLtaListPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="ILS">ILS</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>
                         <SelectItem value="EUR">EUR</SelectItem>
                         <SelectItem value="SAR">SAR</SelectItem>
@@ -790,6 +791,7 @@ export default function AdminLtaListPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="ILS">ILS</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>
                         <SelectItem value="EUR">EUR</SelectItem>
                         <SelectItem value="SAR">SAR</SelectItem>

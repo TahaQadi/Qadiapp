@@ -43,7 +43,7 @@ const ltaFormSchema = z.object({
 const ltaProductSchema = z.object({
   productId: z.string().min(1, 'Product is required'),
   contractPrice: z.string().min(1, 'Contract price is required'),
-  currency: z.string().default('USD'),
+  currency: z.string().default('ILS'),
 });
 
 const ltaClientSchema = z.object({
@@ -1205,6 +1205,7 @@ KB-001,89.99,SAR`;
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="ILS">ILS</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>
                         <SelectItem value="EUR">EUR</SelectItem>
                         <SelectItem value="SAR">SAR</SelectItem>
@@ -1272,6 +1273,7 @@ KB-001,89.99,SAR`;
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="ILS">ILS</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>
                         <SelectItem value="EUR">EUR</SelectItem>
                         <SelectItem value="SAR">SAR</SelectItem>
