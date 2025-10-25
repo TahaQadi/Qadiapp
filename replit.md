@@ -12,6 +12,8 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)** - REST API reference with 63+ endpoints, request/response formats, and authentication
 - **[DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)** - Complete database schema with 28 tables, relationships, and constraints
 - **[CODE_AUDIT.md](docs/CODE_AUDIT.md)** - Code quality audit identifying unused/deprecated code and improvement recommendations
+- **[PHASE_2_MIGRATION_GUIDE.md](docs/PHASE_2_MIGRATION_GUIDE.md)** - Migration guide for API validation schemas and query key factory
+- **[PHASE_3_4_IMPLEMENTATION.md](docs/PHASE_3_4_IMPLEMENTATION.md)** - Performance optimization, monitoring, and security enhancements guide
 
 These documents provide detailed technical specifications, implementation details, and maintenance guidance for the entire application.
 
@@ -54,7 +56,7 @@ Preferred communication style: Simple, everyday language.
 **Client Features:** Responsive product grid, product display (images, names, SKU, descriptions, pricing), single-LTA cart, active contract badge, order templates, order history with reorder, order modification/cancellation requests, price request submission (select LTA products and request quotes), price offer viewing (receive offers, download PDFs, accept/reject), multi-language (EN/AR) with RTL support.
 **System Features:** Full bilingual support (EN/AR with RTL/BiDi), responsive design, dark/light themes, PWA with push notifications, Pipefy webhook integration, comprehensive order modification workflow, template-based PDF generation (price offers, orders, invoices, LTA contracts).
 
-# Recent Improvements (December 2024)
+# Recent Improvements (December 2024 - January 2025)
 
 ## Phase 1: Critical Fixes ✅ COMPLETED
 - **Standardized API Responses** (`shared/api-types.ts`): All endpoints now return consistent `ApiResponse<T>` format with `{success, data?, error?, meta?}` structure
@@ -62,7 +64,7 @@ Preferred communication style: Simple, everyday language.
 - **Error Handler Middleware** (`server/error-handler.ts`): Centralized error handling with `AppError` class, automatic Zod validation error handling, and helper functions (`errors.unauthorized()`, `errors.notFound()`, etc.)
 - **Authentication Middleware**: Updated `isAuthenticated`, `requireAuth`, `requireAdmin` to use standardized error responses
 - **Type Duplication Cleanup**: Removed duplicate table definitions from `server/db.ts`, consolidated all schemas in `shared/schema.ts`
-- **Middleware Stack**: Correctly ordered middleware (Routes → API 404 Handler → SPA Fallback → Error Handler) ensuring JSON responses for API routes and HTML for client routes
+- **Middleware Stack**: Correctly ordered middleware (Security Headers → Rate Limiting → Performance Monitoring → Routes → API 404 Handler → SPA Fallback → Error Handler) ensuring JSON responses for API routes and HTML for client routes
 
 ## Phase 2: API Improvements ✅ COMPLETED
 - **Query Key Factory** (`client/src/lib/queryKeys.ts`): Centralized, hierarchical query key system for TanStack Query with type-safe keys for all resources (products, LTAs, clients, orders, templates, price requests/offers, documents, feedback, stats)
@@ -70,6 +72,19 @@ Preferred communication style: Simple, everyday language.
 - **Validation Middleware** (`server/validation-middleware.ts`): Express middleware factory for automatic validation of body/query/params with file upload validation, common helpers (`validateId`, `validatePagination`), and standardized error responses
 - **Migration Guide** (`docs/PHASE_2_MIGRATION_GUIDE.md`): Complete guide with before/after examples, CRUD demonstration, and clear distinction between JSON body validation and query parameter validation
 - **Query String Coercion**: Fixed pagination and query parameter validation to properly handle URL query strings with `z.coerce.number()` for automatic type conversion
+
+## Phase 3: Performance Optimization & Monitoring ✅ COMPLETED
+- **Performance Monitoring** (`server/performance-monitoring.ts`): Tracks API endpoint metrics including response times, sizes, status codes; detects slow requests (>1s); stores last 1000 metrics in-memory; admin endpoints for stats/metrics/clear
+- **Caching Layer** (`server/caching.ts`): In-memory TTL-based caching with pattern-based invalidation, cache middleware factory for GET endpoints, automatic cleanup, cache hit/miss headers, predefined TTL constants (SHORT/MEDIUM/LONG/VERY_LONG)
+- **Business Metrics** (`server/business-metrics.ts`): Event tracking for 30+ business KPIs (orders, price offers, LTAs, products); time-range filtering; user activity tracking; admin endpoints for metrics and events
+- **Frontend Performance** (`client/src/lib/queryClient.ts`): Enhanced retry logic with intelligent exponential backoff; rate limit aware (429 handling with Retry-After); don't retry 4xx errors except 429; retry 5xx errors up to 3 times; granular cache strategies by data type
+
+## Phase 4: Enhanced Security ✅ COMPLETED
+- **Rate Limiting** (`server/rate-limiting.ts`): Per-user and per-IP rate limiting with sliding window algorithm; configurable windows and limits; rate limit headers (X-RateLimit-*); Retry-After header for 429 responses; 4 presets (AUTH: 5/15min, API: 100/15min, PUBLIC: 300/15min, EXPENSIVE: 10/hour)
+- **Security Headers** (`server/security-headers.ts`): 7 security headers (CORS, CSP, HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy); dev/production presets
+- **Audit Logging** (`server/audit-logging.ts`): Comprehensive audit trail tracking user, action, resource, changes; IP address and user agent tracking; resource history tracking; time-based filtering; 40+ predefined audit actions
+- **Monitoring Routes** (`server/monitoring-routes.ts`): Admin-only monitoring dashboard with 10 endpoints for performance, cache, business metrics, audit logs, and system health; mounted at `/api/monitoring/*`
+- **Implementation Guide** (`docs/PHASE_3_4_IMPLEMENTATION.md`): Complete documentation with usage examples, integration points, benefits, migration checklist, and future enhancements
 
 # External Dependencies
 
