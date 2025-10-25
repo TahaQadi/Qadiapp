@@ -1310,27 +1310,34 @@ export default function AdminPriceManagementPage() {
                 <div className="space-y-2">
                   {(typeof selectedRequest.products === 'string' 
                     ? JSON.parse(selectedRequest.products) 
-                    : selectedRequest.products || []).map((product: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm sm:text-base mb-1 truncate">
-                          {language === 'ar' ? product.nameAr : product.nameEn}
-                        </div>
-                        <div className="text-xs sm:text-sm text-muted-foreground">
-                          SKU: {product.sku}
-                        </div>
-                        {product.unit && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {language === 'ar' ? 'الوحدة:' : 'Unit:'} {product.unit}
+                    : selectedRequest.products || []).map((product: any, idx: number) => {
+                      // Handle different product name formats
+                      const productName = language === 'ar' 
+                        ? (product.nameAr || product.nameEn || product.name || 'منتج غير معروف')
+                        : (product.nameEn || product.nameAr || product.name || 'Unknown Product');
+                      
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm sm:text-base mb-1 truncate">
+                              {productName}
+                            </div>
+                            <div className="text-xs sm:text-sm text-muted-foreground">
+                              SKU: {product.sku || 'N/A'}
+                            </div>
+                            {product.unit && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {language === 'ar' ? 'الوحدة:' : 'Unit:'} {product.unit}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="font-semibold text-base sm:text-lg">{product.quantity || 1}</div>
-                        <div className="text-xs text-muted-foreground whitespace-nowrap">{language === 'ar' ? 'الكمية' : 'Quantity'}</div>
-                      </div>
-                    </div>
-                  ))}
+                          <div className="text-right flex-shrink-0">
+                            <div className="font-semibold text-base sm:text-lg">{product.quantity || 1}</div>
+                            <div className="text-xs text-muted-foreground whitespace-nowrap">{language === 'ar' ? 'الكمية' : 'Quantity'}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
 
