@@ -123,7 +123,7 @@ function Router() {
       <Route path="/logout" component={LogoutPage} />
 
       {/* Public product pages for SEO */}
-      <Route path="/products/:subCategory/:productName" component={ProductDetailPage} />
+      <Route path="/products/:productName" component={ProductDetailPage} />
       <Route path="/catalog/:category" component={CatalogPage} />
       <Route path="/catalog" component={CatalogPage} />
 
