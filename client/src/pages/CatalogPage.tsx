@@ -564,7 +564,7 @@ export default function CatalogPage() {
                 
                 {/* Horizontal scrollable tabs */}
                 <div className="relative">
-                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+                  <div className="flex gap-2 overflow-x-auto pb-2">
                     {getSubCategories(selectedMainCategory).map((subCat, index) => {
                       const isActive = selectedSubCategory === subCat;
                       const count = products.filter(p => p.category === subCat).length;
