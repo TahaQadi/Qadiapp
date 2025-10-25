@@ -2,8 +2,45 @@
 import { Client } from '@replit/object-storage';
 import crypto from 'crypto';
 
-// Initialize Object Storage client
-const client = new Client();
+// Lazy initialization of Object Storage client
+let client: Client | null = null;
+let clientInitialized = false;
+let clientInitError: Error | null = null;
+
+/**
+ * Get the Object Storage client with lazy initialization and error handling
+ */
+async function getClient(): Promise<Client> {
+  if (clientInitialized) {
+    if (clientInitError) {
+      throw clientInitError;
+    }
+    if (!client) {
+      throw new Error('Object Storage client not available');
+    }
+    return client;
+  }
+
+  try {
+    // Check if we're in a Replit environment
+    const isReplit = process.env.REPL_ID || process.env.REPLIT_DB_URL;
+    
+    if (!isReplit) {
+      throw new Error('Not running in Replit environment - Object Storage not available');
+    }
+
+    client = new Client();
+    await client.init(); // Initialize the client
+    clientInitialized = true;
+    console.log('Object Storage client initialized successfully');
+    return client;
+  } catch (error: any) {
+    clientInitError = error;
+    clientInitialized = true;
+    console.error('Failed to initialize Object Storage client:', error.message);
+    throw new Error(`Object Storage unavailable: ${error.message}`);
+  }
+}
 
 export interface StoredPDF {
   fileName: string;
@@ -96,7 +133,6 @@ export class PDFStorage {
     category: keyof typeof PDFStorage.CATEGORIES = 'PRICE_OFFER'
   ): Promise<{ ok: boolean; fileName?: string; error?: string; checksum?: string }> {
     try {
-
       // Validate buffer
       const validation = this.validateBuffer(pdfBuffer);
       if (!validation.valid) {
@@ -113,9 +149,12 @@ export class PDFStorage {
       // Convert Buffer to Uint8Array for Object Storage
       const uint8Array = new Uint8Array(pdfBuffer);
 
+      // Get client with lazy initialization
+      const storageClient = await getClient();
+
       // Upload with retry logic
       const { ok, error } = await this.retryOperation(async () => {
-        return await client.uploadFromBytes(fullPath, uint8Array);
+        return await storageClient.uploadFromBytes(fullPath, uint8Array);
       });
       
       if (!ok) {
@@ -135,10 +174,12 @@ export class PDFStorage {
     expectedChecksum?: string
   ): Promise<{ ok: boolean; data?: Buffer; error?: string; checksum?: string }> {
     try {
+      // Get client with lazy initialization
+      const storageClient = await getClient();
 
       // Download with retry logic
       const { ok, value, error } = await this.retryOperation(async () => {
-        return await client.downloadAsBytes(fileName);
+        return await storageClient.downloadAsBytes(fileName);
       });
       
       if (!ok) {
@@ -179,11 +220,14 @@ export class PDFStorage {
     category?: keyof typeof PDFStorage.CATEGORIES
   ): Promise<{ ok: boolean; files?: string[]; error?: string }> {
     try {
+      // Get client with lazy initialization
+      const storageClient = await getClient();
+
       const prefix = category 
         ? `${this.BASE_FOLDER}${this.CATEGORIES[category]}/`
         : this.BASE_FOLDER;
 
-      const { ok, value, error } = await client.list({ prefix });
+      const { ok, value, error } = await storageClient.list({ prefix });
       
       if (!ok || !value) {
         return { ok: false, error: error?.message || 'List failed' };
@@ -198,9 +242,11 @@ export class PDFStorage {
 
   static async deletePDF(fileName: string): Promise<{ ok: boolean; error?: string }> {
     try {
+      // Get client with lazy initialization
+      const storageClient = await getClient();
       
       const { ok, error } = await this.retryOperation(async () => {
-        return await client.delete(fileName);
+        return await storageClient.delete(fileName);
       });
       
       if (!ok) {

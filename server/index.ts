@@ -108,11 +108,41 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  
+  // Function to try starting the server with port fallback
+  const startServer = async (attemptPort: number, maxAttempts: number = 3): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const serverInstance = server.listen({
+        port: attemptPort,
+        host: "0.0.0.0",
+        reusePort: true,
+      }, () => {
+        log(`serving on port ${attemptPort}`);
+        resolve();
+      });
+
+      serverInstance.on('error', (error: any) => {
+        if (error.code === 'EADDRINUSE') {
+          log(`Port ${attemptPort} is already in use, trying port ${attemptPort + 1}...`);
+          if (maxAttempts > 0) {
+            serverInstance.close();
+            startServer(attemptPort + 1, maxAttempts - 1)
+              .then(resolve)
+              .catch(reject);
+          } else {
+            reject(new Error(`Unable to find available port starting from ${port}`));
+          }
+        } else {
+          reject(error);
+        }
+      });
+    });
+  };
+
+  try {
+    await startServer(port);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 })();
