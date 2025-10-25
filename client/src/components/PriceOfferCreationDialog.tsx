@@ -234,12 +234,12 @@ export default function PriceOfferCreationDialog({
         : priceRequest.products || [];
 
       const items = products.map((product: any) => ({
-        productId: product.id,
-        nameEn: product.nameEn,
-        nameAr: product.nameAr,
-        sku: product.sku,
-        quantity: 1, // Default to 1 since price requests don't have quantities
-        unitPrice: product.contractPrice || '0',
+        productId: product.id || product.productId,
+        nameEn: product.nameEn || 'Unknown Product',
+        nameAr: product.nameAr || 'منتج غير معروف',
+        sku: product.sku || 'N/A',
+        quantity: product.quantity || 1,
+        unitPrice: product.contractPrice || product.unitPrice || '0',
         currency: 'USD', // Will be updated when LTA loads
       }));
 
@@ -562,10 +562,10 @@ export default function PriceOfferCreationDialog({
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm">
-                                  {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
+                                  {language === 'ar' ? item.nameAr : item.nameEn}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  SKU: {item.sku || 'N/A'}
+                                  {language === 'ar' ? 'رمز المنتج:' : 'SKU:'} {item.sku}
                                 </div>
                               </div>
                               <Button
