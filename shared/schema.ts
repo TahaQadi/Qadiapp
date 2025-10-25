@@ -705,4 +705,6 @@ export interface AuthUser {
   companyId?: string; // Same as id, kept for clarity
   companyNameEn?: string;
   companyNameAr?: string;
+  departments?: ClientDepartment[];
+  locations?: ClientLocation[];
 }

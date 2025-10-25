@@ -41,10 +41,10 @@ export default function ClientProfilePage() {
   const form = useForm<UpdateProfileForm>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      nameEn: user?.client?.nameEn || '',
-      nameAr: user?.client?.nameAr || '',
-      email: user?.client?.email || '',
-      phone: user?.client?.phone || '',
+      nameEn: user?.nameEn || '',
+      nameAr: user?.nameAr || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
     },
   });
 
@@ -354,25 +354,25 @@ export default function ClientProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</p>
-                      <p className="font-medium text-foreground dark:text-white">{user?.client?.nameAr || '-'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.nameAr || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</p>
-                      <p className="font-medium text-foreground dark:text-white">{user?.client?.nameEn || '-'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.nameEn || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
                         <Mail className="h-4 w-4" />
                         {isArabic ? 'البريد الإلكتروني' : 'Email'}
                       </p>
-                      <p className="font-medium text-foreground dark:text-white">{user?.client?.email || '-'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.email || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
                         <Phone className="h-4 w-4" />
                         {isArabic ? 'رقم الهاتف' : 'Phone Number'}
                       </p>
-                      <p className="font-medium text-foreground dark:text-white">{user?.client?.phone || '-'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.phone || '-'}</p>
                     </div>
                   </div>
                 )}

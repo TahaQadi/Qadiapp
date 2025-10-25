@@ -205,8 +205,8 @@ export default function AdminPriceRequestsPage() {
                         {language === "ar" ? "الاتفاقية" : "LTA"}
                       </span>
                       <span className="font-medium text-right flex-1 ml-2 truncate flex items-center gap-2">
-                        {getLtaName(request.ltaId)}
-                        {getLtaStatusBadge(request.ltaId)}
+                        {request.ltaId ? getLtaName(request.ltaId) : '-'}
+                        {request.ltaId && getLtaStatusBadge(request.ltaId)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
@@ -286,7 +286,7 @@ export default function AdminPriceRequestsPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === "ar" ? "الاتفاقية" : "LTA"}:</span>
-                  <div className="mt-1 font-medium">{getLtaName(selectedRequest.ltaId)}</div>
+                  <div className="mt-1 font-medium">{selectedRequest.ltaId ? getLtaName(selectedRequest.ltaId) : '-'}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === "ar" ? "الحالة" : "Status"}:</span>
