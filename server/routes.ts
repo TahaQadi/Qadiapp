@@ -180,7 +180,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         queueStatus: documentTriggerService.getQueueStatus()
       });
     } catch (error) {
-      console.error('Test document trigger error:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Test document trigger error:', error);
+      }
       res.status(500).json({ 
         success: false, 
         message: error instanceof Error ? error.message : 'Unknown error' 
@@ -198,7 +201,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // req.user is already populated by Passport Local Strategy
       res.json(req.user);
     } catch (error) {
-      console.error("Error fetching user:", error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching user:", error);
+      }
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
@@ -447,7 +453,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messageAr: "تم إرسال طلب السعر بنجاح"
       });
     } catch (error) {
-      console.error('Price request error:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Price request error:', error);
+      }
       res.status(500).json({
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: "حدث خطأ أثناء إرسال طلب السعر"
@@ -472,7 +481,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[Price Offers] Client ${req.client.id} has ${offers.length} offers`);
       res.json(offers);
     } catch (error) {
-      console.error('[Price Offers] Error fetching offers:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Price Offers] Error fetching offers:', error);
+      }
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
@@ -621,7 +633,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messageAr: "تم إرسال الرد بنجاح" 
       });
     } catch (error) {
-      console.error('Price offer response error:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Price offer response error:', error);
+      }
       res.status(500).json({ 
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -666,7 +681,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offers = await storage.getAllPriceOffers();
       res.json(offers);
     } catch (error) {
-      console.error('Error fetching price offers:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching price offers:', error);
+      }
       res.status(500).json({ message: 'Failed to fetch price offers' });
     }
   });
@@ -689,7 +707,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedOffer);
     } catch (error) {
-      console.error('Error updating price offer status:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error updating price offer status:', error);
+      }
       res.status(500).json({ message: 'Failed to update price offer status' });
     }
   });
@@ -796,13 +817,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date()
         });
       } catch (docError: any) {
-        console.error('Error triggering document generation:', docError);
+        // Log error for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error triggering document generation:', docError);
+        }
         // Don't fail the offer creation if document generation fails
       }
 
       res.json(offer);
     } catch (error) {
-      console.error('Create offer error:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Create offer error:', error);
+      }
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
@@ -878,7 +905,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(pdfBuffer);
 
     } catch (error) {
-      console.error('Error generating PDF for price request:', error);
+      // Log error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error generating PDF for price request:', error);
+      }
       return res.status(500).json({
         message: error instanceof Error ? error.message : 'Failed to generate PDF',
         messageAr: 'فشل في إنشاء ملف PDF'

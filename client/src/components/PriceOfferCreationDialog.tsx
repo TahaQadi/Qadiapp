@@ -208,7 +208,10 @@ export default function PriceOfferCreationDialog({
 
         return res.json();
       } catch (error) {
-        console.error('Price offer creation error:', error);
+        // Log error for debugging but don't expose internal details to user
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Price offer creation error:', error);
+        }
         throw error;
       }
     },
