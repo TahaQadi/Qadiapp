@@ -81,7 +81,10 @@ export function GenerateDocumentDialog({
       setTemplates(data.templates || []);
     } catch (error) {
       console.error('Error loading templates:', error);
-      toast.error('Failed to load templates');
+      toast({
+        variant: "destructive",
+        description: "Failed to load templates"
+      });
     } finally {
       setLoading(false);
     }
@@ -89,7 +92,10 @@ export function GenerateDocumentDialog({
 
   const handleGenerate = async () => {
     if (!selectedTemplate) {
-      toast.error('Please select a template');
+      toast({
+        variant: "destructive",
+        description: "Please select a template"
+      });
       return;
     }
 
@@ -98,7 +104,10 @@ export function GenerateDocumentDialog({
     if (template) {
       const missingVariables = template.variables.filter(variable => !variables[variable]?.trim());
       if (missingVariables.length > 0) {
-        toast.error(`Please fill in all required variables: ${missingVariables.join(', ')}`);
+        toast({
+          variant: "destructive",
+          description: `Please fill in all required variables: ${missingVariables.join(', ')}`
+        });
         return;
       }
     }
@@ -129,7 +138,9 @@ export function GenerateDocumentDialog({
 
       const result = await response.json();
       
-      toast.success('Document generated successfully!');
+      toast({
+        description: "Document generated successfully!"
+      });
       
       if (onDocumentGenerated) {
         onDocumentGenerated(result.documentId, result.fileName);
@@ -152,7 +163,10 @@ export function GenerateDocumentDialog({
       setOpen(false);
     } catch (error) {
       console.error('Error generating document:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate document');
+      toast({
+        variant: "destructive",
+        description: error instanceof Error ? error.message : 'Failed to generate document'
+      });
     } finally {
       setGenerating(false);
     }
