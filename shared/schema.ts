@@ -14,21 +14,6 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table - RESERVED FOR FUTURE USE
-// This table is currently UNUSED and reserved for future multi-tenancy features.
-// The application currently uses the 'clients' table for all authentication and user management.
-// Do NOT reference this table in foreign keys - use 'clients' table instead.
-// This table may be removed in a future version if multi-tenancy is not implemented.
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 // Business logic: Clients table (companies/organizations)
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -596,7 +581,6 @@ export const insertDemoRequestSchema = createInsertSchema(demoRequests).omit({
 
 export const schema = {
   sessions,
-  users,
   clients,
   companyUsers,
   passwordResetTokens,
@@ -677,10 +661,6 @@ export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PriceImportRow = z.infer<typeof priceImportRowSchema>;
-
-// Replit Auth user types
-export type User = typeof users.$inferSelect;
-export type UpsertUser = typeof users.$inferInsert;
 
 export interface CartItem {
   productId: string;

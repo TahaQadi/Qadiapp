@@ -32,8 +32,6 @@ import {
   type InsertPriceOffer,
   type InsertPasswordResetToken,
   type AuthUser,
-  type User,
-  type UpsertUser,
   Notification,
   notifications,
   clients,
@@ -50,7 +48,6 @@ import {
   ltas,
   ltaProducts,
   ltaClients,
-  users,
   priceRequests,
   priceOffers,
   passwordResetTokens,
@@ -71,10 +68,6 @@ const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   sessionStore: session.Store;
-
-  // Replit Auth User operations (required for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
 
   // Client Authentication
   getClientByUsername(username: string): Promise<Client | undefined>;
@@ -306,7 +299,6 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   public sessionStore: session.Store;
   private db = db;
-  private users: Map<string, User>;
   private clients: Map<string, Client>;
   private clientDepartments: Map<string, ClientDepartment>;
   private clientLocations: Map<string, ClientLocation>;
@@ -325,7 +317,6 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
-    this.users = new Map();
     this.clients = new Map();
     this.clientDepartments = new Map();
     this.clientLocations = new Map();
@@ -338,43 +329,6 @@ export class MemStorage implements IStorage {
     this.ltas = new Map();
     this.ltaProducts = new Map();
     this.ltaClients = new Map();
-  }
-
-  // Replit Auth User operations
-  async getUser(id: string): Promise<User | undefined> {
-    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
-    return result[0];
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const existingUser = await this.getUser(userData.id!);
-
-    if (existingUser) {
-      const updated = await this.db
-        .update(users)
-        .set({
-          email: userData.email ?? null,
-          firstName: userData.firstName ?? null,
-          lastName: userData.lastName ?? null,
-          profileImageUrl: userData.profileImageUrl ?? null,
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, userData.id!))
-        .returning();
-      return updated[0];
-    } else {
-      const inserted = await this.db
-        .insert(users)
-        .values({
-          id: userData.id!,
-          email: userData.email ?? null,
-          firstName: userData.firstName ?? null,
-          lastName: userData.lastName ?? null,
-          profileImageUrl: userData.profileImageUrl ?? null,
-        })
-        .returning();
-      return inserted[0];
-    }
   }
 
   // Client Authentication
