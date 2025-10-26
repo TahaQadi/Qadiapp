@@ -809,21 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Trigger document generation for price offer created
-      try {
-        await documentTriggerService.queueEvent({
-          type: 'price_offer_created',
-          data: offer,
-          clientId: offer.clientId,
-          timestamp: new Date()
-        });
-      } catch (docError: any) {
-        // Log error for debugging
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Error triggering document generation:', docError);
-        }
-        // Don't fail the offer creation if document generation fails
-      }
+      // Document generation removed - now manual only via admin UI
 
       res.json(offer);
     } catch (error) {
@@ -1939,22 +1925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error sending push notification:', error);
         }
 
-        // Trigger document generation for status change
-        try {
-          await documentTriggerService.queueEvent({
-            type: 'order_status_changed',
-            data: {
-              order: fullOrder,
-              oldStatus: fullOrder.status,
-              newStatus: status
-            },
-            clientId: fullOrder.clientId,
-            timestamp: new Date()
-          });
-        } catch (docError: any) {
-          console.error('Error triggering document generation:', docError);
-          // Don't fail the status update if document generation fails
-        }
+        // Document generation removed - now manual only via admin UI
       }
 
       res.json(order);
@@ -2599,21 +2570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Trigger document generation for order placed
-      try {
-        // Queue document generation event (non-blocking)
-        documentTriggerService.queueEvent({
-          type: 'order_placed',
-          data: finalOrder,
-          clientId: req.client.id,
-          timestamp: new Date()
-        }).catch(error => {
-          console.error('Failed to queue document generation:', error);
-          // Don't fail the order creation if document queueing fails
-        });
-      } catch (docError: any) {
-        console.error('Error triggering document generation:', docError);
-        // Don't fail the order creation if document generation fails
-      }
+      // Document generation removed - now manual only via admin UI
 
       res.status(201).json(finalOrder);
     } catch (error) {

@@ -338,8 +338,16 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar'
   ) {
     const content = section.content as any;
-    const headers = language === 'ar' ? content.headersAr : content.headers;
-    const dataSource = content.dataSource;
+    
+    // Support both naming conventions: headers/headersAr and columnsEn/columnsAr
+    let headers: string[];
+    if (language === 'ar') {
+      headers = content.headersAr || content.columnsAr;
+    } else {
+      headers = content.headers || content.columnsEn;
+    }
+    
+    const dataSource = content.dataSource || content.rows;
 
     // Validate table structure
     if (!headers || !Array.isArray(headers)) {
