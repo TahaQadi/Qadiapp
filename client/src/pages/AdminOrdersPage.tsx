@@ -188,8 +188,9 @@ export default function AdminOrdersPage() {
       });
     },
     onSettled: () => {
-      // Always refetch after error or success to ensure data consistency
+      // Invalidate all order-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
     },
   });
 

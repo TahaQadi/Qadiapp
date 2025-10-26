@@ -1863,17 +1863,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { status } = req.body;
+      const { status, notes } = req.body;
       const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
 
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
 
+      // Get current order to track previous status
+      const currentOrder = await storage.getOrder(req.params.id);
+      if (!currentOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const previousStatus = currentOrder.status;
+
+      // Update order status
       const order = await storage.updateOrderStatus(req.params.id, status);
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Create order history entry (only if status actually changed)
+      if (previousStatus !== status) {
+        await storage.createOrderHistory({
+          orderId: req.params.id,
+          status: status,
+          changedBy: req.client.id,
+          notes: notes || null,
+          isAdminNote: true,
+        });
       }
 
       // Get the order details for notification
@@ -1891,22 +1911,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           pending: { en: "Status updated to pending", ar: "تم تحديث الحالة إلى قيد الانتظار" },
         };
 
-        // Send notification for status change
-        await storage.createNotification({
-          clientId: fullOrder.clientId,
-          type: 'order_status_changed',
-          titleEn: statusMessages[status].en,
-          titleAr: statusMessages[status].ar,
-          messageEn: `Order #${fullOrder.id.substring(0, 8)} status updated`,
-          messageAr: `تم تحديث حالة الطلب #${fullOrder.id.substring(0, 8)}`,
-          actionUrl: `/orders`,
-          metadata: JSON.stringify({
-            orderId: fullOrder.id,
-            status,
-            previousStatus: fullOrder.status,
-            timestamp: new Date().toISOString(),
-          }),
-        });
+        // Send notification for status change (only if status actually changed)
+        if (previousStatus !== status) {
+          await storage.createNotification({
+            clientId: fullOrder.clientId,
+            type: 'order_status_changed',
+            titleEn: statusMessages[status].en,
+            titleAr: statusMessages[status].ar,
+            messageEn: `Order #${fullOrder.id.substring(0, 8)} status updated`,
+            messageAr: `تم تحديث حالة الطلب #${fullOrder.id.substring(0, 8)}`,
+            actionUrl: `/orders`,
+            metadata: JSON.stringify({
+              orderId: fullOrder.id,
+              status,
+              previousStatus,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+        }
 
         // Send feedback request notification if order is delivered
         if (status === 'delivered') {

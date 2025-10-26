@@ -775,12 +775,15 @@ export class MemStorage implements IStorage {
   }
 
   async updateOrderStatus(orderId: string, status: string) {
-    const [order] = await this.db
+    const [updated] = await this.db
       .update(orders)
-      .set({ status })
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
       .where(eq(orders.id, orderId))
       .returning();
-    return order;
+    return updated;
   }
 
   async getOrder(orderId: string): Promise<Order | undefined> {
