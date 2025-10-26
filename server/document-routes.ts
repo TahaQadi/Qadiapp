@@ -40,8 +40,10 @@ export function setupDocumentRoutes(app: Express) {
   // 1. Generate Document from Template
   app.post('/api/documents/generate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      // Validate request body
       const validation = generateDocumentSchema.safeParse(req.body);
       if (!validation.success) {
+        console.error('❌ Document generation validation failed:', validation.error.errors);
         return res.status(400).json({
           success: false,
           error: 'Invalid request data',
@@ -51,9 +53,28 @@ export function setupDocumentRoutes(app: Express) {
 
       const { templateId, variables, language, saveToDocuments, clientId, ltaId, orderId, priceOfferId } = validation.data;
 
+      console.log('📄 Document generation request:', {
+        templateId,
+        language,
+        variableCount: variables.length,
+        clientId,
+        userId: req.user?.id
+      });
+
       // Get template
-      const template = await TemplateStorage.getTemplate(templateId);
+      let template;
+      try {
+        template = await TemplateStorage.getTemplate(templateId);
+      } catch (templateError) {
+        console.error('❌ Failed to fetch template:', templateError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to retrieve template from database'
+        });
+      }
+
       if (!template) {
+        console.error('❌ Template not found:', templateId);
         return res.status(404).json({
           success: false,
           error: 'Template not found'
@@ -61,15 +82,26 @@ export function setupDocumentRoutes(app: Express) {
       }
 
       if (!template.isActive) {
+        console.error('❌ Template is inactive:', templateId);
         return res.status(400).json({
           success: false,
           error: 'Template is not active'
         });
       }
 
-      // Generate PDF with error handling
+      // Validate template structure
+      if (!template.sections || !Array.isArray(template.sections)) {
+        console.error('❌ Template has invalid sections:', templateId);
+        return res.status(400).json({
+          success: false,
+          error: 'Template has invalid structure'
+        });
+      }
+
+      // Generate PDF with comprehensive error handling
       let pdfBuffer: Buffer;
       try {
+        console.log('🔨 Starting PDF generation...');
         pdfBuffer = await TemplatePDFGenerator.generate({
           template,
           variables,
@@ -79,8 +111,19 @@ export function setupDocumentRoutes(app: Express) {
         if (!pdfBuffer || pdfBuffer.length === 0) {
           throw new Error('PDF generation returned empty buffer');
         }
+
+        console.log('✅ PDF generated successfully:', {
+          size: pdfBuffer.length,
+          sizeKB: Math.round(pdfBuffer.length / 1024)
+        });
       } catch (pdfError) {
-        console.error('PDF generation failed:', pdfError);
+        console.error('❌ PDF generation failed:', {
+          error: pdfError instanceof Error ? pdfError.message : 'Unknown error',
+          stack: pdfError instanceof Error ? pdfError.stack : undefined,
+          templateId,
+          language,
+          variableCount: variables.length
+        });
         return res.status(500).json({
           success: false,
           error: 'Failed to generate PDF',
@@ -97,44 +140,74 @@ export function setupDocumentRoutes(app: Express) {
 
       if (saveToDocuments) {
         // Upload to storage
-        const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, template.category);
-        if (!uploadResult.success) {
+        let uploadResult;
+        try {
+          console.log('📤 Uploading PDF to storage...');
+          uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, template.category);
+          
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Upload failed');
+          }
+          
+          console.log('✅ PDF uploaded successfully:', uploadResult.fileName);
+        } catch (uploadError) {
+          console.error('❌ Failed to upload PDF:', uploadError);
           return res.status(500).json({
             success: false,
-            error: 'Failed to upload PDF to storage'
+            error: 'Failed to upload PDF to storage',
+            details: uploadError instanceof Error ? uploadError.message : 'Unknown error'
           });
         }
 
         // Create document record
-        const document = await storage.createDocumentMetadata({
-          documentType: template.category as any,
-          fileName,
-          fileUrl: uploadResult.fileName!,
-          fileSize: pdfBuffer.length,
-          checksum: uploadResult.checksum,
-          clientId: clientId || (req.user!.isAdmin ? undefined : req.user!.id),
-          ltaId,
-          orderId,
-          priceOfferId,
-          metadata: {
-            templateId,
-            language,
-            generatedAt: new Date().toISOString(),
-            generatedBy: req.user!.id
-          }
-        });
+        let document;
+        try {
+          console.log('💾 Creating document metadata...');
+          document = await storage.createDocumentMetadata({
+            documentType: template.category as any,
+            fileName,
+            fileUrl: uploadResult.fileName!,
+            fileSize: pdfBuffer.length,
+            checksum: uploadResult.checksum,
+            clientId: clientId || (req.user!.isAdmin ? undefined : req.user!.id),
+            ltaId,
+            orderId,
+            priceOfferId,
+            metadata: {
+              templateId,
+              language,
+              generatedAt: new Date().toISOString(),
+              generatedBy: req.user!.id
+            }
+          });
+          
+          console.log('✅ Document metadata created:', document.id);
+        } catch (dbError) {
+          console.error('❌ Failed to create document metadata:', dbError);
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to save document metadata',
+            details: dbError instanceof Error ? dbError.message : 'Unknown error'
+          });
+        }
 
         documentId = document.id;
         fileUrl = uploadResult.fileName;
 
         // Log generation
-        await PDFAccessControl.logDocumentAccess({
-          documentId: document.id,
-          clientId: req.user!.id,
-          action: 'generate',
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
-        });
+        try {
+          await PDFAccessControl.logDocumentAccess({
+            documentId: document.id,
+            clientId: req.user!.id,
+            action: 'generate',
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent')
+          });
+          console.log('✅ Document access logged');
+        } catch (logError) {
+          // Don't fail the request if logging fails
+          console.error('⚠️ Failed to log document access:', logError);
+        }
       }
 
       res.json({

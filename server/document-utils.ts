@@ -110,24 +110,49 @@ export class DocumentUtils {
   }
 
   /**
-   * Get active template with caching
+   * Get active template with caching and validation
    */
   private static async getActiveTemplate(category: string): Promise<any> {
     const cacheKey = `${category}_active`;
     const cached = this.templateCache.get(cacheKey);
 
+    // Check cache validity
     if (cached && (Date.now() - cached.timestamp) < this.cacheExpiry) {
-      return cached.template;
+      // Validate cached template still has required fields
+      if (cached.template?.id && cached.template?.sections && cached.template?.isActive) {
+        console.log('📋 Using cached template:', { category, templateId: cached.template.id });
+        return cached.template;
+      } else {
+        // Invalid cache entry, remove it
+        console.warn('⚠️ Invalid cached template, removing from cache:', category);
+        this.templateCache.delete(cacheKey);
+      }
     }
 
+    // Fetch from database
+    console.log('🔍 Fetching template from database:', category);
     const templates = await TemplateStorage.getTemplates(category);
-    const template = templates.find(t => t.isActive && t.language === 'both');
+    
+    // Find active bilingual template first, then any active template
+    let template = templates.find(t => t.isActive && t.language === 'both');
+    if (!template) {
+      template = templates.find(t => t.isActive);
+    }
 
     if (template) {
+      // Validate template structure before caching
+      if (!template.sections || !Array.isArray(template.sections)) {
+        console.error('❌ Template has invalid sections:', template.id);
+        return null;
+      }
+      
       this.templateCache.set(cacheKey, {
         template,
         timestamp: Date.now()
       });
+      console.log('✅ Template cached:', { category, templateId: template.id });
+    } else {
+      console.warn('⚠️ No active template found for category:', category);
     }
 
     return template;

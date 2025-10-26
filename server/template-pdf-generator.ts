@@ -22,8 +22,8 @@ export class TemplatePDFGenerator {
           throw new Error('Invalid template: sections array is required');
         }
 
-        const styles = typeof template.styles === 'string' 
-          ? JSON.parse(template.styles) 
+        const styles = typeof template.styles === 'string'
+          ? JSON.parse(template.styles)
           : template.styles;
 
         const doc = new PDFDocument({
@@ -50,11 +50,11 @@ export class TemplatePDFGenerator {
         }
 
         // Sort sections by order
-        const sections = typeof template.sections === 'string' 
-          ? JSON.parse(template.sections) 
+        const sections = typeof template.sections === 'string'
+          ? JSON.parse(template.sections)
           : template.sections as TemplateSection[];
 
-        const sortedSections = sections.sort((a, b) => 
+        const sortedSections = sections.sort((a, b) =>
           (a.order || 0) - (b.order || 0)
         );
 
@@ -338,7 +338,7 @@ export class TemplatePDFGenerator {
     language: 'en' | 'ar'
   ) {
     const content = section.content as any;
-    
+
     // Support both naming conventions: headers/headersAr and columnsEn/columnsAr
     let headers: string[];
     if (language === 'ar') {
@@ -346,7 +346,7 @@ export class TemplatePDFGenerator {
     } else {
       headers = content.headers || content.columnsEn;
     }
-    
+
     const dataSource = content.dataSource || content.rows;
 
     // Validate table structure
@@ -615,11 +615,11 @@ export class TemplatePDFGenerator {
     // Handle nested paths efficiently
     const parts = path.split('.');
     let current: any = varMap.get(parts[0]);
-    
+
     for (let i = 1; i < parts.length && current != null; i++) {
       current = current[parts[i]];
     }
-    
+
     return current;
   }
 }

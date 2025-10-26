@@ -98,6 +98,9 @@ export default function PriceOfferCreationDialog({
   const [isCalculating, setIsCalculating] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const lastSyncedCurrencyRef = useRef<string | null>(null);
+  const [clients, setClients] = useState<Client[]>([]); // State for clients
+  const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined); // State for selected client ID
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -110,13 +113,34 @@ export default function PriceOfferCreationDialog({
     },
   });
 
-  const { data: ltas = [], isLoading: isLoadingLtas } = useQuery<LTA[]>({
-    queryKey: ['/api/admin/ltas'],
-  });
+  // Fetch active clients for selection
+  useEffect(() => {
+    if (!open) return;
 
-  const { data: clients = [], isLoading: isLoadingClients } = useQuery<Client[]>({
-    queryKey: ['/api/admin/clients'],
-  });
+    fetch('/api/admin/clients/active')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setClients(data.clients);
+        }
+      })
+      .catch(err => console.error('Failed to fetch clients:', err));
+  }, [open]);
+
+  // Fetch LTAs when client is selected
+  useEffect(() => {
+    if (!selectedClientId || !open) return;
+
+    fetch(`/api/admin/ltas?clientId=${selectedClientId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setLtas(data.ltas);
+        }
+      })
+      .catch(err => console.error('Failed to fetch LTAs:', err));
+  }, [selectedClientId, open]);
+
 
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -255,7 +279,7 @@ export default function PriceOfferCreationDialog({
   };
 
   // Calculate loading state
-  const isLoading = isLoadingLtas || isLoadingClients || isLoadingProducts ||
+  const isLoading = isLoadingProducts ||
                    isLoadingPriceRequest || isLoadingLtaProducts ||
                    isLoadingSelectedLta || isLoadingLtaClients;
 
@@ -445,14 +469,17 @@ export default function PriceOfferCreationDialog({
                       <Users className="h-4 w-4" />
                       {language === 'ar' ? 'العميل' : 'Client'}
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedClientId(value); // Update selectedClientId state
+                    }} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(selectedLtaId ? ltaClients : clients).map((client) => (
+                        {clients.map((client) => ( // Use the fetched clients state
                           <SelectItem key={client.id} value={client.id}>
                             {language === 'ar' ? client.nameAr : client.nameEn}
                           </SelectItem>
