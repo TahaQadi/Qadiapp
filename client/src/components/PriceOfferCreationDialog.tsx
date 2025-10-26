@@ -101,7 +101,6 @@ export default function PriceOfferCreationDialog({
   const lastSyncedCurrencyRef = useRef<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]); // State for clients
   const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
-  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined); // State for selected client ID
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -128,11 +127,11 @@ export default function PriceOfferCreationDialog({
       .catch(err => console.error('Failed to fetch clients:', err));
   }, [open]);
 
-  // Fetch LTAs when client is selected
+  // Fetch all active LTAs
   useEffect(() => {
-    if (!selectedClientId || !open) return;
+    if (!open) return;
 
-    fetch(`/api/admin/ltas?clientId=${selectedClientId}`)
+    fetch('/api/admin/ltas?status=active')
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -140,7 +139,7 @@ export default function PriceOfferCreationDialog({
         }
       })
       .catch(err => console.error('Failed to fetch LTAs:', err));
-  }, [selectedClientId, open]);
+  }, [open]);
 
 
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
@@ -475,10 +474,7 @@ export default function PriceOfferCreationDialog({
                       <Users className="h-4 w-4" />
                       {language === 'ar' ? 'العميل' : 'Client'}
                     </FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      setSelectedClientId(value); // Update selectedClientId state
-                    }} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'} />
