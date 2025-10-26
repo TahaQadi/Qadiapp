@@ -98,6 +98,15 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Start Fresh"
+author = 48391860
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_database:1.0.0"]
 
