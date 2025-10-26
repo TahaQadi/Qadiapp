@@ -18,6 +18,13 @@ interface DocumentGenerationResult {
   error?: string;
 }
 
+/**
+ * DocumentTriggerService - Manual document generation only
+ * 
+ * NOTE: Automatic document generation has been disabled.
+ * This service is now only used for manual generation via admin UI.
+ * Use the /api/documents/generate endpoint to manually create documents.
+ */
 export class DocumentTriggerService {
   private static instance: DocumentTriggerService;
   private eventQueue: DocumentGenerationEvent[] = [];
