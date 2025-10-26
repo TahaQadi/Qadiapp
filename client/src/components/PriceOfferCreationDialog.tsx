@@ -4,7 +4,13 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -249,8 +255,8 @@ export default function PriceOfferCreationDialog({
   };
 
   // Calculate loading state
-  const isLoading = isLoadingLtas || isLoadingClients || isLoadingProducts || 
-                   isLoadingPriceRequest || isLoadingLtaProducts || 
+  const isLoading = isLoadingLtas || isLoadingClients || isLoadingProducts ||
+                   isLoadingPriceRequest || isLoadingLtaProducts ||
                    isLoadingSelectedLta || isLoadingLtaClients;
 
   // Extract primitive value to avoid object reference issues
@@ -286,7 +292,7 @@ export default function PriceOfferCreationDialog({
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open]);
+  }, [priceRequest, open, form.setValue, selectedLtaCurrency, setSelectedProducts]);
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -304,8 +310,8 @@ export default function PriceOfferCreationDialog({
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open]);
-  
+  }, [selectedLtaCurrency, open, form.getValues, form.setValue]);
+
   // Reset currency sync when dialog closes
   useEffect(() => {
     if (!open) {
@@ -313,7 +319,7 @@ export default function PriceOfferCreationDialog({
       form.reset();
       setSelectedProducts([]);
     }
-  }, [open]);
+  }, [open, form.reset, setSelectedProducts]);
 
   const handleAddProduct = (product: Product) => {
     const currentItems = form.getValues('items');
@@ -385,6 +391,11 @@ export default function PriceOfferCreationDialog({
             <FileText className="h-5 w-5" />
             {language === 'ar' ? 'إنشاء عرض سعر جديد' : 'Create New Price Offer'}
           </DialogTitle>
+          <DialogDescription>
+            {language === 'ar'
+              ? 'قم بإنشاء عرض سعر جديد للعميل بتحديد المنتجات والأسعار'
+              : 'Create a new price offer for the client by selecting products and prices'}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
