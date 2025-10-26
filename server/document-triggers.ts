@@ -121,18 +121,29 @@ export class DocumentTriggerService {
     const variables = await this.prepareOrderVariables(order, event.clientId);
     
     // Generate PDF
-    const pdfBuffer = await TemplatePDFGenerator.generate({
-      template,
-      variables,
-      language: 'en' // Default to English, can be made dynamic
-    });
+    let pdfBuffer: Buffer;
+    try {
+      pdfBuffer = await TemplatePDFGenerator.generate({
+        template,
+        variables,
+        language: 'en' // Default to English, can be made dynamic
+      });
+      
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        throw new Error('PDF generation returned empty buffer');
+      }
+    } catch (error) {
+      console.error('❌ PDF generation failed:', error);
+      throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
     // Upload to storage
     const fileName = `order_confirmation_${order.id}_${Date.now()}.pdf`;
     const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'ORDER');
     
     if (!uploadResult.success) {
-      throw new Error('Failed to upload PDF to storage');
+      console.error('❌ PDF upload failed:', uploadResult.error);
+      throw new Error(`Failed to upload PDF to storage: ${uploadResult.error || 'Unknown error'}`);
     }
 
     // Create document record

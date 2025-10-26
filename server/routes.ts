@@ -745,18 +745,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enrichedItems = [];
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        
+
         // Check if names are missing
         if (!item.nameEn || !item.nameAr) {
           const product = await storage.getProduct(item.productId);
-          
+
           if (!product) {
             return res.status(400).json({
               message: `Product not found for item ${i + 1}`,
               messageAr: `المنتج غير موجود للعنصر ${i + 1}`
             });
           }
-          
+
           // Enrich with product names
           enrichedItems.push({
             ...item,
@@ -2599,11 +2599,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Trigger document generation for order placed
       try {
-        await documentTriggerService.queueEvent({
+        // Queue document generation event (non-blocking)
+        documentTriggerService.queueEvent({
           type: 'order_placed',
           data: finalOrder,
           clientId: req.client.id,
           timestamp: new Date()
+        }).catch(error => {
+          console.error('Failed to queue document generation:', error);
+          // Don't fail the order creation if document queueing fails
         });
       } catch (docError: any) {
         console.error('Error triggering document generation:', docError);
