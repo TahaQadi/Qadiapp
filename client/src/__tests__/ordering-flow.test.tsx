@@ -27,7 +27,15 @@ describe('Ordering Flow Integration', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false },
+        queries: { 
+          retry: false,
+          queryFn: async ({ queryKey }) => {
+            const url = queryKey[0] as string;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+          },
+        },
         mutations: { retry: false },
       },
     });

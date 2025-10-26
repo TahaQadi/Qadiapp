@@ -29,7 +29,15 @@ describe('Admin Order Management', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false },
+        queries: { 
+          retry: false,
+          queryFn: async ({ queryKey }) => {
+            const url = queryKey[0] as string;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+          },
+        },
         mutations: { retry: false },
       },
     });
@@ -88,13 +96,21 @@ describe('Admin Product Management', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false },
+        queries: { 
+          retry: false,
+          queryFn: async ({ queryKey }) => {
+            const url = queryKey[0] as string;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+          },
+        },
         mutations: { retry: false },
       },
     });
 
     global.fetch = vi.fn((url) => {
-      if (url.includes('/api/admin/products')) {
+      if (url.includes('/api/products/all') || url.includes('/api/admin/products')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([
@@ -106,6 +122,12 @@ describe('Admin Product Management', () => {
               contractPrice: '100.00',
             },
           ]),
+        });
+      }
+      if (url.includes('/api/admin/vendors')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });

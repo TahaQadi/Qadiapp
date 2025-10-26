@@ -30,10 +30,16 @@ describe('Performance Tests', () => {
     }));
 
     global.fetch = vi.fn((url) => {
-      if (url.includes('/api/admin/products')) {
+      if (url.includes('/api/products/all') || url.includes('/api/admin/products')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(largeProductList),
+        });
+      }
+      if (url.includes('/api/admin/vendors')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
@@ -62,13 +68,19 @@ describe('Performance Tests', () => {
   it('should cache query results', async () => {
     let fetchCount = 0;
     global.fetch = vi.fn((url) => {
-      if (url.includes('/api/admin/products')) {
+      if (url.includes('/api/products/all') || url.includes('/api/admin/products')) {
         fetchCount++;
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([
             { id: 'prod-1', sku: 'SKU-001', nameEn: 'Test Product', nameAr: 'منتج تجريبي', contractPrice: '100.00' }
           ]),
+        });
+      }
+      if (url.includes('/api/admin/vendors')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
