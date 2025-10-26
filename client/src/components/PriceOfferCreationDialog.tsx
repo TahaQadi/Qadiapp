@@ -101,7 +101,6 @@ export default function PriceOfferCreationDialog({
   const lastSyncedCurrencyRef = useRef<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]); // State for clients
   const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
-  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined); // State for selected client ID
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -114,33 +113,29 @@ export default function PriceOfferCreationDialog({
     },
   });
 
-  // Fetch active clients for selection
+  // Fetch all active clients
   useEffect(() => {
     if (!open) return;
 
-    fetch('/api/admin/clients/active')
+    fetch('/api/admin/clients')
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setClients(data.clients);
-        }
+        setClients(Array.isArray(data) ? data : []);
       })
       .catch(err => console.error('Failed to fetch clients:', err));
   }, [open]);
 
-  // Fetch LTAs when client is selected
+  // Fetch all active LTAs
   useEffect(() => {
-    if (!selectedClientId || !open) return;
+    if (!open) return;
 
-    fetch(`/api/admin/ltas?clientId=${selectedClientId}`)
+    fetch('/api/admin/ltas?status=active')
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setLtas(data.ltas);
-        }
+        setLtas(Array.isArray(data) ? data : []);
       })
       .catch(err => console.error('Failed to fetch LTAs:', err));
-  }, [selectedClientId, open]);
+  }, [open]);
 
 
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
@@ -296,15 +291,18 @@ export default function PriceOfferCreationDialog({
   // Auto-fill from price request if provided
   useEffect(() => {
     if (priceRequest && open) {
-      form.setValue('ltaId', priceRequest.ltaId || '');
+      // Set LTA and client first
+      if (priceRequest.ltaId) {
+        form.setValue('ltaId', priceRequest.ltaId);
+      }
       form.setValue('clientId', priceRequest.clientId);
       form.setValue('notes', priceRequest.notes || '');
 
       // Add products from request - now using the enhanced API that returns full product details
       if (priceRequest.products && Array.isArray(priceRequest.products)) {
-        const ltaCurrency = priceRequest.lta?.currency || selectedLtaCurrency || 'ILS';
+        const ltaCurrency = priceRequest.lta?.currency || 'ILS';
         const items = priceRequest.products.map((product: any) => ({
-          productId: product.id,
+          productId: product.id || product.productId,
           nameEn: product.nameEn || 'Unknown Product',
           nameAr: product.nameAr || 'منتج غير معروف',
           sku: product.sku || 'N/A',
@@ -317,7 +315,7 @@ export default function PriceOfferCreationDialog({
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open, form.setValue, selectedLtaCurrency, setSelectedProducts]);
+  }, [priceRequest, open, form, setSelectedProducts]);
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -335,7 +333,7 @@ export default function PriceOfferCreationDialog({
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open, form.getValues, form.setValue]);
+  }, [selectedLtaCurrency, open, form]);
 
   // Reset currency sync when dialog closes
   useEffect(() => {
