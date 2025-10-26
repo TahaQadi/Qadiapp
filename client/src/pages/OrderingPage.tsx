@@ -993,7 +993,7 @@ export default function OrderingPage() {
         description={isArabic ? "إدارة طلباتك وسلة التسوق" : "Manage your orders and shopping cart"}
         noIndex={true}
       />
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={isArabic ? 'rtl' : 'ltr'} data-testid="page-ordering">
         {/* Animated background elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
