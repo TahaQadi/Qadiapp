@@ -20,7 +20,8 @@ class ErrorMonitoring {
   private maxQueueSize: number = 50;
 
   constructor() {
-    this.enabled = import.meta.env.PROD;
+    // Enable monitoring in both dev and prod, but only send reports in prod
+    this.enabled = true;
     this.setupGlobalErrorHandler();
     this.setupUnhandledRejectionHandler();
   }
@@ -52,11 +53,6 @@ class ErrorMonitoring {
   }
 
   captureError(error: Error, context?: ErrorContext) {
-    if (!this.enabled) {
-      console.error('[Error Monitoring]', error, context);
-      return;
-    }
-
     const report: ErrorReport = {
       message: error.message,
       stack: error.stack,
@@ -73,7 +69,20 @@ class ErrorMonitoring {
       this.errorQueue.shift();
     }
 
-    this.sendErrorReport(report);
+    // Always log to console in development
+    if (import.meta.env.DEV) {
+      console.error('[Error Monitoring]', {
+        error: error.message,
+        stack: error.stack?.split('\n').slice(0, 5),
+        context,
+        url: window.location.href,
+      });
+    }
+
+    // Send to API in production
+    if (import.meta.env.PROD) {
+      this.sendErrorReport(report);
+    }
   }
 
   private async sendErrorReport(report: ErrorReport) {

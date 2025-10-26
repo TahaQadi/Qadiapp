@@ -12,6 +12,16 @@ export class TemplatePDFGenerator {
     return new Promise((resolve, reject) => {
       try {
         const { template, variables, language } = options;
+
+        // Validate template structure
+        if (!template || typeof template !== 'object') {
+          throw new Error('Invalid template: template must be an object');
+        }
+
+        if (!template.sections || !Array.isArray(template.sections)) {
+          throw new Error('Invalid template: sections array is required');
+        }
+
         const styles = typeof template.styles === 'string' 
           ? JSON.parse(template.styles) 
           : template.styles;
@@ -127,7 +137,7 @@ export class TemplatePDFGenerator {
 
     if (content.companyInfo || content.companyInfoEn || content.companyInfoAr) {
       const companyInfo = language === 'ar' ? content.companyInfoAr : (content.companyInfoEn || content.companyInfo);
-      
+
       if (typeof companyInfo === 'object') {
         companyName = companyInfo.name || '';
         companyAddress = companyInfo.address || '';
@@ -217,7 +227,7 @@ export class TemplatePDFGenerator {
     if (text) {
       doc.fontSize(styles.fontSize)
         .fillColor(styles.secondaryColor);
-      
+
       this.renderText(doc, this.replaceVariables(text, variables), {
         align: content.align || 'left',
       }, language);
@@ -311,7 +321,7 @@ export class TemplatePDFGenerator {
     if (language === 'ar' && options.align !== 'center') {
       options.align = 'right';
     }
-    
+
     doc.text(text, options);
   }
 
@@ -331,9 +341,10 @@ export class TemplatePDFGenerator {
     const headers = language === 'ar' ? content.headersAr : content.headers;
     const dataSource = content.dataSource;
 
+    // Validate table structure
     if (!headers || !Array.isArray(headers)) {
-      console.warn('Table headers not found or invalid');
-      return;
+      console.error('Invalid table section:', JSON.stringify(section, null, 2));
+      throw new Error(`Table headers not found or invalid in section: ${section.title || 'unnamed'}`);
     }
 
     // Get data from variables - handle both direct variable and nested access
@@ -373,7 +384,10 @@ export class TemplatePDFGenerator {
 
       // Check if we need a new page
       if (currentY + rowHeight > doc.page.height - 100) {
-        this.renderFooter(doc, { content: { text: '', pageNumbers: true } } as any, variables, styles, language);
+        // Render footer before adding new page for page numbers
+        if (content.pageNumbers) {
+          this.renderFooter(doc, { content: { text: '', pageNumbers: true } } as any, variables, styles, language);
+        }
         doc.addPage();
         currentY = 50; // Start after header space
       }
@@ -387,12 +401,12 @@ export class TemplatePDFGenerator {
 
       // Handle both object and array row data
       const rowValues = Array.isArray(row) ? row : Object.values(row);
-      
+
       rowValues.forEach((cell: any, colIndex: number) => {
         if (colIndex < headers.length) {
           doc.fontSize(styles.fontSize - 1)
             .fillColor(styles.secondaryColor);
-          
+
           this.renderText(doc, String(cell || ''), {
             x: 50 + colIndex * columnWidth + 5,
             y: currentY + 3,
@@ -570,7 +584,7 @@ export class TemplatePDFGenerator {
     if (!text) return '';
 
     let result = text;
-    
+
     // Convert variables array to object for easier access
     const varMap = new Map<string, any>();
     variables.forEach(variable => {
@@ -597,7 +611,7 @@ export class TemplatePDFGenerator {
     if (parts.length === 2) {
       const [objectKey, propertyKey] = parts;
       const object = varMap.get(objectKey);
-      
+
       if (object && typeof object === 'object') {
         return object[propertyKey];
       }

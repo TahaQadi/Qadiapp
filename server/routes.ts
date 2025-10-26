@@ -52,6 +52,7 @@ import { z } from "zod";
 import path from "path";
 import crypto from "crypto";
 import fs from "fs";
+import express from 'express'; // Import express to use its middleware like express.json()
 
 import { generateSitemap } from "./sitemap";
 
@@ -174,8 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date()
       });
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: 'Event queued successfully',
         queueStatus: documentTriggerService.getQueueStatus()
       });
@@ -184,9 +185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (process.env.NODE_ENV === 'development') {
         console.error('Test document trigger error:', error);
       }
-      res.status(500).json({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -627,17 +628,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.json({ 
+      res.json({
         success: true,
-        message: "Response submitted successfully", 
-        messageAr: "تم إرسال الرد بنجاح" 
+        message: "Response submitted successfully",
+        messageAr: "تم إرسال الرد بنجاح"
       });
     } catch (error) {
       // Log error for debugging
       if (process.env.NODE_ENV === 'development') {
         console.error('Price offer response error:', error);
       }
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error',
         messageAr: 'حدث خطأ غير معروف'
@@ -4225,6 +4226,39 @@ Please contact them to schedule a demo.
     } catch (error: any) {
       log(`Template PDF generation error: ${error.message}`);
       res.status(500).json({ message: "Failed to generate PDF from template" });
+    }
+  });
+
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Error reporting endpoint (for client-side errors)
+  app.post('/api/errors', express.json(), (req, res) => {
+    try {
+      const { message, stack, context, timestamp, userAgent, url } = req.body;
+
+      console.error('[Client Error]', {
+        message,
+        url,
+        userAgent,
+        context,
+        timestamp: new Date(timestamp).toISOString(),
+      });
+
+      // Log to error logger if critical
+      if (context?.component || context?.action) {
+        errorLogger.logError(new Error(message), {
+          route: url,
+          ...context,
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[Error Reporting Failed]', error);
+      res.status(500).json({ success: false });
     }
   });
 

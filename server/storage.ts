@@ -119,6 +119,7 @@ export interface IStorage {
   getProduct(id: string): Promise<Product | undefined>;
   getProductBySku(sku: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  getProductsByIds(ids: string[]): Promise<Product[]>;
 
   // Client Pricing
   getClientPricing(clientId: string): Promise<ClientPricing[]>;
@@ -686,6 +687,15 @@ export class MemStorage implements IStorage {
     return result[0];
   }
 
+  async getProductsByIds(ids: string[]): Promise<Product[]> {
+    if (ids.length === 0) return [];
+
+    return await this.db
+      .select()
+      .from(products)
+      .where(sql`${products.id} = ANY(${ids})`);
+  }
+
   async getProductBySku(sku: string): Promise<Product | undefined> {
     const result = await this.db.select().from(products).where(eq(products.sku, sku)).limit(1);
     return result[0];
@@ -1049,10 +1059,17 @@ export class MemStorage implements IStorage {
   // Product queries for LTA context
   async getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>> {
     const ltaProducts = await this.getLtaProducts(ltaId);
-    const productsWithPricing: Array<Product & { contractPrice: string; currency: string }> = [];
+    const productsWithPricing: Array<Product & { contractPrice: string; currency: string }>= [];
+
+    // Fetch all product IDs
+    const productIds = ltaProducts.map(lp => lp.productId);
+
+    // Fetch all products in a single query
+    const products = await this.getProductsByIds(productIds);
+    const productMap = new Map(products.map(p => [p.id, p]));
 
     for (const ltaProduct of ltaProducts) {
-      const product = await this.getProduct(ltaProduct.productId);
+      const product = productMap.get(ltaProduct.productId);
       if (product) {
         productsWithPricing.push({
           ...product,
@@ -1180,19 +1197,24 @@ export class MemStorage implements IStorage {
     const clientLtas = await this.getClientLtas(clientId);
     const productsWithPricing: Array<Product & { contractPrice: string; currency: string; ltaId: string }> = [];
 
-    for (const lta of clientLtas) {
-      const ltaProducts = await this.getLtaProducts(lta.id);
+    // Fetch all product IDs across all client LTAs
+    const allLtaProducts = await this.getLtaProducts(clientLtas.map(lta => lta.id));
+    const productIds = allLtaProducts.map(lp => lp.productId);
 
-      for (const ltaProduct of ltaProducts) {
-        const product = this.products.get(ltaProduct.productId);
-        if (product) {
-          productsWithPricing.push({
-            ...product,
-            contractPrice: ltaProduct.contractPrice,
-            currency: ltaProduct.currency,
-            ltaId: lta.id,
-          });
-        }
+    // Fetch all relevant products in one go
+    const products = await this.getProductsByIds(productIds);
+    const productMap = new Map(products.map(p => [p.id, p]));
+
+    // Map products with pricing info
+    for (const ltaProduct of allLtaProducts) {
+      const product = productMap.get(ltaProduct.productId);
+      if (product) {
+        productsWithPricing.push({
+          ...product,
+          contractPrice: ltaProduct.contractPrice,
+          currency: ltaProduct.currency,
+          ltaId: ltaProduct.ltaId,
+        });
       }
     }
 
@@ -1214,6 +1236,15 @@ export class MemStorage implements IStorage {
       throw new Error('LTA not found');
     }
 
+    // Fetch all products by SKU in one query to minimize DB calls
+    const skus = products.map(p => p.sku);
+    const existingProducts = await db.select().from(products).where(sql`${products.sku} = ANY(${skus})`);
+    const productMap = new Map(existingProducts.map(p => [p.sku, p]));
+
+    // Fetch existing LTA products for this LTA to check for duplicates
+    const existingLtaProducts = await this.getLtaProducts(ltaId);
+    const existingLtaProductMap = new Map(existingLtaProducts.map(lp => [lp.productId, lp]));
+
     for (const item of products) {
       try {
         // Validate inputs
@@ -1222,18 +1253,15 @@ export class MemStorage implements IStorage {
           continue;
         }
 
-        const product = await this.getProductBySku(item.sku);
+        const product = productMap.get(item.sku);
 
         if (!product) {
           results.failed.push({ sku: item.sku, error: 'Product not found' });
           continue;
         }
 
-        // Check for existing assignment in database
-        const existingAssignments = await this.getLtaProducts(ltaId);
-        const alreadyAssigned = existingAssignments.some(lp => lp.productId === product.id);
-
-        if (alreadyAssigned) {
+        // Check for existing assignment in database using the pre-fetched map
+        if (existingLtaProductMap.has(product.id)) {
           results.failed.push({ sku: item.sku, error: 'Already assigned to this LTA' });
           continue;
         }

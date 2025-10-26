@@ -24,12 +24,46 @@ export interface ErrorLog {
 }
 
 class ErrorLogger {
+  private initialized = false;
+
+  private async ensureTableExists(): Promise<void> {
+    if (this.initialized) return;
+
+    try {
+      // Check if table exists, create if not
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS error_logs (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          level VARCHAR(20) NOT NULL CHECK (level IN ('error', 'warning', 'info')),
+          message TEXT NOT NULL,
+          stack TEXT,
+          context JSONB,
+          timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+      `);
+
+      // Create indexes if they don't exist
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_error_logs_level ON error_logs(level)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_error_logs_timestamp ON error_logs(timestamp DESC)
+      `);
+
+      this.initialized = true;
+    } catch (error) {
+      console.error('[ErrorLogger] Failed to initialize table:', error);
+    }
+  }
+
   private async saveToDatabase(
     level: LogLevel,
     message: string,
     stack: string | undefined,
     context: ErrorContext
   ): Promise<void> {
+    await this.ensureTableExists();
     try {
       await db.execute(sql`
         INSERT INTO error_logs (id, level, message, stack, context, timestamp)
