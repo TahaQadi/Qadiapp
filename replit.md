@@ -86,6 +86,21 @@ Preferred communication style: Simple, everyday language.
 - **Monitoring Routes** (`server/monitoring-routes.ts`): Admin-only monitoring dashboard with 10 endpoints for performance, cache, business metrics, audit logs, and system health; mounted at `/api/monitoring/*`
 - **Implementation Guide** (`docs/PHASE_3_4_IMPLEMENTATION.md`): Complete documentation with usage examples, integration points, benefits, migration checklist, and future enhancements
 
+# Code Cleanup (October 2025)
+
+## Cleanup Summary
+- **Removed 70+ temporary development files** from `attached_assets/` folder (screenshots, test videos, pasted text files, Word documents)
+- **Removed unused database table**: Deleted the `users` table from `shared/schema.ts` which was marked as "RESERVED FOR FUTURE USE" but completely unused
+- **Fixed duplicate route registration**: Removed duplicate `demoRequestRoutes` registration in `server/routes.ts`
+- **Removed test files**: Deleted 5 test files from `server/` directory (`test-document-api.ts`, `test-document-triggers.ts`, `test-enhanced-pdf-generator.ts`, `test-pdf-flow.ts`, `test-pdf-generator-simple.ts`)
+- **Removed duplicate hook file**: Deleted duplicate `use-mobile.ts` (kept `use-mobile.tsx` which uses media queries for better performance)
+- **Removed empty directory**: Deleted the empty `backups/` directory
+
+## Production Data Preserved
+- All production assets in `attached_assets/documents/` and `attached_assets/products/` remain intact
+- All database tables and production data preserved
+- All production features remain functional
+
 # External Dependencies
 
 **Database:** Neon Serverless PostgreSQL (`@neondatabase/serverless`).
