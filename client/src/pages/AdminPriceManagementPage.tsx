@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign, Trash2, Send, Edit, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -125,6 +125,9 @@ export default function AdminPriceManagementPage() {
   const [selectedRequestForOffer, setSelectedRequestForOffer] = useState<PriceRequest | null>(null);
   const [viewOfferDialogOpen, setViewOfferDialogOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<PriceOffer | null>(null);
+  const [requestSearchQuery, setRequestSearchQuery] = useState('');
+  const [offerSearchQuery, setOfferSearchQuery] = useState('');
+  const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
 
   const { data: notifications = [], isLoading: isLoadingRequests } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -290,6 +293,101 @@ export default function AdminPriceManagementPage() {
       });
     },
   });
+
+  const sendOfferMutation = useMutation({
+    mutationFn: async (offerId: string) => {
+      const res = await apiRequest('POST', `/api/admin/price-offers/${offerId}/send`, {});
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to send offer');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم إرسال العرض' : 'Offer Sent',
+        description: language === 'ar' ? 'تم إرسال عرض السعر بنجاح' : 'Price offer sent successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
+  const deleteOfferMutation = useMutation({
+    mutationFn: async (offerId: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/price-offers/${offerId}`);
+      if (!res.ok) {
+        throw new Error('Failed to delete offer');
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+        description: language === 'ar' ? 'تم حذف عرض السعر بنجاح' : 'Price offer deleted successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
+  const bulkDeleteOffersMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await apiRequest('POST', '/api/admin/price-offers/bulk-delete', { ids });
+      if (!res.ok) {
+        throw new Error('Failed to delete offers');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+        description: language === 'ar' ? 'تم حذف عروض الأسعار بنجاح' : 'Price offers deleted successfully',
+      });
+      setSelectedOffers(new Set());
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+  });
+
+  const handleDeleteOffer = (offerId: string) => {
+    if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا العرض؟' : 'Are you sure you want to delete this offer?')) {
+      deleteOfferMutation.mutate(offerId);
+    }
+  };
+
+  const handleBulkDeleteOffers = () => {
+    if (confirm(language === 'ar' ? `هل أنت متأكد من حذف ${selectedOffers.size} عروض؟` : `Are you sure you want to delete ${selectedOffers.size} offers?`)) {
+      bulkDeleteOffersMutation.mutate(Array.from(selectedOffers));
+    }
+  };
+
+  const toggleOfferSelection = (offerId: string) => {
+    const newSelection = new Set(selectedOffers);
+    if (newSelection.has(offerId)) {
+      newSelection.delete(offerId);
+    } else {
+      newSelection.add(offerId);
+    }
+    setSelectedOffers(newSelection);
+  };
 
   const getClientName = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
@@ -457,6 +555,8 @@ export default function AdminPriceManagementPage() {
     setSelectedOffer(offer);
     setViewOfferDialogOpen(true);
   };
+
+  const isSelectedOffer = (offerId: string) => selectedOffers.has(offerId);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
@@ -837,6 +937,20 @@ export default function AdminPriceManagementPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead>
+                              <input
+                                type="checkbox"
+                                checked={selectedOffers.size === filteredOffers.length && filteredOffers.length > 0}
+                                onChange={() => {
+                                  if (selectedOffers.size === filteredOffers.length) {
+                                    setSelectedOffers(new Set());
+                                  } else {
+                                    setSelectedOffers(new Set(filteredOffers.map(o => o.id)));
+                                  }
+                                }}
+                                className="form-checkbox h-4 w-4 text-primary dark:text-[#d4af37]"
+                              />
+                            </TableHead>
                             <TableHead>{language === 'ar' ? 'رقم العرض' : 'Offer #'}</TableHead>
                             <TableHead>{language === 'ar' ? 'العميل' : 'Client'}</TableHead>
                             <TableHead>{language === 'ar' ? 'الاتفاقية' : 'LTA'}</TableHead>
@@ -855,7 +969,15 @@ export default function AdminPriceManagementPage() {
                             const isExpired = new Date(offer.validUntil) < new Date();
 
                             return (
-                              <TableRow key={offer.id}>
+                              <TableRow key={offer.id} className={`${isSelectedOffer(offer.id) ? 'bg-primary/10 dark:bg-[#d4af37]/10' : ''}`}>
+                                <TableCell>
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelectedOffer(offer.id)}
+                                    onChange={() => toggleOfferSelection(offer.id)}
+                                    className="form-checkbox h-4 w-4 text-primary dark:text-[#d4af37]"
+                                  />
+                                </TableCell>
                                 <TableCell className="font-medium font-mono">
                                   <div className="flex items-center gap-2">
                                     {offer.offerNumber}
@@ -981,6 +1103,14 @@ export default function AdminPriceManagementPage() {
                                     >
                                       <Download className="h-4 w-4" />
                                     </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteOffer(offer.id)}
+                                      className="hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -1001,12 +1131,12 @@ export default function AdminPriceManagementPage() {
                     const isExpired = new Date(offer.validUntil) < new Date();
 
                     return (
-                      <Card key={offer.id} className="overflow-hidden border-l-4 border-l-primary dark:border-l-[#d4af37] shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-accent/5 dark:from-black dark:to-[#d4af37]/5">
+                      <Card key={offer.id} className={`overflow-hidden border-l-4 ${isSelectedOffer(offer.id) ? 'border-l-primary dark:border-l-[#d4af37] bg-primary/5 dark:bg-[#d4af37]/5' : 'border-l-primary dark:border-l-[#d4af37]'} shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-accent/5 dark:from-black dark:to-[#d4af37]/5`}>
                         <CardContent className="p-4 space-y-4">
                           {/* Header with Gradient Background */}
                           <div className="flex items-start justify-between gap-3 pb-3 border-b border-border/50 dark:border-[#d4af37]/20">
                             <div className="flex-1 min-w-0">
-                              <div className="font-mono font-bold text-base mb-2 bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
+                              <div className="text-2xl font-bold font-mono mb-1 bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
                                 {offer.offerNumber}
                               </div>
                               {linkedRequest && (
@@ -1016,8 +1146,16 @@ export default function AdminPriceManagementPage() {
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#d4af37]/10 flex items-center justify-center border-2 border-primary/30 dark:border-[#d4af37]/30">
-                              {getOfferStatusIcon(isExpired ? 'expired' : offer.status)}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <input
+                                type="checkbox"
+                                checked={isSelectedOffer(offer.id)}
+                                onChange={() => toggleOfferSelection(offer.id)}
+                                className="form-checkbox h-4 w-4 text-primary dark:text-[#d4af37]"
+                              />
+                              <div className={`h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#d4af37]/10 flex items-center justify-center border-2 ${isSelectedOffer(offer.id) ? 'border-primary dark:border-[#d4af37]' : 'border-primary/30 dark:border-[#d4af37]/30'}`}>
+                                {getOfferStatusIcon(isExpired ? 'expired' : offer.status)}
+                              </div>
                             </div>
                           </div>
 
@@ -1135,11 +1273,23 @@ export default function AdminPriceManagementPage() {
                               <Download className="h-4 w-4 me-1.5" />
                               <span className="text-xs">{language === 'ar' ? 'تحميل' : 'Download'}</span>
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteOffer(offer.id)}
+                              className="col-span-2 h-10 border-destructive/30 hover:bg-destructive/10 hover:text-destructive border-destructive text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 me-1.5" />
+                              <span className="text-xs">{language === 'ar' ? 'حذف' : 'Delete'}</span>
+                            </Button>
                             {linkedRequest && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleViewRequest(linkedRequest)}
+                                onClick={() => {
+                                  handleViewRequest(linkedRequest);
+                                  setViewOfferDialogOpen(false);
+                                }}
                                 className="col-span-2 h-10 border-primary/30 dark:border-[#d4af37]/30 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:border-primary dark:hover:border-[#d4af37] transition-all"
                               >
                                 <FileText className="h-4 w-4 me-1.5" />
@@ -1156,11 +1306,31 @@ export default function AdminPriceManagementPage() {
             )}
 
             {filteredOffers.length > 0 && (
-              <div className="text-sm text-muted-foreground text-center sm:text-left">
-                {language === 'ar' 
-                  ? `إجمالي ${filteredOffers.length} عرض سعر`
-                  : `Total ${filteredOffers.length} price offer${filteredOffers.length !== 1 ? 's' : ''}`
-                }
+              <div className="flex justify-between items-center mt-4 px-4">
+                <div className="text-sm text-muted-foreground">
+                  {language === 'ar' 
+                    ? `إجمالي ${filteredOffers.length} عرض سعر`
+                    : `Total ${filteredOffers.length} price offer${filteredOffers.length !== 1 ? 's' : ''}`
+                  }
+                </div>
+                {selectedOffers.size > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDeleteOffers}
+                    className="gap-1.5"
+                    disabled={bulkDeleteOffersMutation.isPending}
+                  >
+                    {bulkDeleteOffersMutation.isPending ? (
+                      <span className="animate-pulse">{language === 'ar' ? 'جاري الحذف...' : 'Deleting...'}</span>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        {language === 'ar' ? `حذف ${selectedOffers.size}` : `Delete ${selectedOffers.size}`}
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>
@@ -1287,7 +1457,7 @@ export default function AdminPriceManagementPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'رقم الطلب' : 'Request Number'}:</span>
-                  <div className="mt-1 font-medium font-mono text-sm sm:text-base">{selectedRequest.requestNumber}</div>
+                  <div className="mt-1 font-medium text-sm sm:text-base">{selectedRequest.requestNumber}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}:</span>
@@ -1310,7 +1480,7 @@ export default function AdminPriceManagementPage() {
                 <div className="sm:col-span-2">
                   <span className="text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}:</span>
                   <div className="mt-1 font-medium text-sm sm:text-base">
-                    {new Date(selectedRequest.requestedAt).toLocaleString('en-US', {
+                    {new Date(selectedRequest.requestedAt).toLocaleString(language === 'ar' ? 'ar-SA' : 'en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

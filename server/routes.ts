@@ -1033,6 +1033,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Bulk delete price offers
+  app.post("/api/admin/price-offers/bulk-delete", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Invalid request: ids array required" });
+      }
+
+      for (const id of ids) {
+        await storage.deletePriceOffer(id);
+      }
+
+      res.json({
+        success: true,
+        message: `Deleted ${ids.length} price offers`,
+        messageAr: `تم حذف ${ids.length} عروض أسعار`
+      });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Delete order
+  app.delete("/api/admin/orders/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const orderId = req.params.id;
+      
+      // Check if order exists
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({
+          message: "Order not found",
+          messageAr: "الطلب غير موجود"
+        });
+      }
+
+      // Delete the order
+      await db.delete(orders).where(eq(orders.id, orderId));
+
+      res.json({
+        success: true,
+        message: "Order deleted successfully",
+        messageAr: "تم حذف الطلب بنجاح"
+      });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Bulk delete orders
+  app.post("/api/admin/orders/bulk-delete", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Invalid request: ids array required" });
+      }
+
+      for (const id of ids) {
+        await db.delete(orders).where(eq(orders.id, id));
+      }
+
+      res.json({
+        success: true,
+        message: `Deleted ${ids.length} orders`,
+        messageAr: `تم حذف ${ids.length} طلبات`
+      });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   // Admin Client Management Routes
   app.get("/api/admin/clients", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package } from 'lucide-react';
+import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package, Trash2 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateLocalized } from '@/lib/dateUtils';
@@ -193,6 +193,94 @@ export default function AdminOrdersPage() {
     },
   });
 
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete order');
+      }
+    },
+    onMutate: async (deletedOrderId) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/admin/orders'] });
+      const previousOrders = queryClient.getQueryData(['/api/admin/orders']);
+      queryClient.setQueryData(['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          orders: oldData.orders.filter((order: Order) => order.id !== deletedOrderId),
+        };
+      });
+      return { previousOrders };
+    },
+    onError: (error: any, _variables, context) => {
+      if (context?.previousOrders) {
+        queryClient.setQueryData(['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery], context.previousOrders);
+      }
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+        description: language === 'ar' ? 'تم حذف الطلب بنجاح' : 'Order deleted successfully',
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+    },
+  });
+
+  const bulkDeleteOrdersMutation = useMutation({
+    mutationFn: async (orderIds: string[]) => {
+      const response = await fetch('/api/admin/orders/bulk-delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderIds }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete orders');
+      }
+    },
+    onMutate: async (deletedOrderIds) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/admin/orders'] });
+      const previousOrders = queryClient.getQueryData(['/api/admin/orders']);
+      queryClient.setQueryData(['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          orders: oldData.orders.filter((order: Order) => !deletedOrderIds.includes(order.id)),
+        };
+      });
+      return { previousOrders };
+    },
+    onError: (error: any, _variables, context) => {
+      if (context?.previousOrders) {
+        queryClient.setQueryData(['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery], context.previousOrders);
+      }
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+        description: language === 'ar' ? 'تم حذف الطلبات بنجاح' : 'Orders deleted successfully',
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+    },
+  });
+
   const getClientName = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     return client ? (language === 'ar' ? client.nameAr : client.nameEn) : clientId;
@@ -232,6 +320,14 @@ export default function AdminOrdersPage() {
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
     updateStatusMutation.mutate({ orderId, status: newStatus });
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    deleteOrderMutation.mutate(orderId);
+  };
+
+  const handleBulkDeleteOrders = () => {
+    bulkDeleteOrdersMutation.mutate(Array.from(selectedOrders));
   };
 
   const handlePrintOrder = (order: Order) => {
@@ -489,10 +585,10 @@ export default function AdminOrdersPage() {
   };
 
   const toggleAllOrders = () => {
-    if (selectedOrders.size === orders.length) {
+    if (selectedOrders.size === filteredOrders.length) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(orders.map((o: Order) => o.id)));
+      setSelectedOrders(new Set(filteredOrders.map((o: Order) => o.id)));
     }
   };
 
@@ -637,6 +733,15 @@ export default function AdminOrdersPage() {
           >
             <Download className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteOrder(order.id)}
+            className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive transition-all"
+            title={language === 'ar' ? 'حذف' : 'Delete'}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -774,6 +879,14 @@ export default function AdminOrdersPage() {
                     >
                       <Download className="h-4 w-4 me-1" />
                       {language === 'ar' ? 'تصدير' : 'Export'}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDeleteOrders}
+                    >
+                      <Trash2 className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'حذف' : 'Delete'}
                     </Button>
                   </div>
                 )}
@@ -923,6 +1036,15 @@ export default function AdminOrdersPage() {
                                 title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                               >
                                 <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive transition-all"
+                                title={language === 'ar' ? 'حذف' : 'Delete'}
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
