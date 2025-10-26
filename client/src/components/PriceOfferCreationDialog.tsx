@@ -101,6 +101,7 @@ export default function PriceOfferCreationDialog({
   const lastSyncedCurrencyRef = useRef<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]); // State for clients
   const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined); // State for selected client ID
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -127,11 +128,11 @@ export default function PriceOfferCreationDialog({
       .catch(err => console.error('Failed to fetch clients:', err));
   }, [open]);
 
-  // Fetch all active LTAs
+  // Fetch LTAs when client is selected
   useEffect(() => {
-    if (!open) return;
+    if (!selectedClientId || !open) return;
 
-    fetch('/api/admin/ltas?status=active')
+    fetch(`/api/admin/ltas?clientId=${selectedClientId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -139,7 +140,7 @@ export default function PriceOfferCreationDialog({
         }
       })
       .catch(err => console.error('Failed to fetch LTAs:', err));
-  }, [open]);
+  }, [selectedClientId, open]);
 
 
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
@@ -409,7 +410,7 @@ export default function PriceOfferCreationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="price-offer-description">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <FileText className="h-5 w-5" />
@@ -421,11 +422,6 @@ export default function PriceOfferCreationDialog({
               : 'Create a new price offer for the client by selecting products and prices'}
           </DialogDescription>
         </DialogHeader>
-        <p id="price-offer-description" className="sr-only">
-          {language === 'ar'
-            ? 'نموذج إنشاء عرض سعر جديد للعميل'
-            : 'Form to create a new price offer for a client'}
-        </p>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -474,7 +470,10 @@ export default function PriceOfferCreationDialog({
                       <Users className="h-4 w-4" />
                       {language === 'ar' ? 'العميل' : 'Client'}
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedClientId(value); // Update selectedClientId state
+                    }} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'} />
