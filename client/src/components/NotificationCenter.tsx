@@ -42,7 +42,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
     // Removed refetchInterval to manage polling manually via useEffect
   });
 
-  const { data: unreadCount, queryKey: unreadCountQueryKey } = useQuery<{ count: number }>({
+  const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/client/notifications/unread-count'],
     // Removed refetchInterval here as well
   });

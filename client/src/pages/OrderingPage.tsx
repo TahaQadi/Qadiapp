@@ -609,6 +609,7 @@ export default function OrderingPage() {
     return {
       id: order.id,
       createdAt: new Date(order.createdAt),
+      items: order.items,
       itemCount: totalQuantity,
       totalAmount: order.totalAmount,
       status: order.status,
@@ -1450,7 +1451,7 @@ export default function OrderingPage() {
                       id={template.id}
                       nameEn={template.nameEn}
                       nameAr={template.nameAr}
-                      items={template.items}
+                      itemCount={template.itemCount}
                       createdAt={template.createdAt}
                       onLoad={() => handleLoadTemplate(template)}
                       onDelete={() => handleDeleteTemplate(template.id)}
@@ -1757,7 +1758,7 @@ export default function OrderingPage() {
           }))}
           totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) * 1.15}
           currency={cart[0]?.currency || 'ILS'}
-          ltaContract={clientLtas.find(lta => lta.id === activeLtaId)}
+          ltaName={clientLtas.find(lta => lta.id === activeLtaId)?.nameEn}
           onConfirm={handleConfirmOrder}
           onEdit={() => {
             setOrderConfirmationOpen(false);

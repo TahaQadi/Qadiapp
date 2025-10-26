@@ -456,7 +456,7 @@ export default function AdminDocumentsPage() {
                 {isLoading ? (
                   <div className="space-y-2">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <LoadingSkeleton key={i} type="card" />
+                      <LoadingSkeleton key={i} variant="card" />
                     ))}
                   </div>
                 ) : documents.length === 0 ? (
@@ -649,17 +649,11 @@ export default function AdminDocumentsPage() {
                       ? 'ابدأ بإنشاء قالب جديد لمستنداتك'
                       : 'Start by creating a new template for your documents'
                   }
-                  action={
-                    <Button
-                      onClick={() => {
-                        setEditingTemplate(null);
-                        setCreateDialogOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {language === 'ar' ? 'إنشاء قالب' : 'Create Template'}
-                    </Button>
-                  }
+                  actionLabel={language === 'ar' ? 'إنشاء قالب' : 'Create Template'}
+                  onAction={() => {
+                    setEditingTemplate(null);
+                    setCreateDialogOpen(true);
+                  }}
                 />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

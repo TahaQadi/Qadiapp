@@ -432,7 +432,7 @@ export default function AdminTemplatesPage() {
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <LoadingSkeleton key={i} type="card" />
+                  <LoadingSkeleton key={i} variant="card" />
                 ))}
               </div>
             ) : paginatedTemplates.length === 0 ? (
@@ -442,12 +442,8 @@ export default function AdminTemplatesPage() {
                 description={language === 'ar' 
                   ? 'قم بإنشاء قالب جديد للبدء' 
                   : 'Create a new template to get started'}
-                action={
-                  <Button onClick={() => setCreateDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {language === 'ar' ? 'إنشاء قالب' : 'Create Template'}
-                  </Button>
-                }
+                actionLabel={language === 'ar' ? 'إنشاء قالب' : 'Create Template'}
+                onAction={() => setCreateDialogOpen(true)}
               />
             ) : (
               <>
