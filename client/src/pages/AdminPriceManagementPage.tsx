@@ -418,9 +418,25 @@ export default function AdminPriceManagementPage() {
     window.open(`/api/pdf/download/${fileName}`, '_blank');
   };
 
-  const handleViewRequest = (request: PriceRequest) => {
-    setSelectedRequest(request);
-    setViewRequestDialogOpen(true);
+  const handleViewRequest = async (request: PriceRequest) => {
+    try {
+      // Fetch full request details with enriched product information
+      const res = await apiRequest('GET', `/api/admin/price-requests/${request.id}`);
+      if (res.ok) {
+        const detailedRequest = await res.json();
+        setSelectedRequest(detailedRequest);
+        setViewRequestDialogOpen(true);
+      } else {
+        // Fallback to original request if fetch fails
+        setSelectedRequest(request);
+        setViewRequestDialogOpen(true);
+      }
+    } catch (error) {
+      console.error('Failed to fetch detailed request:', error);
+      // Fallback to original request
+      setSelectedRequest(request);
+      setViewRequestDialogOpen(true);
+    }
   };
 
   const handleCreateOffer = (request: PriceRequest) => {
