@@ -56,9 +56,8 @@ describe('Admin Order Management', () => {
 
   it('should display orders with pagination', async () => {
     render(
-      <QueryClientProvider client={queryClient}>
-        <AdminOrdersPage />
-      </QueryClientProvider>
+      <AdminOrdersPage />,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -70,9 +69,8 @@ describe('Admin Order Management', () => {
     const user = userEvent.setup();
     
     render(
-      <QueryClientProvider client={queryClient}>
-        <AdminOrdersPage />
-      </QueryClientProvider>
+      <AdminOrdersPage />,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -116,9 +114,8 @@ describe('Admin Product Management', () => {
 
   it('should display products with search and filters', async () => {
     render(
-      <QueryClientProvider client={queryClient}>
-        <AdminProductsPage />
-      </QueryClientProvider>
+      <AdminProductsPage />,
+      { queryClient }
     );
 
     await waitFor(() => {
@@ -130,9 +127,8 @@ describe('Admin Product Management', () => {
     const user = userEvent.setup();
     
     render(
-      <QueryClientProvider client={queryClient}>
-        <AdminProductsPage />
-      </QueryClientProvider>
+      <AdminProductsPage />,
+      { queryClient }
     );
 
     await waitFor(() => {

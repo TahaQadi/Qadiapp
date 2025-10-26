@@ -67,9 +67,8 @@ describe('Ordering Flow Integration', () => {
     const user = userEvent.setup();
     
     render(
-      <QueryClientProvider client={queryClient}>
-        <OrderingPage />
-      </QueryClientProvider>
+      <OrderingPage />,
+      { queryClient }
     );
 
     // Wait for products to load

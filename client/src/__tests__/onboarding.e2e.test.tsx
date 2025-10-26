@@ -27,9 +27,8 @@ describe('Onboarding E2E Flow', () => {
     const user = userEvent.setup();
     
     render(
-      <QueryClientProvider client={queryClient}>
-        <OnboardingPage />
-      </QueryClientProvider>
+      <OnboardingPage />,
+      { queryClient }
     );
 
     // Step 1: User Account
