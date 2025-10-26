@@ -102,6 +102,7 @@ export default function PriceOfferCreationDialog({
   const [clients, setClients] = useState<Client[]>([]); // State for clients
   const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined); // State for selected client ID
+  const [selectedLtaId, setSelectedLtaId] = useState<string | undefined>(undefined); // State for selected LTA ID
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -410,7 +411,7 @@ export default function PriceOfferCreationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="price-offer-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <FileText className="h-5 w-5" />
@@ -422,6 +423,11 @@ export default function PriceOfferCreationDialog({
               : 'Create a new price offer for the client by selecting products and prices'}
           </DialogDescription>
         </DialogHeader>
+        <p id="price-offer-description" className="sr-only">
+          {language === 'ar'
+            ? 'نموذج إنشاء عرض سعر جديد للعميل'
+            : 'Form to create a new price offer for a client'}
+        </p>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -441,7 +447,10 @@ export default function PriceOfferCreationDialog({
                         </Badge>
                       )}
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedLtaId(value); // Update selectedLtaId state
+                    }} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'} />

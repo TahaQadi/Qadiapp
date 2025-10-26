@@ -296,8 +296,9 @@ export default function AdminPriceRequestsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                        className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
                         onClick={() => handleDeleteRequest(request.id)}
+                        data-testid={`button-delete-${request.id}`}
                       >
                         <Trash2 className="h-4 w-4 me-2" />
                         {language === "ar" ? "حذف" : "Delete"}
