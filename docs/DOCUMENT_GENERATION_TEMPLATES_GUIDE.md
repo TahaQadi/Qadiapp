@@ -1,9 +1,9 @@
 
 # Document Generation & Template Assignment System - Complete Guide
 
-**Version**: 2.0  
+**Version**: 3.0  
 **Last Updated**: 2025-01-26  
-**Status**: Production Ready
+**Status**: Manual Generation Only
 
 ---
 
@@ -12,12 +12,11 @@
 1. [System Overview](#system-overview)
 2. [Architecture](#architecture)
 3. [Template System](#template-system)
-4. [Document Generation](#document-generation)
+4. [Manual Document Generation](#manual-document-generation)
 5. [Template Assignment](#template-assignment)
-6. [Automatic Document Triggers](#automatic-document-triggers)
-7. [API Reference](#api-reference)
-8. [Usage Examples](#usage-examples)
-9. [Troubleshooting](#troubleshooting)
+6. [API Reference](#api-reference)
+7. [Usage Examples](#usage-examples)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -30,9 +29,13 @@ The Document Generation & Template Assignment System is a comprehensive solution
 - **Dynamic PDF Generation** from JSON-based templates
 - **Bilingual Support** (English, Arabic, or both)
 - **Template-Based Design** with reusable components
-- **Automatic Document Generation** triggered by business events
+- **Manual Document Generation** via admin UI or API
 - **Secure Document Storage** and access control
 - **Template Management** via admin interface
+
+### Important Change (v3.0)
+
+**Automatic document generation has been disabled.** All documents must now be generated manually through the admin interface or API. This simplifies the system and gives administrators full control over when documents are created.
 
 ### Supported Document Types
 
@@ -98,19 +101,17 @@ The Document Generation & Template Assignment System is a comprehensive solution
 4. Available for document generation
 ```
 
-#### Document Generation Flow
+#### Document Generation Flow (Manual Only)
 ```
-1. Event triggered (order placed, price offer created, etc.)
-   OR Manual generation via API
-2. DocumentTriggerService queues event
-3. Fetch template from TemplateStorage
-4. Prepare variables (client data, order data, etc.)
-5. TemplatePDFGenerator.generate() creates PDF buffer
-6. Validate PDF (signature check, size limits)
-7. Upload to Object Storage via PDFStorage.uploadPDF()
-8. Create metadata record in 'documents' table
-9. Log access event in 'document_access_logs' table
-10. Return document ID and download URL
+1. Admin initiates generation via UI or API
+2. Fetch template from TemplateStorage
+3. Prepare variables (client data, order data, etc.)
+4. TemplatePDFGenerator.generate() creates PDF buffer
+5. Validate PDF (signature check, size limits)
+6. Upload to Object Storage via PDFStorage.uploadPDF()
+7. Create metadata record in 'documents' table
+8. Log access event in 'document_access_logs' table
+9. Return document ID and download URL
 ```
 
 #### Document Download Flow
@@ -388,11 +389,9 @@ Variables are placeholders that get replaced with actual data during PDF generat
 
 ---
 
-## Document Generation
+## Manual Document Generation
 
-### Manual Generation
-
-#### Via API
+### Via API
 
 ```typescript
 import { TemplatePDFGenerator } from '@/server/template-pdf-generator';
@@ -431,51 +430,20 @@ fs.writeFileSync('output.pdf', pdfBuffer);
 4. Fill in required variables
 5. Preview and download
 
-### Automatic Generation
+### When to Generate Documents
 
-The system automatically generates documents in response to business events.
+Since automatic generation has been disabled, administrators should manually generate documents when needed:
 
-#### Supported Events
+- **Order Confirmations**: After reviewing and approving an order
+- **Price Offers**: When creating a formal quotation for a client
+- **Invoices**: When an order is completed and ready for billing
+- **LTA Contracts**: When finalizing a long-term agreement
 
-| Event Type | Document Generated | Trigger |
-|------------|-------------------|---------|
-| `order_placed` | Order Confirmation | When order submitted |
-| `order_status_changed` | Status Update | Order status changes |
-| `price_offer_created` | Price Offer PDF | New price offer created |
-| `lta_contract_signed` | LTA Contract | Contract finalized |
-
-#### How Triggers Work
-
-```typescript
-import { documentTriggerService } from '@/server/document-triggers';
-
-// Queue document generation event
-await documentTriggerService.queueEvent({
-  type: 'order_placed',
-  data: orderData,
-  clientId: 'client-uuid',
-  timestamp: new Date()
-});
-
-// Service automatically:
-// 1. Finds appropriate template
-// 2. Prepares variables from order data
-// 3. Generates PDF
-// 4. Uploads to storage
-// 5. Creates database record
-// 6. Logs access
-```
-
-#### Event Processing
-
-Events are queued and processed asynchronously to avoid blocking the main application.
-
-```typescript
-// Check queue status
-const status = documentTriggerService.getQueueStatus();
-console.log(`Queue length: ${status.queueLength}`);
-console.log(`Processing: ${status.isProcessing}`);
-```
+This manual approach ensures:
+- Full control over document creation timing
+- Ability to review data before generating
+- No unexpected document generation errors
+- Reduced system complexity
 
 ---
 
