@@ -76,7 +76,7 @@ export default function ProductDetailPage() {
       const currentList = existingList ? JSON.parse(existingList) : [];
 
       // Check if product already exists
-      const exists = currentList.some((item: any) => item.productId === product.id);
+      const exists = currentList.some((item: any) => item.productId === product?.id);
 
       if (exists) {
         toast({
@@ -89,22 +89,22 @@ export default function ProductDetailPage() {
 
       // Add new product to list
       currentList.push({
-        productId: product.id,
-        productSku: product.sku,
-        productNameEn: product.nameEn,
-        productNameAr: product.nameAr,
+        productId: product?.id,
+        productSku: product?.sku,
+        productNameEn: product?.nameEn,
+        productNameAr: product?.nameAr,
       });
 
       // Save updated list to sessionStorage
       sessionStorage.setItem('priceRequestList', JSON.stringify(currentList));
 
       // Update local state to trigger re-render
-      setPriceRequestList(prev => [...prev, product.id]);
+      setPriceRequestList(prev => [...prev, product?.id]);
 
       toast({
         description: language === 'ar'
-          ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
-          : `${product.nameEn} added to price request list`
+          ? `تمت إضافة ${product?.nameAr} إلى قائمة طلبات الأسعار`
+          : `${product?.nameEn} added to price request list`
       });
       return;
     }
@@ -287,10 +287,10 @@ export default function ProductDetailPage() {
               </Link>
             </>
           )}
-          {product.subCategory && (
+          {product.category && (
             <>
               <span className="mx-2">/</span>
-              <span className="text-foreground">{product.subCategory}</span>
+              <span className="text-foreground">{product.category}</span>
             </>
           )}
           <span className="mx-2">/</span>
@@ -438,7 +438,7 @@ export default function ProductDetailPage() {
                   const slugifiedName = relatedProduct.nameEn.toLowerCase()
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-+|-+$/g, '');
-                  const slugifiedSubCategory = (relatedProduct.subCategory || 'products').toLowerCase()
+                  const slugifiedSubCategory = (relatedProduct.category || 'products').toLowerCase()
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-+|-+$/g, '');
                   return (

@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { cn } from '@/lib/utils'; // Assuming cn is available for conditional class names
-import { useIsMobile } from '@/hooks/useIsMobile'; // Assuming a hook for mobile detection exists
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ProductCardProps {
   id: string;

@@ -40,7 +40,7 @@ interface OrderDetailsDialogProps {
     id: string;
     items: string;
     totalAmount: string;
-    status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+    status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
     createdAt: Date;
     currency: string;
     pipefyCardId?: string;
@@ -126,6 +126,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
   const statusConfig = {
     pending: { variant: 'secondary' as const, color: 'text-yellow-600 dark:text-yellow-400' },
     confirmed: { variant: 'default' as const, color: 'text-blue-600 dark:text-blue-400' },
+    processing: { variant: 'default' as const, color: 'text-orange-600 dark:text-orange-400' },
     shipped: { variant: 'default' as const, color: 'text-purple-600 dark:text-purple-400' },
     delivered: { variant: 'default' as const, color: 'text-green-600 dark:text-green-400' },
     cancelled: { variant: 'destructive' as const, color: 'text-red-600 dark:text-red-400' },

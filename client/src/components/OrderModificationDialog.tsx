@@ -41,7 +41,7 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
   const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   // Fetch LTA products for adding new items
-  const { data: ltaProducts = [] } = useQuery<Product[]>({
+  const { data: ltaProducts = [] } = useQuery<any[]>({
     queryKey: ['/api/ltas', order?.ltaId, 'products'],
     enabled: !!order?.ltaId && modificationType === 'items',
   });
@@ -97,7 +97,7 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
         sku: product.sku,
         nameEn: product.nameEn,
         nameAr: product.nameAr,
-        price: product.price || "0",
+        price: product.contractPrice || "0",
         quantity: 1,
         ltaId: order.ltaId,
         currency: product.currency || "SAR",

@@ -423,7 +423,7 @@ export default function ClientDocumentsPage() {
                 {isLoading ? (
                   <div className="space-y-2">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <LoadingSkeleton key={i} type="card" />
+                      <LoadingSkeleton key={i} variant="card" />
                     ))}
                   </div>
                 ) : error ? (
@@ -431,12 +431,8 @@ export default function ClientDocumentsPage() {
                     icon={AlertCircle}
                     title={language === 'ar' ? 'خطأ في التحميل' : 'Loading Error'}
                     description={language === 'ar' ? 'حدث خطأ أثناء تحميل المستندات' : 'An error occurred while loading documents'}
-                    action={
-                      <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/documents'] })}>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
-                      </Button>
-                    }
+                    actionLabel={language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+                    onAction={() => queryClient.invalidateQueries({ queryKey: ['/api/documents'] })}
                   />
                 ) : documents.length === 0 ? (
                   <EmptyState

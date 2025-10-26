@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag, ArrowLeft, User, LogOut, Star, AlertTriangle } from "lucide-react";
+import { Loader2, Package, Calendar, DollarSign, Edit, ShoppingBag, ArrowLeft, User, LogOut, Star, AlertTriangle, FileText } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { Order } from "@shared/schema";
 import { OrderModificationDialog } from "@/components/OrderModificationDialog";
@@ -465,7 +465,12 @@ export default function OrdersPage() {
       <OrderDetailsDialog
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        order={selectedOrder}
+        order={selectedOrder ? { 
+          ...selectedOrder, 
+          currency: 'SAR',
+          status: selectedOrder.status as 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled',
+          pipefyCardId: selectedOrder.pipefyCardId || undefined
+        } : null}
       />
 
       {/* Modification Dialog */}

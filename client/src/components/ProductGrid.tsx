@@ -64,7 +64,19 @@ export const ProductGrid = memo(({
 
       <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard 
+            key={product.id} 
+            id={product.id}
+            nameEn={product.nameEn}
+            nameAr={product.nameAr}
+            descriptionEn={product.descriptionEn || undefined}
+            descriptionAr={product.descriptionAr || undefined}
+            price={product.contractPrice || "0"}
+            currency={product.currency || "SAR"}
+            sku={product.sku}
+            imageUrl={product.imageUrl || undefined}
+            onAddToCart={() => {}}
+          />
         ))}
       </div>
     </div>

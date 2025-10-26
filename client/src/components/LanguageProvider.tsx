@@ -7,12 +7,13 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   dir: 'ltr' | 'rtl';
+  t: (key: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('language');
     return (saved === 'ar' || saved === 'en') ? saved : 'ar';
@@ -38,7 +39,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, dir: language === 'ar' ? 'rtl' : 'ltr' }}>
+    <LanguageContext.Provider value={{ language, setLanguage, dir: language === 'ar' ? 'rtl' : 'ltr', t }}>
       {children}
     </LanguageContext.Provider>
   );
