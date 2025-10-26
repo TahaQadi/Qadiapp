@@ -262,31 +262,53 @@ export default function PriceOfferCreationDialog({
     setAvailableProducts(allProducts);
   }, [allProducts]);
 
-  // Auto-fill from price request if provided
+  // Auto-populate from price request if available
   useEffect(() => {
-    if (priceRequest && open) {
-      form.setValue('ltaId', priceRequest.ltaId || '');
-      form.setValue('clientId', priceRequest.clientId);
-      form.setValue('notes', priceRequest.notes || '');
-
-      // Add products from request - now using the enhanced API that returns full product details
-      if (priceRequest.products && Array.isArray(priceRequest.products)) {
-        const ltaCurrency = priceRequest.lta?.currency || selectedLtaCurrency || 'ILS';
-        const items = priceRequest.products.map((product: any) => ({
-          productId: product.id,
-          nameEn: product.nameEn || 'Unknown Product',
-          nameAr: product.nameAr || 'منتج غير معروف',
-          sku: product.sku || 'N/A',
-          quantity: product.quantity || 1,
-          unitPrice: product.contractPrice || '0',
-          currency: ltaCurrency,
-        }));
-
-        form.setValue('items', items);
-        setSelectedProducts(priceRequest.products);
+    if (priceRequest && !isLoadingPriceRequest) {
+      // Set LTA if available
+      if (priceRequest.ltaId) {
+        form.setValue('ltaId', priceRequest.ltaId);
       }
+
+      // Set client
+      form.setValue('clientId', priceRequest.clientId);
+
+      // Parse and set products with comprehensive name field handling
+      const products = typeof priceRequest.products === 'string'
+        ? JSON.parse(priceRequest.products)
+        : priceRequest.products || [];
+
+      const formattedProducts = products.map((product: any) => {
+        // Try multiple possible name fields
+        const nameEn = product.nameEn || product.productNameEn || product.name_en ||
+                       product.product_name_en || product.name || product.productName || '';
+        const nameAr = product.nameAr || product.productNameAr || product.name_ar ||
+                       product.product_name_ar || product.name || product.productName || '';
+
+        return {
+          id: product.id || product.productId || '',
+          sku: product.sku || '',
+          nameEn,
+          nameAr,
+          quantity: product.quantity || 1,
+          unitPrice: product.contractPrice || product.unitPrice || '',
+          currency: product.currency || selectedLtaCurrency || 'ILS',
+        };
+      });
+
+      form.setValue('items', formattedProducts);
+      // We need to also set the selectedProducts state to reflect the loaded items
+      // This ensures the product name displays correctly in the selection dropdown
+      setSelectedProducts(formattedProducts.map(item => ({
+        id: item.id,
+        nameEn: item.nameEn,
+        nameAr: item.nameAr,
+        sku: item.sku,
+        contractPrice: item.unitPrice, // Assuming contractPrice can be used here
+        currency: item.currency
+      })));
     }
-  }, [priceRequest, open]);
+  }, [priceRequest, isLoadingPriceRequest, form, selectedLtaCurrency]); // Depend on selectedLtaCurrency
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -305,7 +327,7 @@ export default function PriceOfferCreationDialog({
       }
     }
   }, [selectedLtaCurrency, open]);
-  
+
   // Reset currency sync when dialog closes
   useEffect(() => {
     if (!open) {

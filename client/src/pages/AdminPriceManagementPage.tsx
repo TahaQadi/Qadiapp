@@ -872,9 +872,16 @@ export default function AdminPriceManagementPage() {
                                         return (
                                           <div className="space-y-1">
                                             {items.slice(0, 2).map((item: any, idx: number) => {
+                                              // Try multiple possible name fields in priority order
                                               const name = language === 'ar' 
-                                                ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
-                                                : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
+                                                ? (item.nameAr || item.productNameAr || item.name_ar || item.product_name_ar || 
+                                                   item.nameEn || item.productNameEn || item.name_en || item.product_name_en || 
+                                                   item.name || item.productName || item.product_name || 
+                                                   item.description || 'منتج غير معروف')
+                                                : (item.nameEn || item.productNameEn || item.name_en || item.product_name_en || 
+                                                   item.nameAr || item.productNameAr || item.name_ar || item.product_name_ar || 
+                                                   item.name || item.productName || item.product_name || 
+                                                   item.description || 'Unknown Product');
 
                                               return (
                                                 <div key={idx} className="text-sm">
@@ -1654,9 +1661,17 @@ export default function AdminPriceManagementPage() {
                                   const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
                                   const itemQuantity = Number(item.quantity) || 0;
                                   const total = itemPrice * itemQuantity;
+                                  
+                                  // Try multiple possible name fields in priority order
                                   const name = language === 'ar' 
-                                    ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
-                                    : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
+                                    ? (item.nameAr || item.productNameAr || item.name_ar || item.product_name_ar || 
+                                       item.nameEn || item.productNameEn || item.name_en || item.product_name_en || 
+                                       item.name || item.productName || item.product_name || 
+                                       item.description || 'منتج غير معروف')
+                                    : (item.nameEn || item.productNameEn || item.name_en || item.product_name_en || 
+                                       item.nameAr || item.productNameAr || item.name_ar || item.product_name_ar || 
+                                       item.name || item.productName || item.product_name || 
+                                       item.description || 'Unknown Product');
 
                                   return (
                                     <TableRow key={idx}>
@@ -1687,9 +1702,17 @@ export default function AdminPriceManagementPage() {
                               const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
                               const itemQuantity = Number(item.quantity) || 0;
                               const total = itemPrice * itemQuantity;
+                              
+                              // Try multiple possible name fields in priority order
                               const name = language === 'ar' 
-                                ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
-                                : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
+                                ? (item.nameAr || item.productNameAr || item.name_ar || item.product_name_ar || 
+                                   item.nameEn || item.productNameEn || item.name_en || item.product_name_en || 
+                                   item.name || item.productName || item.product_name || 
+                                   item.description || 'منتج غير معروف')
+                                : (item.nameEn || item.productNameEn || item.name_en || item.product_name_en || 
+                                   item.nameAr || item.productNameAr || item.name_ar || item.product_name_ar || 
+                                   item.name || item.productName || item.product_name || 
+                                   item.description || 'Unknown Product');
 
                               return (
                                 <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/30">
