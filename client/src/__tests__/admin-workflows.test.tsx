@@ -46,16 +46,33 @@ describe('Admin Order Management', () => {
       if (url.includes('/api/admin/orders')) {
         return Promise.resolve({
           ok: true,
+          json: () => Promise.resolve({
+            orders: [
+              {
+                id: 'order-1',
+                orderNumber: 'ORD-001',
+                clientId: 'client-1',
+                status: 'pending',
+                totalAmount: '500.00',
+                createdAt: new Date().toISOString(),
+              },
+            ],
+            totalPages: 1,
+          }),
+        });
+      }
+      if (url.includes('/api/admin/clients')) {
+        return Promise.resolve({
+          ok: true,
           json: () => Promise.resolve([
-            {
-              id: 'order-1',
-              orderNumber: 'ORD-001',
-              clientId: 'client-1',
-              status: 'pending',
-              totalAmount: '500.00',
-              createdAt: new Date().toISOString(),
-            },
+            { id: 'client-1', nameEn: 'Test Client', nameAr: 'عميل تجريبي' }
           ]),
+        });
+      }
+      if (url.includes('/api/admin/ltas')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
         });
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
@@ -68,9 +85,9 @@ describe('Admin Order Management', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('ORD-001')).toBeInTheDocument();
-    });
+    // Wait for the order row to appear and verify it renders
+    const orderRow = await screen.findByTestId('row-order-order-1');
+    expect(orderRow).toBeInTheDocument();
   });
 
   it('should handle order status updates', async () => {
@@ -81,12 +98,12 @@ describe('Admin Order Management', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('ORD-001')).toBeInTheDocument();
-    });
+    // Wait for the order row to appear
+    await screen.findByTestId('row-order-order-1');
 
-    // Verify optimistic update capability
-    expect(screen.getByText(/pending/i)).toBeInTheDocument();
+    // Verify status badge is displayed
+    const statusBadges = screen.getAllByTestId('badge-status-pending');
+    expect(statusBadges.length).toBeGreaterThan(0);
   });
 });
 
@@ -110,7 +127,7 @@ describe('Admin Product Management', () => {
     });
 
     global.fetch = vi.fn((url) => {
-      if (url.includes('/api/products/all') || url.includes('/api/admin/products')) {
+      if (url === '/api/products/all' || url.includes('/api/products/all')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([
@@ -124,7 +141,7 @@ describe('Admin Product Management', () => {
           ]),
         });
       }
-      if (url.includes('/api/admin/vendors')) {
+      if (url === '/api/admin/vendors' || url.includes('/api/admin/vendors')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([]),
@@ -140,9 +157,12 @@ describe('Admin Product Management', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Product')).toBeInTheDocument();
-    });
+    // Wait for the product row to appear
+    const productRow = await screen.findByTestId('row-product-prod-1');
+    expect(productRow).toBeInTheDocument();
+    
+    // Check that the SKU is displayed
+    expect(screen.getByText('SKU-001')).toBeInTheDocument();
   });
 
   it('should handle pagination controls', async () => {
@@ -153,9 +173,8 @@ describe('Admin Product Management', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Product')).toBeInTheDocument();
-    });
+    // Wait for the product row to appear
+    await screen.findByTestId('row-product-prod-1');
 
     // Verify pagination exists
     const paginationElements = screen.queryAllByRole('button');

@@ -15,6 +15,12 @@ describe('Performance Tests', () => {
           retry: false,
           staleTime: 5 * 60 * 1000, // 5 minutes
           gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
+          queryFn: async ({ queryKey }) => {
+            const url = queryKey[0] as string;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+          },
         },
         mutations: { retry: false },
       },
@@ -54,9 +60,8 @@ describe('Performance Tests', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Product 0')).toBeInTheDocument();
-    });
+    // Wait for the first product row to appear
+    await screen.findByTestId('row-product-prod-0');
 
     const endTime = performance.now();
     const renderTime = endTime - startTime;
@@ -91,9 +96,8 @@ describe('Performance Tests', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Product')).toBeInTheDocument();
-    });
+    // Wait for the product row to appear
+    await screen.findByTestId('row-product-prod-1');
 
     const firstFetchCount = fetchCount;
 
@@ -104,9 +108,8 @@ describe('Performance Tests', () => {
       { queryClient }
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Product')).toBeInTheDocument();
-    });
+    // Wait for the product row to appear again  
+    await screen.findByTestId('row-product-prod-1');
 
     // Should use cached data, not fetch again
     expect(fetchCount).toBe(firstFetchCount);
