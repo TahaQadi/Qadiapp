@@ -102,7 +102,6 @@ export default function PriceOfferCreationDialog({
   const [clients, setClients] = useState<Client[]>([]); // State for clients
   const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined); // State for selected client ID
-  const [selectedLtaId, setSelectedLtaId] = useState<string | undefined>(undefined); // State for selected LTA ID
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -447,10 +446,7 @@ export default function PriceOfferCreationDialog({
                         </Badge>
                       )}
                     </FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      setSelectedLtaId(value); // Update selectedLtaId state
-                    }} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'} />
