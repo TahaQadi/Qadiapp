@@ -118,10 +118,10 @@ class Analytics {
 
   // Flush queued events when back online
   flushQueue() {
-    if (this.queue.length === 0) return;
+    if (this.eventQueue.length === 0) return;
 
-    const events = [...this.queue];
-    this.queue = [];
+    const events = [...this.eventQueue];
+    this.eventQueue = [];
 
     events.forEach((event) => this.sendEvent(event));
   }

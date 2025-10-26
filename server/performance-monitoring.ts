@@ -27,8 +27,9 @@ class PerformanceMonitor {
       this.metrics = this.metrics.slice(-this.maxMetrics);
     }
 
-    // Log slow requests (> 1 second)
-    if (metric.duration > 1000) {
+    // Log slow requests (> 2 seconds for production, > 1 second for development)
+    const threshold = process.env.NODE_ENV === 'production' ? 2000 : 1000;
+    if (metric.duration > threshold) {
       console.warn(`[SLOW REQUEST] ${metric.method} ${metric.endpoint} took ${metric.duration}ms`);
     }
   }
