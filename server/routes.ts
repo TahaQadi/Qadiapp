@@ -153,9 +153,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Demo request routes (public POST, admin GET/PATCH)
   app.use(demoRequestRoutes);
 
-  // Demo request routes
-  app.use('/api', demoRequestRoutes); // Register demo request routes
-
   // Document routes
   setupDocumentRoutes(app);
 
