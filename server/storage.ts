@@ -1423,6 +1423,13 @@ export class MemStorage implements IStorage {
     return this.getPriceRequest(id);
   }
 
+  async deletePriceRequest(id: string): Promise<void> {
+    await this.db
+      .delete(priceRequests)
+      .where(eq(priceRequests.id, id))
+      .execute();
+  }
+
   // Price Offers
   async createPriceOffer(data: InsertPriceOffer): Promise<PriceOffer> {
     const result = await this.db

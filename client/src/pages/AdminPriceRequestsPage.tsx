@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Eye, Clock, CheckCircle, Package, Loader2, Send } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { FileText, Eye, Clock, CheckCircle, Package, Loader2, Send, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "wouter";
@@ -108,6 +107,38 @@ export default function AdminPriceRequestsPage() {
   const handleGeneratePDF = (request: PriceRequest) => {
     setPdfRequest(request);
     setPdfDialogOpen(true);
+  };
+
+  const deletePriceRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/price-requests/${requestId}`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to delete price request');
+      }
+      return await res.json();
+    },
+    onSuccess: (_, requestId) => {
+      toast({
+        title: language === "ar" ? "تم حذف طلب السعر" : "Price Request Deleted",
+        description: language === "ar" ? "تم حذف طلب السعر بنجاح" : "Price request deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/price-requests"] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: language === "ar" ? "خطأ" : "Error",
+        description: error.message
+      });
+    }
+  });
+
+  const handleDeleteRequest = (requestId: string) => {
+    // Optionally show a confirmation dialog here before deleting
+    if (confirm(language === "ar" ? "هل أنت متأكد أنك تريد حذف طلب السعر هذا؟" : "Are you sure you want to delete this price request?")) {
+      deletePriceRequestMutation.mutate(requestId);
+    }
   };
 
   const generatePdfMutation = useMutation({
@@ -223,43 +254,54 @@ export default function AdminPriceRequestsPage() {
                         {formatDateLocalized(new Date(request.requestedAt), language)}
                       </span>
                     </div>
-                    <div className="flex gap-2 pt-2">
+                    <div className="space-y-2 pt-2">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleViewRequest(request)}
+                          data-testid={`button-view-${request.id}`}
+                        >
+                          <Eye className="h-4 w-4 me-2" />
+                          {language === "ar" ? "عرض" : "View"}
+                        </Button>
+                        {isPending && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleCreateOffer(request)}
+                              disabled={request.status === 'processed'}
+                              data-testid={`button-create-offer-${request.id}`}
+                            >
+                              <FileText className="h-4 w-4 me-2" />
+                              {request.status === 'processed' 
+                                ? (language === "ar" ? "تم الإنشاء" : "Already Created")
+                                : (language === "ar" ? "إنشاء عرض" : "Create Offer")
+                              }
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleGeneratePDF(request)}
+                              data-testid={`button-generate-pdf-${request.id}`}
+                            >
+                              <FileText className="h-4 w-4 me-2" />
+                              {language === "ar" ? "PDF" : "PDF"}
+                            </Button>
+                          </>
+                        )}
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
-                        onClick={() => handleViewRequest(request)}
-                        data-testid={`button-view-${request.id}`}
+                        className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDeleteRequest(request.id)}
                       >
-                        <Eye className="h-4 w-4 mr-2" />
-                        {language === "ar" ? "عرض" : "View"}
+                        <Trash2 className="h-4 w-4 me-2" />
+                        {language === "ar" ? "حذف" : "Delete"}
                       </Button>
-                      {isPending && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleCreateOffer(request)}
-                            disabled={request.status === 'processed'}
-                            data-testid={`button-create-offer-${request.id}`}
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            {request.status === 'processed' 
-                              ? (language === "ar" ? "تم الإنشاء" : "Already Created")
-                              : (language === "ar" ? "إنشاء عرض" : "Create Offer")
-                            }
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleGeneratePDF(request)}
-                            data-testid={`button-generate-pdf-${request.id}`}
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            {language === "ar" ? "PDF" : "PDF"}
-                          </Button>
-                        </>
-                      )}
                     </div>
                   </CardContent>
                 </Card>

@@ -1023,6 +1023,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Delete price request
+  app.delete("/api/admin/price-requests/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      await storage.deletePriceRequest(req.params.id);
+      res.json({
+        success: true,
+        message: "Price request deleted successfully",
+        messageAr: "تم حذف طلب السعر بنجاح"
+      });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Bulk delete price requests
+  app.post("/api/admin/price-requests/bulk-delete", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Invalid request: ids array required" });
+      }
+
+      for (const id of ids) {
+        await storage.deletePriceRequest(id);
+      }
+
+      res.json({
+        success: true,
+        message: `Deleted ${ids.length} price requests`,
+        messageAr: `تم حذف ${ids.length} طلبات أسعار`
+      });
+    } catch (error) {
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   // Admin: Delete price offer
   app.delete("/api/admin/price-offers/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
