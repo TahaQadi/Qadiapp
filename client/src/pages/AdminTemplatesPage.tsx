@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, FileText, Edit, Trash2, Copy, ArrowLeft, Loader2, Upload, Download,
-  Search, Filter, Eye, BarChart3, Globe, FileCheck, Power
+  Search, Filter, Eye, BarChart3, Globe, FileCheck, Power, Menu
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { PaginationControls } from '@/components/PaginationControls';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface Template {
   id: string;
@@ -73,6 +74,7 @@ export default function AdminTemplatesPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importResults, setImportResults] = useState<any>(null);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Fetch templates
   const { data: templatesData, isLoading } = useQuery<Template[]>({
@@ -298,108 +300,125 @@ export default function AdminTemplatesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold">
-                  {language === 'ar' ? 'إدارة القوالب' : 'Template Management'}
-                </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  {language === 'ar' ? 'تصميم وإدارة قوالب المستندات' : 'Design and manage document templates'}
-                </p>
+      <header className="sticky top-0 z-50 border-b bg-gradient-to-r from-primary/5 via-background to-primary/5 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="h-14 sm:h-16 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <Button variant="ghost" size="icon" asChild className="shrink-0">
+                <Link href="/admin">
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Link>
+              </Button>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 shrink-0">
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-lg font-bold truncate">
+                    {language === 'ar' ? 'إدارة القوالب' : 'Templates'}
+                  </h1>
+                  <p className="text-xs text-muted-foreground hidden md:block truncate">
+                    {language === 'ar' ? 'تصميم وإدارة قوالب المستندات' : 'Design and manage document templates'}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportDialogOpen(true)}
-              className="hidden sm:flex"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {language === 'ar' ? 'استيراد' : 'Import'}
-            </Button>
-            <Button 
-              onClick={() => {
-                setEditingTemplate(null);
-                setCreateDialogOpen(true);
-              }}
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {language === 'ar' ? 'قالب جديد' : 'New Template'}
-            </Button>
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <div className="hidden sm:flex items-center gap-2">
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
+              {isMobile && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="sm:hidden"
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+                className="hidden lg:flex"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'استيراد' : 'Import'}
+              </Button>
+              <Button 
+                onClick={() => {
+                  setEditingTemplate(null);
+                  setCreateDialogOpen(true);
+                }}
+                size="sm"
+                className="gap-1 sm:gap-2"
+              >
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{language === 'ar' ? 'قالب جديد' : 'New'}</span>
+                <span className="sm:hidden">{language === 'ar' ? 'جديد' : 'New'}</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border-l-4 border-l-primary">
-            <CardHeader className="pb-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
               <CardDescription className="text-xs">
-                {language === 'ar' ? 'إجمالي القوالب' : 'Total Templates'}
+                {language === 'ar' ? 'إجمالي القوالب' : 'Total'}
               </CardDescription>
-              <CardTitle className="text-2xl font-bold">{stats.total}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-bold">{stats.total}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="pb-3">
+          <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
               <CardDescription className="text-xs">
                 {language === 'ar' ? 'نشطة' : 'Active'}
               </CardDescription>
-              <CardTitle className="text-2xl font-bold text-green-600">{stats.active}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-bold text-green-600">{stats.active}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-3">
+          <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
               <CardDescription className="text-xs">
                 {language === 'ar' ? 'غير نشطة' : 'Inactive'}
               </CardDescription>
-              <CardTitle className="text-2xl font-bold text-orange-600">{stats.inactive}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-bold text-orange-600">{stats.inactive}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
+          <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+            <CardHeader className="p-3 sm:pb-3 sm:p-6">
               <CardDescription className="text-xs">
                 {language === 'ar' ? 'ثنائية اللغة' : 'Bilingual'}
               </CardDescription>
-              <CardTitle className="text-2xl font-bold text-blue-600">{stats.bilingual}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-bold text-blue-600">{stats.bilingual}</CardTitle>
             </CardHeader>
           </Card>
         </div>
 
         {/* Search and Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-4">
+        <Card className="shadow-sm">
+          <CardContent className="p-3 sm:pt-6 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={language === 'ar' ? 'بحث في القوالب...' : 'Search templates...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-9 sm:h-10"
                 />
               </div>
               <Button
                 variant="outline"
                 onClick={() => setImportDialogOpen(true)}
-                className="sm:hidden"
+                className="lg:hidden"
+                size="sm"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {language === 'ar' ? 'استيراد' : 'Import'}
@@ -410,23 +429,26 @@ export default function AdminTemplatesPage() {
 
         {/* Category Tabs */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-muted/50">
-            {CATEGORIES.map(cat => (
-              <TabsTrigger
-                key={cat.value}
-                value={cat.value}
-                className="flex items-center gap-2 whitespace-nowrap"
-              >
-                <cat.icon className="h-4 w-4" />
-                <span>{language === 'ar' ? cat.labelAr : cat.labelEn}</span>
-                {cat.value !== 'all' && stats.byCategory[cat.value] > 0 && (
-                  <Badge variant="secondary" className="ml-1 text-xs">
-                    {stats.byCategory[cat.value]}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="relative">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-muted/30 p-1 gap-1 scrollbar-hide">
+              {CATEGORIES.map(cat => (
+                <TabsTrigger
+                  key={cat.value}
+                  value={cat.value}
+                  className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap px-2 sm:px-3 text-xs sm:text-sm shrink-0"
+                >
+                  <cat.icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{language === 'ar' ? cat.labelAr : cat.labelEn}</span>
+                  <span className="sm:hidden">{language === 'ar' ? cat.labelAr.split(' ')[0] : cat.labelEn.split(' ')[0]}</span>
+                  {cat.value !== 'all' && stats.byCategory[cat.value] > 0 && (
+                    <Badge variant="secondary" className="ml-0.5 sm:ml-1 text-xs h-4 sm:h-5 px-1 sm:px-1.5">
+                      {stats.byCategory[cat.value]}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <TabsContent value={selectedCategory} className="mt-6">
             {isLoading ? (
@@ -447,25 +469,25 @@ export default function AdminTemplatesPage() {
               />
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {paginatedTemplates.map((template) => {
                     const categoryConfig = CATEGORIES.find(c => c.value === template.category);
                     return (
                       <Card
                         key={template.id}
-                        className="group hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50"
+                        className="group hover:shadow-lg transition-all duration-300 border hover:border-primary/50 overflow-hidden"
                       >
-                        <CardHeader>
+                        <CardHeader className="p-3 sm:p-6">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={`p-2 rounded-lg ${categoryConfig?.color || 'bg-gray-500'} bg-opacity-10`}>
-                                <FileText className="h-4 w-4" />
+                              <div className={`p-1.5 sm:p-2 rounded-lg ${categoryConfig?.color || 'bg-gray-500'} bg-opacity-10 shrink-0`}>
+                                <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <CardTitle className="text-base truncate">
+                                <CardTitle className="text-sm sm:text-base truncate">
                                   {language === 'ar' ? template.nameAr : template.nameEn}
                                 </CardTitle>
-                                <CardDescription className="text-xs truncate mt-1">
+                                <CardDescription className="text-xs truncate mt-0.5 sm:mt-1">
                                   {language === 'ar' ? template.descriptionAr : template.descriptionEn}
                                 </CardDescription>
                               </div>
@@ -477,41 +499,43 @@ export default function AdminTemplatesPage() {
                                 id: template.id, 
                                 isActive: !template.isActive 
                               })}
-                              className={template.isActive ? 'text-green-600' : 'text-gray-400'}
+                              className={`shrink-0 h-8 w-8 ${template.isActive ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-500'}`}
                             >
-                              <Power className="h-4 w-4" />
+                              <Power className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
-                          <div className="flex gap-2 mt-2 flex-wrap">
-                            <Badge variant={template.isActive ? 'default' : 'secondary'} className="text-xs">
+                          <div className="flex gap-1 sm:gap-2 mt-2 flex-wrap">
+                            <Badge variant={template.isActive ? 'default' : 'secondary'} className="text-xs h-5">
                               {template.isActive
                                 ? (language === 'ar' ? 'نشط' : 'Active')
                                 : (language === 'ar' ? 'غير نشط' : 'Inactive')}
                             </Badge>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs h-5">
                               {template.language === 'both' 
-                                ? (language === 'ar' ? 'ثنائي اللغة' : 'Bilingual')
-                                : template.language === 'ar' ? 'عربي' : 'English'}
+                                ? (language === 'ar' ? 'ثنائي' : 'Bilingual')
+                                : template.language === 'ar' ? 'عربي' : 'EN'}
                             </Badge>
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="flex gap-2">
+                        <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="flex-1"
+                              className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
                               onClick={() => {
                                 setEditingTemplate(template);
                                 setCreateDialogOpen(true);
                               }}
                             >
                               <Edit className="h-3 w-3 mr-1" />
-                              {language === 'ar' ? 'تعديل' : 'Edit'}
+                              <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
+                              <span className="sm:hidden">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
+                              className="h-8 w-8 sm:h-9 sm:w-9 p-0"
                               onClick={() => {
                                 const newName = {
                                   en: `${template.nameEn} (Copy)`,
@@ -525,8 +549,8 @@ export default function AdminTemplatesPage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-destructive hover:text-destructive-foreground"
                               onClick={() => deleteMutation.mutate(template.id)}
-                              className="hover:bg-destructive hover:text-destructive-foreground"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -553,6 +577,38 @@ export default function AdminTemplatesPage() {
         </Tabs>
       </main>
 
+      {/* Mobile Filters Sheet */}
+      <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <SheetContent side={language === 'ar' ? 'right' : 'left'} className="w-[280px] sm:w-[350px]">
+          <SheetHeader>
+            <SheetTitle>{language === 'ar' ? 'الإعدادات' : 'Settings'}</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 mt-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{language === 'ar' ? 'اللغة' : 'Language'}</label>
+              <LanguageToggle />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{language === 'ar' ? 'المظهر' : 'Theme'}</label>
+              <ThemeToggle />
+            </div>
+            <div className="pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImportDialogOpen(true);
+                  setMobileFiltersOpen(false);
+                }}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'استيراد قالب' : 'Import Template'}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Import Dialog */}
       <Dialog open={importDialogOpen} onOpenChange={(open) => {
         setImportDialogOpen(open);
@@ -561,7 +617,7 @@ export default function AdminTemplatesPage() {
           setImportResults(null);
         }
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>
               {language === 'ar' ? 'استيراد القوالب' : 'Import Templates'}
@@ -673,7 +729,7 @@ export default function AdminTemplatesPage() {
           setEditingTemplate(null);
         }
       }}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 w-[calc(100vw-1rem)] sm:w-auto">
           <DialogHeader>
             <DialogTitle>
               {editingTemplate
