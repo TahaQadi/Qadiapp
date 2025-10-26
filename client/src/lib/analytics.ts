@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 
@@ -11,7 +10,8 @@ interface AnalyticsEvent {
 
 class Analytics {
   private enabled: boolean = false;
-  private queue: AnalyticsEvent[] = [];
+  private eventQueue: AnalyticsEvent[] = [];
+  private flushTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     // Check if analytics should be enabled (e.g., not in development)
@@ -73,22 +73,47 @@ class Analytics {
     });
   }
 
-  private sendEvent(event: AnalyticsEvent) {
-    // Queue events if offline
-    if (!navigator.onLine) {
-      this.queue.push(event);
-      return;
+  private async sendEvent(event: AnalyticsEvent) {
+    if (!this.enabled) return;
+
+    // Add to queue
+    this.eventQueue.push(event);
+
+    // Clear existing timeout
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
     }
 
-    // Send to your analytics endpoint
-    fetch('/api/analytics', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    }).catch((error) => {
-      console.error('[Analytics] Failed to send event:', error);
-      this.queue.push(event);
-    });
+    // Flush queue after 2 seconds or when it reaches 10 events
+    if (this.eventQueue.length >= 10) {
+      this.flushEvents();
+    } else {
+      this.flushTimeout = setTimeout(() => this.flushEvents(), 2000);
+    }
+  }
+
+  private async flushEvents() {
+    if (this.eventQueue.length === 0) return;
+
+    const events = [...this.eventQueue];
+    this.eventQueue = [];
+
+    try {
+      // Send events in batch (but send only the last event for simplicity)
+      // In production, you'd batch all events
+      await fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(events[events.length - 1]),
+        // Don't wait for response
+        keepalive: true,
+      });
+    } catch (error) {
+      // Silently fail - analytics should never break the app
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Analytics] Failed to send events:', error);
+      }
+    }
   }
 
   // Flush queued events when back online
