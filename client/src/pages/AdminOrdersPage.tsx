@@ -131,14 +131,27 @@ export default function AdminOrdersPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const res = await apiRequest('PATCH', `/api/admin/orders/${orderId}/status`, { status });
-      return res.json();
+      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      return response.json();
     },
-    onSuccess: (data, variables) => {
-      // Invalidate both paginated and all orders queries
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
-      
-      // Optimistically update the cache
+    onMutate: async ({ orderId, status }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/admin/orders'] });
+
+      // Snapshot the previous value
+      const previousOrders = queryClient.getQueryData(['/api/admin/orders']);
+
+      // Optimistically update to the new value
       queryClient.setQueryData(
         ['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery],
         (oldData: any) => {
@@ -146,25 +159,37 @@ export default function AdminOrdersPage() {
           return {
             ...oldData,
             orders: oldData.orders.map((order: Order) =>
-              order.id === variables.orderId
-                ? { ...order, status: variables.status }
+              order.id === orderId
+                ? { ...order, status: status }
                 : order
             ),
           };
         }
       );
-      
-      toast({
-        title: language === 'ar' ? 'تم تحديث الحالة' : 'Status Updated',
-        description: language === 'ar' ? 'تم تحديث حالة الطلب بنجاح' : 'Order status updated successfully',
-      });
+
+      // Return context object with the previous orders
+      return { previousOrders };
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
+      // Rollback on error
+      if (context?.previousOrders) {
+        queryClient.setQueryData(['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery], context.previousOrders);
+      }
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error.message,
       });
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم تحديث الحالة' : 'Status Updated',
+        description: language === 'ar' ? 'تم تحديث حالة الطلب بنجاح' : 'Order status updated successfully',
+      });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure data consistency
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
     },
   });
 
@@ -519,7 +544,7 @@ export default function AdminOrdersPage() {
   };
 
   const renderOrderCard = (order: Order) => (
-    <Card key={order.id} 
+    <Card key={order.id}
       className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-xl dark:hover:shadow-[#d4af37]/30 transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm group"
     >
       <CardContent className="p-4 space-y-4">
