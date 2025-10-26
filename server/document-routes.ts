@@ -5,6 +5,7 @@ import { TemplateStorage } from "./template-storage";
 import { PDFStorage } from "./object-storage";
 import { PDFAccessControl } from "./pdf-access-control";
 import { storage } from "./storage";
+import { DocumentUtils } from "./document-utils";
 import { z } from "zod";
 
 // Validation schemas
@@ -66,18 +67,24 @@ export function setupDocumentRoutes(app: Express) {
         });
       }
 
-      // Generate PDF
-      const pdfBuffer = await TemplatePDFGenerator.generate({
-        template,
-        variables,
-        language: language as 'en' | 'ar'
-      });
+      // Generate PDF with error handling
+      let pdfBuffer: Buffer;
+      try {
+        pdfBuffer = await TemplatePDFGenerator.generate({
+          template,
+          variables,
+          language: language as 'en' | 'ar'
+        });
 
-      // Validate PDF
-      if (pdfBuffer.length === 0) {
+        if (!pdfBuffer || pdfBuffer.length === 0) {
+          throw new Error('PDF generation returned empty buffer');
+        }
+      } catch (pdfError) {
+        console.error('PDF generation failed:', pdfError);
         return res.status(500).json({
           success: false,
-          error: 'Failed to generate PDF'
+          error: 'Failed to generate PDF',
+          details: pdfError instanceof Error ? pdfError.message : 'Unknown error'
         });
       }
 

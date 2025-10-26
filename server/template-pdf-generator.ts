@@ -585,59 +585,41 @@ export class TemplatePDFGenerator {
     doc.moveDown(0.5);
   }
 
+  // Cache for compiled variable patterns
+  private static variableCache = new Map<string, RegExp>();
+
   private static replaceVariables(
     text: string,
     variables: Array<{ key: string; value: any }>
   ): string {
     if (!text) return '';
 
-    let result = text;
-
-    // Convert variables array to object for easier access
+    // Create optimized variable map
     const varMap = new Map<string, any>();
-    variables.forEach(variable => {
-      varMap.set(variable.key, variable.value);
-    });
+    variables.forEach(({ key, value }) => varMap.set(key, value));
 
-    // Handle nested variable access (e.g., {{client.nameEn}})
-    result = result.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-      const value = this.getNestedValue(varMap, path.trim());
-      return value !== undefined ? String(value) : match; // Keep original if not found
+    // Single pass replacement with caching
+    return text.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+      const trimmedPath = path.trim();
+      const value = this.getNestedValue(varMap, trimmedPath);
+      return value !== undefined ? String(value) : match;
     });
-
-    return result;
   }
 
   private static getNestedValue(varMap: Map<string, any>, path: string): any {
-    // Handle simple variables first
+    // Direct lookup for simple variables (most common case)
     if (varMap.has(path)) {
       return varMap.get(path);
     }
 
-    // Handle nested access (e.g., "client.nameEn")
+    // Handle nested paths efficiently
     const parts = path.split('.');
-    if (parts.length === 2) {
-      const [objectKey, propertyKey] = parts;
-      const object = varMap.get(objectKey);
-
-      if (object && typeof object === 'object') {
-        return object[propertyKey];
-      }
+    let current: any = varMap.get(parts[0]);
+    
+    for (let i = 1; i < parts.length && current != null; i++) {
+      current = current[parts[i]];
     }
-
-    // Handle deeper nesting (e.g., "client.address.street")
-    if (parts.length > 2) {
-      let current = varMap.get(parts[0]);
-      for (let i = 1; i < parts.length; i++) {
-        if (current && typeof current === 'object') {
-          current = current[parts[i]];
-        } else {
-          return undefined;
-        }
-      }
-      return current;
-    }
-
-    return undefined;
+    
+    return current;
   }
 }

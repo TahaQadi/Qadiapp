@@ -23,11 +23,13 @@ export class TemplateStorage {
   }
 
   static async getTemplates(category?: string) {
+    const query = db.select().from(templates);
+    
     if (category) {
-      return await db.select().from(templates).where(eq(templates.category, category as any)).orderBy(templates.createdAt);
+      return await query.where(eq(templates.category, category as any)).orderBy(templates.createdAt);
     }
     
-    return await db.select().from(templates).orderBy(templates.createdAt);
+    return await query.orderBy(templates.createdAt);
   }
 
   static async getTemplate(id: string) {

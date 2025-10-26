@@ -103,20 +103,44 @@ export class DocumentTriggerService {
     }
   }
 
+  // Cache active templates to avoid repeated DB queries
+  private templateCache = new Map<string, any>();
+  private lastCacheUpdate = 0;
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  private async getActiveTemplate(category: string): Promise<any> {
+    const now = Date.now();
+    const cacheKey = `${category}_active`;
+    
+    // Return cached template if valid
+    if (this.templateCache.has(cacheKey) && (now - this.lastCacheUpdate) < this.CACHE_TTL) {
+      return this.templateCache.get(cacheKey);
+    }
+    
+    // Refresh cache
+    const templates = await TemplateStorage.getTemplates(category);
+    const template = templates.find(t => t.isActive && t.language === 'both');
+    
+    if (template) {
+      this.templateCache.set(cacheKey, template);
+      this.lastCacheUpdate = now;
+    }
+    
+    return template;
+  }
+
   /**
    * Handle order placed event
    */
   private async handleOrderPlaced(event: DocumentGenerationEvent): Promise<DocumentGenerationResult> {
     const { data: order } = event;
     
-    // Get order confirmation template - try 'order' first, then fallback to 'invoice'
-    let templates = await TemplateStorage.getTemplates('order');
-    let template = templates.find(t => t.isActive && t.language === 'both');
+    // Get order confirmation template with caching
+    let template = await this.getActiveTemplate('order');
     
     if (!template) {
       console.log('ℹ️ No active order template found, trying invoice template...');
-      templates = await TemplateStorage.getTemplates('invoice');
-      template = templates.find(t => t.isActive && t.language === 'both');
+      template = await this.getActiveTemplate('invoice');
     }
     
     if (!template) {
