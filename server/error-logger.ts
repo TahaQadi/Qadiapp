@@ -123,8 +123,8 @@ class ErrorLogger {
     ];
 
     return criticalPatterns.some(pattern => pattern.test(message)) ||
-           context.route?.includes('/api/client/orders') ||
-           context.route?.includes('/api/admin/');
+           (context.route?.includes('/api/client/orders') ?? false) ||
+           (context.route?.includes('/api/admin/') ?? false);
   }
 
   private sendCriticalAlert(message: string, context: ErrorContext): void {

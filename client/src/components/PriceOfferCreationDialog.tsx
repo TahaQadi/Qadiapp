@@ -468,10 +468,7 @@ export default function PriceOfferCreationDialog({
                       <Users className="h-4 w-4" />
                       {language === 'ar' ? 'العميل' : 'Client'}
                     </FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      setSelectedClientId(value); // Update selectedClientId state
-                    }} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'} />

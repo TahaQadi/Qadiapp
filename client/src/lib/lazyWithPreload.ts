@@ -8,7 +8,7 @@ interface PreloadableComponent<T extends ComponentType<any>> {
 export function lazyWithPreload<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ): T & PreloadableComponent<T> {
-  const Component = lazy(factory) as T & PreloadableComponent<T>;
+  const Component = lazy(factory) as unknown as T & PreloadableComponent<T>;
   Component.preload = factory;
   return Component;
 }

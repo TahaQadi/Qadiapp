@@ -15,7 +15,7 @@ interface OrderModificationHistoryProps {
 export function OrderModificationHistory({ orderId }: OrderModificationHistoryProps) {
   const { t, language } = useLanguage();
 
-  const { data: modifications, isLoading } = useQuery({
+  const { data: modifications, isLoading } = useQuery<any[]>({
     queryKey: [`/api/client/orders/${orderId}/modifications`],
   });
 

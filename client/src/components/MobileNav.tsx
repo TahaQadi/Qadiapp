@@ -39,7 +39,7 @@ export function MobileNav({ cartItemCount = 0, onMenuClick }: MobileNavProps) {
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
-                {item.badge > 0 && (
+                {item.badge && item.badge > 0 && (
                   <Badge 
                     className="absolute -top-2 -right-2 h-4 min-w-4 p-0 flex items-center justify-center text-xs"
                     variant="destructive"

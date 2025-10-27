@@ -172,7 +172,7 @@ export class DocumentTriggerService {
     const fileName = `order_confirmation_${order.id}_${Date.now()}.pdf`;
     const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'ORDER');
     
-    if (!uploadResult.success) {
+        if (!uploadResult.ok) {
       console.error('❌ PDF upload failed:', uploadResult.error);
       throw new Error(`Failed to upload PDF to storage: ${uploadResult.error || 'Unknown error'}`);
     }
@@ -263,7 +263,7 @@ export class DocumentTriggerService {
     const fileName = `order_${order.id}_${newStatus}_${Date.now()}.pdf`;
     const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'ORDER');
     
-    if (!uploadResult.success) {
+        if (!uploadResult.ok) {
       throw new Error('Failed to upload PDF to storage');
     }
 
@@ -331,7 +331,7 @@ export class DocumentTriggerService {
     const fileName = `price_offer_${priceOffer.id}_${Date.now()}.pdf`;
     const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'PRICE_OFFER');
     
-    if (!uploadResult.success) {
+        if (!uploadResult.ok) {
       throw new Error('Failed to upload PDF to storage');
     }
 
@@ -397,7 +397,7 @@ export class DocumentTriggerService {
     const fileName = `lta_contract_${lta.id}_${Date.now()}.pdf`;
     const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, 'CONTRACT');
     
-    if (!uploadResult.success) {
+        if (!uploadResult.ok) {
       throw new Error('Failed to upload PDF to storage');
     }
 

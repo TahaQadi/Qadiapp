@@ -62,9 +62,9 @@ export class DocumentUtils {
 
       // 3. Upload to storage
       const fileName = this.generateFileName(templateCategory, metadata);
-      const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, templateCategory.toUpperCase());
+      const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, templateCategory.toUpperCase() as any);
 
-      if (!uploadResult.success) {
+      if (!uploadResult.ok) {
         return { success: false, error: 'Failed to upload PDF' };
       }
 
