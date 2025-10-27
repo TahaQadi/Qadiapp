@@ -83,16 +83,32 @@ export class TemplateGenerator {
     const variableMap = new Map(variables.map(v => [v.key, v.value]));
     
     const processedSections = template.sections.map(section => {
-      let content = JSON.stringify(section.content);
+      const content = { ...section.content };
       
-      variableMap.forEach((value, key) => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        content = content.replace(regex, value);
-      });
+      // Recursively replace variables in the content object
+      const replaceInObject = (obj: any): any => {
+        if (typeof obj === 'string') {
+          let result = obj;
+          variableMap.forEach((value, key) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            result = result.replace(regex, String(value));
+          });
+          return result;
+        } else if (Array.isArray(obj)) {
+          return obj.map(item => replaceInObject(item));
+        } else if (obj && typeof obj === 'object') {
+          const result: any = {};
+          for (const [key, value] of Object.entries(obj)) {
+            result[key] = replaceInObject(value);
+          }
+          return result;
+        }
+        return obj;
+      };
       
       return {
         ...section,
-        content: JSON.parse(content)
+        content: replaceInObject(content)
       };
     });
 
@@ -339,7 +355,12 @@ export class TemplateGenerator {
   ) {
     const tableTop = doc.y;
     let headers = content.headers || [];
-    const rows = content.rows || content.dataSource || [];
+    let rows = content.rows || content.dataSource || [];
+    
+    // Ensure rows is an array
+    if (!Array.isArray(rows)) {
+      rows = [];
+    }
     
     // For bilingual mode, combine headers
     if (language === 'both' && content.headersAr) {

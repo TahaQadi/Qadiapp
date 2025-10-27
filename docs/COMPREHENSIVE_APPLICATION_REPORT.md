@@ -253,6 +253,9 @@ Multiple pricing tiers for flexibility:
 - **Language Support**: Language-specific or bilingual templates
 - **Versioning**: Active/inactive template management
 - **Rendering**: Server-side with PDFKit and Arabic text support
+- **Default Templates**: Automatic fallback templates to prevent generation failures
+- **Template Management**: Complete CRUD operations with admin interface
+- **Variable System**: Dynamic content replacement with type-safe handling
 
 ---
 
@@ -455,9 +458,12 @@ PROD-002,149.50
 ##### 7.3 Template Structure
 - **JSON-based**: Flexible template definition
 - **Sections**: header, body, table, footer, signature, image, divider, spacer, terms
-- **Variables**: Dynamic data placeholders
-- **Styling**: Colors, fonts, spacing
+- **Variables**: Dynamic data placeholders with type-safe replacement
+- **Styling**: Colors, fonts, spacing, margins
 - **Language**: English, Arabic, or bilingual
+- **Default Templates**: Pre-configured templates for each category
+- **Template Validation**: Structure and content validation
+- **Variable Replacement**: Recursive replacement for complex objects
 
 ---
 
@@ -1066,18 +1072,25 @@ errorLogs
 ```typescript
 {
   id: varchar (PK, UUID)
-  name: text (NOT NULL)
+  nameEn: text (NOT NULL)
+  nameAr: text (NOT NULL)
+  descriptionEn: text
+  descriptionAr: text
   category: text (NOT NULL)
   language: text (NOT NULL)
   sections: jsonb (NOT NULL)
+  variables: jsonb (NOT NULL)
   styles: jsonb
   isActive: boolean (DEFAULT true)
+  isDefault: boolean (DEFAULT false)
+  version: integer (DEFAULT 1)
+  tags: text[]
   createdAt: timestamp (DEFAULT NOW)
   updatedAt: timestamp (DEFAULT NOW)
 }
 ```
 
-**Categories**: price_offer, order, invoice, contract
+**Categories**: price_offer, order, invoice, contract, lta_document
 
 ---
 
@@ -1638,6 +1651,172 @@ Get recent business events.
 
 ---
 
+### Template Management Endpoints
+
+#### POST /api/templates/generate
+Generate PDF document from template.
+
+**Auth**: Required
+
+**Request**:
+```json
+{
+  "category": "price_offer",
+  "variables": [
+    { "key": "companyName", "value": "ACME Corp" },
+    { "key": "clientName", "value": "Client Inc." },
+    { "key": "date", "value": "2024-01-15" }
+  ],
+  "templateId": "optional-template-id",
+  "language": "both"
+}
+```
+
+**Response** (200): PDF file download
+
+---
+
+#### GET /api/templates/default/:category
+Get default template for category.
+
+**Auth**: Required
+
+**Response** (200):
+```json
+{
+  "success": true,
+  "template": {
+    "id": "uuid",
+    "nameEn": "Standard Price Offer",
+    "nameAr": "عرض سعر قياسي",
+    "category": "price_offer",
+    "sections": [...],
+    "variables": [...]
+  }
+}
+```
+
+---
+
+#### GET /api/templates/category/:category
+Get templates by category.
+
+**Auth**: Required
+
+**Response** (200):
+```json
+{
+  "success": true,
+  "templates": [...]
+}
+```
+
+---
+
+#### GET /api/templates/:id/variables
+Get template variables.
+
+**Auth**: Required
+
+**Response** (200):
+```json
+{
+  "success": true,
+  "variables": ["companyName", "clientName", "date"]
+}
+```
+
+---
+
+### Admin Template Endpoints
+
+#### POST /api/admin/templates/set-default
+Set template as default for its category.
+
+**Auth**: Required (Admin)
+
+**Request**:
+```json
+{
+  "templateId": "uuid"
+}
+```
+
+---
+
+#### POST /api/admin/templates/validate
+Validate template structure.
+
+**Auth**: Required (Admin)
+
+**Request**:
+```json
+{
+  "template": {
+    "nameEn": "Template Name",
+    "nameAr": "اسم القالب",
+    "category": "price_offer",
+    "sections": [...],
+    "variables": [...]
+  }
+}
+```
+
+**Response** (200):
+```json
+{
+  "success": true,
+  "valid": true,
+  "errors": []
+}
+```
+
+---
+
+#### GET /api/admin/templates/stats
+Get template statistics.
+
+**Auth**: Required (Admin)
+
+**Response** (200):
+```json
+{
+  "success": true,
+  "stats": {
+    "totalTemplates": 12,
+    "templatesByCategory": {
+      "price_offer": 3,
+      "order": 3,
+      "invoice": 3,
+      "contract": 3
+    },
+    "activeTemplates": 10,
+    "defaultTemplates": 4
+  }
+}
+```
+
+---
+
+#### POST /api/admin/templates/:id/preview
+Preview template with sample data.
+
+**Auth**: Required (Admin)
+
+**Request**:
+```json
+{
+  "variables": [
+    { "key": "companyName", "value": "Sample Company" }
+  ],
+  "language": "both"
+}
+```
+
+**Response** (200): PDF file download
+
+---
+
 ## Integrations
 
 ### 1. Pipefy Integration
@@ -2090,6 +2269,9 @@ npm start
 # Database migration
 npm run db:push
 
+# Seed templates
+npm run seed:templates
+
 # Run tests
 npm test
 ```
@@ -2124,12 +2306,18 @@ workspace/
 │   ├── audit-logging.ts
 │   ├── business-metrics.ts
 │   ├── template-pdf-generator.ts
+│   ├── template-generator.ts
+│   ├── template-storage.ts
+│   ├── template-manager.ts
+│   ├── template-management-routes.ts
+│   ├── seed-templates.ts
 │   └── index.ts           # Server entry point
 │
 ├── shared/                # Shared code
 │   ├── schema.ts          # Drizzle schema + Zod
 │   ├── api-types.ts       # API response types
 │   ├── api-validation.ts  # Validation schemas
+│   ├── template-schema.ts # Template validation schemas
 │   └── types.ts           # Shared TypeScript types
 │
 ├── docs/                  # Documentation
@@ -2139,6 +2327,12 @@ workspace/
 │   ├── DATABASE_SCHEMA.md
 │   ├── WORKFLOWS_DOCUMENTATION.md
 │   └── ...
+│
+├── templates/             # Template system
+│   ├── production/        # Production template files
+│   ├── import-templates.ts # Template import script
+│   ├── README.md          # Template documentation
+│   └── TEMPLATE_GUIDE.md  # Template usage guide
 │
 ├── attached_assets/       # Uploaded files
 │   ├── products/          # Product images

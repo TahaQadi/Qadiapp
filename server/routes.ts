@@ -14,6 +14,7 @@ import demoRequestRoutes from './demo-request-routes';
 import feedbackRoutes from './feedback-routes';
 import feedbackAnalyticsRoutes from './feedback-analytics-routes';
 import { setupDocumentRoutes } from './document-routes';
+import { setupTemplateManagementRoutes } from './template-management-routes';
 import { documentTriggerService } from './document-triggers';
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
@@ -155,6 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Document routes
   setupDocumentRoutes(app);
+  setupTemplateManagementRoutes(app);
 
   // Test document triggers endpoint (for development)
   app.post('/api/test/document-triggers', async (req: any, res) => {

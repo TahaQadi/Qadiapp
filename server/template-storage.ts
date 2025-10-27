@@ -17,6 +17,7 @@ export class TemplateStorage {
       variables: JSON.stringify(data.variables),
       styles: JSON.stringify(data.styles),
       isActive: data.isActive,
+      isDefault: data.isDefault || false,
     }).returning();
     
     return template;
@@ -51,6 +52,7 @@ export class TemplateStorage {
     if (data.variables !== undefined) updateData.variables = JSON.stringify(data.variables);
     if (data.styles !== undefined) updateData.styles = JSON.stringify(data.styles);
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.isDefault !== undefined) updateData.isDefault = data.isDefault;
 
     const [template] = await db.update(templates)
       .set(updateData)
