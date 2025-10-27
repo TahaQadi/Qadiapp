@@ -159,17 +159,15 @@ export const orderTemplates = pgTable("order_templates", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Templates table for PDF/document templates
+// Templates table for PDF/document templates (Arabic-only)
 export const templates = pgTable("templates", {
   id: uuid("id").defaultRandom().primaryKey(),
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
-  descriptionEn: text("description_en"),
-  descriptionAr: text("description_ar"),
+  name: text("name").notNull(),
+  description: text("description"),
   category: text("category", {
     enum: ["price_offer", "order", "invoice", "contract", "report", "other"]
   }).notNull(),
-  language: text("language", { enum: ["en", "ar", "both"] }).notNull().default("both"),
+  language: text("language", { enum: ["ar"] }).notNull().default("ar"),
   sections: jsonb("sections").notNull(),
   variables: jsonb("variables").notNull(),
   styles: jsonb("styles").notNull(),

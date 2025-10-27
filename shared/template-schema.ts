@@ -9,12 +9,10 @@ export const templateSectionSchema = z.object({
 });
 
 export const createTemplateSchema = z.object({
-  nameEn: z.string().min(1, 'Template name (English) is required'),
-  nameAr: z.string().min(1, 'Template name (Arabic) is required'),
-  descriptionEn: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  name: z.string().min(1, 'اسم القالب مطلوب'), // Template name required
+  description: z.string().optional(),
   category: z.enum(['price_offer', 'order', 'invoice', 'contract', 'report', 'other']),
-  language: z.enum(['en', 'ar', 'both']),
+  language: z.enum(['ar']).default('ar'), // Arabic-only
   sections: z.array(templateSectionSchema),
   variables: z.array(z.string()),
   styles: z.object({
