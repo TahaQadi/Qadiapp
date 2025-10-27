@@ -41,3 +41,41 @@ export const updateTemplateSchema = createTemplateSchema.partial();
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 export type TemplateSection = z.infer<typeof templateSectionSchema>;
+
+// Template variable for PDF generation
+export interface TemplateVariable {
+  key: string;
+  value: any;
+}
+
+// Full document template with metadata
+export interface DocumentTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  language: 'ar'; // Arabic-only
+  sections: TemplateSection[];
+  variables: string[];
+  styles: {
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    fontSize: number;
+    fontFamily?: string;
+    headerHeight?: number;
+    footerHeight?: number;
+    margins?: {
+      top: number;
+      bottom: number;
+      left: number;
+      right: number;
+    };
+  };
+  isActive?: boolean;
+  isDefault?: boolean;
+  version?: number;
+  tags?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}

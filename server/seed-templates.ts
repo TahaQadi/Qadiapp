@@ -413,7 +413,9 @@ export async function seedTemplates() {
         variables: templateData.variables,
         styles: templateData.styles,
         isActive: templateData.isActive,
-        isDefault: templateData.isDefault ?? false
+        isDefault: templateData.isDefault ?? false,
+        version: 1,
+        tags: []
       });
       
       console.log(`✅ Created template: ${templateData.name}`);

@@ -126,7 +126,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     section: TemplateSection,
     styles: DocumentTemplate['styles'],
-    language: 'en' | 'ar' | 'both'
+    language: 'ar' // Arabic-only
   ) {
     switch (section.type) {
       case 'header':
@@ -196,7 +196,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     content: { terms?: string[]; title?: string; titleAr?: string; items?: string[]; itemsAr?: string[] },
     styles: DocumentTemplate['styles'],
-    language: 'en' | 'ar' | 'both'
+    language: 'ar'
   ) {
     if (language === 'both') {
       // Render both languages
@@ -261,7 +261,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     content: any,
     styles: DocumentTemplate['styles'],
-    language: 'en' | 'ar' | 'both'
+    language: 'ar'
   ) {
     doc.rect(0, 0, 595, 100)
       .fillAndStroke(styles.primaryColor, styles.primaryColor);
@@ -307,7 +307,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     content: any,
     styles: DocumentTemplate['styles'],
-    language?: 'en' | 'ar' | 'both'
+    language: 'ar'
   ) {
     const title = language === 'ar' ? (content.titleAr || content.title) : content.title;
     
@@ -358,7 +358,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     content: any,
     styles: DocumentTemplate['styles'],
-    language?: 'en' | 'ar' | 'both'
+    language: 'ar'
   ) {
     const tableTop = doc.y;
     let headers = content.headers || [];
@@ -465,7 +465,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     content: any,
     styles: DocumentTemplate['styles'],
-    language: 'en' | 'ar' | 'both'
+    language: 'ar'
   ) {
     const footerY = doc.page.height - 60;
     
@@ -532,7 +532,7 @@ export class TemplateGenerator {
     doc: PDFKit.PDFDocument,
     content: any,
     styles: DocumentTemplate['styles'],
-    language: 'en' | 'ar' | 'both'
+    language: 'ar'
   ) {
     const signatureY = Math.max(doc.y, 650);
     
