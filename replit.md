@@ -2,6 +2,8 @@
 
 This bilingual (Arabic/English) application enables businesses to manage and fulfill Long-Term Agreement (LTA) based product orders. It provides a comprehensive platform for managing contracts, products from a master catalog, and client-specific pricing. Key capabilities include secure client authentication with role-based access, a robust price management system, product image handling, bulk product import, a responsive product grid, order templates, and integration with Pipefy for streamlined order processing. The project's core purpose is to optimize contract fulfillment workflows and enhance the ordering experience for LTA clients.
 
+**Note on Template System:** As of October 2025, the document template system has been refactored to Arabic-only. While the application UI remains fully bilingual (EN/AR), all PDF templates for contracts, invoices, orders, and price offers are now exclusively in Arabic (language: 'ar'). See "Template System Migration (October 2025)" section below for details.
+
 # Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
@@ -98,6 +100,53 @@ Preferred communication style: Simple, everyday language.
 - All production assets in `attached_assets/documents/` and `attached_assets/products/` remain intact
 - All database tables and production data preserved
 - All production features remain functional
+
+# Template System Migration (October 2025)
+
+## Arabic-Only Templates ✅ COMPLETED
+The document template system has been refactored from bilingual (English/Arabic) to **Arabic-only** for simplified template management and streamlined PDF generation. The application UI remains fully bilingual (EN/AR) - only the generated PDF documents are Arabic-only.
+
+### Database Schema Changes
+- **Removed bilingual columns**: `name_en`, `name_ar`, `description_en`, `description_ar`
+- **Added single language columns**: `name` (text, required), `description` (text, optional)
+- **Language enforcement**: `language` column restricted to 'ar' only (previously supported 'en', 'ar', 'both')
+- **Migration method**: Manual SQL `ALTER TABLE` commands applied successfully
+- **All existing bilingual templates deleted** during migration
+
+### Backend Code Changes
+**Files Updated (10+ files):**
+- `shared/schema.ts` - Updated templates table schema
+- `shared/template-schema.ts` - Added `DocumentTemplate` & `TemplateVariable` type exports, enforced Arabic-only validation
+- `server/template-storage.ts` - Uses `name`/`description` fields (not `nameEn`/`nameAr`)
+- `server/template-generator.ts` - All language types changed from `'en' | 'ar' | 'both'` to `'ar'`
+- `server/template-manager.ts` - Removed English language logic and nameEn references
+- `server/template-management-routes.ts` - Updated validation schemas to Arabic-only
+- `server/seed-templates.ts` - Completely rewritten with 4 Arabic-only templates (635 lines → 411 lines)
+- `server/document-utils.ts` - Language parameter defaults to 'ar'
+
+### Frontend Changes
+- **Deleted**: `client/src/pages/AdminTemplatesPage.tsx` (770 lines) - standalone template management page
+- **Updated**: `client/src/App.tsx` - Removed `/admin/templates/documents` route
+- **Centralized Management**: All template operations now handled via `/admin/documents?tab=templates` in `AdminDocumentsPage`
+
+### Seeded Arabic Templates (4 total)
+1. **قالب عرض السعر القياسي** (price_offer) - Standard price offer template
+2. **قالب تأكيد الطلب** (order) - Order confirmation template
+3. **قالب الفاتورة** (invoice) - Invoice template
+4. **قالب عقد الاتفاقية** (contract) - LTA contract template
+
+### Technical Benefits
+- **Simplified codebase**: Removed ~800 lines of bilingual template logic
+- **Type safety**: Enforced Arabic-only at TypeScript compile-time
+- **Database integrity**: Schema-level language validation prevents bilingual data
+- **Maintainability**: Single source of truth for template content (Arabic only)
+- **LSP clean**: All TypeScript compilation errors resolved
+
+### Migration Impact
+- **UI**: No impact - application interface remains fully bilingual (EN/AR)
+- **API**: Template endpoints now enforce Arabic-only validation
+- **PDF Generation**: All generated documents (contracts, invoices, orders, price offers) are Arabic-only
+- **Existing Data**: All previous bilingual templates were deleted during migration
 
 # External Dependencies
 
