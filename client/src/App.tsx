@@ -24,7 +24,6 @@ import AdminLtaDetailPage from "@/pages/AdminLtaDetailPage";
 import AdminPriceRequestsPage from './pages/AdminPriceRequestsPage';
 import AdminPriceManagementPage from './pages/AdminPriceManagementPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
-import AdminTemplatesPage from './pages/AdminTemplatesPage';
 import AdminDocumentsPage from './pages/AdminDocumentsPage';
 import AdminDocumentListPage from './pages/AdminDocumentListPage';
 import OrderModificationsPage from './pages/admin/OrderModificationsPage';
@@ -161,7 +160,6 @@ function Router() {
       <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />
       <AdminRoute path="/admin/feedback" component={CustomerFeedbackPage} />
       <AdminRoute path="/admin/error-logs" component={AdminErrorLogsPage} />
-      <AdminRoute path="/admin/templates/documents" component={AdminTemplatesPage} />
       <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
