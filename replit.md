@@ -6,14 +6,11 @@ This bilingual (Arabic/English) application enables businesses to manage and ful
 
 Comprehensive documentation is available in the `docs/` directory:
 
-- **[APPLICATION_OVERVIEW.md](docs/APPLICATION_OVERVIEW.md)** - Technology stack, architecture patterns, and system design
-- **[FEATURES_DOCUMENTATION.md](docs/FEATURES_DOCUMENTATION.md)** - Complete feature breakdown for admin, client, and system features
-- **[WORKFLOWS_DOCUMENTATION.md](docs/WORKFLOWS_DOCUMENTATION.md)** - Detailed process flows with diagrams for all major workflows
-- **[API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)** - REST API reference with 63+ endpoints, request/response formats, and authentication
-- **[DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)** - Complete database schema with 28 tables, relationships, and constraints
-- **[CODE_AUDIT.md](docs/CODE_AUDIT.md)** - Code quality audit identifying unused/deprecated code and improvement recommendations
+- **[COMPREHENSIVE_APPLICATION_REPORT.md](docs/COMPREHENSIVE_APPLICATION_REPORT.md)** - Complete application documentation (2,184 lines) covering technology stack, system architecture, all features, database schema (28 tables), API reference (63+ endpoints), integrations, security, performance, and development roadmap
 - **[PHASE_2_MIGRATION_GUIDE.md](docs/PHASE_2_MIGRATION_GUIDE.md)** - Migration guide for API validation schemas and query key factory
 - **[PHASE_3_4_IMPLEMENTATION.md](docs/PHASE_3_4_IMPLEMENTATION.md)** - Performance optimization, monitoring, and security enhancements guide
+- **[CODE_AUDIT.md](docs/CODE_AUDIT.md)** - Code quality audit identifying unused/deprecated code and improvement recommendations
+- **[README.md](docs/README.md)** - Documentation index and quick start guide
 
 These documents provide detailed technical specifications, implementation details, and maintenance guidance for the entire application.
 
@@ -95,6 +92,7 @@ Preferred communication style: Simple, everyday language.
 - **Removed test files**: Deleted 5 test files from `server/` directory (`test-document-api.ts`, `test-document-triggers.ts`, `test-enhanced-pdf-generator.ts`, `test-pdf-flow.ts`, `test-pdf-generator-simple.ts`)
 - **Removed duplicate hook file**: Deleted duplicate `use-mobile.ts` (kept `use-mobile.tsx` which uses media queries for better performance)
 - **Removed empty directory**: Deleted the empty `backups/` directory
+- **Documentation consolidation**: Removed 38 redundant documentation files from `docs/` folder, consolidated all information into `COMPREHENSIVE_APPLICATION_REPORT.md` (2,184 lines), kept only 5 essential files
 
 ## Production Data Preserved
 - All production assets in `attached_assets/documents/` and `attached_assets/products/` remain intact
