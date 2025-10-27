@@ -1857,12 +1857,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update order status (admin only)
-  app.patch("/api/admin/orders/:id/status", requireAuth, async (req: any, res) => {
+  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req: AdminRequest, res) => {
     try {
-      if (!req.client.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const { status, notes } = req.body;
       const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
 
@@ -1890,7 +1886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createOrderHistory({
           orderId: req.params.id,
           status: status,
-          changedBy: req.client.id,
+          changedBy: req.user!.id,
           notes: notes || null,
           isAdminNote: true,
         });
@@ -1902,7 +1898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (fullOrder) {
-        const statusMessages = {
+        const statusMessages: Record<string, { en: string; ar: string }> = {
           confirmed: { en: "Order confirmed and being processed", ar: "تم تأكيد الطلب وجاري معالجته" },
           processing: { en: "Order is now being processed", ar: "جاري معالجة الطلب" },
           shipped: { en: "Order has been shipped", ar: "تم شحن الطلب" },
@@ -1916,8 +1912,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createNotification({
             clientId: fullOrder.clientId,
             type: 'order_status_changed',
-            titleEn: statusMessages[status].en,
-            titleAr: statusMessages[status].ar,
+            titleEn: statusMessages[status]?.en || 'Order status updated',
+            titleAr: statusMessages[status]?.ar || 'تم تحديث حالة الطلب',
             messageEn: `Order #${fullOrder.id.substring(0, 8)} status updated`,
             messageAr: `تم تحديث حالة الطلب #${fullOrder.id.substring(0, 8)}`,
             actionUrl: `/orders`,

@@ -139,7 +139,8 @@ export default function AdminOrdersPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update order status');
+        const errorData = await response.json().catch(() => ({ message: 'Failed to update order status' }));
+        throw new Error(errorData.message || 'Failed to update order status');
       }
 
       return response.json();
