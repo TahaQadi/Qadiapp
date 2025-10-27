@@ -2,10 +2,12 @@ import type { Express, Request, Response } from "express";
 import { requireAuth, requireAdmin, AuthenticatedRequest, AdminRequest } from "./auth";
 import { TemplatePDFGenerator } from "./template-pdf-generator";
 import { TemplateStorage } from "./template-storage";
+import { TemplateManager } from "./template-manager";
 import { PDFStorage } from "./object-storage";
 import { PDFAccessControl } from "./pdf-access-control";
 import { storage } from "./storage";
 import { DocumentUtils } from "./document-utils";
+import { DocumentTemplate, TemplateVariable } from "@shared/template-schema";
 import { z } from "zod";
 
 // Validation schemas
@@ -102,11 +104,38 @@ export function setupDocumentRoutes(app: Express) {
       let pdfBuffer: Buffer;
       try {
         console.log('🔨 Starting PDF generation...');
-        pdfBuffer = await TemplatePDFGenerator.generate({
-          template,
-          variables,
-          language: language as 'en' | 'ar'
-        });
+        
+        // Convert template to DocumentTemplate format
+        const documentTemplate: DocumentTemplate = {
+          id: template.id,
+          nameEn: template.nameEn,
+          nameAr: template.nameAr,
+          descriptionEn: template.descriptionEn,
+          descriptionAr: template.descriptionAr,
+          category: template.category,
+          language: template.language,
+          sections: JSON.parse(template.sections),
+          variables: JSON.parse(template.variables),
+          styles: JSON.parse(template.styles),
+          isActive: template.isActive,
+          isDefault: template.isDefault,
+          version: template.version || 1,
+          tags: template.tags || [],
+          createdAt: template.createdAt,
+          updatedAt: template.updatedAt
+        };
+
+        // Convert variables to TemplateVariable format
+        const templateVariables: TemplateVariable[] = variables.map(v => ({
+          key: v.key,
+          value: v.value
+        }));
+
+        pdfBuffer = await TemplateManager.generateDocument(
+          template.category,
+          templateVariables,
+          templateId
+        );
 
         if (!pdfBuffer || pdfBuffer.length === 0) {
           throw new Error('PDF generation returned empty buffer');
