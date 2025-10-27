@@ -285,12 +285,10 @@ export default function CatalogPage() {
             <Button
               variant="ghost"
               size="icon"
-              asChild
+              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = (user ? "/ordering" : "/landing")}
               className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
             >
-              <Link href={user ? "/ordering" : "/landing"}>
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <img
               src="/logo.png"
