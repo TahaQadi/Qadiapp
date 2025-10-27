@@ -247,15 +247,16 @@ Multiple pricing tiers for flexibility:
 - **Micro Feedback**: Touchpoint-based sentiment collection
 - **Design**: Two separate entry points in UI (not integrated into single dialog)
 
-#### 6. Document Template System
+#### 6. Document Template System (Arabic-Only as of October 2025)
 - **Format**: JSON-based template definitions
-- **Categories**: price_offer, order, invoice, contract, lta_document
-- **Language Support**: Language-specific or bilingual templates
+- **Categories**: price_offer, order, invoice, contract, report
+- **Language Support**: Arabic-only (language: 'ar') - UI remains fully bilingual (EN/AR)
 - **Versioning**: Active/inactive template management
-- **Rendering**: Server-side with PDFKit and Arabic text support
-- **Default Templates**: Automatic fallback templates to prevent generation failures
-- **Template Management**: Complete CRUD operations with admin interface
+- **Rendering**: Server-side with PDFKit and Arabic RTL support (arabic-reshaper, bidi-js)
+- **Default Templates**: 4 seeded Arabic templates (قالب عرض السعر القياسي, قالب تأكيد الطلب, قالب الفاتورة, قالب عقد الاتفاقية)
+- **Template Management**: Centralized CRUD via AdminDocumentsPage (/admin/documents?tab=templates)
 - **Variable System**: Dynamic content replacement with type-safe handling
+- **Migration**: Refactored from bilingual to Arabic-only (October 2025) for simplified management
 
 ---
 
@@ -1066,18 +1067,16 @@ errorLogs
 
 ### Document Management Tables
 
-#### 14. templates
-**Purpose**: PDF document templates
+#### 14. templates (Arabic-Only as of October 2025)
+**Purpose**: PDF document templates (Arabic-only)
 
 ```typescript
 {
   id: varchar (PK, UUID)
-  nameEn: text (NOT NULL)
-  nameAr: text (NOT NULL)
-  descriptionEn: text
-  descriptionAr: text
+  name: text (NOT NULL)              // Arabic template name (was nameEn/nameAr)
+  description: text                   // Arabic description (was descriptionEn/descriptionAr)
   category: text (NOT NULL)
-  language: text (NOT NULL)
+  language: text (NOT NULL, DEFAULT 'ar')  // Arabic-only ('ar')
   sections: jsonb (NOT NULL)
   variables: jsonb (NOT NULL)
   styles: jsonb
@@ -1090,7 +1089,9 @@ errorLogs
 }
 ```
 
-**Categories**: price_offer, order, invoice, contract, lta_document
+**Categories**: price_offer, order, invoice, contract, report
+
+**Migration Note (October 2025)**: Refactored from bilingual to Arabic-only. Removed nameEn/nameAr/descriptionEn/descriptionAr columns, added single name/description fields. Language column restricted to 'ar' only.
 
 ---
 
