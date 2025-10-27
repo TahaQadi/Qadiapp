@@ -10,9 +10,29 @@ import { vi } from 'vitest';
 // Mock i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string) => {
+      // Return English translations for tests
+      const translations: Record<string, string> = {
+        'Test Product': 'Test Product',
+        'منتج تجريبي': 'Test Product',
+        'Test LTA': 'Test LTA',
+        'اتفاقية تجريبية': 'Test LTA',
+        'Orders': 'Orders',
+        'الطلبات': 'Orders',
+        'Add to Cart': 'Add to Cart',
+        'أضف للسلة': 'Add to Cart',
+        'Cart': 'Cart',
+        'السلة': 'Cart',
+        'Something went wrong': 'Something went wrong',
+        'An error occurred while rendering this page': 'An error occurred while rendering this page',
+        'Try Again': 'Try Again',
+        'Go Home': 'Go Home',
+      };
+      return translations[key] || key;
+    },
     i18n: {
       changeLanguage: vi.fn(),
+      language: 'en',
     },
   }),
 }));

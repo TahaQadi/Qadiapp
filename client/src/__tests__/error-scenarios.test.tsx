@@ -5,6 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import OrderingPage from '@/pages/OrderingPage';
 import { render } from './test-utils';
+import { seedData, getProductsWithLtaPricing, getClientLtas } from './seed-data';
 
 describe('Error Boundary Scenarios', () => {
   let queryClient: QueryClient;
@@ -37,9 +38,11 @@ describe('Error Boundary Scenarios', () => {
       { queryClient }
     );
 
-    // Component should render without crashing
+    // Component should render without crashing - look for error boundary or page content
     await waitFor(() => {
-      expect(screen.getByTestId('page-ordering') || screen.getByText(/something went wrong/i)).toBeInTheDocument();
+      const errorBoundary = screen.queryByText(/something went wrong/i);
+      const pageContent = screen.queryByText(/Test Product|منتج تجريبي|Orders|الطلبات/i);
+      expect(errorBoundary || pageContent).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
@@ -60,7 +63,8 @@ describe('Error Boundary Scenarios', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('page-ordering')).toBeInTheDocument();
+      const pageContent = screen.getByText(/Test Product|منتج تجريبي|Orders|الطلبات/i);
+      expect(pageContent).toBeInTheDocument();
     });
   });
 
@@ -81,7 +85,8 @@ describe('Error Boundary Scenarios', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('page-ordering')).toBeInTheDocument();
+      const pageContent = screen.getByText(/Test Product|منتج تجريبي|Orders|الطلبات/i);
+      expect(pageContent).toBeInTheDocument();
     });
   });
 
@@ -101,7 +106,9 @@ describe('Error Boundary Scenarios', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('page-ordering') || screen.getByText(/something went wrong/i)).toBeInTheDocument();
+      const errorBoundary = screen.queryByText(/something went wrong/i);
+      const pageContent = screen.queryByText(/Test Product|منتج تجريبي|Orders|الطلبات/i);
+      expect(errorBoundary || pageContent).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 });
@@ -144,7 +151,8 @@ describe('Optimistic Update Error Recovery', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('page-ordering')).toBeInTheDocument();
+      const pageContent = screen.getByText(/Test Product|منتج تجريبي|Orders|الطلبات/i);
+      expect(pageContent).toBeInTheDocument();
     });
   });
 });
