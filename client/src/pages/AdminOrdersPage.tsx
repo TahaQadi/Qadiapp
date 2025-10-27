@@ -145,53 +145,39 @@ export default function AdminOrdersPage() {
 
       return response.json();
     },
-    onMutate: async ({ orderId, status }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['/api/admin/orders'] });
-
-      // Snapshot the previous value
-      const previousOrders = queryClient.getQueryData(['/api/admin/orders']);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(
-        ['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery],
+    onSuccess: (updatedOrder, { orderId, status }) => {
+      // Update all relevant query caches
+      queryClient.setQueriesData(
+        { queryKey: ['/api/admin/orders'] },
         (oldData: any) => {
-          if (!oldData) return oldData;
+          if (!oldData || !oldData.orders) return oldData;
           return {
             ...oldData,
             orders: oldData.orders.map((order: Order) =>
               order.id === orderId
-                ? { ...order, status: status }
+                ? { ...order, status: status, updatedAt: new Date().toISOString() }
                 : order
             ),
           };
         }
       );
 
-      // Return context object with the previous orders
-      return { previousOrders };
+      toast({
+        title: language === 'ar' ? 'تم تحديث الحالة' : 'Status Updated',
+        description: language === 'ar' ? 'تم تحديث حالة الطلب بنجاح' : 'Order status updated successfully',
+      });
     },
-    onError: (error: any, _variables, context) => {
-      // Rollback on error
-      if (context?.previousOrders) {
-        queryClient.setQueryData(['/api/admin/orders', currentPage, itemsPerPage, statusFilter, debouncedSearchQuery], context.previousOrders);
-      }
+    onError: (error: any) => {
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error.message,
       });
     },
-    onSuccess: () => {
-      toast({
-        title: language === 'ar' ? 'تم تحديث الحالة' : 'Status Updated',
-        description: language === 'ar' ? 'تم تحديث حالة الطلب بنجاح' : 'Order status updated successfully',
-      });
-    },
     onSettled: () => {
-      // Invalidate all order-related queries to ensure UI updates
+      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/client/orders'] });
     },
   });
 
