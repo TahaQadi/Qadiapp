@@ -407,13 +407,13 @@ export async function seedTemplates() {
       await TemplateStorage.createTemplate({
         name: templateData.name,
         description: templateData.description,
-        category: templateData.category,
+        category: templateData.category as any,
         language: templateData.language,
         sections: templateData.sections,
         variables: templateData.variables,
         styles: templateData.styles,
         isActive: templateData.isActive,
-        isDefault: templateData.isDefault
+        isDefault: templateData.isDefault ?? false
       });
       
       console.log(`✅ Created template: ${templateData.name}`);

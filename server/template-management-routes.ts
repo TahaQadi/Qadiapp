@@ -14,7 +14,7 @@ const generateDocumentSchema = z.object({
     value: z.any()
   })),
   templateId: z.string().uuid().optional(),
-  language: z.enum(['en', 'ar', 'both']).default('both')
+  language: z.literal('ar').default('ar') // Arabic-only
 });
 
 const setDefaultTemplateSchema = z.object({
@@ -23,10 +23,10 @@ const setDefaultTemplateSchema = z.object({
 
 const validateTemplateSchema = z.object({
   template: z.object({
-    nameEn: z.string(),
-    nameAr: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
     category: z.string(),
-    language: z.string(),
+    language: z.literal('ar'), // Arabic-only
     sections: z.array(z.any()),
     variables: z.array(z.string()),
     styles: z.object({
@@ -229,7 +229,7 @@ export function setupTemplateManagementRoutes(app: Express) {
   app.post('/api/admin/templates/:id/preview', requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { variables = [], language = 'en' } = req.body;
+      const { variables = [], language = 'ar' } = req.body; // Arabic-only
 
       const template = await TemplateStorage.getTemplate(id);
       if (!template) {
@@ -242,19 +242,17 @@ export function setupTemplateManagementRoutes(app: Express) {
       // Convert template to DocumentTemplate format
       const documentTemplate: DocumentTemplate = {
         id: template.id,
-        nameEn: template.nameEn,
-        nameAr: template.nameAr,
-        descriptionEn: template.descriptionEn,
-        descriptionAr: template.descriptionAr,
+        name: template.name,
+        description: template.description,
         category: template.category,
-        language: template.language,
-        sections: JSON.parse(template.sections),
-        variables: JSON.parse(template.variables),
-        styles: JSON.parse(template.styles),
+        language: 'ar' as const, // Arabic-only
+        sections: JSON.parse(template.sections as string),
+        variables: JSON.parse(template.variables as string),
+        styles: JSON.parse(template.styles as string),
         isActive: template.isActive,
-        isDefault: template.isDefault,
-        version: template.version || 1,
-        tags: template.tags || [],
+        isDefault: false,
+        version: 1,
+        tags: [],
         createdAt: template.createdAt,
         updatedAt: template.updatedAt
       };
