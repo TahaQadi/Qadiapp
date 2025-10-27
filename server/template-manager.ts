@@ -11,19 +11,17 @@ export class TemplateManager {
       if (defaultTemplate) {
         return {
           id: defaultTemplate.id,
-          nameEn: defaultTemplate.nameEn,
-          nameAr: defaultTemplate.nameAr,
-          descriptionEn: defaultTemplate.descriptionEn,
-          descriptionAr: defaultTemplate.descriptionAr,
+          name: defaultTemplate.name,
+          description: defaultTemplate.description,
           category: defaultTemplate.category,
-          language: defaultTemplate.language,
-          sections: JSON.parse(defaultTemplate.sections),
-          variables: JSON.parse(defaultTemplate.variables),
-          styles: JSON.parse(defaultTemplate.styles),
+          language: 'ar' as const, // Arabic-only
+          sections: JSON.parse(defaultTemplate.sections as string),
+          variables: JSON.parse(defaultTemplate.variables as string),
+          styles: JSON.parse(defaultTemplate.styles as string),
           isActive: defaultTemplate.isActive,
-          isDefault: defaultTemplate.isDefault,
-          version: defaultTemplate.version || 1,
-          tags: defaultTemplate.tags || [],
+          isDefault: defaultTemplate.isDefault || false,
+          version: 1,
+          tags: [],
           createdAt: defaultTemplate.createdAt,
           updatedAt: defaultTemplate.updatedAt
         };
@@ -34,19 +32,17 @@ export class TemplateManager {
       if (activeTemplate) {
         return {
           id: activeTemplate.id,
-          nameEn: activeTemplate.nameEn,
-          nameAr: activeTemplate.nameAr,
-          descriptionEn: activeTemplate.descriptionEn,
-          descriptionAr: activeTemplate.descriptionAr,
+          name: activeTemplate.name,
+          description: activeTemplate.description,
           category: activeTemplate.category,
-          language: activeTemplate.language,
-          sections: JSON.parse(activeTemplate.sections),
-          variables: JSON.parse(activeTemplate.variables),
-          styles: JSON.parse(activeTemplate.styles),
+          language: 'ar' as const, // Arabic-only
+          sections: JSON.parse(activeTemplate.sections as string),
+          variables: JSON.parse(activeTemplate.variables as string),
+          styles: JSON.parse(activeTemplate.styles as string),
           isActive: activeTemplate.isActive,
-          isDefault: activeTemplate.isDefault,
-          version: activeTemplate.version || 1,
-          tags: activeTemplate.tags || [],
+          isDefault: activeTemplate.isDefault || false,
+          version: 1,
+          tags: [],
           createdAt: activeTemplate.createdAt,
           updatedAt: activeTemplate.updatedAt
         };
@@ -72,19 +68,17 @@ export class TemplateManager {
         if (templateData) {
           template = {
             id: templateData.id,
-            nameEn: templateData.nameEn,
-            nameAr: templateData.nameAr,
-            descriptionEn: templateData.descriptionEn,
-            descriptionAr: templateData.descriptionAr,
+            name: templateData.name,
+            description: templateData.description,
             category: templateData.category,
-            language: templateData.language,
-            sections: JSON.parse(templateData.sections),
-            variables: JSON.parse(templateData.variables),
-            styles: JSON.parse(templateData.styles),
+            language: 'ar' as const, // Arabic-only
+            sections: JSON.parse(templateData.sections as string),
+            variables: JSON.parse(templateData.variables as string),
+            styles: JSON.parse(templateData.styles as string),
             isActive: templateData.isActive,
-            isDefault: templateData.isDefault,
-            version: templateData.version || 1,
-            tags: templateData.tags || [],
+            isDefault: false,
+            version: 1,
+            tags: [],
             createdAt: templateData.createdAt,
             updatedAt: templateData.updatedAt
           };

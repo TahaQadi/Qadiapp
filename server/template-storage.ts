@@ -7,12 +7,10 @@ import { CreateTemplateInput, UpdateTemplateInput } from '@shared/template-schem
 export class TemplateStorage {
   static async createTemplate(data: CreateTemplateInput) {
     const [template] = await db.insert(templates).values({
-      nameEn: data.nameEn,
-      nameAr: data.nameAr,
-      descriptionEn: data.descriptionEn,
-      descriptionAr: data.descriptionAr,
+      name: data.name,
+      description: data.description,
       category: data.category,
-      language: data.language,
+      language: data.language || 'ar', // Always Arabic
       sections: JSON.stringify(data.sections),
       variables: JSON.stringify(data.variables),
       styles: JSON.stringify(data.styles),
@@ -42,12 +40,10 @@ export class TemplateStorage {
   static async updateTemplate(id: string, data: UpdateTemplateInput) {
     const updateData: any = {};
     
-    if (data.nameEn !== undefined) updateData.nameEn = data.nameEn;
-    if (data.nameAr !== undefined) updateData.nameAr = data.nameAr;
-    if (data.descriptionEn !== undefined) updateData.descriptionEn = data.descriptionEn;
-    if (data.descriptionAr !== undefined) updateData.descriptionAr = data.descriptionAr;
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
     if (data.category !== undefined) updateData.category = data.category;
-    if (data.language !== undefined) updateData.language = data.language;
+    if (data.language !== undefined) updateData.language = data.language || 'ar'; // Always Arabic
     if (data.sections !== undefined) updateData.sections = JSON.stringify(data.sections);
     if (data.variables !== undefined) updateData.variables = JSON.stringify(data.variables);
     if (data.styles !== undefined) updateData.styles = JSON.stringify(data.styles);
@@ -67,17 +63,15 @@ export class TemplateStorage {
     return true;
   }
 
-  static async duplicateTemplate(id: string, newName: { en: string; ar: string }) {
+  static async duplicateTemplate(id: string, newName: string) {
     const original = await this.getTemplate(id);
     if (!original) throw new Error('Template not found');
 
     const [duplicate] = await db.insert(templates).values({
-      nameEn: newName.en,
-      nameAr: newName.ar,
-      descriptionEn: original.descriptionEn,
-      descriptionAr: original.descriptionAr,
+      name: newName,
+      description: original.description,
       category: original.category,
-      language: original.language,
+      language: 'ar', // Always Arabic
       sections: original.sections,
       variables: original.variables,
       styles: original.styles,

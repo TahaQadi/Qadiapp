@@ -18,7 +18,8 @@ interface TemplateSection {
 interface DocumentTemplate {
   id: string;
   name: string;
-  language: 'en' | 'ar' | 'both';
+  description?: string;
+  language: 'ar'; // Arabic-only
   sections: TemplateSection[];
   variables: string[];
   styles: {
@@ -36,6 +37,12 @@ interface DocumentTemplate {
       right: number;
     };
   };
+  isActive?: boolean;
+  isDefault?: boolean;
+  version?: number;
+  tags?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export class TemplateGenerator {

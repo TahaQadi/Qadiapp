@@ -8,7 +8,7 @@ import { PDFAccessControl } from './pdf-access-control';
 interface GenerateDocumentOptions {
   templateCategory: string;
   variables: Array<{ key: string; value: any }>;
-  language?: 'en' | 'ar';
+  language?: 'ar'; // Arabic-only
   clientId: string;
   metadata?: {
     orderId?: string;
@@ -37,7 +37,7 @@ export class DocumentUtils {
    * Generate a document from template with all necessary steps
    */
   static async generateDocument(options: GenerateDocumentOptions): Promise<GenerateDocumentResult> {
-    const { templateCategory, variables, language = 'en', clientId, metadata = {} } = options;
+    const { templateCategory, variables, language = 'ar', clientId, metadata = {} } = options;
 
     try {
       // 1. Get active template (with caching)
