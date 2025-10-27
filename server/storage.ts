@@ -1015,28 +1015,38 @@ export class MemStorage implements IStorage {
 
   // Product queries for LTA context
   async getProductsForLta(ltaId: string): Promise<Array<Product & { contractPrice: string; currency: string }>> {
-    const ltaProducts = await this.getLtaProducts(ltaId);
-    const productsWithPricing: Array<Product & { contractPrice: string; currency: string }>= [];
+    try {
+      const result = await this.db
+        .select({
+          id: products.id,
+          sku: products.sku,
+          nameEn: products.nameEn,
+          nameAr: products.nameAr,
+          descriptionEn: products.descriptionEn,
+          descriptionAr: products.descriptionAr,
+          mainCategory: products.mainCategory,
+          category: products.category,
+          unitType: products.unitType,
+          unit: products.unit,
+          unitPerBox: products.unitPerBox,
+          imageUrl: products.imageUrl,
+          contractPrice: ltaProducts.contractPrice,
+          currency: ltaProducts.currency,
+          ltaId: ltaProducts.ltaId,
+        })
+        .from(ltaProducts)
+        .innerJoin(products, eq(products.id, ltaProducts.productId))
+        .where(eq(ltaProducts.ltaId, ltaId));
 
-    // Fetch all product IDs
-    const productIds = ltaProducts.map(lp => lp.productId);
-
-    // Fetch all products in a single query
-    const products = await this.getProductsByIds(productIds);
-    const productMap = new Map(products.map(p => [p.id, p]));
-
-    for (const ltaProduct of ltaProducts) {
-      const product = productMap.get(ltaProduct.productId);
-      if (product) {
-        productsWithPricing.push({
-          ...product,
-          contractPrice: ltaProduct.contractPrice,
-          currency: ltaProduct.currency,
-        });
-      }
+      return result.map(p => ({
+        ...p,
+        contractPrice: p.contractPrice?.toString(),
+        hasPrice: !!p.contractPrice,
+      }));
+    } catch (error) {
+      console.error('[Storage] Error getting products for LTA:', error);
+      return [];
     }
-
-    return productsWithPricing;
   }
 
   // Get clients assigned to a specific LTA with full client details

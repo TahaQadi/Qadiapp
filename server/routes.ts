@@ -2495,7 +2495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createOrderSchema.parse(req.body);
 
       // Step 1: Extract and validate ltaId from items
-      const ltaIds = Array.from(new Set(validatedData.items.map(item => item.ltaId)));
+      const ltaIds = Array.from(new Set(validatedData.items.map(item => item.ltaId).filter(Boolean)));
       if (ltaIds.length === 0) {
         errorLogger.logWarning('Order creation attempted without LTA', {
           route: '/api/client/orders',
@@ -2551,8 +2551,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Step 3: Get LTA products with pricing and validate
       const ltaProducts = await storage.getProductsForLta(ltaId);
+      
+      // Create a map of productId -> pricing info
       const ltaProductMap = new Map(
-        ltaProducts.map(p => [p.id, { price: p.contractPrice, currency: p.currency, nameEn: p.nameEn, nameAr: p.nameAr }])
+        ltaProducts
+          .filter(p => p.contractPrice) // Only include products with pricing
+          .map(p => [p.id, { 
+            price: p.contractPrice!, 
+            currency: p.currency || 'ILS', 
+            nameEn: p.nameEn, 
+            nameAr: p.nameAr 
+          }])
       );
 
       // Validate each item against LTA products and pricing
