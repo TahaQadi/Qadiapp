@@ -1,0 +1,120 @@
+{
+  "style": {
+    "language": "en",
+    "typescript": {
+      "strict": true,
+      "noAny": true,
+      "preferInterfaces": true,
+      "useExplicitReturnTypes": true
+    },
+    "react": {
+      "preferFunctionalComponents": true,
+      "useHooks": true,
+      "preferNamedExports": true
+    },
+    "formatting": {
+      "indentSize": 2,
+      "useSemicolons": true,
+      "quoteStyle": "double"
+    }
+  },
+  "constraints": [
+    "Never edit .env files - environment variables are managed through Replit's Secrets manager",
+    "Do not modify replit.yaml without explicit instruction",
+    "All API endpoints must be defined in /server/routes.ts or dedicated route files",
+    "Database operations must go through Drizzle ORM - no raw SQL queries",
+    "All database schemas must be defined in /shared/schema.ts",
+    "Client-side code must not directly access the database - use API routes only",
+    "All API routes must include proper error handling and validation",
+    "Use Zod schemas for all request/response validation",
+    "Never commit sensitive data like API keys, passwords, or tokens",
+    "All components must be properly typed with TypeScript interfaces",
+    "Use path aliases (@/ for client/src, @shared/ for shared) consistently",
+    "Test files must be placed in __tests__ directories and follow naming convention: *.test.ts or *.spec.ts",
+    "All new features must include corresponding tests with minimum 60% coverage",
+    "Use React Query (@tanstack/react-query) for all API calls and state management",
+    "Prefer Radix UI components over custom implementations",
+    "Use Tailwind CSS for styling - avoid custom CSS unless absolutely necessary",
+    "All PDF generation must use the existing PDF generator utilities",
+    "Template system files in /server/templates/ are critical - modify with extreme caution",
+    "Object storage operations must use the existing object-storage.ts utilities",
+    "Authentication must use the existing auth.ts system",
+    "Rate limiting and security headers are mandatory for all public endpoints",
+    "Never modify the database migration files directly - use drizzle-kit push",
+    "All imports must use absolute paths with configured aliases",
+    "Error handling must use the centralized error-handler.ts system",
+    "Logging must use the existing error-logger.ts system"
+  ],
+  "tests": {
+    "framework": "vitest",
+    "requireCoverage": true,
+    "coverageThreshold": 60,
+    "setupFile": "./client/src/__tests__/setup.ts",
+    "includePatterns": [
+      "client/src/__tests__/**/*.{test,spec}.{ts,tsx}",
+      "server/__tests__/**/*.{test,spec}.{ts,tsx}"
+    ],
+    "excludePatterns": [
+      "client/src/components/ui/**",
+      "node_modules/**",
+      "dist/**"
+    ]
+  },
+  "architecture": {
+    "client": {
+      "framework": "react",
+      "routing": "wouter",
+      "stateManagement": "@tanstack/react-query",
+      "styling": "tailwindcss",
+      "uiLibrary": "@radix-ui"
+    },
+    "server": {
+      "framework": "express",
+      "orm": "drizzle-orm",
+      "database": "postgresql",
+      "validation": "zod",
+      "authentication": "passport"
+    },
+    "build": {
+      "bundler": "vite",
+      "typescript": "strict",
+      "moduleResolution": "bundler"
+    }
+  },
+  "fileStructure": {
+    "client": "/client/src",
+    "server": "/server",
+    "shared": "/shared",
+    "tests": ["/client/src/__tests__", "/server/__tests__"],
+    "assets": "/attached_assets",
+    "public": "/public",
+    "dist": "/dist"
+  },
+  "forbidden": [
+    "Direct database queries outside of Drizzle ORM",
+    "Modifying migration files manually",
+    "Creating .env files",
+    "Using 'any' type in TypeScript",
+    "Class components in React (use functional components)",
+    "Direct DOM manipulation (use React patterns)",
+    "Inline styles (use Tailwind classes)",
+    "Raw SQL queries",
+    "Direct file system access from client code",
+    "Hardcoded secrets or API keys",
+    "Modifying core template system files without understanding the full impact"
+  ],
+  "preferred": [
+    "Functional components with hooks",
+    "TypeScript interfaces over types",
+    "Named exports over default exports",
+    "Zod schemas for validation",
+    "React Query for data fetching",
+    "Radix UI components",
+    "Tailwind utility classes",
+    "Path aliases for imports",
+    "Comprehensive error handling",
+    "Proper TypeScript typing",
+    "Test-driven development",
+    "Modular, reusable components"
+  ]
+}

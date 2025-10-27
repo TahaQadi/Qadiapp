@@ -40,12 +40,12 @@ export default function LogoutPage() {
         // Clear React Query cache
         queryClient.clear();
 
-        // Redirect to login after showing success message
+        // Redirect to landing after showing success message
         await new Promise(resolve => setTimeout(resolve, 1500));
-        setLocation('/login');
+        setLocation('/landing');
       } catch (error) {
-        // Even on error, redirect to login
-        setLocation('/login');
+        // Even on error, redirect to landing
+        setLocation('/landing');
       }
     };
 

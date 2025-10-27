@@ -1,0 +1,26 @@
+[info] Resolving ssh remote authority 'fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev:22' (Unparsed 'ssh-remote+fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev:22') (attempt #1)
+[info] SSH askpass server listening on port 55728
+[debug] hostname: fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev, remote platform map: {"fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev":"windows"}
+[info] Using configured platform windows for remote host fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev
+[debug] hostname: fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev, remote server install map: {}
+[debug] hostname: fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev, server port range map: {}
+[info] Using askpass script: c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\scripts\launchSSHAskpass.bat with javascript file c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\scripts\sshAskClient.js. Askpass handle: 55728
+[info] Command length (8191 max): 7776
+[info] Launching SSH server via shell with command: type "C:\Users\TaHa\AppData\Local\Temp\cursor_remote_install_6f04f6d5-d08a-431f-b01b-5c3dcadc10b6.ps1" | ssh -T -o RemoteCommand=none -D 55729 -p 22 fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev powershell -NoProfile
+[info] Establishing SSH connection: type "C:\Users\TaHa\AppData\Local\Temp\cursor_remote_install_6f04f6d5-d08a-431f-b01b-5c3dcadc10b6.ps1" | ssh -T -o RemoteCommand=none -D 55729 -p 22 fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev powershell -NoProfile
+[info] Waiting for server to install. Timeout: 30000ms
+[info] (ssh_tunnel) stderr: Welcome to the Replit SSH Proxy.
+
+Visit https://docs.replit.com/replit-workspace/ssh to learn more about SSH on Replit.
+
+[info] (ssh_tunnel) stdout: bash: powershell: command not found
+
+[error] Error installing server: [Error: Failed to connect to the remote SSH host. Please check the logs for more details.
+	at t.installCodeServer (c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\main.js:2:951304)
+	at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+	at async c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\main.js:2:402760]
+[info] Deleting local script C:\Users\TaHa\AppData\Local\Temp\cursor_remote_install_6f04f6d5-d08a-431f-b01b-5c3dcadc10b6.ps1
+[error] Error resolving SSH authority [Error: Failed to connect to the remote SSH host. Please check the logs for more details.
+	at t.installCodeServer (c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\main.js:2:951304)
+	at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+	at async c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\main.js:2:402760]

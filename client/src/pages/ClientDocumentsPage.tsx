@@ -258,9 +258,10 @@ export default function ClientDocumentsPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="h-9 w-9 sm:h-10 sm:w-10"
+              className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300"
+              title={language === 'ar' ? 'العودة للطلبات' : 'Back to Ordering'}
             >
-              <Link href="/">
+              <Link href="/ordering">
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>

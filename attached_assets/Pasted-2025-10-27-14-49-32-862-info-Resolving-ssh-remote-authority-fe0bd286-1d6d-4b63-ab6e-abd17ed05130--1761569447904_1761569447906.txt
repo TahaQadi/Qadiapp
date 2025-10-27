@@ -1,0 +1,17 @@
+2025-10-27 14:49:32.862 [info] Resolving ssh remote authority 'fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev:22' (Unparsed 'ssh-remote+fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev:22') (attempt #1)
+2025-10-27 14:49:33.003 [info] SSH askpass server listening on port 55562
+2025-10-27 14:49:33.014 [info] Using configured platform windows for remote host fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev
+2025-10-27 14:49:33.110 [info] Using askpass script: c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\scripts\launchSSHAskpass.bat with javascript file c:\Users\TaHa\.cursor\extensions\anysphere.remote-ssh-1.0.34\dist\scripts\sshAskClient.js. Askpass handle: 55562
+2025-10-27 14:49:33.128 [info] Command length (8191 max): 7778
+2025-10-27 14:49:33.321 [info] Launching SSH server via shell with command: type "C:\Users\TaHa\AppData\Local\Temp\cursor_remote_install_09e0db65-8d62-4f7d-a8d3-93238cc96c3b.ps1" | ssh -T -D 55563 -p 22 fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev powershell -NoProfile
+2025-10-27 14:49:33.321 [info] Establishing SSH connection: type "C:\Users\TaHa\AppData\Local\Temp\cursor_remote_install_09e0db65-8d62-4f7d-a8d3-93238cc96c3b.ps1" | ssh -T -D 55563 -p 22 fe0bd286-1d6d-4b63-ab6e-abd17ed05130@fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev powershell -NoProfile
+2025-10-27 14:49:33.322 [info] Waiting for server to install. Timeout: 30000ms
+2025-10-27 14:49:35.294 [info] (ssh_tunnel) stderr: Welcome to the Replit SSH Proxy.
+
+Visit https://docs.replit.com/replit-workspace/ssh to learn more about SSH on Replit.
+
+2025-10-27 14:49:36.575 [info] (ssh_tunnel) stdout: bash: powershell: command not found
+
+2025-10-27 14:49:36.624 [error] Error installing server: Failed to connect to the remote SSH host. Please check the logs for more details.
+2025-10-27 14:49:36.625 [info] Deleting local script C:\Users\TaHa\AppData\Local\Temp\cursor_remote_install_09e0db65-8d62-4f7d-a8d3-93238cc96c3b.ps1
+2025-10-27 14:49:36.630 [error] Error resolving SSH authority Failed to connect to the remote SSH host. Please check the logs for more details.

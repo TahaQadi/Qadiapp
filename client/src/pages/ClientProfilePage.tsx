@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, ArrowLeft, User, Building2, MapPin, Phone, Mail, Edit2, Save, X, Plus, Trash2 } from 'lucide-react';
+import { LogOut, ArrowLeft, User, Building2, MapPin, Phone, Mail, Edit2, Save, X, Plus, Trash2, Package, Settings } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { Link } from 'wouter';
@@ -214,6 +214,57 @@ export default function ClientProfilePage() {
         noIndex={true}
       />
       <div className="min-h-screen bg-background" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        {/* Header */}
+        <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+          <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                asChild 
+                className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300"
+                title={isArabic ? 'العودة للطلبات' : 'Back to Ordering'}
+              >
+                <Link href="/ordering">
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Link>
+              </Button>
+              <img 
+                src="/logo.png" 
+                alt={isArabic ? 'شعار الشركة' : 'Company Logo'} 
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
+              />
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                  {isArabic ? 'الملف الشخصي' : 'Profile'}
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                <Link href="/orders">
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Link>
+              </Button>
+              {user?.isAdmin && (
+                <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                  <Link href="/admin">
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Link>
+                </Button>
+              )}
+              <LanguageToggle />
+              <ThemeToggle />
+              <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                <Link href="/logout">
+                  <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </header>
+
         <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-4xl">
           <div className="grid gap-6">
             {/* Personal Information Card */}
