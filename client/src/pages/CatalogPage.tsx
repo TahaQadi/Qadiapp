@@ -577,7 +577,7 @@ export default function CatalogPage() {
               </div>
             )}
 
-            {/* Subcategories Tabs */}
+            {/* Subcategories - Dropdown on mobile, Tabs on desktop */}
             {selectedMainCategory && !searchQuery && (
               <div className="animate-fade-in mb-8" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center gap-3 mb-4">
@@ -594,8 +594,33 @@ export default function CatalogPage() {
                   </h2>
                 </div>
                 
-                {/* Wrapped tabs - optimized for mobile */}
-                <div className="flex flex-wrap gap-2">
+                {/* Mobile Dropdown */}
+                <div className="md:hidden">
+                  <Select 
+                    value={selectedSubCategory || 'all'} 
+                    onValueChange={(value) => setSelectedSubCategory(value === 'all' ? null : value)}
+                  >
+                    <SelectTrigger className="w-full border-2">
+                      <SelectValue placeholder={language === 'ar' ? 'اختر الفئة الفرعية' : 'Select Subcategory'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        {language === 'ar' ? 'جميع الفئات الفرعية' : 'All Subcategories'} ({products.filter(p => p.mainCategory === selectedMainCategory).length})
+                      </SelectItem>
+                      {getSubCategories(selectedMainCategory).map((subCat) => {
+                        const count = products.filter(p => p.category === subCat).length;
+                        return (
+                          <SelectItem key={subCat} value={subCat}>
+                            {subCat} ({count})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Desktop Tabs */}
+                <div className="hidden md:flex flex-wrap gap-2">
                   {getSubCategories(selectedMainCategory).map((subCat, index) => {
                     const isActive = selectedSubCategory === subCat;
                     const count = products.filter(p => p.category === subCat).length;
