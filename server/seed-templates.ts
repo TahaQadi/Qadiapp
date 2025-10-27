@@ -310,7 +310,7 @@ const DEFAULT_TEMPLATES: TemplateData[] = [
   {
     name: "قالب عقد الاتفاقية",
     description: "قالب عقد الاتفاقية طويلة الأجل (LTA)",
-    category: "lta_contract",
+    category: "contract",
     language: "ar",
     sections: [
       {
