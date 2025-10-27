@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
-import { requireAuth, requireAdmin, AuthenticatedRequest, AdminRequest } from "./auth";
+import { requireAuth, requireAdmin } from "./auth";
+import { AuthenticatedRequest, AdminRequest } from "./types";
 import { TemplatePDFGenerator } from "./template-pdf-generator";
 import { TemplateStorage } from "./template-storage";
 import { PDFStorage } from "./object-storage";
@@ -8,12 +9,30 @@ import { storage } from "./storage";
 import { DocumentUtils } from "./document-utils";
 import { z } from "zod";
 
+// Map template categories to document types
+function mapCategoryToDocumentType(category: string): "LTA" | "PRICE_OFFER" | "ORDER" | "INVOICE" | "CONTRACT" | "OTHER" {
+  switch (category) {
+    case 'price_offer':
+      return 'PRICE_OFFER';
+    case 'order':
+      return 'ORDER';
+    case 'invoice':
+      return 'INVOICE';
+    case 'contract':
+      return 'CONTRACT';
+    case 'lta':
+      return 'LTA';
+    default:
+      return 'OTHER';
+  }
+}
+
 // Validation schemas
 const generateDocumentSchema = z.object({
   templateId: z.string().uuid(),
   variables: z.array(z.object({
     key: z.string(),
-    value: z.any()
+    value: z.any().optional()
   })),
   language: z.enum(['en', 'ar', 'both']).default('both'),
   saveToDocuments: z.boolean().default(true),
@@ -38,7 +57,8 @@ const documentSearchSchema = z.object({
 
 export function setupDocumentRoutes(app: Express) {
   // 1. Generate Document from Template
-  app.post('/api/documents/generate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/documents/generate', requireAuth, async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
     try {
       // Validate request body
       const validation = generateDocumentSchema.safeParse(req.body);
@@ -143,9 +163,9 @@ export function setupDocumentRoutes(app: Express) {
         let uploadResult;
         try {
           console.log('📤 Uploading PDF to storage...');
-          uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, template.category);
+          uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, mapCategoryToDocumentType(template.category));
           
-          if (!uploadResult.success) {
+          if (!uploadResult.ok) {
             throw new Error(uploadResult.error || 'Upload failed');
           }
           
@@ -164,12 +184,12 @@ export function setupDocumentRoutes(app: Express) {
         try {
           console.log('💾 Creating document metadata...');
           document = await storage.createDocumentMetadata({
-            documentType: template.category as any,
+            documentType: mapCategoryToDocumentType(template.category),
             fileName,
             fileUrl: uploadResult.fileName!,
             fileSize: pdfBuffer.length,
             checksum: uploadResult.checksum,
-            clientId: clientId || (req.user!.isAdmin ? undefined : req.user!.id),
+            clientId: clientId || (authReq.user!.isAdmin ? undefined : authReq.user!.id),
             ltaId,
             orderId,
             priceOfferId,
@@ -228,7 +248,8 @@ export function setupDocumentRoutes(app: Express) {
   });
 
   // 2. Generate Secure Download Token
-  app.post('/api/documents/:id/token', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/documents/:id/token', requireAuth, async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
     try {
       const { id } = req.params;
       const document = await storage.getDocumentById(id);
@@ -248,7 +269,7 @@ export function setupDocumentRoutes(app: Express) {
         });
       }
 
-      const token = PDFAccessControl.generateDownloadToken(id, req.user!.id);
+      const token = PDFAccessControl.generateDownloadToken(id, authReq.user!.id);
       const expiresIn = '2h'; // Token expires in 2 hours
 
       res.json({
@@ -321,7 +342,7 @@ export function setupDocumentRoutes(app: Express) {
       // Send file
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
-      res.setHeader('Content-Length', downloadResult.data.length);
+      res.setHeader('Content-Length', downloadResult.data?.length || 0);
       res.send(downloadResult.data);
 
     } catch (error) {
@@ -453,7 +474,7 @@ export function setupDocumentRoutes(app: Express) {
 
       // Delete from storage
       const deleteResult = await PDFStorage.deletePDF(document.fileUrl);
-      if (!deleteResult.success) {
+      if (!deleteResult.ok) {
         console.warn('Failed to delete file from storage:', deleteResult.error);
       }
 

@@ -23,32 +23,28 @@ export function OptimisticList<T>({
     const key = keyExtractor(item);
     setPendingItems((prev) => new Set(prev).add(key));
     
-    startTransition(async () => {
-      try {
-        await onUpdate(item);
-      } finally {
+    startTransition(() => {
+      onUpdate(item).finally(() => {
         setPendingItems((prev) => {
           const next = new Set(prev);
           next.delete(key);
           return next;
         });
-      }
+      });
     });
   };
 
   const handleDelete = async (id: string | number) => {
     setPendingItems((prev) => new Set(prev).add(id));
     
-    startTransition(async () => {
-      try {
-        await onDelete(id);
-      } finally {
+    startTransition(() => {
+      onDelete(id).finally(() => {
         setPendingItems((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
         });
-      }
+      });
     });
   };
 

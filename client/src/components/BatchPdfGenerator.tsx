@@ -60,7 +60,7 @@ export function BatchPdfGenerator({ requests, onComplete }: BatchPdfGeneratorPro
           results.push({ requestId: request.id, status: 'success' });
           setProgress(p => ({ ...p, completed: p.completed + 1, results: [...p.results, { ...request, status: 'success' }] }));
         } catch (error) {
-          results.push({ requestId: request.id, status: 'failed', error: error.message });
+          results.push({ requestId: request.id, status: 'failed', error: error instanceof Error ? error.message : String(error) });
           setProgress(p => ({ ...p, failed: p.failed + 1, results: [...p.results, { ...request, status: 'failed' }] }));
         }
       }

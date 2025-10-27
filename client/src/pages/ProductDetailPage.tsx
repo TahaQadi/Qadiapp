@@ -99,7 +99,9 @@ export default function ProductDetailPage() {
       sessionStorage.setItem('priceRequestList', JSON.stringify(currentList));
 
       // Update local state to trigger re-render
-      setPriceRequestList(prev => [...prev, product?.id]);
+      if (product?.id) {
+        setPriceRequestList(prev => [...prev, product.id]);
+      }
 
       toast({
         description: language === 'ar'

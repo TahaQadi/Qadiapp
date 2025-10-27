@@ -208,9 +208,9 @@ async function getClientFromAuth(req: AuthenticatedRequest, res: Response, next:
  * Standard authentication middleware with client attachment
  * Use this for all authenticated routes
  */
-export async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   isAuthenticated(req, res, async () => {
-    await getClientFromAuth(req, res, next);
+    await getClientFromAuth(req as AuthenticatedRequest, res, next);
   });
 }
 
@@ -218,9 +218,10 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
  * Admin authorization middleware
  * Requires authentication and admin privileges
  */
-export async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction) {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   await requireAuth(req, res, () => {
-    if (!req.client?.isAdmin) {
+    const authReq = req as AdminRequest;
+    if (!authReq.client?.isAdmin) {
       return res.status(403).json(createErrorResponse(ErrorCode.FORBIDDEN));
     }
     next();

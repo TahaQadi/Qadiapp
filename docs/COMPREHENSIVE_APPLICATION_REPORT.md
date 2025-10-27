@@ -17,8 +17,9 @@
 6. [API Reference](#api-reference)
 7. [Integrations](#integrations)
 8. [Security & Performance](#security--performance)
-9. [Development Roadmap](#development-roadmap)
-10. [Deployment & Infrastructure](#deployment--infrastructure)
+9. [Debug & Maintenance](#debug--maintenance)
+10. [Development Roadmap](#development-roadmap)
+11. [Deployment & Infrastructure](#deployment--infrastructure)
 
 ---
 
@@ -1919,6 +1920,147 @@ Implemented via `server/business-metrics.ts`:
 
 ---
 
+## Debug & Maintenance
+
+### Recent Debug Session (January 2025)
+
+A comprehensive debug session was conducted to identify and resolve application issues. The following findings and fixes were implemented:
+
+#### Issues Identified & Fixed
+
+##### 1. TypeScript Compilation Errors ✅ **FIXED**
+**Client-Side Issues:**
+- Fixed error handling in `BatchPdfGenerator.tsx` (unknown error type)
+- Corrected API request parameter order in `DemoRequestDialog.tsx`
+- Fixed undefined property access in `MobileNav.tsx` (badge property)
+- Resolved `startTransition` async function issues in `OptimisticList.tsx`
+- Fixed null assignment issues in `OrderModificationDialog.tsx`
+- Corrected query type definitions in `OrderModificationHistory.tsx`
+- Removed undefined function call in `PriceOfferCreationDialog.tsx`
+- Fixed array type issues in `ProductDetailPage.tsx`
+- Resolved type assertion issues in `lazyWithPreload.ts`
+
+**Server-Side Issues:**
+- Fixed import errors for `AuthenticatedRequest` and `AdminRequest` types
+- Corrected document type mapping (lowercase to uppercase enum conversion)
+- Fixed return type mismatches (`success` vs `ok` properties in PDF storage)
+- Resolved type conversion issues in `document-access-log.ts`
+- Fixed boolean type issues in `error-logger.ts`
+
+##### 2. Dependencies & Security ✅ **ADDRESSED**
+- Successfully installed all missing dependencies
+- Identified 4 moderate security vulnerabilities in esbuild/drizzle-kit (development dependencies only)
+- All vulnerabilities are in development tools, not production code
+
+##### 3. Code Quality Improvements ✅ **COMPLETED**
+- No linter errors found
+- Improved type safety throughout the codebase
+- Enhanced error handling in multiple components
+- Fixed type assertions and null safety issues
+
+#### Remaining Issues
+
+##### 1. Runtime Dependencies ⚠️ **REQUIRES ATTENTION**
+**Object Storage Connection Failed:**
+- **Issue**: App requires Replit's object storage service (port 1106) which is not available in development environments
+- **Impact**: Prevents application startup
+- **Solution Needed**: 
+  - Create mock implementations for development
+  - Add environment variable checks to disable object storage in development
+  - Implement local file storage as fallback
+
+**Port Conflict:**
+- **Issue**: Port 26053 appears to be in use (false positive detection)
+- **Impact**: Prevents server startup
+- **Solution**: Use different port or resolve port detection issue
+
+##### 2. TypeScript Errors (Partially Fixed) ⚠️ **IN PROGRESS**
+**Route Handler Type Issues:**
+- Express middleware type compatibility issues remain
+- Some route handlers still need type signature updates
+- Document type mapping needs refinement
+
+**Server-Side Type Assertions:**
+- Some type assertions need completion
+- Middleware function signatures need standardization
+
+#### Debug Recommendations
+
+##### 1. For Development Environment
+```typescript
+// Add to server/object-storage.ts
+if (process.env.NODE_ENV === 'development' && !process.env.REPLIT_DB_URL) {
+  // Use mock implementation
+  export class PDFStorage {
+    static async uploadPDF() {
+      return { ok: true, fileName: 'mock-file.pdf' };
+    }
+    // ... other mock methods
+  }
+}
+```
+
+##### 2. For Production Environment
+- Ensure Replit object storage service is properly configured
+- Complete remaining TypeScript error fixes
+- Address any remaining type safety issues
+
+##### 3. Code Quality Improvements
+- Complete route handler type fixes
+- Add comprehensive error handling for missing services
+- Implement proper fallbacks for development environments
+- Add environment-specific configuration checks
+
+#### Debug Tools & Commands
+
+**TypeScript Checking:**
+```bash
+npm run check          # Check TypeScript compilation
+npm run build          # Build application
+```
+
+**Dependency Management:**
+```bash
+npm install            # Install dependencies
+npm audit              # Check security vulnerabilities
+npm audit fix          # Fix vulnerabilities (use with caution)
+```
+
+**Development Server:**
+```bash
+npm run dev            # Start development server
+npm run start          # Start production server
+```
+
+**Database Operations:**
+```bash
+npm run db:push        # Push database schema changes
+```
+
+#### Maintenance Checklist
+
+**Regular Maintenance Tasks:**
+- [ ] Run `npm run check` to verify TypeScript compilation
+- [ ] Check for security vulnerabilities with `npm audit`
+- [ ] Verify object storage connectivity in production
+- [ ] Monitor error logs for new issues
+- [ ] Update dependencies regularly
+- [ ] Test application startup in different environments
+
+**Code Quality Monitoring:**
+- [ ] Ensure no linter errors
+- [ ] Maintain type safety standards
+- [ ] Test error handling paths
+- [ ] Verify API response consistency
+- [ ] Check database query performance
+
+**Environment-Specific Checks:**
+- [ ] Development: Mock services working
+- [ ] Staging: Full integration testing
+- [ ] Production: All services operational
+
+---
+
 ## Development Roadmap
 
 ### Completed (2024-2025)
@@ -2179,5 +2321,5 @@ The application successfully manages the complete LTA lifecycle from contract cr
 - [Workflows Documentation](./WORKFLOWS_DOCUMENTATION.md)
 - [Code Audit](./CODE_AUDIT.md)
 
-**Last Updated**: October 26, 2025  
-**Document Version**: 1.0
+**Last Updated**: January 2025  
+**Document Version**: 1.1

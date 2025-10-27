@@ -31,5 +31,5 @@ export async function getDocumentAccessLogs(documentId: string): Promise<Documen
     LIMIT 100
   `);
   
-  return result.rows as DocumentAccessLog[];
+  return result.rows as unknown as DocumentAccessLog[];
 }

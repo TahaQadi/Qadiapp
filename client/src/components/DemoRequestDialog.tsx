@@ -47,10 +47,7 @@ export function DemoRequestDialog({ open, onOpenChange }: DemoRequestDialogProps
   const onSubmit = async (data: DemoRequestForm) => {
     setIsSubmitting(true);
     try {
-      await apiRequest('/api/demo-request', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      await apiRequest('POST', '/api/demo-request', data);
 
       toast({
         title: language === 'ar' ? 'تم الإرسال بنجاح' : 'Request Sent Successfully',
