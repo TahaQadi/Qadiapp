@@ -30,39 +30,47 @@ describe('Data Seeding Tests', () => {
   let testOrderId: number;
 
   beforeAll(async () => {
-    // Clean up any existing test data
-    await db.delete(orderFeedback);
-    await db.delete(issueReports);
-    await db.delete(priceRequests);
-    await db.delete(demoRequests);
-    await db.delete(orderItems);
-    await db.delete(orders);
-    await db.delete(clientDepartments);
-    await db.delete(clientLocations);
-    await db.delete(ltaClients);
-    await db.delete(ltaProducts);
-    await db.delete(ltaDocuments);
-    await db.delete(ltas);
-    await db.delete(products);
-    await db.delete(clients);
+    // Clean up any existing test data in correct order (respecting foreign keys)
+    try {
+      await db.delete(orderFeedback).execute();
+      await db.delete(issueReports).execute();
+      await db.delete(priceRequests).execute();
+      await db.delete(demoRequests).execute();
+      await db.delete(orderItems).execute();
+      await db.delete(orders).execute();
+      await db.delete(clientDepartments).execute();
+      await db.delete(clientLocations).execute();
+      await db.delete(ltaClients).execute();
+      await db.delete(ltaProducts).execute();
+      await db.delete(ltaDocuments).execute();
+      await db.delete(ltas).execute();
+      await db.delete(products).execute();
+      await db.delete(clients).execute();
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+    }
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await db.delete(orderFeedback);
-    await db.delete(issueReports);
-    await db.delete(priceRequests);
-    await db.delete(demoRequests);
-    await db.delete(orderItems);
-    await db.delete(orders);
-    await db.delete(clientDepartments);
-    await db.delete(clientLocations);
-    await db.delete(ltaClients);
-    await db.delete(ltaProducts);
-    await db.delete(ltaDocuments);
-    await db.delete(ltas);
-    await db.delete(products);
-    await db.delete(clients);
+    // Clean up test data in correct order (respecting foreign keys)
+    try {
+      await db.delete(orderFeedback).execute();
+      await db.delete(issueReports).execute();
+      await db.delete(priceRequests).execute();
+      await db.delete(demoRequests).execute();
+      await db.delete(orderItems).execute();
+      await db.delete(orders).execute();
+      await db.delete(clientDepartments).execute();
+      await db.delete(clientLocations).execute();
+      await db.delete(ltaClients).execute();
+      await db.delete(ltaProducts).execute();
+      await db.delete(ltaDocuments).execute();
+      await db.delete(ltas).execute();
+      await db.delete(products).execute();
+      await db.delete(clients).execute();
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+    }
   });
 
   describe('Client Seeding', () => {
