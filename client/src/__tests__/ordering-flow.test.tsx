@@ -5,6 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { userEvent } from '@testing-library/user-event';
 import { render } from './test-utils';
 import OrderingPage from '@/pages/OrderingPage';
+import { seedData, getProductsWithLtaPricing, getClientLtas } from './seed-data';
 
 // Mock the auth hook
 vi.mock('@/hooks/useAuth', () => ({
@@ -40,28 +41,30 @@ describe('Ordering Flow Integration', () => {
       },
     });
 
-    // Mock fetch
+    // Mock fetch with seed data
     global.fetch = vi.fn((url) => {
       if (url.includes('/api/products')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve([
-            {
-              id: '1',
-              sku: 'TEST-001',
-              nameEn: 'Test Product',
-              nameAr: 'منتج تجريبي',
-              contractPrice: '100.00',
-              ltaId: 'lta-1',
-              hasPrice: true,
-            },
-          ]),
+          json: () => Promise.resolve(getProductsWithLtaPricing('lta-1')),
         });
       }
       if (url.includes('/api/client/ltas')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve([{ id: 'lta-1', nameEn: 'Test LTA', nameAr: 'اتفاقية تجريبية' }]),
+          json: () => Promise.resolve(getClientLtas('client-1')),
+        });
+      }
+      if (url.includes('/api/orders')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
+        });
+      }
+      if (url.includes('/api/cart')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
         });
       }
       return Promise.resolve({
@@ -79,18 +82,20 @@ describe('Ordering Flow Integration', () => {
       { queryClient }
     );
 
-    // Wait for products to load
+    // Wait for products to load - look for the first product specifically
     await waitFor(() => {
-      expect(screen.getByText('Test Product')).toBeInTheDocument();
+      const productText = screen.getByTestId('text-product-name-product-1');
+      expect(productText).toHaveTextContent('Test Product');
     });
 
-    // Add product to cart
-    const addButton = screen.getByTestId('button-add-to-cart-1');
+    // Look for add to cart button - it might have different test IDs
+    const addButton = screen.getByTestId('button-add-to-cart-product-1');
     await user.click(addButton);
 
-    // Verify cart count updated
+    // Verify cart count updated - look for specific cart count badge
     await waitFor(() => {
-      expect(screen.getByTestId('badge-cart-count')).toHaveTextContent('1');
+      const cartCount = screen.getByTestId('badge-cart-count');
+      expect(cartCount).toHaveTextContent('1');
     });
   });
 });

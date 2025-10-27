@@ -8,6 +8,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './client/src/__tests__/setup.ts',
+    env: {
+      NODE_ENV: 'test',
+    },
     include: [
       'client/src/__tests__/**/*.{test,spec}.{ts,tsx}',
       'server/__tests__/**/*.{test,spec}.{ts,tsx}'

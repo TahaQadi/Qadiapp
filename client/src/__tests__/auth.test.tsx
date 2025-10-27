@@ -23,7 +23,7 @@ describe('Authentication Flow', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current.isLoading).toBe(true);
-    expect(result.current.user).toBeUndefined();
+    expect(result.current.user).toBeNull();
   });
 
   it('should handle user authentication state', async () => {

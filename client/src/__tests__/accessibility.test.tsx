@@ -24,7 +24,7 @@ describe('Accessibility Tests', () => {
     );
 
     // Check for heading text in both languages - use getAllByText since there are multiple instances
-    const headingTexts = screen.getAllByText(/تسجيل الدخول|Sign In/i);
+    const headingTexts = screen.getAllByText(/تسجيل الدخول|Login/i);
     expect(headingTexts.length).toBeGreaterThan(0);
   });
 
@@ -35,11 +35,11 @@ describe('Accessibility Tests', () => {
     );
 
     // Check for email input by label text in both languages
-    const emailInput = screen.getByLabelText(/البريد الإلكتروني|email/i);
+    const emailInput = screen.getByLabelText(/البريد الإلكتروني|Email/i);
     expect(emailInput).toBeInTheDocument();
 
     // Check for password input by label text in both languages
-    const passwordInput = screen.getByLabelText(/كلمة المرور|password/i);
+    const passwordInput = screen.getByLabelText(/كلمة المرور|Password/i);
     expect(passwordInput).toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe('Accessibility Tests', () => {
     );
 
     // Check for login button text in both languages
-    const loginButton = screen.getByRole('button', { name: /تسجيل الدخول|sign in/i });
+    const loginButton = screen.getByRole('button', { name: /تسجيل الدخول|Login/i });
     expect(loginButton).toBeInTheDocument();
   });
 
@@ -61,9 +61,9 @@ describe('Accessibility Tests', () => {
     );
 
     // Check for form elements that support keyboard navigation
-    const emailInput = screen.getByLabelText(/البريد الإلكتروني|email/i);
-    const passwordInput = screen.getByLabelText(/كلمة المرور|password/i);
-    const loginButton = screen.getByRole('button', { name: /تسجيل الدخول|sign in/i });
+    const emailInput = screen.getByLabelText(/البريد الإلكتروني|Email/i);
+    const passwordInput = screen.getByLabelText(/كلمة المرور|Password/i);
+    const loginButton = screen.getByRole('button', { name: /تسجيل الدخول|Login/i });
     
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
