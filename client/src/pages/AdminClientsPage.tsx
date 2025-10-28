@@ -6,6 +6,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { CompanyUsersSection } from '@/components/CompanyUsersSection';
 import { ClientImportDialog } from '@/components/ClientImportDialog';
+import { DepartmentManagementDialog } from '@/components/DepartmentManagementDialog';
+import { LocationManagementDialog } from '@/components/LocationManagementDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
