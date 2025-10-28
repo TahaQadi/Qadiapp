@@ -5,6 +5,8 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { CompanyUsersSection } from '@/components/CompanyUsersSection';
+import { DepartmentManagementDialog } from '@/components/DepartmentManagementDialog';
+import { LocationManagementDialog } from '@/components/LocationManagementDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +71,8 @@ interface ClientBasic {
   email: string | null;
   phone: string | null;
   isAdmin: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Department {
@@ -109,12 +113,12 @@ interface ClientDetailsCardProps {
   setEditDialogOpen: (isOpen: boolean) => void;
   setDeleteDialogOpen: (isOpen: boolean) => void;
   setPasswordResetDialogOpen: (isOpen: boolean) => void;
-  newDepartmentType: string;
-  setNewDepartmentType: (value: string) => void;
-  newLocationName: string;
-  setNewLocationName: (value: string) => void;
-  handleAddDepartment: () => Promise<void>;
-  handleAddLocation: () => Promise<void>;
+  handleAddDepartment: () => void;
+  handleEditDepartment: (department: Department) => void;
+  handleDeleteDepartment: (id: string) => void;
+  handleAddLocation: () => void;
+  handleEditLocation: (location: Location) => void;
+  handleDeleteLocation: (id: string) => void;
 }
 
 export default function AdminClientsPage() {
@@ -129,6 +133,12 @@ export default function AdminClientsPage() {
   const [passwordResetDialogOpen, setPasswordResetDialogOpen] = useState(false);
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
 
+  // Department and Location dialog state
+  const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [adminFilter, setAdminFilter] = useState<'all' | 'admin' | 'non-admin'>('all');
@@ -141,12 +151,6 @@ export default function AdminClientsPage() {
   // Bulk operations state
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-
-  // Inline editing state
-  const [editingDepartment, setEditingDepartment] = useState<string | null>(null);
-  const [editingLocation, setEditingLocation] = useState<string | null>(null);
-  const [newDepartmentType, setNewDepartmentType] = useState('');
-  const [newLocationName, setNewLocationName] = useState('');
 
   const { data: clients = [], isLoading: clientsLoading, refetch: refetchClients } = useQuery<ClientBasic[]>({
     queryKey: ['/api/admin/clients'],
@@ -442,6 +446,152 @@ export default function AdminClientsPage() {
     },
   });
 
+  // Department mutations
+  const createDepartmentMutation = useMutation({
+    mutationFn: async (data: { departmentType: string; contactName?: string; contactEmail?: string; contactPhone?: string }) => {
+      if (!selectedClientId) throw new Error('No client selected');
+      const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/departments`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      setDepartmentDialogOpen(false);
+      setEditingDepartment(null);
+      toast({
+        title: language === 'ar' ? 'تم إضافة القسم' : 'Department Added',
+        description: language === 'ar' ? 'تم إضافة القسم بنجاح' : 'Department added successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في إضافة القسم' : 'Error Adding Department',
+        description: error.message || (language === 'ar' ? 'فشل في إضافة القسم' : 'Failed to add department'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const updateDepartmentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { departmentType: string; contactName?: string; contactEmail?: string; contactPhone?: string } }) => {
+      const res = await apiRequest('PUT', `/api/admin/departments/${id}`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      setDepartmentDialogOpen(false);
+      setEditingDepartment(null);
+      toast({
+        title: language === 'ar' ? 'تم تحديث القسم' : 'Department Updated',
+        description: language === 'ar' ? 'تم تحديث القسم بنجاح' : 'Department updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في تحديث القسم' : 'Error Updating Department',
+        description: error.message || (language === 'ar' ? 'فشل في تحديث القسم' : 'Failed to update department'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteDepartmentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/departments/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete department');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      toast({
+        title: language === 'ar' ? 'تم حذف القسم' : 'Department Deleted',
+        description: language === 'ar' ? 'تم حذف القسم بنجاح' : 'Department deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في حذف القسم' : 'Error Deleting Department',
+        description: error.message || (language === 'ar' ? 'فشل في حذف القسم' : 'Failed to delete department'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Location mutations
+  const createLocationMutation = useMutation({
+    mutationFn: async (data: { nameEn: string; nameAr: string; addressEn: string; addressAr: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean }) => {
+      if (!selectedClientId) throw new Error('No client selected');
+      const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/locations`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      setLocationDialogOpen(false);
+      setEditingLocation(null);
+      toast({
+        title: language === 'ar' ? 'تم إضافة الموقع' : 'Location Added',
+        description: language === 'ar' ? 'تم إضافة الموقع بنجاح' : 'Location added successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في إضافة الموقع' : 'Error Adding Location',
+        description: error.message || (language === 'ar' ? 'فشل في إضافة الموقع' : 'Failed to add location'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const updateLocationMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { nameEn: string; nameAr: string; addressEn: string; addressAr: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean } }) => {
+      const res = await apiRequest('PUT', `/api/admin/locations/${id}`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      setLocationDialogOpen(false);
+      setEditingLocation(null);
+      toast({
+        title: language === 'ar' ? 'تم تحديث الموقع' : 'Location Updated',
+        description: language === 'ar' ? 'تم تحديث الموقع بنجاح' : 'Location updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في تحديث الموقع' : 'Error Updating Location',
+        description: error.message || (language === 'ar' ? 'فشل في تحديث الموقع' : 'Failed to update location'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteLocationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/locations/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete location');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+      toast({
+        title: language === 'ar' ? 'تم حذف الموقع' : 'Location Deleted',
+        description: language === 'ar' ? 'تم حذف الموقع بنجاح' : 'Location deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في حذف الموقع' : 'Error Deleting Location',
+        description: error.message || (language === 'ar' ? 'فشل في حذف الموقع' : 'Failed to delete location'),
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleClientSelect = (client: ClientBasic) => {
     setSelectedClientId(client.id);
     if (isMobile) {
@@ -543,60 +693,52 @@ export default function AdminClientsPage() {
   };
 
   // Inline editing handlers
-  const handleAddDepartment = async () => {
-    if (!selectedClientId || !newDepartmentType.trim()) return;
+  // Department and Location handlers
+  const handleAddDepartment = () => {
+    setEditingDepartment(null);
+    setDepartmentDialogOpen(true);
+  };
 
-    try {
-      const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/departments`, {
-        departmentType: newDepartmentType.trim(),
-      });
+  const handleEditDepartment = (department: Department) => {
+    setEditingDepartment(department);
+    setDepartmentDialogOpen(true);
+  };
 
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
-        setNewDepartmentType('');
-        toast({
-          title: language === 'ar' ? 'تم إضافة القسم' : 'Department Added',
-          description: language === 'ar' ? 'تم إضافة القسم بنجاح' : 'Department added successfully',
-        });
-      } else {
-        throw new Error('Failed to add department');
-      }
-    } catch (error) {
-      toast({
-        title: language === 'ar' ? 'خطأ في إضافة القسم' : 'Error Adding Department',
-        description: language === 'ar' ? 'فشل إضافة القسم' : 'Failed to add department',
-        variant: 'destructive',
-      });
+  const handleDeleteDepartment = async (id: string) => {
+    if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا القسم؟' : 'Are you sure you want to delete this department?')) {
+      deleteDepartmentMutation.mutate(id);
     }
   };
 
-  const handleAddLocation = async () => {
-    if (!selectedClientId || !newLocationName.trim()) return;
+  const handleSaveDepartment = (data: { departmentType: string; contactName?: string; contactEmail?: string; contactPhone?: string }) => {
+    if (editingDepartment) {
+      updateDepartmentMutation.mutate({ id: editingDepartment.id, data });
+    } else {
+      createDepartmentMutation.mutate(data);
+    }
+  };
 
-    try {
-      const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/locations`, {
-        nameEn: newLocationName.trim(),
-        nameAr: newLocationName.trim(),
-        addressEn: '',
-        addressAr: '',
-      });
+  const handleAddLocation = () => {
+    setEditingLocation(null);
+    setLocationDialogOpen(true);
+  };
 
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
-        setNewLocationName('');
-        toast({
-          title: language === 'ar' ? 'تم إضافة الموقع' : 'Location Added',
-          description: language === 'ar' ? 'تم إضافة الموقع بنجاح' : 'Location added successfully',
-        });
-      } else {
-        throw new Error('Failed to add location');
-      }
-    } catch (error) {
-      toast({
-        title: language === 'ar' ? 'خطأ في إضافة الموقع' : 'Error Adding Location',
-        description: language === 'ar' ? 'فشل إضافة الموقع' : 'Failed to add location',
-        variant: 'destructive',
-      });
+  const handleEditLocation = (location: Location) => {
+    setEditingLocation(location);
+    setLocationDialogOpen(true);
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا الموقع؟' : 'Are you sure you want to delete this location?')) {
+      deleteLocationMutation.mutate(id);
+    }
+  };
+
+  const handleSaveLocation = (data: { nameEn: string; nameAr: string; addressEn: string; addressAr: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean }) => {
+    if (editingLocation) {
+      updateLocationMutation.mutate({ id: editingLocation.id, data });
+    } else {
+      createLocationMutation.mutate(data);
     }
   };
 
@@ -1306,12 +1448,12 @@ export default function AdminClientsPage() {
               setEditDialogOpen={setEditDialogOpen}
               setDeleteDialogOpen={setDeleteDialogOpen}
               setPasswordResetDialogOpen={setPasswordResetDialogOpen}
-              newDepartmentType={newDepartmentType}
-              setNewDepartmentType={setNewDepartmentType}
-              newLocationName={newLocationName}
-              setNewLocationName={setNewLocationName}
               handleAddDepartment={handleAddDepartment}
+              handleEditDepartment={handleEditDepartment}
+              handleDeleteDepartment={handleDeleteDepartment}
               handleAddLocation={handleAddLocation}
+              handleEditLocation={handleEditLocation}
+              handleDeleteLocation={handleDeleteLocation}
             />
           </div>
         )}
@@ -1370,6 +1512,48 @@ export default function AdminClientsPage() {
                     </div>
                     <div>{clientDetails.client.phone || '-'}</div>
                   </div>
+                  {(clientDetails.client.createdAt || clientDetails.client.updatedAt) && (
+                    <>
+                      {clientDetails.client.createdAt && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">
+                            {language === 'ar' ? 'تاريخ الإنشاء' : 'Created At'}
+                          </div>
+                          <div className="text-sm">
+                            {new Date(clientDetails.client.createdAt).toLocaleString(
+                              language === 'ar' ? 'ar-SA' : 'en-US',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {clientDetails.client.updatedAt && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">
+                            {language === 'ar' ? 'آخر تحديث' : 'Last Updated'}
+                          </div>
+                          <div className="text-sm">
+                            {new Date(clientDetails.client.updatedAt).toLocaleString(
+                              language === 'ar' ? 'ar-SA' : 'en-US',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">{language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}</div>
@@ -1393,9 +1577,19 @@ export default function AdminClientsPage() {
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-3">
-                    {language === 'ar' ? 'الأقسام' : 'Departments'}
-                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold">
+                      {language === 'ar' ? 'الأقسام' : 'Departments'}
+                    </h3>
+                    <Button
+                      size="sm"
+                      onClick={handleAddDepartment}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {language === 'ar' ? 'إضافة قسم' : 'Add Department'}
+                    </Button>
+                  </div>
                   {clientDetails.departments.length === 0 ? (
                     <div className="text-sm text-muted-foreground">
                       {language === 'ar' ? 'لا توجد أقسام' : 'No departments'}
@@ -1404,8 +1598,32 @@ export default function AdminClientsPage() {
                     <div className="space-y-2">
                       {clientDetails.departments.map((dept) => (
                         <div key={dept.id} className="p-3 border rounded-md">
-                          <div className="font-medium">{getDepartmentTypeLabel(dept.departmentType)}</div>
-                          {dept.contactName && <div className="text-sm text-muted-foreground">{dept.contactName}</div>}
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium">{getDepartmentTypeLabel(dept.departmentType)}</div>
+                              {dept.contactName && <div className="text-sm text-muted-foreground">{dept.contactName}</div>}
+                              {dept.contactEmail && <div className="text-sm text-muted-foreground">{dept.contactEmail}</div>}
+                              {dept.contactPhone && <div className="text-sm text-muted-foreground">{dept.contactPhone}</div>}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditDepartment(dept)}
+                                title={language === 'ar' ? 'تعديل' : 'Edit'}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteDepartment(dept.id)}
+                                title={language === 'ar' ? 'حذف' : 'Delete'}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1415,9 +1633,19 @@ export default function AdminClientsPage() {
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-3">
-                    {language === 'ar' ? 'المواقع' : 'Locations'}
-                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold">
+                      {language === 'ar' ? 'المواقع' : 'Locations'}
+                    </h3>
+                    <Button
+                      size="sm"
+                      onClick={handleAddLocation}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {language === 'ar' ? 'إضافة موقع' : 'Add Location'}
+                    </Button>
+                  </div>
                   {clientDetails.locations.length === 0 ? (
                     <div className="text-sm text-muted-foreground">
                       {language === 'ar' ? 'لا توجد مواقع' : 'No locations'}
@@ -1426,9 +1654,48 @@ export default function AdminClientsPage() {
                     <div className="space-y-2">
                       {clientDetails.locations.map((loc) => (
                         <div key={loc.id} className="p-3 border rounded-md">
-                          <div className="font-medium">{language === 'ar' ? loc.nameAr : loc.nameEn}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {language === 'ar' ? loc.addressAr : loc.addressEn}
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className="font-medium">{language === 'ar' ? loc.nameAr : loc.nameEn}</div>
+                                {loc.isHeadquarters && (
+                                  <Badge variant="secondary">
+                                    {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {language === 'ar' ? loc.addressAr : loc.addressEn}
+                              </div>
+                              {(loc.city || loc.country) && (
+                                <div className="text-sm text-muted-foreground">
+                                  {[loc.city, loc.country].filter(Boolean).join(', ')}
+                                </div>
+                              )}
+                              {loc.phone && (
+                                <div className="text-sm text-muted-foreground">
+                                  {loc.phone}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditLocation(loc)}
+                                title={language === 'ar' ? 'تعديل' : 'Edit'}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteLocation(loc.id)}
+                                title={language === 'ar' ? 'حذف' : 'Delete'}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1632,6 +1899,24 @@ export default function AdminClientsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Department Management Dialog */}
+        <DepartmentManagementDialog
+          open={departmentDialogOpen}
+          onOpenChange={setDepartmentDialogOpen}
+          department={editingDepartment}
+          onSave={handleSaveDepartment}
+          isSaving={createDepartmentMutation.isPending || updateDepartmentMutation.isPending}
+        />
+
+        {/* Location Management Dialog */}
+        <LocationManagementDialog
+          open={locationDialogOpen}
+          onOpenChange={setLocationDialogOpen}
+          location={editingLocation}
+          onSave={handleSaveLocation}
+          isSaving={createLocationMutation.isPending || updateLocationMutation.isPending}
+        />
       </main>
     </div>
   );
@@ -1650,12 +1935,12 @@ function ClientDetailsCard({
   setEditDialogOpen,
   setDeleteDialogOpen,
   setPasswordResetDialogOpen,
-  newDepartmentType,
-  setNewDepartmentType,
-  newLocationName,
-  setNewLocationName,
   handleAddDepartment,
+  handleEditDepartment,
+  handleDeleteDepartment,
   handleAddLocation,
+  handleEditLocation,
+  handleDeleteLocation,
 }: ClientDetailsCardProps) {
   return (
     <Card className="md:col-span-2 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
@@ -1747,6 +2032,49 @@ function ClientDetailsCard({
                 <div>{clientDetails.client.phone || '-'}</div>
               </div>
 
+              {(clientDetails.client.createdAt || clientDetails.client.updatedAt) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {clientDetails.client.createdAt && (
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {language === 'ar' ? 'تاريخ الإنشاء' : 'Created At'}
+                      </div>
+                      <div className="text-sm">
+                        {new Date(clientDetails.client.createdAt).toLocaleString(
+                          language === 'ar' ? 'ar-SA' : 'en-US',
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {clientDetails.client.updatedAt && (
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {language === 'ar' ? 'آخر تحديث' : 'Last Updated'}
+                      </div>
+                      <div className="text-sm">
+                        {new Date(clientDetails.client.updatedAt).toLocaleString(
+                          language === 'ar' ? 'ar-SA' : 'en-US',
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between p-4 border rounded-md bg-muted/30">
                 <div className="flex items-center gap-3 flex-1">
                   <ShieldCheck className="h-5 w-5 text-primary" />
@@ -1782,22 +2110,14 @@ function ClientDetailsCard({
                 <h3 className="font-semibold">
                   {language === 'ar' ? 'الأقسام' : 'Departments'}
                 </h3>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={language === 'ar' ? 'نوع القسم' : 'Department type'}
-                    value={newDepartmentType}
-                    onChange={(e) => setNewDepartmentType(e.target.value)}
-                    className="w-40"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddDepartment()}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleAddDepartment}
-                    disabled={!newDepartmentType.trim()}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  onClick={handleAddDepartment}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {language === 'ar' ? 'إضافة قسم' : 'Add Department'}
+                </Button>
               </div>
               {clientDetails.departments.length === 0 ? (
                 <div className="text-sm text-muted-foreground">
@@ -1807,19 +2127,46 @@ function ClientDetailsCard({
                 <div className="space-y-2">
                   {clientDetails.departments.map((dept: any) => (
                     <div key={dept.id} className="p-3 border rounded-md">
-                      <div className="font-medium">
-                        {getDepartmentTypeLabel(dept.departmentType)}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {getDepartmentTypeLabel(dept.departmentType)}
+                          </div>
+                          {dept.contactName && (
+                            <div className="text-sm text-muted-foreground">
+                              {dept.contactName}
+                            </div>
+                          )}
+                          {dept.contactEmail && (
+                            <div className="text-sm text-muted-foreground">
+                              {dept.contactEmail}
+                            </div>
+                          )}
+                          {dept.contactPhone && (
+                            <div className="text-sm text-muted-foreground">
+                              {dept.contactPhone}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditDepartment(dept)}
+                            title={language === 'ar' ? 'تعديل' : 'Edit'}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteDepartment(dept.id)}
+                            title={language === 'ar' ? 'حذف' : 'Delete'}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      {dept.contactName && (
-                        <div className="text-sm text-muted-foreground">
-                          {dept.contactName}
-                        </div>
-                      )}
-                      {dept.contactEmail && (
-                        <div className="text-sm text-muted-foreground">
-                          {dept.contactEmail}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -1833,22 +2180,14 @@ function ClientDetailsCard({
                 <h3 className="font-semibold">
                   {language === 'ar' ? 'المواقع' : 'Locations'}
                 </h3>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={language === 'ar' ? 'اسم الموقع' : 'Location name'}
-                    value={newLocationName}
-                    onChange={(e) => setNewLocationName(e.target.value)}
-                    className="w-40"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddLocation()}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleAddLocation}
-                    disabled={!newLocationName.trim()}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  onClick={handleAddLocation}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {language === 'ar' ? 'إضافة موقع' : 'Add Location'}
+                </Button>
               </div>
               {clientDetails.locations.length === 0 ? (
                 <div className="text-sm text-muted-foreground">
@@ -1858,24 +2197,51 @@ function ClientDetailsCard({
                 <div className="space-y-2">
                   {clientDetails.locations.map((loc: any) => (
                     <div key={loc.id} className="p-3 border rounded-md">
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium">
-                          {language === 'ar' ? loc.nameAr : loc.nameEn}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">
+                              {language === 'ar' ? loc.nameAr : loc.nameEn}
+                            </div>
+                            {loc.isHeadquarters && (
+                              <Badge variant="secondary">
+                                {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {language === 'ar' ? loc.addressAr : loc.addressEn}
+                          </div>
+                          {(loc.city || loc.country) && (
+                            <div className="text-sm text-muted-foreground">
+                              {[loc.city, loc.country].filter(Boolean).join(', ')}
+                            </div>
+                          )}
+                          {loc.phone && (
+                            <div className="text-sm text-muted-foreground">
+                              {loc.phone}
+                            </div>
+                          )}
                         </div>
-                        {loc.isHeadquarters && (
-                          <Badge variant="secondary">
-                            {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {language === 'ar' ? loc.addressAr : loc.addressEn}
-                      </div>
-                      {(loc.city || loc.country) && (
-                        <div className="text-sm text-muted-foreground">
-                          {[loc.city, loc.country].filter(Boolean).join(', ')}
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditLocation(loc)}
+                            title={language === 'ar' ? 'تعديل' : 'Edit'}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteLocation(loc.id)}
+                            title={language === 'ar' ? 'حذف' : 'Delete'}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>

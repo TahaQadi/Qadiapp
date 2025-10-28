@@ -25,6 +25,8 @@ export const clients = pgTable("clients", {
   email: text("email"),
   phone: text("phone"),
   isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Company Users: Multiple users can access the same company
@@ -313,7 +315,7 @@ export const orderHistory = pgTable("order_history", {
 
 // Insert schemas
 // Note: insertClientSchema expects a raw password that will be hashed by the auth layer before storage
-export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
+export const insertClientSchema = createInsertSchema(clients).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCompanyUserSchema = createInsertSchema(companyUsers).omit({ id: true, createdAt: true });
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({ id: true, createdAt: true });
 export const insertClientDepartmentSchema = createInsertSchema(clientDepartments).omit({ id: true });
