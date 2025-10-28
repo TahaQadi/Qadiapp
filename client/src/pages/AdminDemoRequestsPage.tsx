@@ -9,12 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDateLocalized } from "@/lib/dateUtils";
-import { PlayCircle, Mail, Phone, Building2, Calendar, FileText, Loader2, Eye, CheckCircle2, Clock, XCircle, Filter, ArrowLeft } from "lucide-react";
-import { useState, useMemo } from "react";
+import { PlayCircle, Mail, Phone, Building2, Calendar, FileText, Loader2, Eye, CheckCircle2, Clock, XCircle, Filter, ArrowLeft, Search, RefreshCw, Download, Trash2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
+import { useDebounce } from "@/hooks/use-debounce";
+import { arrayToCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
 
 interface DemoRequest {
   id: number;
@@ -79,9 +82,17 @@ export default function AdminDemoRequestsPage() {
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'company' | 'status'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Data fetching
-  const { data: requests = [], isLoading, isError } = useQuery<DemoRequest[]>({
+  const { data: requests = [], isLoading, isError, refetch: refetchRequests } = useQuery<DemoRequest[]>({
     queryKey: ["/api/admin/demo-requests"],
     staleTime: 30000, // Cache for 30 seconds
     refetchOnWindowFocus: true,
@@ -94,7 +105,10 @@ export default function AdminDemoRequestsPage() {
         status: data.status,
         notes: data.notes,
       });
-      if (!res.ok) throw new Error('Failed to update request');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to update request');
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -105,11 +119,38 @@ export default function AdminDemoRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
       handleCloseDialog();
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'فشل تحديث الطلب' : 'Failed to update request',
+        description: error.message || (language === 'ar' ? 'فشل تحديث الطلب' : 'Failed to update request'),
+      });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/admin/demo-requests/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete request');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+        description: language === 'ar' ? 'تم حذف الطلب بنجاح' : 'Request deleted successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
+      handleCloseDialog();
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل حذف الطلب' : 'Failed to delete request'),
       });
     },
   });
@@ -118,14 +159,58 @@ export default function AdminDemoRequestsPage() {
   const filteredRequests = useMemo(() => {
     let filtered = requests;
     
+    // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(req => req.status === statusFilter);
     }
     
-    return filtered.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }, [requests, statusFilter]);
+    // Search filter
+    if (debouncedSearchQuery) {
+      const query = debouncedSearchQuery.toLowerCase();
+      filtered = filtered.filter(req => 
+        req.name.toLowerCase().includes(query) ||
+        req.email.toLowerCase().includes(query) ||
+        req.company.toLowerCase().includes(query) ||
+        req.phone.toLowerCase().includes(query) ||
+        (req.message && req.message.toLowerCase().includes(query))
+      );
+    }
+    
+    // Date range filter
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      filtered = filtered.filter(req => new Date(req.createdAt) >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999); // End of day
+      filtered = filtered.filter(req => new Date(req.createdAt) <= toDate);
+    }
+    
+    // Sort requests
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'company':
+          comparison = a.company.localeCompare(b.company);
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return filtered;
+  }, [requests, statusFilter, debouncedSearchQuery, dateFrom, dateTo, sortBy, sortOrder]);
 
   // Statistics
   const stats = useMemo(() => ({
@@ -135,7 +220,8 @@ export default function AdminDemoRequestsPage() {
     scheduled: requests.filter(r => r.status === 'scheduled').length,
     completed: requests.filter(r => r.status === 'completed').length,
     cancelled: requests.filter(r => r.status === 'cancelled').length,
-  }), [requests]);
+    filtered: filteredRequests.length,
+  }), [requests, filteredRequests]);
 
   // Handlers
   const handleViewRequest = (request: DemoRequest) => {
@@ -159,6 +245,51 @@ export default function AdminDemoRequestsPage() {
       status,
       notes,
     });
+  };
+
+  const handleDelete = () => {
+    if (!selectedRequest) return;
+    if (confirm(language === 'ar' 
+      ? `هل أنت متأكد من حذف طلب ${selectedRequest.company}؟` 
+      : `Are you sure you want to delete request from ${selectedRequest.company}?`)) {
+      deleteMutation.mutate(selectedRequest.id);
+    }
+  };
+
+  const handleExportCSV = () => {
+    try {
+      const exportData = filteredRequests.map(request => ({
+        'ID': request.id,
+        'Name': request.name,
+        'Email': request.email,
+        'Phone': request.phone,
+        'Company': request.company,
+        'Message': request.message || '',
+        'Status': STATUS_CONFIG[request.status as keyof typeof STATUS_CONFIG]?.label || request.status,
+        'Status (Arabic)': STATUS_CONFIG[request.status as keyof typeof STATUS_CONFIG]?.labelAr || request.status,
+        'Notes': request.notes || '',
+        'Created Date': formatDateForCSV(request.createdAt),
+        'Updated Date': request.updatedAt ? formatDateForCSV(request.updatedAt) : '',
+      }));
+
+      const csvContent = arrayToCSV(exportData);
+      const filename = `demo_requests_export_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      downloadCSV(csvContent, filename);
+      
+      toast({
+        title: language === 'ar' ? 'تم التصدير بنجاح' : 'Export Successful',
+        description: language === 'ar' 
+          ? `تم تصدير ${exportData.length} طلب إلى ملف CSV` 
+          : `Exported ${exportData.length} requests to CSV file`,
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'خطأ في التصدير' : 'Export Error',
+        description: language === 'ar' ? 'فشل تصدير البيانات' : 'Failed to export data',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getStatusBadge = (requestStatus: string) => {
@@ -265,6 +396,86 @@ export default function AdminDemoRequestsPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Search and Filter Controls */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+              <div className="flex-1 min-w-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={language === 'ar' ? 'البحث في الطلبات...' : 'Search requests...'}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 items-center">
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">{language === 'ar' ? 'التاريخ' : 'Date'}</SelectItem>
+                    <SelectItem value="name">{language === 'ar' ? 'الاسم' : 'Name'}</SelectItem>
+                    <SelectItem value="company">{language === 'ar' ? 'الشركة' : 'Company'}</SelectItem>
+                    <SelectItem value="status">{language === 'ar' ? 'الحالة' : 'Status'}</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  title={language === 'ar' ? 'ترتيب' : 'Sort'}
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+                
+                <Input
+                  type="date"
+                  placeholder={language === 'ar' ? 'من تاريخ' : 'From date'}
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-40"
+                />
+                
+                <Input
+                  type="date"
+                  placeholder={language === 'ar' ? 'إلى تاريخ' : 'To date'}
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-40"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => refetchRequests()}
+                  title={language === 'ar' ? 'تحديث' : 'Refresh'}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Export Button */}
+            <div className="mt-4 pt-4 border-t flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={filteredRequests.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'تصدير CSV' : 'Export CSV'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Filter Tabs */}
         <div className="mb-6">
           <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="w-auto">
@@ -277,6 +488,15 @@ export default function AdminDemoRequestsPage() {
               </TabsTrigger>
               <TabsTrigger value="contacted">
                 {language === 'ar' ? 'تم الاتصال' : 'Contacted'} ({stats.contacted})
+              </TabsTrigger>
+              <TabsTrigger value="scheduled">
+                {language === 'ar' ? 'مجدول' : 'Scheduled'} ({stats.scheduled})
+              </TabsTrigger>
+              <TabsTrigger value="completed">
+                {language === 'ar' ? 'مكتمل' : 'Completed'} ({stats.completed})
+              </TabsTrigger>
+              <TabsTrigger value="cancelled">
+                {language === 'ar' ? 'ملغي' : 'Cancelled'} ({stats.cancelled})
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -468,16 +688,34 @@ export default function AdminDemoRequestsPage() {
 
               <DialogFooter className="gap-2">
                 <Button 
+                  variant="destructive" 
+                  onClick={handleDelete} 
+                  disabled={updateMutation.isPending || deleteMutation.isPending}
+                  data-testid="button-delete"
+                >
+                  {deleteMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {language === 'ar' ? 'جاري الحذف...' : 'Deleting...'}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {language === 'ar' ? 'حذف' : 'Delete'}
+                    </>
+                  )}
+                </Button>
+                <Button 
                   variant="outline" 
                   onClick={handleCloseDialog} 
                   data-testid="button-cancel"
-                  disabled={updateMutation.isPending}
+                  disabled={updateMutation.isPending || deleteMutation.isPending}
                 >
                   {language === 'ar' ? 'إلغاء' : 'Cancel'}
                 </Button>
                 <Button 
                   onClick={handleUpdate} 
-                  disabled={updateMutation.isPending}
+                  disabled={updateMutation.isPending || deleteMutation.isPending}
                   data-testid="button-save"
                 >
                   {updateMutation.isPending ? (

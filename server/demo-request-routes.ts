@@ -84,4 +84,24 @@ router.patch('/api/admin/demo-requests/:id', requireAdmin, async (req: Request, 
   }
 });
 
+// Delete demo request (admin only)
+router.delete('/api/admin/demo-requests/:id', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const [deleted] = await db.delete(demoRequests)
+      .where(eq(demoRequests.id, parseInt(id)))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Demo request not found' });
+    }
+
+    res.json({ success: true, message: 'Demo request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting demo request:', error);
+    res.status(500).json({ error: 'Failed to delete demo request' });
+  }
+});
+
 export default router;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -12,14 +12,18 @@ import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck, KeyRound, Edit } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck, KeyRound, Edit, Search, Filter, RefreshCw, Download, Users, UserCheck, UserX, Building2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useDebounce } from '@/hooks/use-debounce';
+import { arrayToCSV, downloadCSV, formatDateForCSV } from '@/lib/csvExport';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,10 +108,95 @@ export default function AdminClientsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [passwordResetDialogOpen, setPasswordResetDialogOpen] = useState(false);
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [adminFilter, setAdminFilter] = useState<'all' | 'admin' | 'non-admin'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'created' | 'email'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  
+  // Bulk operations state
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  
+  // Inline editing state
+  const [editingDepartment, setEditingDepartment] = useState<string | null>(null);
+  const [editingLocation, setEditingLocation] = useState<string | null>(null);
+  const [newDepartmentType, setNewDepartmentType] = useState('');
+  const [newLocationName, setNewLocationName] = useState('');
 
-  const { data: clients = [], isLoading: clientsLoading } = useQuery<ClientBasic[]>({
+  const { data: clients = [], isLoading: clientsLoading, refetch: refetchClients } = useQuery<ClientBasic[]>({
     queryKey: ['/api/admin/clients'],
   });
+
+  // Filter and sort clients
+  const filteredAndSortedClients = useMemo(() => {
+    let filtered = clients.filter(client => {
+      // Search filter
+      if (debouncedSearchQuery) {
+        const query = debouncedSearchQuery.toLowerCase();
+        const matchesName = client.nameEn.toLowerCase().includes(query) || 
+                           client.nameAr.toLowerCase().includes(query);
+        const matchesEmail = client.email?.toLowerCase().includes(query);
+        const matchesUsername = client.username.toLowerCase().includes(query);
+        
+        if (!matchesName && !matchesEmail && !matchesUsername) {
+          return false;
+        }
+      }
+
+      // Admin filter
+      if (adminFilter === 'admin' && !client.isAdmin) return false;
+      if (adminFilter === 'non-admin' && client.isAdmin) return false;
+
+      return true;
+    });
+
+    // Sort clients
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = (language === 'ar' ? a.nameAr : a.nameEn)
+            .localeCompare(language === 'ar' ? b.nameAr : b.nameEn);
+          break;
+        case 'email':
+          comparison = (a.email || '').localeCompare(b.email || '');
+          break;
+        case 'created':
+          // Note: We don't have created date in ClientBasic, so we'll skip this for now
+          comparison = 0;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [clients, debouncedSearchQuery, adminFilter, sortBy, sortOrder, language]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedClients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClients = filteredAndSortedClients.slice(startIndex, endIndex);
+
+  // Statistics
+  const stats = useMemo(() => ({
+    total: clients.length,
+    admin: clients.filter(c => c.isAdmin).length,
+    nonAdmin: clients.filter(c => !c.isAdmin).length,
+    filtered: filteredAndSortedClients.length,
+  }), [clients, filteredAndSortedClients]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, adminFilter, sortBy, sortOrder]);
 
   const { data: clientDetails, isLoading: detailsLoading, error: detailsError } = useQuery<ClientDetails>({
     queryKey: ['/api/admin/clients', selectedClientId],
@@ -199,7 +288,12 @@ export default function AdminClientsPage() {
 
   const deleteClientMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest('DELETE', `/api/admin/clients/${id}`);
+      const res = await apiRequest('DELETE', `/api/admin/clients/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete client');
+      }
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
@@ -213,7 +307,7 @@ export default function AdminClientsPage() {
     onError: (error: any) => {
       toast({
         title: language === 'ar' ? 'خطأ في حذف العميل' : 'Error deleting client',
-        description: error.message,
+        description: error.message || (language === 'ar' ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred'),
         variant: 'destructive',
       });
     },
@@ -298,6 +392,36 @@ export default function AdminClientsPage() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (clientIds: string[]) => {
+      const results = await Promise.allSettled(
+        clientIds.map(id => apiRequest('DELETE', `/api/admin/clients/${id}`))
+      );
+      
+      const failed = results.filter(result => result.status === 'rejected');
+      if (failed.length > 0) {
+        throw new Error(`Failed to delete ${failed.length} out of ${clientIds.length} clients`);
+      }
+      
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+      setSelectedClients(new Set());
+      setBulkDeleteDialogOpen(false);
+      toast({
+        title: language === 'ar' ? 'تم حذف العملاء بنجاح' : 'Clients deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === 'ar' ? 'خطأ في حذف العملاء' : 'Error deleting clients',
+        description: error.message || (language === 'ar' ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred'),
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleClientSelect = (client: ClientBasic) => {
     setSelectedClientId(client.id);
     if (isMobile) {
@@ -321,6 +445,137 @@ export default function AdminClientsPage() {
       resetPasswordMutation.mutate({
         clientId: selectedClientId,
         newPassword: data.newPassword,
+      });
+    }
+  };
+
+  // Bulk operation handlers
+  const handleSelectClient = (clientId: string, checked: boolean) => {
+    const newSelected = new Set(selectedClients);
+    if (checked) {
+      newSelected.add(clientId);
+    } else {
+      newSelected.delete(clientId);
+    }
+    setSelectedClients(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedClients(new Set(paginatedClients.map(c => c.id)));
+    } else {
+      setSelectedClients(new Set());
+    }
+  };
+
+  const handleBulkDelete = () => {
+    const clientIds = Array.from(selectedClients);
+    
+    // Check if trying to delete all admin users
+    const selectedClientsData = clients.filter(c => clientIds.includes(c.id));
+    const adminClientsSelected = selectedClientsData.filter(c => c.isAdmin);
+    const totalAdminClients = clients.filter(c => c.isAdmin);
+    
+    if (adminClientsSelected.length === totalAdminClients.length && totalAdminClients.length > 0) {
+      toast({
+        title: language === 'ar' ? 'خطأ في الحذف' : 'Delete Error',
+        description: language === 'ar' 
+          ? 'لا يمكن حذف جميع المسؤولين. يجب أن يبقى مسؤول واحد على الأقل.' 
+          : 'Cannot delete all admin users. At least one admin must remain.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    bulkDeleteMutation.mutate(clientIds);
+  };
+
+  const handleExportCSV = () => {
+    try {
+      const exportData = filteredAndSortedClients.map(client => ({
+        'Name (English)': client.nameEn,
+        'Name (Arabic)': client.nameAr,
+        'Username': client.username,
+        'Email': client.email || '',
+        'Phone': client.phone || '',
+        'Is Admin': client.isAdmin ? 'Yes' : 'No',
+        'Admin Status': client.isAdmin ? (language === 'ar' ? 'مسؤول' : 'Admin') : (language === 'ar' ? 'عميل' : 'Client'),
+      }));
+
+      const csvContent = arrayToCSV(exportData);
+      const filename = `clients_export_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      downloadCSV(csvContent, filename);
+      
+      toast({
+        title: language === 'ar' ? 'تم التصدير بنجاح' : 'Export Successful',
+        description: language === 'ar' 
+          ? `تم تصدير ${exportData.length} عميل إلى ملف CSV` 
+          : `Exported ${exportData.length} clients to CSV file`,
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'خطأ في التصدير' : 'Export Error',
+        description: language === 'ar' ? 'فشل تصدير البيانات' : 'Failed to export data',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Inline editing handlers
+  const handleAddDepartment = async () => {
+    if (!selectedClientId || !newDepartmentType.trim()) return;
+    
+    try {
+      const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/departments`, {
+        departmentType: newDepartmentType.trim(),
+      });
+      
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+        setNewDepartmentType('');
+        toast({
+          title: language === 'ar' ? 'تم إضافة القسم' : 'Department Added',
+          description: language === 'ar' ? 'تم إضافة القسم بنجاح' : 'Department added successfully',
+        });
+      } else {
+        throw new Error('Failed to add department');
+      }
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'خطأ في إضافة القسم' : 'Error Adding Department',
+        description: language === 'ar' ? 'فشل إضافة القسم' : 'Failed to add department',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddLocation = async () => {
+    if (!selectedClientId || !newLocationName.trim()) return;
+    
+    try {
+      const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/locations`, {
+        nameEn: newLocationName.trim(),
+        nameAr: newLocationName.trim(),
+        addressEn: '',
+        addressAr: '',
+      });
+      
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
+        setNewLocationName('');
+        toast({
+          title: language === 'ar' ? 'تم إضافة الموقع' : 'Location Added',
+          description: language === 'ar' ? 'تم إضافة الموقع بنجاح' : 'Location added successfully',
+        });
+      } else {
+        throw new Error('Failed to add location');
+      }
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'خطأ في إضافة الموقع' : 'Error Adding Location',
+        description: language === 'ar' ? 'فشل إضافة الموقع' : 'Failed to add location',
+        variant: 'destructive',
       });
     }
   };
@@ -416,6 +671,169 @@ export default function AdminClientsPage() {
               : 'Manage client information and users'}
           </p>
         </div>
+
+        {/* Statistics Cards */}
+        {!clientsLoading && clients.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('all')}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'ar' ? 'الإجمالي' : 'Total'}
+                    </p>
+                    <p className="text-2xl font-bold">{stats.total}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('admin')}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'ar' ? 'المسؤولين' : 'Admins'}
+                    </p>
+                    <p className="text-2xl font-bold">{stats.admin}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('non-admin')}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'ar' ? 'العملاء' : 'Clients'}
+                    </p>
+                    <p className="text-2xl font-bold">{stats.nonAdmin}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-purple-600 dark:text-purple-500" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'ar' ? 'المعروض' : 'Filtered'}
+                    </p>
+                    <p className="text-2xl font-bold">{stats.filtered}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Search and Filter Controls */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex-1 min-w-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={language === 'ar' ? 'البحث في العملاء...' : 'Search clients...'}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2 items-center">
+                <Select value={adminFilter} onValueChange={(v) => setAdminFilter(v as any)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="admin">{language === 'ar' ? 'مسؤولين' : 'Admins'}</SelectItem>
+                    <SelectItem value="non-admin">{language === 'ar' ? 'عملاء' : 'Clients'}</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">{language === 'ar' ? 'الاسم' : 'Name'}</SelectItem>
+                    <SelectItem value="email">{language === 'ar' ? 'البريد' : 'Email'}</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  title={language === 'ar' ? 'ترتيب' : 'Sort'}
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => refetchClients()}
+                  title={language === 'ar' ? 'تحديث' : 'Refresh'}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Bulk Actions */}
+            {selectedClients.size > 0 && (
+              <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {language === 'ar' 
+                    ? `${selectedClients.size} عميل محدد` 
+                    : `${selectedClients.size} clients selected`}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                    disabled={bulkDeleteMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {language === 'ar' ? 'حذف محدد' : 'Delete Selected'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedClients(new Set())}
+                  >
+                    {language === 'ar' ? 'إلغاء التحديد' : 'Clear Selection'}
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Export Button */}
+            <div className="mt-4 pt-4 border-t flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={filteredAndSortedClients.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'تصدير CSV' : 'Export CSV'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Mobile: Client List Only */}
         {isMobile ? (
@@ -539,34 +957,93 @@ export default function AdminClientsPage() {
                     <div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />
                   ))}
                 </div>
-              ) : clients.length === 0 ? (
+              ) : paginatedClients.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  {language === 'ar' ? 'لا يوجد عملاء' : 'No clients'}
+                  {filteredAndSortedClients.length === 0 ? (
+                    language === 'ar' ? 'لا يوجد عملاء' : 'No clients'
+                  ) : (
+                    language === 'ar' ? 'لا توجد نتائج للبحث' : 'No search results'
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {clients.map((client) => (
-                    <button
+                  {/* Select All Checkbox */}
+                  <div className="flex items-center gap-3 p-2 border-b">
+                    <Checkbox
+                      checked={selectedClients.size === paginatedClients.length && paginatedClients.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'تحديد الكل' : 'Select All'}
+                    </span>
+                  </div>
+                  
+                  {paginatedClients.map((client) => (
+                    <div
                       key={client.id}
-                      onClick={() => handleClientSelect(client)}
-                      className="w-full text-start p-3 rounded-md border transition-colors hover-elevate bg-card border-border"
+                      className="flex items-center gap-3 p-3 rounded-md border transition-colors hover-elevate bg-card border-border"
                     >
-                      <div className="font-medium">
-                        {language === 'ar' ? client.nameAr : client.nameEn}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {client.email || client.username}
-                      </div>
-                      {client.isAdmin && (
-                        <Badge variant="secondary" className="mt-1">
-                          {language === 'ar' ? 'مسؤول' : 'Admin'}
-                        </Badge>
-                      )}
-                    </button>
+                      <Checkbox
+                        checked={selectedClients.has(client.id)}
+                        onCheckedChange={(checked) => handleSelectClient(client.id, checked as boolean)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <button
+                        onClick={() => handleClientSelect(client)}
+                        className="flex-1 text-start"
+                      >
+                        <div className="font-medium">
+                          {language === 'ar' ? client.nameAr : client.nameEn}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {client.email || client.username}
+                        </div>
+                        {client.isAdmin && (
+                          <Badge variant="secondary" className="mt-1">
+                            {language === 'ar' ? 'مسؤول' : 'Admin'}
+                          </Badge>
+                        )}
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
             </CardContent>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-4 pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' 
+                      ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredAndSortedClients.length)} من ${filteredAndSortedClients.length}`
+                      : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredAndSortedClients.length)} of ${filteredAndSortedClients.length}`
+                    }
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      {language === 'ar' ? 'السابق' : 'Previous'}
+                    </Button>
+                    <span className="text-sm">
+                      {language === 'ar' ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      {language === 'ar' ? 'التالي' : 'Next'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
         ) : (
           /* Desktop: Side-by-side Layout */
@@ -703,39 +1180,98 @@ export default function AdminClientsPage() {
                       <div key={i} className="h-20 bg-muted/50 rounded-lg animate-pulse" />
                     ))}
                   </div>
-                ) : clients.length === 0 ? (
+                ) : paginatedClients.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {language === 'ar' ? 'لا يوجد عملاء' : 'No clients'}
+                    {filteredAndSortedClients.length === 0 ? (
+                      language === 'ar' ? 'لا يوجد عملاء' : 'No clients'
+                    ) : (
+                      language === 'ar' ? 'لا توجد نتائج للبحث' : 'No search results'
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {clients.map((client) => (
-                      <button
+                    {/* Select All Checkbox */}
+                    <div className="flex items-center gap-3 p-2 border-b">
+                      <Checkbox
+                        checked={selectedClients.size === paginatedClients.length && paginatedClients.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'تحديد الكل' : 'Select All'}
+                      </span>
+                    </div>
+                    
+                    {paginatedClients.map((client) => (
+                      <div
                         key={client.id}
-                        onClick={() => handleClientSelect(client)}
-                        className={`w-full text-start p-3 rounded-md border transition-colors hover-elevate ${
+                        className={`flex items-center gap-3 p-3 rounded-md border transition-colors hover-elevate ${
                           selectedClientId === client.id
                             ? 'bg-accent border-accent-border'
                             : 'bg-card border-border'
                         }`}
-                        data-testid={`button-select-client-${client.id}`}
                       >
-                        <div className="font-medium">
-                          {language === 'ar' ? client.nameAr : client.nameEn}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {client.email || client.username}
-                        </div>
-                        {client.isAdmin && (
-                          <Badge variant="secondary" className="mt-1">
-                            {language === 'ar' ? 'مسؤول' : 'Admin'}
-                          </Badge>
-                        )}
-                      </button>
+                        <Checkbox
+                          checked={selectedClients.has(client.id)}
+                          onCheckedChange={(checked) => handleSelectClient(client.id, checked as boolean)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button
+                          onClick={() => handleClientSelect(client)}
+                          className="flex-1 text-start"
+                          data-testid={`button-select-client-${client.id}`}
+                        >
+                          <div className="font-medium">
+                            {language === 'ar' ? client.nameAr : client.nameEn}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {client.email || client.username}
+                          </div>
+                          {client.isAdmin && (
+                            <Badge variant="secondary" className="mt-1">
+                              {language === 'ar' ? 'مسؤول' : 'Admin'}
+                            </Badge>
+                          )}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
               </CardContent>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="px-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? `عرض ${startIndex + 1}-${Math.min(endIndex, filteredAndSortedClients.length)} من ${filteredAndSortedClients.length}`
+                        : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredAndSortedClients.length)} of ${filteredAndSortedClients.length}`
+                      }
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        {language === 'ar' ? 'السابق' : 'Previous'}
+                      </Button>
+                      <span className="text-sm">
+                        {language === 'ar' ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        {language === 'ar' ? 'التالي' : 'Next'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
 
             <ClientDetailsCard
@@ -750,6 +1286,12 @@ export default function AdminClientsPage() {
               setEditDialogOpen={setEditDialogOpen}
               setDeleteDialogOpen={setDeleteDialogOpen}
               setPasswordResetDialogOpen={setPasswordResetDialogOpen}
+              newDepartmentType={newDepartmentType}
+              setNewDepartmentType={setNewDepartmentType}
+              newLocationName={newLocationName}
+              setNewLocationName={setNewLocationName}
+              handleAddDepartment={handleAddDepartment}
+              handleAddLocation={handleAddLocation}
             />
           </div>
         )}
@@ -1014,12 +1556,58 @@ export default function AdminClientsPage() {
               <AlertDialogAction
                 onClick={() => {
                   if (selectedClientId) {
+                    const clientToDelete = clients.find(c => c.id === selectedClientId);
+                    const totalAdminClients = clients.filter(c => c.isAdmin);
+                    
+                    // Check if trying to delete the last admin user
+                    if (clientToDelete?.isAdmin && totalAdminClients.length === 1) {
+                      toast({
+                        title: language === 'ar' ? 'خطأ في الحذف' : 'Delete Error',
+                        description: language === 'ar' 
+                          ? 'لا يمكن حذف آخر مسؤول. يجب أن يبقى مسؤول واحد على الأقل.' 
+                          : 'Cannot delete the last admin user. At least one admin must remain.',
+                        variant: 'destructive',
+                      });
+                      setDeleteDialogOpen(false);
+                      return;
+                    }
+                    
                     deleteClientMutation.mutate(selectedClientId);
                   }
                 }}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {language === 'ar' ? 'حذف' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === 'ar' ? 'حذف العملاء المحددين' : 'Delete Selected Clients'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === 'ar' 
+                  ? `سيتم حذف ${selectedClients.size} عميل وجميع بياناتهم بشكل دائم. لا يمكن التراجع عن هذا الإجراء.` 
+                  : `${selectedClients.size} clients and all their data will be permanently deleted. This action cannot be undone.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleBulkDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={bulkDeleteMutation.isPending}
+              >
+                {bulkDeleteMutation.isPending 
+                  ? (language === 'ar' ? 'جاري الحذف...' : 'Deleting...')
+                  : (language === 'ar' ? 'حذف' : 'Delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1042,6 +1630,12 @@ function ClientDetailsCard({
   setEditDialogOpen,
   setDeleteDialogOpen,
   setPasswordResetDialogOpen,
+  newDepartmentType,
+  setNewDepartmentType,
+  newLocationName,
+  setNewLocationName,
+  handleAddDepartment,
+  handleAddLocation,
 }: any) {
   return (
     <Card className="md:col-span-2 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
@@ -1164,9 +1758,27 @@ function ClientDetailsCard({
             <Separator />
 
             <div className="mt-6">
-              <h3 className="font-semibold mb-3">
-                {language === 'ar' ? 'الأقسام' : 'Departments'}
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">
+                  {language === 'ar' ? 'الأقسام' : 'Departments'}
+                </h3>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={language === 'ar' ? 'نوع القسم' : 'Department type'}
+                    value={newDepartmentType}
+                    onChange={(e) => setNewDepartmentType(e.target.value)}
+                    className="w-40"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddDepartment()}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleAddDepartment}
+                    disabled={!newDepartmentType.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
               {clientDetails.departments.length === 0 ? (
                 <div className="text-sm text-muted-foreground">
                   {language === 'ar' ? 'لا توجد أقسام' : 'No departments'}
@@ -1197,9 +1809,27 @@ function ClientDetailsCard({
             <Separator className="my-6" />
 
             <div>
-              <h3 className="font-semibold mb-3">
-                {language === 'ar' ? 'المواقع' : 'Locations'}
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">
+                  {language === 'ar' ? 'المواقع' : 'Locations'}
+                </h3>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={language === 'ar' ? 'اسم الموقع' : 'Location name'}
+                    value={newLocationName}
+                    onChange={(e) => setNewLocationName(e.target.value)}
+                    className="w-40"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddLocation()}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleAddLocation}
+                    disabled={!newLocationName.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
               {clientDetails.locations.length === 0 ? (
                 <div className="text-sm text-muted-foreground">
                   {language === 'ar' ? 'لا توجد مواقع' : 'No locations'}
