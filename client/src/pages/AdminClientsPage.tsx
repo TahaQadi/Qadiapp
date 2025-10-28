@@ -1091,8 +1091,8 @@ export default function AdminClientsPage() {
                     </DialogTitle>
                     <DialogDescription className="text-sm sm:text-base text-muted-foreground dark:text-gray-400">
                       {language === 'ar' 
-                        ? 'أدخل معلومات العميل الجديد' 
-                        : 'Enter the new client information'}
+                        ? 'أدخل معلومات العميل الجديد لإنشاء حساب جديد في النظام' 
+                        : 'Enter the new client information to create a new account in the system'}
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...createForm}>
@@ -1797,6 +1797,9 @@ export default function AdminClientsPage() {
           <DialogContent className={isMobile ? "max-w-[95vw]" : ""}>
             <DialogHeader>
               <DialogTitle>{language === 'ar' ? 'تعديل العميل' : 'Edit Client'}</DialogTitle>
+              <DialogDescription>
+                {language === 'ar' ? 'تحديث معلومات العميل' : 'Update client information'}
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">

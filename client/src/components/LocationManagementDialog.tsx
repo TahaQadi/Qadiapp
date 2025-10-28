@@ -113,9 +113,13 @@ export function LocationManagementDialog({
             }
           </DialogTitle>
           <DialogDescription className="text-sm">
-            {language === 'ar' 
-              ? 'أدخل معلومات الموقع'
-              : 'Enter location information'
+            {location
+              ? (language === 'ar' 
+                  ? 'تحديث معلومات الموقع والعنوان على الخريطة'
+                  : 'Update location information and address on the map')
+              : (language === 'ar' 
+                  ? 'أدخل معلومات الموقع واختر العنوان على الخريطة'
+                  : 'Enter location information and select address on the map')
             }
           </DialogDescription>
         </DialogHeader>

@@ -102,9 +102,13 @@ export function DepartmentManagementDialog({
             }
           </DialogTitle>
           <DialogDescription>
-            {language === 'ar' 
-              ? 'أدخل معلومات القسم والشخص المسؤول'
-              : 'Enter department information and contact person'
+            {department
+              ? (language === 'ar' 
+                  ? 'تحديث معلومات القسم والشخص المسؤول عنه'
+                  : 'Update department information and contact person')
+              : (language === 'ar' 
+                  ? 'أدخل معلومات القسم والشخص المسؤول عنه'
+                  : 'Enter department information and contact person')
             }
           </DialogDescription>
         </DialogHeader>
