@@ -47,10 +47,12 @@ export function DemoRequestDialog({ open, onOpenChange }: DemoRequestDialogProps
   const onSubmit = async (data: DemoRequestForm) => {
     setIsSubmitting(true);
     try {
-      await apiRequest('/api/demo-request', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/demo-request', data);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Failed to submit request');
+      }
 
       toast({
         title: language === 'ar' ? 'تم الإرسال بنجاح' : 'Request Sent Successfully',
@@ -62,6 +64,7 @@ export function DemoRequestDialog({ open, onOpenChange }: DemoRequestDialogProps
       form.reset();
       onOpenChange(false);
     } catch (error) {
+      console.error('Demo request error:', error);
       toast({
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',

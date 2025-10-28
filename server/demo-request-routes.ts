@@ -30,15 +30,23 @@ router.post('/api/demo-request', async (req: Request, res: Response) => {
       status: 'pending',
     }).returning();
 
-    // Log for admin notification (could be enhanced with actual notification system)
+    console.log('Demo request created:', request.id);
 
-    res.json({ success: true, requestId: request.id });
+    return res.status(200).json({ success: true, requestId: request.id });
   } catch (error) {
     console.error('Demo request error:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid request data', 
+        details: error.errors 
+      });
     }
-    res.status(500).json({ error: 'Failed to submit demo request' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Failed to submit demo request',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
