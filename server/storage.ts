@@ -9,6 +9,7 @@ import {
   type OrderTemplate,
   type Order,
   type OrderModification,
+  type OrderHistory,
   type Lta,
   type LtaProduct,
   type LtaClient,
@@ -25,6 +26,7 @@ import {
   type InsertOrderTemplate,
   type InsertOrder,
   type InsertOrderModification,
+  type InsertOrderHistory,
   type InsertLta,
   type InsertLtaProduct,
   type InsertLtaClient,
@@ -44,7 +46,7 @@ import {
   orderTemplates,
   orders,
   orderModifications,
-  orderHistory, // Added orderHistory
+  orderHistory,
   ltas,
   ltaProducts,
   ltaClients,
@@ -52,10 +54,10 @@ import {
   priceOffers,
   passwordResetTokens,
   pushSubscriptions,
-  documents, // Assuming 'documents' schema is imported from '@shared/schema'
-  OrderFeedback, // Assuming OrderFeedback type is imported
-  orderFeedback, // Assuming orderFeedback schema is imported
-  InsertOrderFeedback, // Assuming InsertOrderFeedback type is imported
+  documents,
+  OrderFeedback,
+  orderFeedback,
+  InsertOrderFeedback,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
