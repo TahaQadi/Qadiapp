@@ -1010,15 +1010,26 @@ export default function AdminClientsPage() {
               </CardTitle>
               <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="icon" variant="outline" data-testid="button-create-client">
-                    <Plus className="h-4 w-4" />
+                  <Button 
+                    size="icon" 
+                    variant="outline" 
+                    data-testid="button-create-client"
+                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg border-border/50 dark:border-[#d4af37]/30 hover:border-primary dark:hover:border-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300"
+                  >
+                    <Plus className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw]">
-                  <DialogHeader>
-                    <DialogTitle>
+                <DialogContent className="border-border/50 dark:border-[#d4af37]/30 bg-card dark:bg-black/95 backdrop-blur-xl sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader className="space-y-3 pb-4 border-b border-border/50 dark:border-[#d4af37]/20">
+                    <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-2">
+                      <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
                       {language === 'ar' ? 'إنشاء عميل جديد' : 'Create New Client'}
                     </DialogTitle>
+                    <DialogDescription className="text-sm sm:text-base text-muted-foreground dark:text-gray-400">
+                      {language === 'ar' 
+                        ? 'أدخل معلومات العميل الجديد' 
+                        : 'Enter the new client information'}
+                    </DialogDescription>
                   </DialogHeader>
                   <Form {...createForm}>
                     <form onSubmit={createForm.handleSubmit((data) => createClientMutation.mutate(data))} className="space-y-4">
@@ -1029,7 +1040,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'اسم المستخدم' : 'Username'}</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} data-testid="input-create-username" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1042,7 +1053,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'كلمة المرور' : 'Password'}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="password" />
+                              <Input {...field} type="password" data-testid="input-create-password" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1055,7 +1066,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} data-testid="input-create-name-en" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1068,7 +1079,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} data-testid="input-create-name-ar" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1081,7 +1092,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" />
+                              <Input {...field} type="email" data-testid="input-create-email" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1094,7 +1105,7 @@ export default function AdminClientsPage() {
                           <FormItem>
                             <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} data-testid="input-create-phone" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1222,16 +1233,22 @@ export default function AdminClientsPage() {
                 </CardTitle>
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="icon" variant="outline" data-testid="button-create-client">
-                      <Plus className="h-4 w-4" />
+                    <Button 
+                      size="icon" 
+                      variant="outline" 
+                      data-testid="button-create-client"
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg border-border/50 dark:border-[#d4af37]/30 hover:border-primary dark:hover:border-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300"
+                    >
+                      <Plus className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>
+                  <DialogContent className="border-border/50 dark:border-[#d4af37]/30 bg-card dark:bg-black/95 backdrop-blur-xl sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="space-y-3 pb-4 border-b border-border/50 dark:border-[#d4af37]/20">
+                      <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-2">
+                        <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
                         {language === 'ar' ? 'إنشاء عميل جديد' : 'Create New Client'}
                       </DialogTitle>
-                      <DialogDescription>
+                      <DialogDescription className="text-sm sm:text-base text-muted-foreground dark:text-gray-400">
                         {language === 'ar' 
                           ? 'أدخل معلومات العميل الجديد' 
                           : 'Enter the new client information'}
