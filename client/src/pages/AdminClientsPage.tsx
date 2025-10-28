@@ -97,6 +97,26 @@ interface ClientDetails {
   locations: Location[];
 }
 
+interface ClientDetailsCardProps {
+  selectedClientId: string | null;
+  clientDetails: ClientDetails | undefined;
+  detailsLoading: boolean;
+  detailsError: any;
+  form: any; // Use a more specific type if available
+  language: string;
+  toggleAdminMutation: any; // Use a more specific type if available
+  getDepartmentTypeLabel: (type: string) => string;
+  setEditDialogOpen: (isOpen: boolean) => void;
+  setDeleteDialogOpen: (isOpen: boolean) => void;
+  setPasswordResetDialogOpen: (isOpen: boolean) => void;
+  newDepartmentType: string;
+  setNewDepartmentType: (value: string) => void;
+  newLocationName: string;
+  setNewLocationName: (value: string) => void;
+  handleAddDepartment: () => Promise<void>;
+  handleAddLocation: () => Promise<void>;
+}
+
 export default function AdminClientsPage() {
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -108,7 +128,7 @@ export default function AdminClientsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [passwordResetDialogOpen, setPasswordResetDialogOpen] = useState(false);
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
-  
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [adminFilter, setAdminFilter] = useState<'all' | 'admin' | 'non-admin'>('all');
@@ -117,11 +137,11 @@ export default function AdminClientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  
+
   // Bulk operations state
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  
+
   // Inline editing state
   const [editingDepartment, setEditingDepartment] = useState<string | null>(null);
   const [editingLocation, setEditingLocation] = useState<string | null>(null);
@@ -142,7 +162,7 @@ export default function AdminClientsPage() {
                            client.nameAr.toLowerCase().includes(query);
         const matchesEmail = client.email?.toLowerCase().includes(query);
         const matchesUsername = client.username.toLowerCase().includes(query);
-        
+
         if (!matchesName && !matchesEmail && !matchesUsername) {
           return false;
         }
@@ -158,7 +178,7 @@ export default function AdminClientsPage() {
     // Sort clients
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'name':
           comparison = (language === 'ar' ? a.nameAr : a.nameEn)
@@ -172,7 +192,7 @@ export default function AdminClientsPage() {
           comparison = 0;
           break;
       }
-      
+
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
@@ -397,12 +417,12 @@ export default function AdminClientsPage() {
       const results = await Promise.allSettled(
         clientIds.map(id => apiRequest('DELETE', `/api/admin/clients/${id}`))
       );
-      
+
       const failed = results.filter(result => result.status === 'rejected');
       if (failed.length > 0) {
         throw new Error(`Failed to delete ${failed.length} out of ${clientIds.length} clients`);
       }
-      
+
       return results;
     },
     onSuccess: () => {
@@ -470,12 +490,12 @@ export default function AdminClientsPage() {
 
   const handleBulkDelete = () => {
     const clientIds = Array.from(selectedClients);
-    
+
     // Check if trying to delete all admin users
     const selectedClientsData = clients.filter(c => clientIds.includes(c.id));
     const adminClientsSelected = selectedClientsData.filter(c => c.isAdmin);
     const totalAdminClients = clients.filter(c => c.isAdmin);
-    
+
     if (adminClientsSelected.length === totalAdminClients.length && totalAdminClients.length > 0) {
       toast({
         title: language === 'ar' ? 'خطأ في الحذف' : 'Delete Error',
@@ -486,7 +506,7 @@ export default function AdminClientsPage() {
       });
       return;
     }
-    
+
     bulkDeleteMutation.mutate(clientIds);
   };
 
@@ -504,9 +524,9 @@ export default function AdminClientsPage() {
 
       const csvContent = arrayToCSV(exportData);
       const filename = `clients_export_${new Date().toISOString().split('T')[0]}.csv`;
-      
+
       downloadCSV(csvContent, filename);
-      
+
       toast({
         title: language === 'ar' ? 'تم التصدير بنجاح' : 'Export Successful',
         description: language === 'ar' 
@@ -525,12 +545,12 @@ export default function AdminClientsPage() {
   // Inline editing handlers
   const handleAddDepartment = async () => {
     if (!selectedClientId || !newDepartmentType.trim()) return;
-    
+
     try {
       const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/departments`, {
         departmentType: newDepartmentType.trim(),
       });
-      
+
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
         setNewDepartmentType('');
@@ -552,7 +572,7 @@ export default function AdminClientsPage() {
 
   const handleAddLocation = async () => {
     if (!selectedClientId || !newLocationName.trim()) return;
-    
+
     try {
       const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/locations`, {
         nameEn: newLocationName.trim(),
@@ -560,7 +580,7 @@ export default function AdminClientsPage() {
         addressEn: '',
         addressAr: '',
       });
-      
+
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ['/api/admin/clients', selectedClientId] });
         setNewLocationName('');
@@ -688,7 +708,7 @@ export default function AdminClientsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('admin')}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -702,7 +722,7 @@ export default function AdminClientsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('non-admin')}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -716,7 +736,7 @@ export default function AdminClientsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -748,7 +768,7 @@ export default function AdminClientsPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex gap-2 items-center">
                 <Select value={adminFilter} onValueChange={(v) => setAdminFilter(v as any)}>
                   <SelectTrigger className="w-32">
@@ -760,7 +780,7 @@ export default function AdminClientsPage() {
                     <SelectItem value="non-admin">{language === 'ar' ? 'عملاء' : 'Clients'}</SelectItem>
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -770,7 +790,7 @@ export default function AdminClientsPage() {
                     <SelectItem value="email">{language === 'ar' ? 'البريد' : 'Email'}</SelectItem>
                   </SelectContent>
                 </Select>
-                
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -779,7 +799,7 @@ export default function AdminClientsPage() {
                 >
                   {sortOrder === 'asc' ? '↑' : '↓'}
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -790,7 +810,7 @@ export default function AdminClientsPage() {
                 </Button>
               </div>
             </div>
-            
+
             {/* Bulk Actions */}
             {selectedClients.size > 0 && (
               <div className="mt-4 pt-4 border-t flex items-center justify-between">
@@ -819,7 +839,7 @@ export default function AdminClientsPage() {
                 </div>
               </div>
             )}
-            
+
             {/* Export Button */}
             <div className="mt-4 pt-4 border-t flex justify-end">
               <Button
@@ -977,7 +997,7 @@ export default function AdminClientsPage() {
                       {language === 'ar' ? 'تحديد الكل' : 'Select All'}
                     </span>
                   </div>
-                  
+
                   {paginatedClients.map((client) => (
                     <div
                       key={client.id}
@@ -1009,7 +1029,7 @@ export default function AdminClientsPage() {
                 </div>
               )}
             </CardContent>
-            
+
             {/* Pagination Controls */}
             {totalPages > 1 && (
               <div className="px-4 pb-4">
@@ -1200,7 +1220,7 @@ export default function AdminClientsPage() {
                         {language === 'ar' ? 'تحديد الكل' : 'Select All'}
                       </span>
                     </div>
-                    
+
                     {paginatedClients.map((client) => (
                       <div
                         key={client.id}
@@ -1237,7 +1257,7 @@ export default function AdminClientsPage() {
                   </div>
                 )}
               </CardContent>
-              
+
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="px-4 pb-4">
@@ -1558,7 +1578,7 @@ export default function AdminClientsPage() {
                   if (selectedClientId) {
                     const clientToDelete = clients.find(c => c.id === selectedClientId);
                     const totalAdminClients = clients.filter(c => c.isAdmin);
-                    
+
                     // Check if trying to delete the last admin user
                     if (clientToDelete?.isAdmin && totalAdminClients.length === 1) {
                       toast({
@@ -1571,7 +1591,7 @@ export default function AdminClientsPage() {
                       setDeleteDialogOpen(false);
                       return;
                     }
-                    
+
                     deleteClientMutation.mutate(selectedClientId);
                   }
                 }}
@@ -1636,7 +1656,7 @@ function ClientDetailsCard({
   setNewLocationName,
   handleAddDepartment,
   handleAddLocation,
-}: any) {
+}: ClientDetailsCardProps) {
   return (
     <Card className="md:col-span-2 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm 
       border-border/50 dark:border-[#d4af37]/20 
