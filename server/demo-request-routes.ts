@@ -4,6 +4,7 @@ import { db } from './db';
 import { demoRequests } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
+import { requireAdmin } from './auth';
 
 const router = Router();
 
@@ -42,16 +43,8 @@ router.post('/api/demo-request', async (req: Request, res: Response) => {
 });
 
 // Get all demo requests (admin only)
-router.get('/api/admin/demo-requests', async (req: Request, res: Response) => {
+router.get('/api/admin/demo-requests', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Check if user is admin
-    if (!req.user || !(req.user as any).isAdmin) {
-      return res.status(403).json({ 
-        message: 'Unauthorized - Admin access required',
-        messageAr: 'غير مصرح - مطلوب صلاحيات المسؤول'
-      });
-    }
-
     const requests = await db.select().from(demoRequests).orderBy(desc(demoRequests.createdAt));
 
     res.json(requests);
@@ -62,16 +55,8 @@ router.get('/api/admin/demo-requests', async (req: Request, res: Response) => {
 });
 
 // Update demo request status (admin only)
-router.patch('/api/admin/demo-requests/:id', async (req: Request, res: Response) => {
+router.patch('/api/admin/demo-requests/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Check if user is admin
-    if (!req.user || !(req.user as any).isAdmin) {
-      return res.status(403).json({ 
-        message: 'Unauthorized - Admin access required',
-        messageAr: 'غير مصرح - مطلوب صلاحيات المسؤول'
-      });
-    }
-
     const { id } = req.params;
     const { status, notes } = req.body;
 

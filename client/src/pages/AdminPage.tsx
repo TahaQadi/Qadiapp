@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp, PlayCircle } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -77,6 +77,18 @@ export default function AdminPage() {
       gradient: 'from-orange-500/20 to-purple-500/10',
       hoverGradient: 'from-orange-500/30 to-purple-500/20',
       testId: 'card-price-management'
+    },
+    {
+      id: 'demo-requests',
+      path: '/admin/demo-requests',
+      icon: PlayCircle,
+      titleEn: 'Demo Requests',
+      titleAr: 'طلبات العروض التوضيحية',
+      descEn: 'Manage demo requests from clients',
+      descAr: 'إدارة طلبات العروض التوضيحية من العملاء',
+      gradient: 'from-cyan-500/20 to-blue-500/10',
+      hoverGradient: 'from-cyan-500/30 to-blue-500/20',
+      testId: 'card-demo-requests'
     },
     {
       id: 'orders',

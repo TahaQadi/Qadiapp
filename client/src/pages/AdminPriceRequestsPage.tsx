@@ -4,7 +4,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FileText, Eye, Clock, CheckCircle, Package, Loader2, Send } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -276,6 +276,9 @@ export default function AdminPriceRequestsPage() {
             <DialogTitle>
               {selectedRequest?.requestNumber}
             </DialogTitle>
+            <DialogDescription>
+              {language === "ar" ? "عرض تفاصيل طلب السعر" : "View price request details"}
+            </DialogDescription>
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4">
@@ -340,6 +343,9 @@ export default function AdminPriceRequestsPage() {
             <DialogTitle>
               {language === "ar" ? "إنشاء PDF لطلب السعر" : "Generate PDF for Price Request"}
             </DialogTitle>
+            <DialogDescription>
+              {language === "ar" ? "اختر اللغة لإنشاء مستند PDF" : "Select language to generate PDF document"}
+            </DialogDescription>
           </DialogHeader>
           {pdfRequest && (
             <div className="space-y-4">
