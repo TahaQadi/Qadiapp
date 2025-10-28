@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/components/LanguageProvider';
 import { MapLocationPicker } from '@/components/MapLocationPicker';
+import { MapPin } from 'lucide-react';
 import type { ClientLocation } from '@shared/schema';
 
 const locationSchema = z.object({
@@ -104,15 +105,18 @@ export function LocationManagementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6" data-testid="dialog-location">
-        <DialogHeader className="space-y-2">
-          <DialogTitle className="text-lg sm:text-xl">
+      <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-border/50 dark:border-[#d4af37]/30 bg-gradient-to-br from-card/95 to-card dark:from-black/95 dark:to-[#1a1a1a]/95 backdrop-blur-xl" data-testid="dialog-location">
+        <DialogHeader className="space-y-2 pb-3 border-b border-border/50 dark:border-[#d4af37]/20">
+          <DialogTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+              <MapPin className="h-4 w-4 text-primary dark:text-[#d4af37]" />
+            </div>
             {location 
               ? (language === 'ar' ? 'تعديل الموقع' : 'Edit Location')
               : (language === 'ar' ? 'إضافة موقع' : 'Add Location')
             }
           </DialogTitle>
-          <DialogDescription className="text-sm">
+          <DialogDescription className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
             {location
               ? (language === 'ar' 
                   ? 'تحديث معلومات الموقع والعنوان على الخريطة'
@@ -124,7 +128,7 @@ export function LocationManagementDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-3 sm:gap-4 py-4">
           {/* Location Name */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">
@@ -133,7 +137,7 @@ export function LocationManagementDialog({
             <Input
               id="name"
               {...form.register('name')}
-              className="h-10"
+              className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
               placeholder={language === 'ar' ? 'أدخل اسم الموقع' : 'Enter location name'}
               data-testid="input-name"
             />
@@ -150,7 +154,7 @@ export function LocationManagementDialog({
             <Input
               id="address"
               {...form.register('address')}
-              className="h-10"
+              className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
               placeholder={language === 'ar' ? 'أدخل العنوان' : 'Enter address'}
               data-testid="input-address"
             />
@@ -160,7 +164,7 @@ export function LocationManagementDialog({
           </div>
 
           {/* Headquarters Checkbox */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
             <Controller
               name="isHeadquarters"
               control={form.control}
@@ -169,6 +173,7 @@ export function LocationManagementDialog({
                   id="isHeadquarters"
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  className="border-border/50 dark:border-[#d4af37]/30"
                   data-testid="checkbox-headquarters"
                 />
               )}
@@ -181,11 +186,12 @@ export function LocationManagementDialog({
             </Label>
           </div>
 
-          <Separator />
+          <Separator className="my-2" />
 
           {/* Map Section */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5" />
               {language === 'ar' ? 'الموقع على الخريطة' : 'Location on Map'}
             </Label>
             <p className="text-xs text-muted-foreground">
@@ -193,7 +199,7 @@ export function LocationManagementDialog({
                 ? 'انقر على الخريطة لتحديد الموقع (اختياري)' 
                 : 'Click on the map to pin location (optional)'}
             </p>
-            <div className="rounded-lg overflow-hidden border">
+            <div className="rounded-lg overflow-hidden border-2 border-border/50 dark:border-[#d4af37]/20 shadow-md">
               <MapLocationPicker
                 latitude={form.watch('latitude')}
                 longitude={form.watch('longitude')}
@@ -206,11 +212,11 @@ export function LocationManagementDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0 pt-3">
           <Button
             variant="outline"
             onClick={handleCancel}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37]"
             data-testid="button-cancel"
           >
             {language === 'ar' ? 'إلغاء' : 'Cancel'}
@@ -218,7 +224,7 @@ export function LocationManagementDialog({
           <Button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto h-10 sm:h-11 touch-target bg-gradient-to-r from-primary to-primary/90 dark:from-[#d4af37] dark:to-[#f9c800] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300"
             data-testid="button-save-location"
           >
             {isSaving 

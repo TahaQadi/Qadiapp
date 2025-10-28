@@ -1083,100 +1083,108 @@ export default function AdminClientsPage() {
                     <Plus className="h-5 w-5 text-primary dark:text-[#d4af37]" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-border/50 dark:border-[#d4af37]/30 bg-card dark:bg-black/95 backdrop-blur-xl sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                  <DialogHeader className="space-y-3 pb-4 border-b border-border/50 dark:border-[#d4af37]/20">
-                    <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-2">
-                      <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
+                <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-border/50 dark:border-[#d4af37]/30 bg-gradient-to-br from-card/95 to-card dark:from-black/95 dark:to-[#1a1a1a]/95 backdrop-blur-xl">
+                  <DialogHeader className="space-y-2 sm:space-y-3 pb-3 sm:pb-4 border-b border-border/50 dark:border-[#d4af37]/20">
+                    <DialogTitle className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent flex items-center gap-2">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary dark:text-[#d4af37]" />
+                      </div>
                       {language === 'ar' ? 'إنشاء عميل جديد' : 'Create New Client'}
                     </DialogTitle>
-                    <DialogDescription className="text-sm sm:text-base text-muted-foreground dark:text-gray-400">
+                    <DialogDescription className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
                       {language === 'ar' 
                         ? 'أدخل معلومات العميل الجديد لإنشاء حساب جديد في النظام' 
                         : 'Enter the new client information to create a new account in the system'}
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...createForm}>
-                    <form onSubmit={createForm.handleSubmit((data) => createClientMutation.mutate(data))} className="space-y-4">
-                      <FormField
-                        control={createForm.control}
-                        name="username"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'اسم المستخدم' : 'Username'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} data-testid="input-create-username" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={createForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'كلمة المرور' : 'Password'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="password" data-testid="input-create-password" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={createForm.control}
-                        name="nameEn"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} data-testid="input-create-name-en" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={createForm.control}
-                        name="nameAr"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} data-testid="input-create-name-ar" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={createForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="email" data-testid="input-create-email" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={createForm.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
-                            <FormControl>
-                              <Input {...field} data-testid="input-create-phone" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <DialogFooter>
-                        <Button type="submit" disabled={createClientMutation.isPending} className="w-full">
+                    <form onSubmit={createForm.handleSubmit((data) => createClientMutation.mutate(data))} className="space-y-3 sm:space-y-4 pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem className="sm:col-span-2">
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'اسم المستخدم' : 'Username'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-username" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem className="sm:col-span-2">
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'كلمة المرور' : 'Password'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="password" className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-password" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="nameEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-name-en" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="nameAr"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-name-ar" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="email" className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-email" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-phone" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <DialogFooter className="pt-3 sm:pt-4">
+                        <Button 
+                          type="submit" 
+                          disabled={createClientMutation.isPending} 
+                          className="w-full h-10 sm:h-11 touch-target bg-gradient-to-r from-primary to-primary/90 dark:from-[#d4af37] dark:to-[#f9c800] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300"
+                        >
                           {createClientMutation.isPending
                             ? (language === 'ar' ? 'جاري الإنشاء...' : 'Creating...')
                             : (language === 'ar' ? 'إنشاء عميل' : 'Create Client')}
@@ -1794,26 +1802,31 @@ export default function AdminClientsPage() {
 
         {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className={isMobile ? "max-w-[95vw]" : ""}>
-            <DialogHeader>
-              <DialogTitle>{language === 'ar' ? 'تعديل العميل' : 'Edit Client'}</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-border/50 dark:border-[#d4af37]/30 bg-gradient-to-br from-card/95 to-card dark:from-black/95 dark:to-[#1a1a1a]/95 backdrop-blur-xl">
+            <DialogHeader className="space-y-2 pb-3 border-b border-border/50 dark:border-[#d4af37]/20">
+              <DialogTitle className="text-lg sm:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+                  <Edit className="h-4 w-4 text-primary dark:text-[#d4af37]" />
+                </div>
+                {language === 'ar' ? 'تعديل العميل' : 'Edit Client'}
+              </DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
                 {language === 'ar' ? 'تحديث معلومات العميل' : 'Update client information'}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 sm:space-y-4 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <FormField
                     control={form.control}
                     name="nameEn"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -1822,43 +1835,47 @@ export default function AdminClientsPage() {
                     name="nameAr"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="email" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="submit" disabled={updateClientMutation.isPending} className={isMobile ? "w-full" : ""}>
+                <DialogFooter className="pt-3 sm:pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateClientMutation.isPending} 
+                    className="w-full h-10 sm:h-11 touch-target bg-gradient-to-r from-primary to-primary/90 dark:from-[#d4af37] dark:to-[#f9c800] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300"
+                  >
                     {updateClientMutation.isPending
                       ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...')
                       : (language === 'ar' ? 'حفظ' : 'Save')}
