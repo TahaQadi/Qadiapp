@@ -106,7 +106,7 @@ export class DocumentTriggerService {
   // Cache active templates to avoid repeated DB queries
   private templateCache = new Map<string, any>();
   private lastCacheUpdate = 0;
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_TTL = 60 * 60 * 1000; // 1 hour (increased from 5 minutes)
 
   private async getActiveTemplate(category: string): Promise<any> {
     const now = Date.now();
@@ -117,9 +117,9 @@ export class DocumentTriggerService {
       return this.templateCache.get(cacheKey);
     }
     
-    // Refresh cache
+    // Refresh cache - system is Arabic-only
     const templates = await TemplateStorage.getTemplates(category);
-    const template = templates.find(t => t.isActive && t.language === 'both');
+    const template = templates.find(t => t.isActive && t.language === 'ar');
     
     if (template) {
       this.templateCache.set(cacheKey, template);
@@ -157,7 +157,7 @@ export class DocumentTriggerService {
       pdfBuffer = await TemplatePDFGenerator.generate({
         template,
         variables,
-        language: 'en' // Default to English, can be made dynamic
+        language: 'ar' // Arabic-only system
       });
       
       if (!pdfBuffer || pdfBuffer.length === 0) {
@@ -232,12 +232,12 @@ export class DocumentTriggerService {
 
     // Get appropriate template - try specific category first, then fallback to 'invoice'
     let templates = await TemplateStorage.getTemplates(templateCategory);
-    let template = templates.find(t => t.isActive && t.language === 'both');
+    let template = templates.find(t => t.isActive && t.language === 'ar');
     
     if (!template) {
       console.log(`ℹ️ No active ${templateCategory} template found, trying invoice template...`);
       templates = await TemplateStorage.getTemplates('invoice');
-      template = templates.find(t => t.isActive && t.language === 'both');
+      template = templates.find(t => t.isActive && t.language === 'ar');
     }
     
     if (!template) {
@@ -252,11 +252,11 @@ export class DocumentTriggerService {
       statusChangeDate: event.timestamp
     });
     
-    // Generate PDF
+    // Generate PDF (Arabic-only)
     const pdfBuffer = await TemplatePDFGenerator.generate({
       template,
       variables,
-      language: 'en'
+      language: 'ar'
     });
 
     // Upload to storage
@@ -308,9 +308,9 @@ export class DocumentTriggerService {
   private async handlePriceOfferCreated(event: DocumentGenerationEvent): Promise<DocumentGenerationResult> {
     const { data: priceOffer } = event;
     
-    // Get price offer template
+    // Get price offer template (Arabic-only)
     const templates = await TemplateStorage.getTemplates('price_offer');
-    const template = templates.find(t => t.isActive && t.language === 'both');
+    const template = templates.find(t => t.isActive && t.language === 'ar');
     
     if (!template) {
       console.warn('⚠️ No active price offer template found');
@@ -320,11 +320,11 @@ export class DocumentTriggerService {
     // Prepare variables
     const variables = await this.preparePriceOfferVariables(priceOffer, event.clientId);
     
-    // Generate PDF
+    // Generate PDF (Arabic-only)
     const pdfBuffer = await TemplatePDFGenerator.generate({
       template,
       variables,
-      language: priceOffer.language || 'en'
+      language: 'ar'
     });
 
     // Upload to storage
@@ -374,9 +374,9 @@ export class DocumentTriggerService {
   private async handleLtaContractSigned(event: DocumentGenerationEvent): Promise<DocumentGenerationResult> {
     const { data: lta } = event;
     
-    // Get contract template
+    // Get contract template (Arabic-only)
     const templates = await TemplateStorage.getTemplates('contract');
-    const template = templates.find(t => t.isActive && t.language === 'both');
+    const template = templates.find(t => t.isActive && t.language === 'ar');
     
     if (!template) {
       console.warn('⚠️ No active contract template found');
@@ -386,11 +386,11 @@ export class DocumentTriggerService {
     // Prepare variables
     const variables = await this.prepareLtaVariables(lta, event.clientId);
     
-    // Generate PDF
+    // Generate PDF (Arabic-only)
     const pdfBuffer = await TemplatePDFGenerator.generate({
       template,
       variables,
-      language: 'en'
+      language: 'ar'
     });
 
     // Upload to storage

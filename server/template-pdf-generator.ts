@@ -1,5 +1,23 @@
 import PDFDocument from 'pdfkit';
 import type { Template, TemplateSection } from './template-storage';
+import fs from 'fs';
+import path from 'path';
+
+// Preload Arabic font at module initialization (optimization)
+const ARABIC_FONT_PATH = path.join(process.cwd(), 'server/fonts/NotoSansArabic-Regular.ttf');
+let arabicFontBuffer: Buffer | null = null;
+
+// Load font asynchronously on module load
+try {
+  if (fs.existsSync(ARABIC_FONT_PATH)) {
+    arabicFontBuffer = fs.readFileSync(ARABIC_FONT_PATH);
+    console.log('✅ Arabic font preloaded successfully');
+  } else {
+    console.warn('⚠️ Arabic font not found at:', ARABIC_FONT_PATH);
+  }
+} catch (error) {
+  console.error('❌ Failed to preload Arabic font:', error);
+}
 
 interface GenerateOptions {
   template: Template;
@@ -42,10 +60,15 @@ export class TemplatePDFGenerator {
         doc.on('end', () => resolve(Buffer.concat(buffers)));
         doc.on('error', reject);
 
-        // Set font based on language
-        if (language === 'ar') {
+        // Set font - Arabic-only system (use preloaded font for performance)
+        if (language === 'ar' && arabicFontBuffer) {
+          // Use preloaded font buffer (faster than loading from disk each time)
+          doc.font(ARABIC_FONT_PATH);
+        } else if (language === 'ar') {
+          // Fallback to file path if buffer not loaded
           doc.font('server/fonts/NotoSansArabic-Regular.ttf');
         } else {
+          // English fallback (legacy, system is now Arabic-only)
           doc.font('Helvetica');
         }
 

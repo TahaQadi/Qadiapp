@@ -109,8 +109,8 @@ export default function ClientPriceOffersPage() {
 
   const generateDownloadUrl = (offer: PriceOffer) => {
     if (!offer.pdfFileName) return "#";
-    const token = btoa(`${offer.id}:${Date.now()}`);
-    return `/api/price-offers/${offer.id}/download?token=${token}`;
+    // No token needed - uses session authentication
+    return `/api/price-offers/${offer.id}/download`;
   };
 
   return (

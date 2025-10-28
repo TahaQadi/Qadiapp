@@ -4,6 +4,7 @@ import { TemplateStorage } from './template-storage';
 import { PDFStorage } from './object-storage';
 import { storage } from './storage';
 import { PDFAccessControl } from './pdf-access-control';
+import { checkDuplicateDocument, computeVariablesHash } from './document-deduplication';
 
 interface GenerateDocumentOptions {
   templateCategory: string;
@@ -16,6 +17,7 @@ interface GenerateDocumentOptions {
     ltaId?: string;
     [key: string]: any;
   };
+  force?: boolean; // Force regeneration, skip deduplication
 }
 
 interface GenerateDocumentResult {
@@ -31,13 +33,13 @@ interface GenerateDocumentResult {
  */
 export class DocumentUtils {
   private static templateCache = new Map<string, any>();
-  private static cacheExpiry = 5 * 60 * 1000; // 5 minutes
+  private static cacheExpiry = 60 * 60 * 1000; // 1 hour (increased from 5 minutes)
 
   /**
    * Generate a document from template with all necessary steps
    */
   static async generateDocument(options: GenerateDocumentOptions): Promise<GenerateDocumentResult> {
-    const { templateCategory, variables, language = 'ar', clientId, metadata = {} } = options;
+    const { templateCategory, variables, language = 'ar', clientId, metadata = {}, force = false } = options;
 
     try {
       // 1. Get active template (with caching)
@@ -46,6 +48,31 @@ export class DocumentUtils {
         return {
           success: false,
           error: `No active template found for category: ${templateCategory}`
+        };
+      }
+
+      // 2. Check for duplicate document (unless force=true)
+      const entityId = metadata.orderId || metadata.priceOfferId || metadata.ltaId;
+      const entityType = metadata.orderId ? 'order' 
+        : metadata.priceOfferId ? 'priceOffer'
+        : metadata.ltaId ? 'lta'
+        : undefined;
+
+      const dedupeResult = await checkDuplicateDocument({
+        templateId: template.id,
+        variables,
+        entityId,
+        entityType: entityType as any,
+        force
+      });
+
+      // If duplicate exists and force=false, return existing document
+      if (dedupeResult.isDuplicate && dedupeResult.existingDocument) {
+        console.log(`✅ Returning existing document: ${dedupeResult.existingDocument.id}`);
+        return {
+          success: true,
+          documentId: dedupeResult.existingDocument.id,
+          fileName: dedupeResult.existingDocument.fileName
         };
       }
 
@@ -68,7 +95,7 @@ export class DocumentUtils {
         return { success: false, error: 'Failed to upload PDF' };
       }
 
-      // 4. Create database record
+      // 4. Create database record with variablesHash for deduplication
       const document = await storage.createDocumentMetadata({
         documentType: templateCategory as any,
         fileName,
@@ -81,6 +108,7 @@ export class DocumentUtils {
         ltaId: metadata.ltaId,
         metadata: {
           templateId: template.id,
+          variablesHash: dedupeResult.variablesHash,
           generatedAt: new Date().toISOString(),
           ...metadata
         }
@@ -133,11 +161,8 @@ export class DocumentUtils {
     console.log('🔍 Fetching template from database:', category);
     const templates = await TemplateStorage.getTemplates(category);
     
-    // Find active bilingual template first, then any active template
-    let template = templates.find(t => t.isActive && t.language === 'both');
-    if (!template) {
-      template = templates.find(t => t.isActive);
-    }
+    // Find active Arabic template (system is Arabic-only)
+    const template = templates.find(t => t.isActive && t.language === 'ar');
 
     if (template) {
       // Validate template structure before caching

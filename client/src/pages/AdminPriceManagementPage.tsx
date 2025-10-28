@@ -512,8 +512,9 @@ export default function AdminPriceManagementPage() {
     }
   };
 
-  const handleDownload = async (fileName: string) => {
-    window.open(`/api/pdf/download/${fileName}`, '_blank');
+  const handleDownload = async (offerId: string) => {
+    // Use new authenticated download endpoint
+    window.open(`/api/price-offers/${offerId}/download`, '_blank');
   };
 
   const handleViewRequest = async (request: PriceRequest) => {
@@ -1099,7 +1100,7 @@ export default function AdminPriceManagementPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => handleDownload(offer.pdfFileName)}
+                                      onClick={() => handleDownload(offer.id)}
                                     >
                                       <Download className="h-4 w-4" />
                                     </Button>
@@ -1267,7 +1268,7 @@ export default function AdminPriceManagementPage() {
                             </Button>
                             <Button
                               size="sm"
-                              onClick={() => handleDownload(offer.pdfFileName)}
+                              onClick={() => handleDownload(offer.id)}
                               className="h-10 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 shadow-sm hover:shadow-md transition-all"
                             >
                               <Download className="h-4 w-4 me-1.5" />
@@ -2049,7 +2050,7 @@ export default function AdminPriceManagementPage() {
                     {language === 'ar' ? 'إغلاق' : 'Close'}
                   </Button>
                   <Button
-                    onClick={() => handleDownload(selectedOffer.pdfFileName)}
+                    onClick={() => handleDownload(selectedOffer.id)}
                     className="w-full sm:w-auto bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90"
                   >
                     <Download className="h-4 w-4 me-2" />

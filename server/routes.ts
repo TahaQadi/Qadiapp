@@ -15,6 +15,7 @@ import feedbackRoutes from './feedback-routes';
 import feedbackAnalyticsRoutes from './feedback-analytics-routes';
 import { setupDocumentRoutes } from './document-routes';
 import { setupTemplateManagementRoutes } from './template-management-routes';
+import { setupInvoiceContractRoutes } from './invoice-contract-routes';
 import { documentTriggerService } from './document-triggers';
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
@@ -23,6 +24,7 @@ import { PDFStorage } from "./object-storage";
 import { TemplateStorage } from "./template-storage";
 import { TemplatePDFGenerator } from "./template-pdf-generator";
 import { PDFAccessControl } from "./pdf-access-control";
+import { DocumentUtils } from "./document-utils";
 import {
   loginSchema,
   priceImportRowSchema,
@@ -157,6 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Document routes
   setupDocumentRoutes(app);
   setupTemplateManagementRoutes(app);
+  setupInvoiceContractRoutes(app); // NEW: Invoice & Contract generation
 
   // Test document triggers endpoint (for development)
   app.post('/api/test/document-triggers', async (req: any, res) => {
@@ -902,6 +905,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client: Download price offer PDF
+  app.get("/api/price-offers/:id/download", isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const offerId = req.params.id;
+      
+      // Get price offer
+      const offer = await storage.getPriceOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
+      }
+
+      // Check if user has access (must be the offer's client or admin)
+      if (offer.clientId !== req.user?.id && req.user?.role !== 'admin') {
+        return res.status(403).json({ 
+          message: "Access denied", 
+          messageAr: "غير مصرح بالوصول" 
+        });
+      }
+
+      // Find the document by price offer ID
+      const documents = await storage.searchDocuments({ priceOfferId: offerId });
+      const document = documents.find(doc => doc.priceOfferId === offerId);
+
+      if (!document || !document.fileUrl) {
+        return res.status(404).json({ 
+          message: "PDF not found", 
+          messageAr: "لم يتم العثور على ملف PDF" 
+        });
+      }
+
+      // Download from storage
+      const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
+      
+      if (!downloadResult.ok || !downloadResult.data) {
+        return res.status(500).json({ 
+          message: "Failed to download PDF", 
+          messageAr: "فشل تحميل PDF" 
+        });
+      }
+
+      // Log access
+      await PDFAccessControl.logDocumentAccess({
+        documentId: document.id,
+        clientId: offer.clientId,
+        action: 'download',
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      // Send PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${offer.offerNumber}.pdf"`);
+      res.setHeader('Content-Length', downloadResult.data.length.toString());
+      res.send(downloadResult.data);
+
+    } catch (error) {
+      console.error('Price offer download error:', error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : 'Download failed',
+        messageAr: 'فشل التحميل'
+      });
+    }
+  });
+
   // Admin: Send price offer (generates PDF and sends to client)
   app.post("/api/admin/price-offers/:id/send", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
@@ -929,67 +996,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get active price offer template
-      const priceOfferTemplates = await TemplateStorage.getTemplates('price_offer');
-      const activeTemplate = priceOfferTemplates.find(t => t.isActive);
-
-      if (!activeTemplate) {
-        return res.status(500).json({
-          message: "No active price offer template found",
-          messageAr: "لم يتم العثور على قالب عرض سعر نشط"
-        });
-      }
-
-      // Prepare template variables
+      // Use NEW optimized DocumentUtils with deduplication and caching
       const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
-      const templateVariables = {
-        offerNumber: offer.offerNumber,
-        offerDate: new Date(offer.createdAt).toLocaleDateString('en-US'),
-        clientNameEn: client.nameEn,
-        clientNameAr: client.nameAr,
-        clientEmail: client.email || '',
-        clientPhone: client.phone || '',
-        ltaNameEn: lta.nameEn,
-        ltaNameAr: lta.nameAr,
-        ltaNumber: lta.referenceNumber || 'N/A',
-        items: items,
-        subtotal: offer.subtotal,
-        tax: offer.tax,
-        total: offer.total,
-        validUntil: new Date(offer.validUntil).toLocaleDateString('en-US'),
-        notes: offer.notes || '',
-        companyNameEn: 'Al Qadi Trading Company',
-        companyNameAr: 'شركة القاضي التجارية',
-        companyAddressEn: 'Riyadh, Kingdom of Saudi Arabia',
-        companyAddressAr: 'الرياض، المملكة العربية السعودية',
-        companyPhone: '+966 XX XXX XXXX',
-        companyEmail: 'info@alqadi.com',
-        companyWebsite: 'www.alqadi.com'
-      };
+      
+      const documentResult = await DocumentUtils.generateDocument({
+        templateCategory: 'price_offer',
+        variables: [
+          { key: 'date', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
+          { key: 'offerNumber', value: offer.offerNumber },
+          { key: 'clientName', value: client.nameAr },
+          { key: 'validUntil', value: new Date(offer.validUntil).toLocaleDateString('ar-SA') },
+          { key: 'items', value: items },
+          { key: 'subtotal', value: offer.subtotal.toString() },
+          { key: 'discount', value: '0' },
+          { key: 'total', value: offer.total.toString() },
+          { key: 'validityDays', value: '30' },
+          { key: 'deliveryDays', value: '5' },
+          { key: 'paymentTerms', value: '30' },
+          { key: 'warrantyDays', value: '7' }
+        ],
+        clientId: offer.clientId,
+        metadata: { priceOfferId: offer.id },
+        force: false // Use deduplication
+      });
 
-      // Generate PDF
-      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(
-        activeTemplate,
-        templateVariables,
-        'en'
-      );
-
-      if (!pdfBuffer || pdfBuffer.length < 100) {
+      if (!documentResult.success) {
         return res.status(500).json({
-          message: "Failed to generate valid PDF",
-          messageAr: "فشل إنشاء ملف PDF صالح"
-        });
-      }
-
-      // Upload PDF to Object Storage
-      const pdfFileName = `price-offers/${offer.offerNumber}_${client.nameEn.replace(/\s/g, '_')}.pdf`;
-      const uploadResult = await PDFStorage.uploadPDF(Buffer.from(pdfBuffer), pdfFileName, 'PRICE_OFFER');
-
-      if (!uploadResult.ok) {
-        return res.status(500).json({
-          message: "Failed to save PDF",
-          messageAr: "فشل في حفظ ملف PDF",
-          error: uploadResult.error
+          message: documentResult.error || "Failed to generate PDF",
+          messageAr: "فشل إنشاء ملف PDF"
         });
       }
 
@@ -997,7 +1031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updatePriceOffer(req.params.id, {
         status: 'sent',
         sentAt: new Date(),
-        pdfFileName: uploadResult.fileName || pdfFileName
+        pdfFileName: documentResult.fileName || ''
       });
 
       // Notify client
@@ -1014,7 +1048,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: "Offer sent successfully",
         messageAr: "تم إرسال العرض بنجاح",
-        pdfFileName: uploadResult.fileName
+        pdfFileName: documentResult.fileName,
+        documentId: documentResult.documentId
       });
     } catch (error) {
       console.error('Send offer error:', error);
@@ -1931,23 +1966,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export order to PDF (admin only)
+  // Export order to PDF (admin only) - Using NEW template system
   app.post('/api/admin/orders/export-pdf', requireAdmin, async (req: any, res) => {
     try {
       const { order, client, lta, items, language } = req.body;
 
-      const pdfBuffer = await PDFGenerator.generateOrderPDF({
-        order,
-        client,
-        lta,
-        items,
-        language: language || 'en',
+      // Use NEW DocumentUtils with deduplication
+      const documentResult = await DocumentUtils.generateDocument({
+        templateCategory: 'order',
+        variables: [
+          { key: 'orderId', value: order.id },
+          { key: 'orderDate', value: new Date(order.createdAt).toLocaleDateString('ar-SA') },
+          { key: 'clientName', value: client.nameAr || client.nameEn },
+          { key: 'deliveryAddress', value: order.deliveryAddress || client.address || '' },
+          { key: 'clientPhone', value: client.phone || '' },
+          { key: 'paymentMethod', value: order.paymentMethod || 'تحويل بنكي' },
+          { key: 'reference', value: order.referenceNumber || lta?.referenceNumber || '' },
+          { key: 'items', value: items },
+          { key: 'totalAmount', value: order.totalAmount?.toString() || '0' },
+          { key: 'deliveryDays', value: '5' }
+        ],
+        clientId: client.id,
+        metadata: { orderId: order.id }
       });
+
+      if (!documentResult.success) {
+        return res.status(500).json({
+          message: documentResult.error || 'Failed to generate PDF',
+          messageAr: 'فشل إنشاء PDF'
+        });
+      }
+
+      // Download the generated PDF and send to client
+      const downloadResult = await PDFStorage.downloadPDF(documentResult.fileName!);
+      
+      if (!downloadResult.ok || !downloadResult.data) {
+        return res.status(500).json({
+          message: 'Failed to retrieve PDF',
+          messageAr: 'فشل استرجاع PDF'
+        });
+      }
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="order-${order.id.slice(0, 8)}.pdf"`);
-      res.setHeader('Content-Length', pdfBuffer.length.toString());
-      res.send(pdfBuffer);
+      res.setHeader('Content-Length', downloadResult.data.length.toString());
+      res.send(downloadResult.data);
     } catch (error) {
       console.error('PDF export error:', error);
       res.status(500).json({

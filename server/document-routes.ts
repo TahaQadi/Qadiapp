@@ -8,6 +8,8 @@ import { PDFAccessControl } from "./pdf-access-control";
 import { storage } from "./storage";
 import { DocumentUtils } from "./document-utils";
 import { DocumentTemplate, TemplateVariable } from "@shared/template-schema";
+import { PreviewCache } from "./preview-cache";
+import { computeVariablesHash } from "./document-deduplication";
 import { z } from "zod";
 
 // Validation schemas
@@ -653,11 +655,11 @@ export function setupDocumentRoutes(app: Express) {
     }
   });
 
-  // 9. Preview Template with Sample Data (Admin Only)
+  // 9. Preview Template with Sample Data (Admin Only) - with caching
   app.post('/api/admin/templates/:id/preview', requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { variables, language = 'en' } = req.body;
+      const { variables, language = 'ar', force = false } = req.body;
 
       const template = await TemplateStorage.getTemplate(id);
       if (!template) {
@@ -667,14 +669,45 @@ export function setupDocumentRoutes(app: Express) {
         });
       }
 
-      const pdfBuffer = await TemplatePDFGenerator.generate({
+      const normalizedVariables = variables || [];
+      const normalizedLanguage = language as 'ar'; // Arabic-only
+
+      // Check preview cache (unless force=true)
+      let pdfBuffer: Buffer;
+      if (!force) {
+        const cachedPreview = await PreviewCache.get({
+          templateId: id,
+          variables: normalizedVariables,
+          language: normalizedLanguage
+        });
+
+        if (cachedPreview) {
+          console.log('✅ Serving cached preview');
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', 'inline; filename="preview.pdf"');
+          res.setHeader('X-Preview-Cache', 'HIT');
+          return res.send(cachedPreview);
+        }
+      }
+
+      // Generate new preview
+      console.log('📄 Generating new preview...');
+      pdfBuffer = await TemplatePDFGenerator.generate({
         template,
-        variables: variables || [],
-        language: language as 'en' | 'ar'
+        variables: normalizedVariables,
+        language: normalizedLanguage
       });
+
+      // Cache the preview
+      await PreviewCache.set({
+        templateId: id,
+        variables: normalizedVariables,
+        language: normalizedLanguage
+      }, pdfBuffer);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline; filename="preview.pdf"');
+      res.setHeader('X-Preview-Cache', 'MISS');
       res.send(pdfBuffer);
 
     } catch (error) {
