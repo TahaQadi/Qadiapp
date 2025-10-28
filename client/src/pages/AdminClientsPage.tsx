@@ -805,11 +805,11 @@ export default function AdminClientsPage() {
   }, [clientDetails, form]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/3 left-1/3 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
         {/* Floating particles */}
         <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float"></div>
@@ -817,14 +817,14 @@ export default function AdminClientsPage() {
         <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm safe-top">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
               asChild
-              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              className="touch-target h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary dark:hover:text-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300 flex-shrink-0"
               data-testid="button-back-admin"
             >
               <Link href="/admin">
@@ -836,24 +836,24 @@ export default function AdminClientsPage() {
               alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
               className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
             />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                 {language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
               </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
+              <p className="text-xs text-muted-foreground hidden md:block truncate">
                 {language === 'ar' ? 'إدارة معلومات العملاء والمستخدمين' : 'Manage client information and users'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <LanguageToggle />
             <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
-              className="h-9 w-9 sm:h-10 sm:w-10"
+              className="touch-target h-9 w-9 sm:h-10 sm:w-10 hover:bg-destructive/10"
               data-testid="button-logout"
             >
               <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -862,13 +862,13 @@ export default function AdminClientsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 relative z-10 pb-20 sm:pb-8">
         {/* Welcome Section */}
-        <div className="mb-8 animate-slide-down">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+        <div className="mb-6 sm:mb-8 animate-slide-down">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
             {language === 'ar' ? 'لوحة إدارة العملاء' : 'Client Management Dashboard'}
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {language === 'ar' 
               ? 'إدارة معلومات العملاء والمستخدمين' 
               : 'Manage client information and users'}
@@ -877,58 +877,66 @@ export default function AdminClientsPage() {
 
         {/* Statistics Cards */}
         {!clientsLoading && clients.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('all')}>
-              <CardContent className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6 animate-fade-in">
+            <Card className="hover:shadow-md dark:hover:shadow-[#d4af37]/20 transition-all duration-300 cursor-pointer border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm" onClick={() => setAdminFilter('all')}>
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10">
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 text-primary dark:text-[#d4af37]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {language === 'ar' ? 'الإجمالي' : 'Total'}
                     </p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-foreground dark:text-white">{stats.total}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('admin')}>
-              <CardContent className="p-4">
+            <Card className="hover:shadow-md dark:hover:shadow-[#d4af37]/20 transition-all duration-300 cursor-pointer border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm" onClick={() => setAdminFilter('admin')}>
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/10">
+                    <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {language === 'ar' ? 'المسؤولين' : 'Admins'}
                     </p>
-                    <p className="text-2xl font-bold">{stats.admin}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-foreground dark:text-white">{stats.admin}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setAdminFilter('non-admin')}>
-              <CardContent className="p-4">
+            <Card className="hover:shadow-md dark:hover:shadow-[#d4af37]/20 transition-all duration-300 cursor-pointer border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm" onClick={() => setAdminFilter('non-admin')}>
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-green-600 dark:text-green-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-green-500/20 to-green-500/10 dark:from-green-500/20 dark:to-green-500/10">
+                    <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {language === 'ar' ? 'العملاء' : 'Clients'}
                     </p>
-                    <p className="text-2xl font-bold">{stats.nonAdmin}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-foreground dark:text-white">{stats.nonAdmin}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
+            <Card className="hover:shadow-md dark:hover:shadow-[#d4af37]/20 transition-all duration-300 border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-purple-600 dark:text-purple-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 dark:from-purple-500/20 dark:to-purple-500/10">
+                    <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {language === 'ar' ? 'المعروض' : 'Filtered'}
                     </p>
-                    <p className="text-2xl font-bold">{stats.filtered}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-foreground dark:text-white">{stats.filtered}</p>
                   </div>
                 </div>
               </CardContent>
@@ -937,24 +945,24 @@ export default function AdminClientsPage() {
         )}
 
         {/* Search and Filter Controls */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <Card className="mb-4 sm:mb-6 border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col gap-3 sm:gap-4">
               <div className="flex-1 min-w-0">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder={language === 'ar' ? 'البحث في العملاء...' : 'Search clients...'}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-10 sm:h-11 text-sm sm:text-base border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37] bg-background/50 dark:bg-black/30"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Select value={adminFilter} onValueChange={(v) => setAdminFilter(v as any)}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-28 sm:w-32 h-9 sm:h-10 text-xs sm:text-sm border-border/50 dark:border-[#d4af37]/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -965,7 +973,7 @@ export default function AdminClientsPage() {
                 </Select>
 
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-28 sm:w-32 h-9 sm:h-10 text-xs sm:text-sm border-border/50 dark:border-[#d4af37]/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -979,6 +987,7 @@ export default function AdminClientsPage() {
                   size="icon"
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                   title={language === 'ar' ? 'ترتيب' : 'Sort'}
+                  className="touch-target h-9 w-9 sm:h-10 sm:w-10 border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
                 >
                   {sortOrder === 'asc' ? '↑' : '↓'}
                 </Button>
@@ -988,6 +997,7 @@ export default function AdminClientsPage() {
                   size="icon"
                   onClick={() => refetchClients()}
                   title={language === 'ar' ? 'تحديث' : 'Refresh'}
+                  className="touch-target h-9 w-9 sm:h-10 sm:w-10 border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
@@ -996,41 +1006,45 @@ export default function AdminClientsPage() {
 
             {/* Bulk Actions */}
             {selectedClients.size > 0 && (
-              <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
+              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/50 dark:border-[#d4af37]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium">
                   {language === 'ar' 
                     ? `${selectedClients.size} عميل محدد` 
                     : `${selectedClients.size} clients selected`}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => setBulkDeleteDialogOpen(true)}
                     disabled={bulkDeleteMutation.isPending}
+                    className="flex-1 sm:flex-none h-9 text-xs sm:text-sm touch-target"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {language === 'ar' ? 'حذف محدد' : 'Delete Selected'}
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="hidden xs:inline">{language === 'ar' ? 'حذف محدد' : 'Delete Selected'}</span>
+                    <span className="xs:hidden">{language === 'ar' ? 'حذف' : 'Delete'}</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedClients(new Set())}
+                    className="flex-1 sm:flex-none h-9 text-xs sm:text-sm border-border/50 dark:border-[#d4af37]/20 touch-target"
                   >
-                    {language === 'ar' ? 'إلغاء التحديد' : 'Clear Selection'}
+                    {language === 'ar' ? 'إلغاء التحديد' : 'Clear'}
                   </Button>
                 </div>
               </div>
             )}
 
             {/* Export and Import Buttons */}
-            <div className="mt-4 pt-4 border-t flex justify-end gap-2">
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/50 dark:border-[#d4af37]/20 flex flex-col sm:flex-row justify-end gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setImportDialogOpen(true)}
+                className="w-full sm:w-auto h-9 text-xs sm:text-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 touch-target"
               >
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 {language === 'ar' ? 'استيراد CSV' : 'Import CSV'}
               </Button>
               <Button
@@ -1038,8 +1052,9 @@ export default function AdminClientsPage() {
                 size="sm"
                 onClick={handleExportCSV}
                 disabled={filteredAndSortedClients.length === 0}
+                className="w-full sm:w-auto h-9 text-xs sm:text-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 touch-target"
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 {language === 'ar' ? 'تصدير CSV' : 'Export CSV'}
               </Button>
             </div>

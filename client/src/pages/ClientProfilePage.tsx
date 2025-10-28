@@ -213,16 +213,22 @@ export default function ClientProfilePage() {
         description={isArabic ? "إدارة معلومات الملف الشخصي" : "Manage your profile information"}
         noIndex={true}
       />
-      <div className="min-h-screen bg-background" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 left-1/3 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/3 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
         {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
+        <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm safe-top">
           <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 asChild 
-                className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300"
+                className="touch-target h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all duration-300 flex-shrink-0"
                 title={isArabic ? 'العودة للطلبات' : 'Back to Ordering'}
               >
                 <Link href="/ordering">
@@ -234,21 +240,21 @@ export default function ClientProfilePage() {
                 alt={isArabic ? 'شعار الشركة' : 'Company Logo'} 
                 className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
               />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
                   {isArabic ? 'الملف الشخصي' : 'Profile'}
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <Button variant="ghost" size="icon" asChild className="touch-target h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10" title={isArabic ? 'الطلبات' : 'Orders'}>
                 <Link href="/orders">
                   <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
               {user?.isAdmin && (
-                <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                <Button variant="ghost" size="icon" asChild className="touch-target h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10" title={isArabic ? 'لوحة الإدارة' : 'Admin'}>
                   <Link href="/admin">
                     <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Link>
@@ -256,7 +262,7 @@ export default function ClientProfilePage() {
               )}
               <LanguageToggle />
               <ThemeToggle />
-              <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+              <Button variant="ghost" size="icon" asChild className="touch-target h-9 w-9 sm:h-10 sm:w-10 hover:bg-destructive/10" title={isArabic ? 'تسجيل الخروج' : 'Logout'}>
                 <Link href="/logout">
                   <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
@@ -265,8 +271,8 @@ export default function ClientProfilePage() {
           </div>
         </header>
 
-        <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-4xl">
-          <div className="grid gap-6">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 max-w-4xl relative z-10 pb-20 sm:pb-8">
+          <div className="grid gap-4 sm:gap-6">
             {/* Personal Information Card */}
             <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 transition-all duration-500 animate-fade-in" style={{ animationDelay: '100ms' }}>
               <CardHeader>
