@@ -1298,6 +1298,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk import clients from CSV
+  app.post("/api/admin/clients/bulk-import", requireAdmin, async (req: any, res) => {
+    try {
+      const { clients } = req.body;
+      
+      if (!Array.isArray(clients) || clients.length === 0) {
+        return res.status(400).json({
+          message: "Clients array is required and must not be empty",
+          messageAr: "مصفوفة العملاء مطلوبة ولا يجب أن تكون فارغة"
+        });
+      }
+
+      const results = {
+        successCount: 0,
+        errorCount: 0,
+        errors: [] as Array<{ index: number; username: string; error: string }>
+      };
+
+      // Process each client
+      for (let i = 0; i < clients.length; i++) {
+        const clientData = clients[i];
+        
+        try {
+          // Validate required fields
+          if (!clientData.username || !clientData.password || !clientData.nameEn || !clientData.nameAr) {
+            throw new Error("Missing required fields: username, password, nameEn, nameAr");
+          }
+
+          // Check if username already exists
+          const existingClient = await storage.getClientByUsername(clientData.username);
+          if (existingClient) {
+            throw new Error(`Username '${clientData.username}' already exists`);
+          }
+
+          // Create client
+          const client = await storage.createClient({
+            username: clientData.username,
+            password: clientData.password,
+            nameEn: clientData.nameEn,
+            nameAr: clientData.nameAr,
+            email: clientData.email || null,
+            phone: clientData.phone || null,
+            isAdmin: clientData.isAdmin || false,
+          });
+
+          // Add departments if provided
+          if (clientData.departmentTypes && Array.isArray(clientData.departmentTypes)) {
+            for (const deptType of clientData.departmentTypes) {
+              await storage.createClientDepartment({
+                clientId: client.id,
+                departmentType: deptType,
+                contactName: null,
+                contactEmail: null,
+                contactPhone: null,
+              });
+            }
+          }
+
+          // Add location if provided
+          if (clientData.locationName) {
+            await storage.createClientLocation({
+              clientId: client.id,
+              nameEn: clientData.locationName,
+              nameAr: clientData.locationName, // Use same name for both languages if not provided
+              addressEn: clientData.locationAddress || '',
+              addressAr: clientData.locationAddress || '',
+              city: clientData.locationCity || null,
+              country: clientData.locationCountry || null,
+              phone: null,
+              latitude: null,
+              longitude: null,
+              isHeadquarters: true, // Default to headquarters for imported locations
+            });
+          }
+
+          results.successCount++;
+        } catch (error) {
+          results.errorCount++;
+          results.errors.push({
+            index: i + 1,
+            username: clientData.username || 'Unknown',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+
+      res.json({
+        ...results,
+        message: `Bulk import completed. ${results.successCount} clients imported successfully, ${results.errorCount} failed.`,
+        messageAr: `اكتمل الاستيراد المجمع. تم استيراد ${results.successCount} عميل بنجاح، فشل ${results.errorCount}.`
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Error during bulk import",
+        messageAr: "خطأ أثناء الاستيراد المجمع"
+      });
+    }
+  });
+
   // Company User Management (Admin)
   app.get("/api/admin/company-users/:companyId", requireAdmin, async (req: any, res) => {
     try {

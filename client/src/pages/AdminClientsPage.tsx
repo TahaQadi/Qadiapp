@@ -5,8 +5,7 @@ import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { CompanyUsersSection } from '@/components/CompanyUsersSection';
-import { DepartmentManagementDialog } from '@/components/DepartmentManagementDialog';
-import { LocationManagementDialog } from '@/components/LocationManagementDialog';
+import { ClientImportDialog } from '@/components/ClientImportDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck, KeyRound, Edit, Search, Filter, RefreshCw, Download, Users, UserCheck, UserX, Building2 } from 'lucide-react';
+import { LogOut, User, Package, ArrowLeft, Plus, Trash2, ShieldCheck, KeyRound, Edit, Search, Filter, RefreshCw, Download, Upload, Users, UserCheck, UserX, Building2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -25,7 +24,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDebounce } from '@/hooks/use-debounce';
-import { arrayToCSV, downloadCSV, formatDateForCSV } from '@/lib/csvExport';
+import { arrayToCSV, downloadCSV, formatDateForCSV, formatTimestampForCSV, formatDepartmentsForCSV, formatLocationsForCSV } from '@/lib/csvExport';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,6 +135,7 @@ export default function AdminClientsPage() {
   // Department and Location dialog state
   const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
@@ -660,33 +660,72 @@ export default function AdminClientsPage() {
     bulkDeleteMutation.mutate(clientIds);
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     try {
-      const exportData = filteredAndSortedClients.map(client => ({
+      // Get detailed client data including departments and locations
+      const detailedClients = await Promise.all(
+        filteredAndSortedClients.map(async (client) => {
+          try {
+            const res = await apiRequest('GET', `/api/admin/clients/${client.id}`);
+            if (res.ok) {
+              const data = await res.json();
+              return {
+                client: data.client,
+                departments: data.departments || [],
+                locations: data.locations || [],
+                companyUsers: data.companyUsers || []
+              };
+            }
+            return {
+              client,
+              departments: [],
+              locations: [],
+              companyUsers: []
+            };
+          } catch (error) {
+            console.error(`Error fetching details for client ${client.id}:`, error);
+            return {
+              client,
+              departments: [],
+              locations: [],
+              companyUsers: []
+            };
+          }
+        })
+      );
+
+      const exportData = detailedClients.map(({ client, departments, locations, companyUsers }) => ({
+        'Username': client.username,
         'Name (English)': client.nameEn,
         'Name (Arabic)': client.nameAr,
-        'Username': client.username,
         'Email': client.email || '',
         'Phone': client.phone || '',
-        'Is Admin': client.isAdmin ? 'Yes' : 'No',
         'Admin Status': client.isAdmin ? (language === 'ar' ? 'مسؤول' : 'Admin') : (language === 'ar' ? 'عميل' : 'Client'),
+        'Departments': formatDepartmentsForCSV(departments),
+        'Department Count': departments.length,
+        'Locations': formatLocationsForCSV(locations),
+        'Location Count': locations.length,
+        'Company Users': companyUsers.length,
+        'Created At': client.createdAt ? formatTimestampForCSV(client.createdAt, language) : '',
+        'Updated At': client.updatedAt ? formatTimestampForCSV(client.updatedAt, language) : '',
       }));
 
-      const csvContent = arrayToCSV(exportData);
-      const filename = `clients_export_${new Date().toISOString().split('T')[0]}.csv`;
+      const csvContent = arrayToCSV(exportData, { includeBOM: true });
+      const filename = `clients_detailed_export_${new Date().toISOString().split('T')[0]}.csv`;
 
       downloadCSV(csvContent, filename);
 
       toast({
         title: language === 'ar' ? 'تم التصدير بنجاح' : 'Export Successful',
         description: language === 'ar' 
-          ? `تم تصدير ${exportData.length} عميل إلى ملف CSV` 
-          : `Exported ${exportData.length} clients to CSV file`,
+          ? `تم تصدير ${exportData.length} عميل مع التفاصيل الكاملة إلى ملف CSV` 
+          : `Successfully exported ${exportData.length} clients with full details to CSV`,
       });
     } catch (error) {
+      console.error('Export error:', error);
       toast({
         title: language === 'ar' ? 'خطأ في التصدير' : 'Export Error',
-        description: language === 'ar' ? 'فشل تصدير البيانات' : 'Failed to export data',
+        description: language === 'ar' ? 'فشل في تصدير البيانات' : 'Failed to export data',
         variant: 'destructive',
       });
     }
@@ -982,8 +1021,16 @@ export default function AdminClientsPage() {
               </div>
             )}
 
-            {/* Export Button */}
-            <div className="mt-4 pt-4 border-t flex justify-end">
+            {/* Export and Import Buttons */}
+            <div className="mt-4 pt-4 border-t flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'استيراد CSV' : 'Import CSV'}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1933,6 +1980,15 @@ export default function AdminClientsPage() {
           location={editingLocation}
           onSave={handleSaveLocation}
           isSaving={createLocationMutation.isPending || updateLocationMutation.isPending}
+        />
+
+        {/* Client Import Dialog */}
+        <ClientImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImportComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+          }}
         />
       </main>
     </div>
