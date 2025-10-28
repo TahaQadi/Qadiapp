@@ -2039,36 +2039,51 @@ function ClientDetailsCard({
       hover:shadow-2xl dark:hover:shadow-[#d4af37]/20 
       transition-all duration-500 animate-fade-in" 
       style={{ animationDelay: '200ms' }}>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle className="text-foreground dark:text-white">
-          {language === 'ar' ? 'تفاصيل العميل' : 'Client Details'}
-        </CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[#d4af37]/20 dark:to-[#f9c800]/10 flex-shrink-0">
+            <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-lg sm:text-xl text-foreground dark:text-white">
+              {language === 'ar' ? 'تفاصيل العميل' : 'Client Details'}
+            </CardTitle>
+            {selectedClientId && clientDetails?.client && (
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
+                {clientDetails.client.username}
+              </p>
+            )}
+          </div>
+        </div>
         {selectedClientId && clientDetails?.client && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto flex-shrink-0">
             <Button
               variant="outline"
-              size="icon"
+              size="sm"
               onClick={() => setEditDialogOpen(true)}
-              title={language === 'ar' ? 'تعديل' : 'Edit'}
+              className="flex-1 sm:flex-none gap-2 border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37]"
             >
               <Edit className="h-4 w-4" />
+              <span className="hidden xs:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
             </Button>
             <Button
               variant="outline"
-              size="icon"
+              size="sm"
               onClick={() => setPasswordResetDialogOpen(true)}
-              title={language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+              className="flex-1 sm:flex-none gap-2 border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37]"
             >
               <KeyRound className="h-4 w-4" />
+              <span className="hidden xs:inline">{language === 'ar' ? 'كلمة السر' : 'Password'}</span>
             </Button>
             {!clientDetails.client.isAdmin && (
               <Button
                 variant="destructive"
-                size="icon"
+                size="sm"
                 onClick={() => setDeleteDialogOpen(true)}
-                title={language === 'ar' ? 'حذف' : 'Delete'}
+                className="flex-1 sm:flex-none gap-2"
               >
                 <Trash2 className="h-4 w-4" />
+                <span className="hidden xs:inline">{language === 'ar' ? 'حذف' : 'Delete'}</span>
               </Button>
             )}
           </div>
@@ -2076,60 +2091,81 @@ function ClientDetailsCard({
       </CardHeader>
       <CardContent>
         {!selectedClientId ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {language === 'ar' ? 'اختر عميلاً لعرض التفاصيل' : 'Select a client to view details'}
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
+            <div className="p-4 sm:p-5 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 dark:from-[#d4af37]/10 dark:to-[#f9c800]/5 mb-4">
+              <User className="h-10 w-10 sm:h-12 sm:w-12 text-primary/50 dark:text-[#d4af37]/50" />
+            </div>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xs">
+              {language === 'ar' ? 'اختر عميلاً من القائمة لعرض التفاصيل' : 'Select a client from the list to view details'}
+            </p>
           </div>
         ) : detailsLoading ? (
           <div className="space-y-4">
-            <div className="h-10 bg-muted rounded animate-pulse" />
-            <div className="h-10 bg-muted rounded animate-pulse" />
-            <div className="h-10 bg-muted rounded animate-pulse" />
-            <div className="h-10 bg-muted rounded animate-pulse" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-16 sm:h-20 bg-gradient-to-r from-muted/50 via-muted to-muted/50 rounded-lg animate-pulse" />
+            ))}
           </div>
         ) : detailsError ? (
-          <div className="text-center py-8 text-destructive">
-            {language === 'ar' ? 'خطأ في تحميل تفاصيل العميل' : 'Error loading client details'}
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="p-4 rounded-full bg-destructive/10 mb-4">
+              <User className="h-10 w-10 text-destructive/50" />
+            </div>
+            <p className="text-sm text-destructive">
+              {language === 'ar' ? 'خطأ في تحميل تفاصيل العميل' : 'Error loading client details'}
+            </p>
           </div>
         ) : clientDetails?.client && (
-          <>
-            <div className="space-y-4 mb-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
+          <div className="space-y-6">
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                {language === 'ar' ? 'المعلومات الأساسية' : 'Basic Information'}
+              </h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                  <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5" />
                     {language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}
                   </div>
-                  <div className="font-medium">{clientDetails.client.nameEn}</div>
+                  <div className="font-semibold text-foreground dark:text-white">{clientDetails.client.nameEn}</div>
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">
+                
+                <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                  <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5" />
                     {language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}
                   </div>
-                  <div className="font-medium">{clientDetails.client.nameAr}</div>
+                  <div className="font-semibold text-foreground dark:text-white">{clientDetails.client.nameAr}</div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                  <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" />
+                    {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                  </div>
+                  <div className="font-medium text-foreground dark:text-white text-sm truncate">{clientDetails.client.email || '-'}</div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                  <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5" />
+                    {language === 'ar' ? 'رقم الهاتف' : 'Phone'}
+                  </div>
+                  <div className="font-medium text-foreground dark:text-white">{clientDetails.client.phone || '-'}</div>
                 </div>
               </div>
 
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">
-                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                </div>
-                <div>{clientDetails.client.email || '-'}</div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">
-                  {language === 'ar' ? 'رقم الهاتف' : 'Phone'}
-                </div>
-                <div>{clientDetails.client.phone || '-'}</div>
-              </div>
-
+              {/* Timestamps */}
               {(clientDetails.client.createdAt || clientDetails.client.updatedAt) && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   {clientDetails.client.createdAt && (
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">
+                    <div className="p-3 rounded-lg bg-muted/20 dark:bg-muted/10 border border-border/30 dark:border-[#d4af37]/10">
+                      <div className="text-xs text-muted-foreground mb-1">
                         {language === 'ar' ? 'تاريخ الإنشاء' : 'Created At'}
                       </div>
-                      <div className="text-sm">
+                      <div className="text-xs font-medium text-foreground dark:text-white">
                         {new Date(clientDetails.client.createdAt).toLocaleString(
                           language === 'ar' ? 'ar-SA' : 'en-US',
                           {
@@ -2144,11 +2180,11 @@ function ClientDetailsCard({
                     </div>
                   )}
                   {clientDetails.client.updatedAt && (
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">
+                    <div className="p-3 rounded-lg bg-muted/20 dark:bg-muted/10 border border-border/30 dark:border-[#d4af37]/10">
+                      <div className="text-xs text-muted-foreground mb-1">
                         {language === 'ar' ? 'آخر تحديث' : 'Last Updated'}
                       </div>
-                      <div className="text-sm">
+                      <div className="text-xs font-medium text-foreground dark:text-white">
                         {new Date(clientDetails.client.updatedAt).toLocaleString(
                           language === 'ar' ? 'ar-SA' : 'en-US',
                           {
@@ -2164,15 +2200,20 @@ function ClientDetailsCard({
                   )}
                 </div>
               )}
+            </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-md bg-muted/30">
-                <div className="flex items-center gap-3 flex-1">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  <label htmlFor="admin-toggle" className="flex-1 cursor-pointer">
-                    <div className="font-medium">
+            {/* Admin Toggle Section */}
+            <div className="p-4 sm:p-5 border-2 rounded-xl bg-gradient-to-br from-primary/5 to-primary/[0.02] dark:from-[#d4af37]/5 dark:to-[#f9c800]/[0.02] border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="p-2 rounded-lg bg-primary/10 dark:bg-[#d4af37]/10 flex-shrink-0">
+                    <ShieldCheck className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+                  </div>
+                  <label htmlFor="admin-toggle" className="flex-1 cursor-pointer min-w-0">
+                    <div className="font-semibold text-sm sm:text-base text-foreground dark:text-white">
                       {language === 'ar' ? 'صلاحيات المسؤول' : 'Admin Privileges'}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                       {language === 'ar' 
                         ? 'منح صلاحيات المسؤول لهذا العميل' 
                         : 'Grant admin access to this client'}
@@ -2189,68 +2230,85 @@ function ClientDetailsCard({
                     });
                   }}
                   disabled={toggleAdminMutation.isPending}
+                  className="flex-shrink-0"
                 />
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-6" />
 
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">
+            {/* Departments Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
                   {language === 'ar' ? 'الأقسام' : 'Departments'}
+                  <Badge variant="secondary" className="ml-1">
+                    {clientDetails.departments.length}
+                  </Badge>
                 </h3>
                 <Button
                   size="sm"
                   onClick={handleAddDepartment}
-                  className="flex items-center gap-2"
+                  className="gap-2 h-8"
                 >
                   <Plus className="h-4 w-4" />
-                  {language === 'ar' ? 'إضافة قسم' : 'Add Department'}
+                  <span className="hidden xs:inline">{language === 'ar' ? 'إضافة' : 'Add'}</span>
                 </Button>
               </div>
+              
               {clientDetails.departments.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'لا توجد أقسام' : 'No departments'}
+                <div className="text-center py-8 px-4 rounded-lg bg-muted/20 dark:bg-muted/10 border border-dashed border-border/50">
+                  <Building2 className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد أقسام مسجلة' : 'No departments registered'}
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="grid gap-3">
                   {clientDetails.departments.map((dept: any) => (
-                    <div key={dept.id} className="p-3 border rounded-md">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {getDepartmentTypeLabel(dept.departmentType)}
+                    <div key={dept.id} className="p-4 rounded-lg border border-border/50 dark:border-[#d4af37]/10 bg-card/50 dark:bg-card/30 hover:shadow-md dark:hover:shadow-[#d4af37]/10 transition-all duration-300 group">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="font-semibold">
+                              {getDepartmentTypeLabel(dept.departmentType)}
+                            </Badge>
                           </div>
                           {dept.contactName && (
-                            <div className="text-sm text-muted-foreground">
-                              {dept.contactName}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <User className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{dept.contactName}</span>
                             </div>
                           )}
                           {dept.contactEmail && (
-                            <div className="text-sm text-muted-foreground">
-                              {dept.contactEmail}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{dept.contactEmail}</span>
                             </div>
                           )}
                           {dept.contactPhone && (
-                            <div className="text-sm text-muted-foreground">
-                              {dept.contactPhone}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{dept.contactPhone}</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-shrink-0">
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => handleEditDepartment(dept)}
+                            className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100"
                             title={language === 'ar' ? 'تعديل' : 'Edit'}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => handleDeleteDepartment(dept.id)}
+                            className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100 hover:text-destructive"
                             title={language === 'ar' ? 'حذف' : 'Delete'}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -2265,67 +2323,83 @@ function ClientDetailsCard({
 
             <Separator className="my-6" />
 
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">
+            {/* Locations Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
                   {language === 'ar' ? 'المواقع' : 'Locations'}
+                  <Badge variant="secondary" className="ml-1">
+                    {clientDetails.locations.length}
+                  </Badge>
                 </h3>
                 <Button
                   size="sm"
                   onClick={handleAddLocation}
-                  className="flex items-center gap-2"
+                  className="gap-2 h-8"
                 >
                   <Plus className="h-4 w-4" />
-                  {language === 'ar' ? 'إضافة موقع' : 'Add Location'}
+                  <span className="hidden xs:inline">{language === 'ar' ? 'إضافة' : 'Add'}</span>
                 </Button>
               </div>
+              
               {clientDetails.locations.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'لا توجد مواقع' : 'No locations'}
+                <div className="text-center py-8 px-4 rounded-lg bg-muted/20 dark:bg-muted/10 border border-dashed border-border/50">
+                  <MapPin className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد مواقع مسجلة' : 'No locations registered'}
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="grid gap-3">
                   {clientDetails.locations.map((loc: any) => (
-                    <div key={loc.id} className="p-3 border rounded-md">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <div className="font-medium">
+                    <div key={loc.id} className="p-4 rounded-lg border border-border/50 dark:border-[#d4af37]/10 bg-card/50 dark:bg-card/30 hover:shadow-md dark:hover:shadow-[#d4af37]/10 transition-all duration-300 group">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="font-semibold text-foreground dark:text-white">
                               {language === 'ar' ? loc.nameAr : loc.nameEn}
                             </div>
                             {loc.isHeadquarters && (
-                              <Badge variant="secondary">
-                                {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                              <Badge className="bg-primary/10 dark:bg-[#d4af37]/10 text-primary dark:text-[#d4af37] border-primary/20 dark:border-[#d4af37]/20">
+                                {language === 'ar' ? 'المقر الرئيسي' : 'HQ'}
                               </Badge>
                             )}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {language === 'ar' ? loc.addressAr : loc.addressEn}
+                          <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">
+                              {language === 'ar' ? loc.addressAr : loc.addressEn}
+                              {(loc.city || loc.country) && (
+                                <span className="text-muted-foreground/70">
+                                  {', '}
+                                  {[loc.city, loc.country].filter(Boolean).join(', ')}
+                                </span>
+                              )}
+                            </span>
                           </div>
-                          {(loc.city || loc.country) && (
-                            <div className="text-sm text-muted-foreground">
-                              {[loc.city, loc.country].filter(Boolean).join(', ')}
-                            </div>
-                          )}
                           {loc.phone && (
-                            <div className="text-sm text-muted-foreground">
-                              {loc.phone}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{loc.phone}</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-shrink-0">
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => handleEditLocation(loc)}
+                            className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100"
                             title={language === 'ar' ? 'تعديل' : 'Edit'}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => handleDeleteLocation(loc.id)}
+                            className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100 hover:text-destructive"
                             title={language === 'ar' ? 'حذف' : 'Delete'}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -2341,7 +2415,7 @@ function ClientDetailsCard({
             <Separator className="my-6" />
 
             <CompanyUsersSection companyId={selectedClientId} />
-          </>
+          </div>
         )}
       </CardContent>
     </Card>
