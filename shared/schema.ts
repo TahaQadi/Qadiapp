@@ -227,13 +227,15 @@ export const orderModifications = pgTable("order_modifications", {
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
+  type: text("type").notNull(), // 'order_created', 'order_status_changed', 'order_modification_requested', 'order_modification_reviewed', 'system', 'price_request', 'price_offer_ready', 'price_request_sent', 'issue_report'
   titleEn: text("title_en").notNull(),
   titleAr: text("title_ar").notNull(),
   messageEn: text("message_en").notNull(),
   messageAr: text("message_ar").notNull(),
   isRead: boolean("is_read").default(false),
   metadata: jsonb("metadata"),
+  actionUrl: text("action_url"), // URL to navigate when notification is clicked
+  actionType: text("action_type"), // 'view_order', 'review_request', 'download_pdf', 'view_request'
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -346,7 +348,39 @@ export const insertClientPricingSchema = createInsertSchema(clientPricing).omit(
 export const insertOrderTemplateSchema = createInsertSchema(orderTemplates).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderModificationSchema = createInsertSchema(orderModifications).omit({ id: true, createdAt: true });
-export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, isRead: true, metadata: true });
+
+// Notification schemas with comprehensive validation
+export const notificationTypeEnum = z.enum([
+  "order_created",
+  "order_status_changed",
+  "order_modification_requested",
+  "order_modification_reviewed",
+  "system",
+  "price_request",
+  "price_offer_ready",
+  "price_request_sent",
+  "issue_report"
+]);
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ 
+  id: true, 
+  createdAt: true, 
+  isRead: true 
+}).extend({
+  type: notificationTypeEnum,
+  metadata: z.string().optional(), // JSON string
+  actionUrl: z.string().optional(),
+  actionType: z.enum(["view_order", "review_request", "download_pdf", "view_request"]).optional(),
+});
+
+export const updateNotificationSchema = z.object({
+  isRead: z.boolean().optional(),
+  titleEn: z.string().optional(),
+  titleAr: z.string().optional(),
+  messageEn: z.string().optional(),
+  messageAr: z.string().optional(),
+});
+
 export const insertPriceRequestSchema = createInsertSchema(priceRequests).omit({ id: true, requestedAt: true });
 export const insertPriceOfferSchema = createInsertSchema(priceOffers).omit({ id: true, createdAt: true });
 

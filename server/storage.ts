@@ -180,19 +180,23 @@ export interface IStorage {
   // Notifications
   createNotification(data: {
     clientId: string | null; // Allow null for system-wide notifications
-    type: 'order_created' | 'order_status_changed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent';
+    type: 'order_created' | 'order_status_changed' | 'order_modification_requested' | 'order_modification_reviewed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent' | 'issue_report';
     titleEn: string;
     titleAr: string;
     messageEn: string;
     messageAr: string;
     metadata?: string;
+    actionUrl?: string;
+    actionType?: 'view_order' | 'review_request' | 'download_pdf' | 'view_request' | null;
   }): Promise<Notification>;
   getNotification(id: string): Promise<Notification | null>;
-  getClientNotifications(clientId: string): Promise<Notification[]>;
+  getClientNotifications(clientId: string, options?: { limit?: number; offset?: number; type?: string; isRead?: boolean }): Promise<Notification[]>;
   markNotificationAsRead(id: string): Promise<Notification | null>;
-  markAllNotificationsAsRead(clientId: string): Promise<void>;
+  markAllNotificationsAsRead(clientId: string, type?: string): Promise<void>;
   deleteNotification(id: string): Promise<void>;
+  deleteAllReadNotifications(clientId: string): Promise<number>;
   getUnreadNotificationCount(clientId: string): Promise<number>;
+  archiveOldNotifications(days: number): Promise<number>;
 
   // New methods
   getAllProductsWithClientPrices(clientId: string): Promise<Array<Product & { contractPrice?: string; currency?: string; ltaId?: string; hasPrice: boolean }>>;
@@ -1258,12 +1262,14 @@ export class MemStorage implements IStorage {
   // Notifications
   async createNotification(data: {
     clientId: string | null; // Allow null for system-wide notifications
-    type: 'order_created' | 'order_status_changed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent';
+    type: 'order_created' | 'order_status_changed' | 'order_modification_requested' | 'order_modification_reviewed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent' | 'issue_report';
     titleEn: string;
     titleAr: string;
     messageEn: string;
     messageAr: string;
     metadata?: string;
+    actionUrl?: string;
+    actionType?: 'view_order' | 'review_request' | 'download_pdf' | 'view_request' | null;
   }): Promise<Notification> {
     const result = await this.db.insert(notifications).values({
       clientId: data.clientId,
@@ -1273,6 +1279,8 @@ export class MemStorage implements IStorage {
       messageEn: data.messageEn,
       messageAr: data.messageAr,
       metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      actionUrl: data.actionUrl || null,
+      actionType: data.actionType || null,
     }).returning();
 
     return result[0];
@@ -1289,14 +1297,35 @@ export class MemStorage implements IStorage {
     return result[0] || null;
   }
 
-  async getClientNotifications(clientId: string): Promise<Notification[]> {
-    const result = await this.db
+  async getClientNotifications(clientId: string, options?: { limit?: number; offset?: number; type?: string; isRead?: boolean }): Promise<Notification[]> {
+    const { limit, offset, type, isRead } = options || {};
+    
+    // Build conditions
+    const conditions = [eq(notifications.clientId, clientId)];
+    
+    if (type) {
+      conditions.push(eq(notifications.type, type));
+    }
+    
+    if (isRead !== undefined) {
+      conditions.push(eq(notifications.isRead, isRead));
+    }
+    
+    let query = this.db
       .select()
       .from(notifications)
-      .where(eq(notifications.clientId, clientId))
-      .orderBy(desc(notifications.createdAt))
-      .execute();
-
+      .where(and(...conditions))
+      .orderBy(desc(notifications.createdAt));
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    if (offset) {
+      query = query.offset(offset);
+    }
+    
+    const result = await query.execute();
     return result;
   }
 
@@ -1316,16 +1345,49 @@ export class MemStorage implements IStorage {
     return result[0] || null;
   }
 
-  async markAllNotificationsAsRead(clientId: string): Promise<void> {
+  async markAllNotificationsAsRead(clientId: string, type?: string): Promise<void> {
+    const conditions = [eq(notifications.clientId, clientId)];
+    
+    if (type) {
+      conditions.push(eq(notifications.type, type));
+    }
+    
     await this.db
       .update(notifications)
       .set({ isRead: true })
-      .where(eq(notifications.clientId, clientId))
+      .where(and(...conditions))
       .execute();
   }
 
   async deleteNotification(id: string): Promise<void> {
     await this.db.delete(notifications).where(eq(notifications.id, id)).execute();
+  }
+
+  async deleteAllReadNotifications(clientId: string): Promise<number> {
+    const result = await this.db
+      .delete(notifications)
+      .where(and(
+        eq(notifications.clientId, clientId),
+        eq(notifications.isRead, true)
+      ))
+      .execute();
+    
+    return result.rowCount || 0;
+  }
+
+  async archiveOldNotifications(days: number = 30): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    const result = await this.db
+      .delete(notifications)
+      .where(and(
+        sql`${notifications.createdAt} < ${cutoffDate}`,
+        eq(notifications.isRead, true)
+      ))
+      .execute();
+    
+    return result.rowCount || 0;
   }
 
   async getUnreadNotificationCount(clientId: string): Promise<number> {

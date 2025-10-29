@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Bell, Check, CheckCheck, Trash2, X, Package } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, X, Package, ExternalLink, Eye, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useLocation } from 'wouter';
 
 interface Notification {
   id: string;
@@ -25,6 +26,8 @@ interface Notification {
   isRead: boolean;
   metadata?: string;
   pdfFileName?: string | null;
+  actionUrl?: string | null;
+  actionType?: 'view_order' | 'review_request' | 'download_pdf' | 'view_request' | null;
   createdAt: string;
 }
 
@@ -35,16 +38,13 @@ interface NotificationCenterProps {
 export function NotificationCenter({ variant = 'default' }: NotificationCenterProps = {}) {
   const { language } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Fetch notifications and their unread count
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
-    // Removed refetchInterval to manage polling manually via useEffect
-  });
-
-  const { data: unreadCount } = useQuery<{ count: number }>({
-    queryKey: ['/api/client/notifications/unread-count'],
-    // Removed refetchInterval here as well
+    staleTime: 1000 * 60 * 5, // Keep data fresh for 5 minutes
+    gcTime: 1000 * 60 * 10,  // Garbage collect after 10 minutes if not used
   });
 
   // Mutation to mark a single notification as read
@@ -99,6 +99,55 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
       addSuffix: true,
       locale: language === 'ar' ? ar : enUS,
     });
+  };
+
+  // Handle action button click
+  const handleActionClick = (notification: Notification) => {
+    if (notification.actionUrl) {
+      setLocation(notification.actionUrl);
+      setOpen(false);
+      // Mark as read when action is taken
+      if (!notification.isRead) {
+        markAsReadMutation.mutate(notification.id);
+      }
+    }
+  };
+
+  // Get action button configuration
+  const getActionButton = (notification: Notification) => {
+    if (!notification.actionType || !notification.actionUrl) return null;
+
+    const configs = {
+      view_order: {
+        icon: Eye,
+        textEn: 'View Order',
+        textAr: 'عرض الطلب',
+      },
+      review_request: {
+        icon: ExternalLink,
+        textEn: 'Review',
+        textAr: 'مراجعة',
+      },
+      download_pdf: {
+        icon: Download,
+        textEn: 'Download',
+        textAr: 'تنزيل',
+      },
+      view_request: {
+        icon: Eye,
+        textEn: 'View',
+        textAr: 'عرض',
+      },
+    };
+
+    const config = configs[notification.actionType];
+    if (!config) return null;
+
+    const Icon = config.icon;
+    return {
+      icon: Icon,
+      text: language === 'ar' ? config.textAr : config.textEn,
+    };
   };
 
   // Effect for polling notification unread count
@@ -158,12 +207,12 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
           >
             <Bell className="h-4 w-4" />
             <span>{language === 'ar' ? 'الإشعارات' : 'Notifications'}</span>
-            {(unreadCount?.count || 0) > 0 && (
+            {(unreadCountQuery.data?.count || 0) > 0 && (
               <Badge 
                 variant="destructive" 
                 className="ms-auto h-5 min-w-[1.25rem] px-1.5 flex items-center justify-center text-xs font-semibold animate-pulse"
               >
-                {unreadCount!.count > 99 ? '99+' : unreadCount!.count}
+                {unreadCountQuery.data.count > 99 ? '99+' : unreadCountQuery.data.count}
               </Badge>
             )}
           </Button>
@@ -232,20 +281,39 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
                         <p className="text-sm text-muted-foreground">
                           {language === 'ar' ? notification.messageAr : notification.messageEn}
                         </p>
-                        {notification.pdfFileName && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(`/api/pdf/download/${notification.pdfFileName}`, '_blank');
-                            }}
-                          >
-                            <Package className="h-4 w-4 me-2" />
-                            {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
-                          </Button>
-                        )}
+                        <div className="flex gap-2 mt-2">
+                          {notification.pdfFileName && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`/api/pdf/download/${notification.pdfFileName}`, '_blank');
+                              }}
+                            >
+                              <Package className="h-4 w-4 me-2" />
+                              {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
+                            </Button>
+                          )}
+                          {(() => {
+                            const actionButton = getActionButton(notification);
+                            if (!actionButton) return null;
+                            const Icon = actionButton.icon;
+                            return (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleActionClick(notification);
+                                }}
+                              >
+                                <Icon className="h-4 w-4 me-2" />
+                                {actionButton.text}
+                              </Button>
+                            );
+                          })()}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
                         {!notification.isRead && (
@@ -286,11 +354,11 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10 hover:border-primary transition-all duration-300 shadow-sm">
           <Bell className="h-5 w-5" />
-          {(unreadCount?.count || 0) > 0 && (
+          {(unreadCountQuery.data?.count || 0) > 0 && (
             <span
               className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-destructive text-destructive-foreground shadow-lg animate-pulse"
             >
-              {unreadCount!.count > 99 ? '99+' : unreadCount!.count}
+              {unreadCountQuery.data.count > 99 ? '99+' : unreadCountQuery.data.count}
             </span>
           )}
         </Button>
@@ -359,20 +427,39 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
                       <p className="text-sm text-muted-foreground">
                         {language === 'ar' ? notification.messageAr : notification.messageEn}
                       </p>
-                      {notification.pdfFileName && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(`/api/pdf/download/${notification.pdfFileName}`, '_blank');
-                          }}
-                        >
-                          <Package className="h-4 w-4 me-2" />
-                          {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
-                        </Button>
-                      )}
+                      <div className="flex gap-2 mt-2">
+                        {notification.pdfFileName && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`/api/pdf/download/${notification.pdfFileName}`, '_blank');
+                            }}
+                          >
+                            <Package className="h-4 w-4 me-2" />
+                            {language === 'ar' ? 'تنزيل PDF' : 'Download PDF'}
+                          </Button>
+                        )}
+                        {(() => {
+                          const actionButton = getActionButton(notification);
+                          if (!actionButton) return null;
+                          const Icon = actionButton.icon;
+                          return (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleActionClick(notification);
+                              }}
+                            >
+                              <Icon className="h-4 w-4 me-2" />
+                              {actionButton.text}
+                            </Button>
+                          );
+                        })()}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
                       {!notification.isRead && (

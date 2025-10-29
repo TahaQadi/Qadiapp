@@ -5,18 +5,43 @@ import { z } from 'zod';
 
 const router = Router();
 
-// VAPID keys for push notifications
-// Generated using web-push library
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BOiCE4T9ZEExkClb-1uKEh9hZv8SbGB-ivGcb5mqIzo02Ru9CcT6ICQmYSYmHU9jIu4-pg6OAAz-r3X2wSFbpko';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'zndNRfckXOypWnppIh-4zK3xu0C9RB1tlM8ZXakzCb8';
+// TypeScript interfaces for push notifications
+interface PushSubscriptionKeys {
+  p256dh: string;
+  auth: string;
+}
+
+interface PushSubscriptionData {
+  endpoint: string;
+  keys: PushSubscriptionKeys;
+}
+
+interface SendNotificationResult {
+  success: boolean;
+  endpoint: string;
+  error?: string;
+}
+
+// VAPID keys for push notifications - MUST be set in environment variables
+// Generate using: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@alqadi.ps';
 
-// Configure web-push
-webpush.setVapidDetails(
-  VAPID_SUBJECT,
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  console.error('❌ VAPID keys not configured! Push notifications will not work.');
+  console.error('Generate keys with: npx web-push generate-vapid-keys');
+  console.error('Then set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in your environment variables.');
+}
+
+// Configure web-push only if keys are available
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    VAPID_SUBJECT,
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+}
 
 // Get VAPID public key
 router.get('/vapid-public-key', (req, res) => {
@@ -56,9 +81,10 @@ router.post('/subscribe', async (req, res) => {
     });
 
     res.status(201).json({ message: 'Subscription saved successfully' });
-  } catch (error: any) {
-    console.error('Error saving push subscription:', error);
-    res.status(400).json({ message: error.message || 'Failed to save subscription' });
+  } catch (error) {
+    const err = error as Error;
+    console.error('Error saving push subscription:', err);
+    res.status(400).json({ message: err.message || 'Failed to save subscription' });
   }
 });
 
@@ -78,9 +104,10 @@ router.post('/unsubscribe', async (req, res) => {
     await storage.deletePushSubscription(endpoint);
 
     res.json({ message: 'Unsubscribed successfully' });
-  } catch (error: any) {
-    console.error('Error unsubscribing:', error);
-    res.status(500).json({ message: error.message || 'Failed to unsubscribe' });
+  } catch (error) {
+    const err = error as Error;
+    console.error('Error unsubscribing:', err);
+    res.status(500).json({ message: err.message || 'Failed to unsubscribe' });
   }
 });
 
@@ -111,37 +138,39 @@ router.post('/send', async (req, res) => {
     });
 
     const results = await Promise.allSettled(
-      subscriptions.map(async (sub: { endpoint: string; keys: any }) => {
+      subscriptions.map(async (sub: PushSubscriptionData): Promise<SendNotificationResult> => {
         try {
           await webpush.sendNotification({
             endpoint: sub.endpoint,
-            keys: sub.keys as { p256dh: string; auth: string },
+            keys: sub.keys,
           }, payload);
           return { success: true, endpoint: sub.endpoint };
-        } catch (error: any) {
+        } catch (error) {
+          const err = error as { statusCode?: number; message: string };
           // If subscription is invalid or expired, remove it
-          if (error.statusCode === 410 || error.statusCode === 404) {
+          if (err.statusCode === 410 || err.statusCode === 404) {
             await storage.deletePushSubscription(sub.endpoint);
           }
-          return { success: false, endpoint: sub.endpoint, error: error.message };
+          return { success: false, endpoint: sub.endpoint, error: err.message };
         }
       })
     );
 
-    const successful = results.filter((r): r is PromiseFulfilledResult<{ success: true; endpoint: string }> => 
+    const successful = results.filter((r): r is PromiseFulfilledResult<SendNotificationResult> => 
       r.status === 'fulfilled' && r.value.success
     ).length;
     const failed = results.length - successful;
 
     res.json({
       message: `Notifications sent: ${successful} successful, ${failed} failed`,
-      results: results.map((r: PromiseSettledResult<any>) => 
-        r.status === 'fulfilled' ? r.value : { error: r.reason }
+      results: results.map((r) => 
+        r.status === 'fulfilled' ? r.value : { success: false, error: r.reason }
       ),
     });
-  } catch (error: any) {
-    console.error('Error sending push notification:', error);
-    res.status(500).json({ message: error.message || 'Failed to send notification' });
+  } catch (error) {
+    const err = error as Error;
+    console.error('Error sending push notification:', err);
+    res.status(500).json({ message: err.message || 'Failed to send notification' });
   }
 });
 

@@ -4,6 +4,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { errorLogger } from "./error-logger";
+import { notificationService } from "./services/notification-service";
 import { setupAuth, isAuthenticated, requireAuth, requireAdmin } from "./auth";
 import onboardingRoutes from "./onboarding-routes";
 import passwordResetRoutes from "./password-reset-routes";
@@ -424,31 +425,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'pending'
       });
 
-      // Notify admins
+      // Notify admins using NotificationService (automatically sends push notifications)
       const client = await storage.getClient(req.client.id);
-      const admins = await storage.getAdminClients();
-
-      for (const admin of admins) {
-        await storage.createNotification({
-          clientId: admin.id,
-          type: 'system',
-          titleEn: 'New Price Request',
-          titleAr: 'طلب سعر جديد',
-          messageEn: `${client?.nameEn} requested pricing for ${products.length} product(s)`,
-          messageAr: `طلب ${client?.nameAr} تسعير لـ ${products.length} منتج`,
-          metadata: JSON.stringify({ requestId: priceRequest.id })
-        });
-      }
+      
+      await notificationService.sendToAllAdmins(
+        notificationService.createPriceRequestNotification(
+          { en: client?.nameEn || 'Client', ar: client?.nameAr || 'عميل' },
+          requestNumber,
+          products.length,
+          priceRequest.id
+        )
+      );
 
       // Notify client
-      await storage.createNotification({
-        clientId: req.client.id,
-        type: 'system',
+      await notificationService.send({
+        recipientId: req.client.id,
+        recipientType: 'client',
+        type: 'price_request_sent',
         titleEn: 'Price Request Submitted',
         titleAr: 'تم إرسال طلب السعر',
         messageEn: `Your request #${requestNumber} has been submitted`,
         messageAr: `تم إرسال طلبك رقم ${requestNumber}`,
-        metadata: JSON.stringify({ requestId: priceRequest.id })
+        metadata: { requestId: priceRequest.id },
+        actionUrl: '/price-requests',
+        actionType: 'view_request',
       });
 
       res.json({
@@ -2941,9 +2941,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notifications Routes
   app.get("/api/client/notifications", requireAuth, async (req: any, res) => {
     try {
-      const notifications = await storage.getClientNotifications(req.client.id);
+      const { limit, offset, type, isRead } = req.query;
+      
+      const options: {limit?: number; offset?: number; type?: string; isRead?: boolean} = {};
+      
+      if (limit) options.limit = parseInt(limit as string);
+      if (offset) options.offset = parseInt(offset as string);
+      if (type) options.type = type as string;
+      if (isRead !== undefined) options.isRead = isRead === 'true';
+      
+      const notifications = await storage.getClientNotifications(req.client.id, options);
       res.json(notifications);
     } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/client/notifications',
+        userId: req.client.id,
+      });
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
@@ -2953,6 +2966,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const count = await storage.getUnreadNotificationCount(req.client.id);
       res.json({ count });
     } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/client/notifications/unread-count',
+        userId: req.client.id,
+      });
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
@@ -2968,18 +2985,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(notification);
     } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/client/notifications/:id/read',
+        userId: req.client.id,
+        notificationId: req.params.id,
+      });
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
   app.patch("/api/client/notifications/mark-all-read", requireAuth, async (req: any, res) => {
     try {
-      await storage.markAllNotificationsAsRead(req.client.id);
+      const { type } = req.body;
+      await storage.markAllNotificationsAsRead(req.client.id, type);
       res.json({
-        message: "All notifications marked as read",
-        messageAr: "تم وضع علامة مقروء على جميع الإشعارات",
+        message: type ? `All ${type} notifications marked as read` : "All notifications marked as read",
+        messageAr: type ? `تم وضع علامة مقروء على جميع إشعارات ${type}` : "تم وضع علامة مقروء على جميع الإشعارات",
       });
     } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/client/notifications/mark-all-read',
+        userId: req.client.id,
+      });
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
@@ -2989,6 +3016,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteNotification(req.params.id);
       res.sendStatus(204);
     } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/client/notifications/:id',
+        userId: req.client.id,
+        notificationId: req.params.id,
+      });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Bulk delete all read notifications
+  app.delete("/api/client/notifications/read/all", requireAuth, async (req: any, res) => {
+    try {
+      const count = await storage.deleteAllReadNotifications(req.client.id);
+      res.json({
+        count,
+        message: `Deleted ${count} read notification(s)`,
+        messageAr: `تم حذف ${count} إشعار مقروء`,
+      });
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/client/notifications/read/all',
+        userId: req.client.id,
+      });
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Admin: Archive old notifications (admin only)
+  app.post("/api/admin/notifications/archive", requireAdmin, async (req: any, res) => {
+    try {
+      const { days = 30 } = req.body;
+      const count = await storage.archiveOldNotifications(days);
+      res.json({
+        count,
+        message: `Archived ${count} old notification(s)`,
+        messageAr: `تم أرشفة ${count} إشعار قديم`,
+      });
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/admin/notifications/archive',
+        userId: req.client?.id,
+      });
       res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
   });

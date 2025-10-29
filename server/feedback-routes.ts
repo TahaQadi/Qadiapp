@@ -6,6 +6,7 @@ import { insertOrderFeedbackSchema, insertIssueReportSchema, insertMicroFeedback
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { Response } from 'express';
+import { notificationService } from './services/notification-service';
 
 // Database storage helpers for feedback operations
 const storage = {
@@ -167,36 +168,15 @@ router.post('/feedback/issue', requireAuth, async (req: any, res: any) => {
     const adminClients = await storage.getAdminClients();
     const client = await storage.getClient(req.client!.id);
 
-    const severityLabelsEn = {
-      low: 'Low',
-      medium: 'Medium',
-      high: 'High',
-      critical: 'Critical'
-    };
-
-    const severityLabelsAr = {
-      low: 'منخفضة',
-      medium: 'متوسطة',
-      high: 'عالية',
-      critical: 'حرجة'
-    };
-
-    for (const admin of adminClients) {
-      await storage.createNotification({
-        clientId: admin.id,
-        type: 'system',
-        titleEn: `New Issue Report`,
-        titleAr: 'بلاغ مشكلة جديد',
-        messageEn: `${client?.nameEn || 'A client'} reported a ${severityLabelsEn[data.severity as keyof typeof severityLabelsEn]} severity issue: ${data.title}`,
-        messageAr: `${client?.nameAr || 'عميل'} أبلغ عن مشكلة بدرجة ${severityLabelsAr[data.severity as keyof typeof severityLabelsAr]}: ${data.title}`,
-        metadata: JSON.stringify({ 
-          issueId: newReport.id,
-          severity: data.severity,
-          issueType: data.issueType,
-          orderId: data.orderId 
-        }),
-      });
-    }
+    // Notify admins using NotificationService (automatically sends push notifications)
+    await notificationService.sendToAllAdmins(
+      notificationService.createIssueReportNotification(
+        { en: client?.nameEn || 'A client', ar: client?.nameAr || 'عميل' },
+        data.severity,
+        data.title,
+        newReport.id
+      )
+    );
 
     res.json({ success: true, id: newReport.id });
   } catch (error) {
@@ -255,16 +235,18 @@ router.patch('/feedback/issues/:id/status', requireAuth, async (req: any, res: a
       return res.status(404).json({ error: 'Issue not found' });
     }
 
-    // Notify client of status change
-    const { storage } = await import('./storage');
-    await storage.createNotification({
-      clientId: updatedIssue.userId,
+    // Notify client of status change using NotificationService
+    await notificationService.send({
+      recipientId: updatedIssue.userId,
+      recipientType: 'client',
       type: 'system',
       titleEn: 'Issue Status Updated',
       titleAr: 'تم تحديث حالة المشكلة',
       messageEn: `Your issue "${updatedIssue.title}" status has been updated to: ${status}`,
       messageAr: `تم تحديث حالة مشكلتك "${updatedIssue.title}" إلى: ${status}`,
-      metadata: JSON.stringify({ issueId: updatedIssue.id, status }),
+      metadata: { issueId: updatedIssue.id, status },
+      actionUrl: '/feedback',
+      actionType: 'view_request',
     });
 
     res.json(updatedIssue);
@@ -366,16 +348,18 @@ router.post('/feedback/:id/respond', requireAuth, async (req: any, res: any) => 
       return res.status(404).json({ error: 'Feedback not found' });
     }
 
-    // Notify client of response
-    const { storage } = await import('./storage');
-    await storage.createNotification({
-      clientId: updatedFeedback.clientId,
+    // Notify client of response using NotificationService
+    await notificationService.send({
+      recipientId: updatedFeedback.clientId,
+      recipientType: 'client',
       type: 'system',
       titleEn: 'Admin responded to your feedback',
       titleAr: 'رد المسؤول على ملاحظاتك',
       messageEn: `We've responded to your feedback on order #${updatedFeedback.orderId.slice(0, 8)}`,
       messageAr: `لقد قمنا بالرد على ملاحظاتك على الطلب #${updatedFeedback.orderId.slice(0, 8)}`,
-      metadata: JSON.stringify({ feedbackId: updatedFeedback.id, orderId: updatedFeedback.orderId }),
+      metadata: { feedbackId: updatedFeedback.id, orderId: updatedFeedback.orderId },
+      actionUrl: '/orders',
+      actionType: 'view_order',
     });
 
     res.json(updatedFeedback);
