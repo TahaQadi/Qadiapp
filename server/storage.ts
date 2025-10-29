@@ -1298,32 +1298,32 @@ export class MemStorage implements IStorage {
 
   async getClientNotifications(clientId: string, options?: { limit?: number; offset?: number; type?: string; isRead?: boolean }): Promise<Notification[]> {
     const { limit, offset, type, isRead } = options || {};
-    
+
     // Build conditions
     const conditions = [eq(notifications.clientId, clientId)];
-    
+
     if (type) {
       conditions.push(eq(notifications.type, type));
     }
-    
+
     if (isRead !== undefined) {
       conditions.push(eq(notifications.isRead, isRead));
     }
-    
+
     let query = this.db
       .select()
       .from(notifications)
       .where(and(...conditions))
       .orderBy(desc(notifications.createdAt));
-    
+
     if (limit) {
       query = query.limit(limit);
     }
-    
+
     if (offset) {
       query = query.offset(offset);
     }
-    
+
     const result = await query.execute();
     return result;
   }
@@ -1346,11 +1346,11 @@ export class MemStorage implements IStorage {
 
   async markAllNotificationsAsRead(clientId: string, type?: string): Promise<void> {
     const conditions = [eq(notifications.clientId, clientId)];
-    
+
     if (type) {
       conditions.push(eq(notifications.type, type));
     }
-    
+
     await this.db
       .update(notifications)
       .set({ isRead: true })
@@ -1370,14 +1370,14 @@ export class MemStorage implements IStorage {
         eq(notifications.isRead, true)
       ))
       .execute();
-    
+
     return result.rowCount || 0;
   }
 
   async archiveOldNotifications(days: number = 30): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
+
     const result = await this.db
       .delete(notifications)
       .where(and(
@@ -1385,7 +1385,7 @@ export class MemStorage implements IStorage {
         eq(notifications.isRead, true)
       ))
       .execute();
-    
+
     return result.rowCount || 0;
   }
 

@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import path from 'path'; // Import path module
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
@@ -78,6 +79,18 @@ app.use((req, res, next) => {
   // API 404 handler - must come BEFORE SPA fallback
   // Catches undefined API routes and returns JSON 404 instead of HTML
   app.use('/api/*', notFoundHandler);
+
+  // Serve static files with aggressive caching
+  app.use(express.static(path.join(process.cwd(), "public"), {
+    maxAge: '1y',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.png') || filepath.endsWith('.jpg') || filepath.endsWith('.jpeg')) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    }
+  }));
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
