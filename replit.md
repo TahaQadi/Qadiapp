@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 **Client Features:** Responsive product grid, product display, single-LTA cart, active contract badge, order templates, order history with reorder, order modification/cancellation requests, price request submission, price offer viewing/acceptance/rejection, multi-language (EN/AR) with RTL support.
 **System Features:** Full bilingual support (EN/AR with RTL/BiDi), responsive design, dark/light themes, PWA with push notifications, Pipefy webhook integration, comprehensive order modification workflow, template-based PDF generation (price offers, orders, invoices, LTA contracts).
 **Core System Enhancements:** Standardized API responses with error codes, centralized error handling, type-safe query key factory, comprehensive Zod validation schemas with middleware, performance monitoring (API metrics, caching, business KPIs), enhanced security (rate limiting, security headers, audit logging), and admin monitoring dashboard.
-**Template System:** Refactored to Arabic-only for PDF generation (UI remains bilingual). Database schema adjusted, backend code updated, and 4 core templates (price offer, order, invoice, contract) are seeded in Arabic.
+**Template System:** Refactored to Arabic-only for PDF generation (UI remains bilingual). Database schema adjusted, backend code updated, and 8 Arabic templates (2 per category: price offer, order, invoice, contract) are seeded with default templates marked. Migration completed October 29, 2025: added is_default, version, and tags columns to templates table.
 
 # External Dependencies
 
