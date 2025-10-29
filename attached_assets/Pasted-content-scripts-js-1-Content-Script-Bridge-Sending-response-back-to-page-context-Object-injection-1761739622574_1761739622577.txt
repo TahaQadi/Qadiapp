@@ -1,0 +1,84 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: Object
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: Object
+client:802 WebSocket connection to 'wss://localhost:5000/?token=SRarBtNbXC-0' failed: 
+createConnection @ client:802
+client:841 [vite] failed to connect to websocket (Error: WebSocket closed without opened.). 
+connect @ client:841
+client:882 [vite] Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (client:454:22)
+error @ client:882
+client:454 Uncaught (in promise) Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (client:454:22)
+chunk-SXRIVT2P.js?v=83d19d2d:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+/api/auth/user:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+securityAudit.ts:126 🔒 Security Audit Report
+/login:1 The resource https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/logo.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+errorMonitoring.ts:74 [Error Monitoring] Object
+captureError @ errorMonitoring.ts:74
+AdminClientsPage.tsx:2465 Uncaught ReferenceError: Mail is not defined
+    at ClientDetailsCard (AdminClientsPage.tsx:2465:22)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=83d19d2d:11596:26)
+    at updateFunctionComponent (chunk-SXRIVT2P.js?v=83d19d2d:14630:28)
+    at beginWork (chunk-SXRIVT2P.js?v=83d19d2d:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-SXRIVT2P.js?v=83d19d2d:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-SXRIVT2P.js?v=83d19d2d:3705:24)
+    at invokeGuardedCallback (chunk-SXRIVT2P.js?v=83d19d2d:3739:39)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=83d19d2d:19818:15)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=83d19d2d:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=83d19d2d:19190:13)
+errorMonitoring.ts:74 [Error Monitoring] Object
+captureError @ errorMonitoring.ts:74
+AdminClientsPage.tsx:2465 Uncaught ReferenceError: Mail is not defined
+    at ClientDetailsCard (AdminClientsPage.tsx:2465:22)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=83d19d2d:11596:26)
+    at updateFunctionComponent (chunk-SXRIVT2P.js?v=83d19d2d:14630:28)
+    at beginWork (chunk-SXRIVT2P.js?v=83d19d2d:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-SXRIVT2P.js?v=83d19d2d:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-SXRIVT2P.js?v=83d19d2d:3705:24)
+    at invokeGuardedCallback (chunk-SXRIVT2P.js?v=83d19d2d:3739:39)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=83d19d2d:19818:15)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=83d19d2d:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=83d19d2d:19190:13)
+chunk-SXRIVT2P.js?v=83d19d2d:14080 The above error occurred in the <ClientDetailsCard> component:
+
+    at ClientDetailsCard (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/pages/AdminClientsPage.tsx:4510:3)
+    at div
+    at main
+    at div
+    at AdminClientsPage (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/pages/AdminClientsPage.tsx:96:20)
+    at Suspense
+    at Route (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=0D-0UUVHhlOHH2zwIH99P:74:3)
+    at Switch (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=83d19d2d:336:17)
+    at Router (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=0D-0UUVHhlOHH2zwIH99P:154:48)
+    at ErrorBoundary (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at AppContent (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=0D-0UUVHhlOHH2zwIH99P:357:31)
+    at Provider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/LanguageProvider.tsx:21:36)
+    at ThemeProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at _a (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/src/App.tsx?v=0D-0UUVHhlOHH2zwIH99P:401:42)
+    at QueryClientProvider (https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+logCapturedError @ chunk-SXRIVT2P.js?v=83d19d2d:14080
+ErrorBoundary.tsx:29 Error boundary caught error: ReferenceError: Mail is not defined
+    at ClientDetailsCard (AdminClientsPage.tsx:2465:22)
+    at renderWithHooks (chunk-SXRIVT2P.js?v=83d19d2d:11596:26)
+    at updateFunctionComponent (chunk-SXRIVT2P.js?v=83d19d2d:14630:28)
+    at beginWork (chunk-SXRIVT2P.js?v=83d19d2d:15972:22)
+    at beginWork$1 (chunk-SXRIVT2P.js?v=83d19d2d:19806:22)
+    at performUnitOfWork (chunk-SXRIVT2P.js?v=83d19d2d:19251:20)
+    at workLoopSync (chunk-SXRIVT2P.js?v=83d19d2d:19190:13)
+    at renderRootSync (chunk-SXRIVT2P.js?v=83d19d2d:19169:15)
+    at recoverFromConcurrentError (chunk-SXRIVT2P.js?v=83d19d2d:18786:28)
+    at performSyncWorkOnRoot (chunk-SXRIVT2P.js?v=83d19d2d:18932:28) Object
+componentDidCatch @ ErrorBoundary.tsx:29
+client:882 [vite] Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (client:454:22)
+error @ client:882
+client:882 [vite] Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (client:454:22)
+error @ client:882
