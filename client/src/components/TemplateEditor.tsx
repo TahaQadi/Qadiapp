@@ -25,12 +25,9 @@ interface TemplateEditorProps {
 
 export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEditorProps) {
   const { language } = useLanguage();
-  const [nameEn, setNameEn] = useState(initialTemplate?.nameEn || '');
-  const [nameAr, setNameAr] = useState(initialTemplate?.nameAr || '');
-  const [descriptionEn, setDescriptionEn] = useState(initialTemplate?.descriptionEn || '');
-  const [descriptionAr, setDescriptionAr] = useState(initialTemplate?.descriptionAr || '');
+  const [name, setName] = useState(initialTemplate?.name || '');
+  const [description, setDescription] = useState(initialTemplate?.description || '');
   const [category, setCategory] = useState(initialTemplate?.category || 'other');
-  const [templateLanguage, setTemplateLanguage] = useState(initialTemplate?.language || 'both');
   const [sections, setSections] = useState<Section[]>(initialTemplate?.sections || []);
   const [variables, setVariables] = useState<string[]>(initialTemplate?.variables || []);
   const [primaryColor, setPrimaryColor] = useState(initialTemplate?.styles?.primaryColor || '#2563eb');
@@ -104,12 +101,10 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
 
   const handleSave = () => {
     const template = {
-      nameEn,
-      nameAr,
-      descriptionEn,
-      descriptionAr,
+      name,
+      description,
       category,
-      language: templateLanguage,
+      language: 'ar', // Always Arabic
       sections,
       variables,
       styles: {
@@ -129,26 +124,26 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
-          <Label>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</Label>
-          <Input value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
+          <Label>{language === 'ar' ? 'الاسم' : 'Name'}</Label>
+          <Input 
+            value={name} 
+            onChange={(e) => setName(e.target.value)}
+            placeholder={language === 'ar' ? 'اسم القالب' : 'Template name'}
+          />
         </div>
         <div>
-          <Label>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</Label>
-          <Input value={nameAr} onChange={(e) => setNameAr(e.target.value)} />
-        </div>
-        <div>
-          <Label>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</Label>
-          <Input value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} />
-        </div>
-        <div>
-          <Label>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</Label>
-          <Input value={descriptionAr} onChange={(e) => setDescriptionAr(e.target.value)} />
+          <Label>{language === 'ar' ? 'الوصف' : 'Description'}</Label>
+          <Input 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={language === 'ar' ? 'وصف القالب' : 'Template description'}
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label>{language === 'ar' ? 'التصنيف' : 'Category'}</Label>
           <Select value={category} onValueChange={setCategory}>
@@ -160,20 +155,8 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
               <SelectItem value="order">{language === 'ar' ? 'طلب' : 'Order'}</SelectItem>
               <SelectItem value="invoice">{language === 'ar' ? 'فاتورة' : 'Invoice'}</SelectItem>
               <SelectItem value="contract">{language === 'ar' ? 'عقد' : 'Contract'}</SelectItem>
+              <SelectItem value="report">{language === 'ar' ? 'تقرير' : 'Report'}</SelectItem>
               <SelectItem value="other">{language === 'ar' ? 'أخرى' : 'Other'}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{language === 'ar' ? 'اللغة' : 'Language'}</Label>
-          <Select value={templateLanguage} onValueChange={setTemplateLanguage}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="ar">العربية</SelectItem>
-              <SelectItem value="both">{language === 'ar' ? 'ثنائية اللغة' : 'Bilingual'}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -286,8 +269,7 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
             <DialogTitle>{language === 'ar' ? 'معاينة القالب' : 'Template Preview'}</DialogTitle>
           </DialogHeader>
           <TemplatePreview template={{
-            nameEn,
-            nameAr,
+            name,
             styles: { primaryColor, secondaryColor, accentColor, fontSize },
             sections
           }} />

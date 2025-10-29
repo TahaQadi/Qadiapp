@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { FileText, Eye, Check, X, ArrowLeft, User, LogOut, Package, Download } from "lucide-react";
+import { FileText, Eye, Check, X, ArrowLeft, User, LogOut, Package, Download, Printer, FileSpreadsheet } from "lucide-react";
 import { Link } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -113,6 +113,253 @@ export default function ClientPriceOffersPage() {
     return `/api/price-offers/${offer.id}/download`;
   };
 
+  const handlePrintOffer = (offer: PriceOffer) => {
+    const items = typeof offer.items === "string" ? JSON.parse(offer.items) : offer.items;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'فشل فتح نافذة الطباعة' : 'Failed to open print window',
+      });
+      return;
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html dir="${language === 'ar' ? 'rtl' : 'ltr'}">
+        <head>
+          <title>${language === 'ar' ? 'عرض سعر' : 'Price Offer'} #${offer.offerNumber}</title>
+          <meta charset="UTF-8">
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              font-family: ${language === 'ar' ? 'Arial' : 'Arial, sans-serif'};
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              direction: ${language === 'ar' ? 'rtl' : 'ltr'};
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 3px solid #d4af37;
+              padding-bottom: 20px;
+            }
+            .company-name {
+              font-size: 24px;
+              font-weight: bold;
+              color: #1a365d;
+              margin-bottom: 10px;
+            }
+            .offer-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .info-block {
+              border: 1px solid #e5e7eb;
+              padding: 15px;
+              border-radius: 8px;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #6b7280;
+              font-size: 12px;
+              margin-bottom: 5px;
+            }
+            .info-value {
+              color: #111827;
+              font-size: 14px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th {
+              background: #1a365d;
+              color: white;
+              padding: 12px;
+              text-align: ${language === 'ar' ? 'right' : 'left'};
+            }
+            td {
+              border-bottom: 1px solid #e5e7eb;
+              padding: 12px;
+              text-align: ${language === 'ar' ? 'right' : 'left'};
+            }
+            .total-section {
+              margin-top: 30px;
+              padding: 20px;
+              background: #f9fafb;
+              border-radius: 8px;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              font-size: 16px;
+            }
+            .grand-total {
+              font-size: 20px;
+              font-weight: bold;
+              border-top: 2px solid #d4af37;
+              padding-top: 12px;
+              margin-top: 12px;
+            }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">
+              ${language === 'ar' ? 'شركة القاضي التجارية' : 'Al Qadi Trading Company'}
+            </div>
+            <div style="color: #6b7280;">${language === 'ar' ? 'عرض سعر' : 'Price Offer'}</div>
+          </div>
+
+          <div class="offer-info">
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'رقم العرض' : 'Offer Number'}</div>
+              <div class="info-value">${offer.offerNumber}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'التاريخ' : 'Date'}</div>
+              <div class="info-value">${formatDateLocalized(new Date(offer.createdAt), language)}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'الحالة' : 'Status'}</div>
+              <div class="info-value">${offer.status === 'pending' ? (language === 'ar' ? 'قيد الانتظار' : 'Pending') : 
+                offer.status === 'accepted' ? (language === 'ar' ? 'مقبول' : 'Accepted') : 
+                (language === 'ar' ? 'مرفوض' : 'Rejected')}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'صالح حتى' : 'Valid Until'}</div>
+              <div class="info-value">${offer.validUntil ? formatDateLocalized(new Date(offer.validUntil), language) : '-'}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>${language === 'ar' ? '#' : 'No.'}</th>
+                <th>${language === 'ar' ? 'رمز المنتج' : 'SKU'}</th>
+                <th>${language === 'ar' ? 'المنتج' : 'Product'}</th>
+                <th>${language === 'ar' ? 'الكمية' : 'Qty'}</th>
+                <th>${language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</th>
+                <th>${language === 'ar' ? 'الإجمالي' : 'Total'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((item: any, idx: number) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${item.sku || '-'}</td>
+                  <td>${language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}</td>
+                  <td>${item.quantity}</td>
+                  <td>${parseFloat(item.unitPrice).toFixed(2)}</td>
+                  <td>${(parseFloat(item.unitPrice) * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-row">
+              <span>${language === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}:</span>
+              <span>${offer.subtotal}</span>
+            </div>
+            <div class="total-row">
+              <span>${language === 'ar' ? 'الضريبة' : 'Tax'}:</span>
+              <span>${offer.tax || 0}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>${language === 'ar' ? 'المجموع الكلي' : 'Grand Total'}:</span>
+              <span>${offer.total}</span>
+            </div>
+          </div>
+
+          ${offer.notes ? `
+            <div style="margin-top: 30px; padding: 15px; background: #f9fafb; border-radius: 8px;">
+              <div style="font-weight: bold; margin-bottom: 8px;">${language === 'ar' ? 'ملاحظات' : 'Notes'}:</div>
+              <div style="white-space: pre-wrap;">${offer.notes}</div>
+            </div>
+          ` : ''}
+
+          <div class="no-print" style="text-align: center; margin-top: 40px;">
+            <button onclick="window.print(); setTimeout(() => window.close(), 100);" style="padding: 12px 24px; background: #1a365d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
+              ${language === 'ar' ? 'طباعة' : 'Print'}
+            </button>
+          </div>
+
+          <script>
+            if (document.readyState === 'complete') {
+              window.print();
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(() => {
+                  window.print();
+                }, 100);
+              });
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const handleExportToExcel = (offers: PriceOffer[]) => {
+    // Create CSV content
+    const headers = language === 'ar' 
+      ? ['رقم العرض', 'التاريخ', 'الحالة', 'المجموع الفرعي', 'الضريبة', 'الإجمالي', 'صالح حتى']
+      : ['Offer Number', 'Date', 'Status', 'Subtotal', 'Tax', 'Total', 'Valid Until'];
+    
+    let csv = headers.join(',') + '\n';
+    
+    offers.forEach(offer => {
+      const status = offer.status === 'pending' ? (language === 'ar' ? 'قيد الانتظار' : 'Pending') :
+                     offer.status === 'accepted' ? (language === 'ar' ? 'مقبول' : 'Accepted') :
+                     (language === 'ar' ? 'مرفوض' : 'Rejected');
+      
+      const row = [
+        offer.offerNumber,
+        formatDateLocalized(new Date(offer.createdAt), language),
+        status,
+        offer.subtotal,
+        offer.tax || 0,
+        offer.total,
+        offer.validUntil ? formatDateLocalized(new Date(offer.validUntil), language) : '-'
+      ];
+      
+      csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+    });
+
+    // Add BOM for proper UTF-8 encoding in Excel
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `price-offers-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    toast({
+      title: language === 'ar' ? 'تم التصدير' : 'Exported',
+      description: language === 'ar' ? 'تم تصدير عروض الأسعار بنجاح' : 'Price offers exported successfully',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -175,6 +422,17 @@ export default function ClientPriceOffersPage() {
             <h2 className="text-2xl font-bold">
               {language === "ar" ? "عروض الأسعار الخاصة بك" : "Your Price Offers"}
             </h2>
+            {offers.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportToExcel(offers)}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                {language === "ar" ? "تصدير Excel" : "Export to Excel"}
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
@@ -245,7 +503,7 @@ export default function ClientPriceOffersPage() {
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="flex gap-2">
+                    <CardFooter className="flex gap-2 flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
@@ -255,6 +513,15 @@ export default function ClientPriceOffersPage() {
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         {language === "ar" ? "عرض" : "View"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePrintOffer(offer)}
+                        title={language === "ar" ? "طباعة" : "Print"}
+                        data-testid={`button-print-${offer.id}`}
+                      >
+                        <Printer className="h-4 w-4" />
                       </Button>
                       {offer.pdfFileName && (
                         <Button

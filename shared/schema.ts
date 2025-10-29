@@ -24,6 +24,17 @@ export const clients = pgTable("clients", {
   password: text("password").notNull(),
   email: text("email"),
   phone: text("phone"),
+  // Organization Identity fields
+  domain: text("domain"),
+  registrationId: text("registration_id"),
+  industry: text("industry"),
+  hqCity: text("hq_city"),
+  hqCountry: text("hq_country"),
+  // Commercial fields
+  paymentTerms: text("payment_terms"),
+  priceTier: text("price_tier"),
+  riskTier: text("risk_tier", { enum: ["A", "B", "C"] }),
+  contractModel: text("contract_model", { enum: ["PO", "LTA", "Subscription"] }),
   isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -174,6 +185,9 @@ export const templates = pgTable("templates", {
   variables: jsonb("variables").notNull(),
   styles: jsonb("styles").notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false),
+  version: integer("version").notNull().default(1),
+  tags: jsonb("tags"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -439,6 +453,15 @@ export const updateClientSchema = insertClientSchema.pick({
   nameAr: true,
   email: true,
   phone: true,
+  domain: true,
+  registrationId: true,
+  industry: true,
+  hqCity: true,
+  hqCountry: true,
+  paymentTerms: true,
+  priceTier: true,
+  riskTier: true,
+  contractModel: true,
 });
 
 // Client creation schema (admin with password)

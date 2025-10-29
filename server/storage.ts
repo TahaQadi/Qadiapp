@@ -1655,12 +1655,12 @@ export class MemStorage implements IStorage {
 
     // Apply pagination
     const offset = (page - 1) * pageSize;
-    const documents = await query
+    const docs = await query
       .orderBy(desc(documents.createdAt))
       .limit(pageSize)
       .offset(offset);
 
-    return { documents, totalCount };
+    return { documents: docs, totalCount };
   }
 
   async updateDocumentMetadata(id: string, updates: {

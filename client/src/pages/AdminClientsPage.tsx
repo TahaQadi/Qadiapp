@@ -45,6 +45,15 @@ const clientFormSchema = z.object({
   nameAr: z.string().min(1, 'Arabic name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
+  domain: z.string().optional(),
+  registrationId: z.string().optional(),
+  industry: z.string().optional(),
+  hqCity: z.string().optional(),
+  hqCountry: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  priceTier: z.string().optional(),
+  riskTier: z.enum(["A", "B", "C"]).optional().or(z.literal('')),
+  contractModel: z.enum(["PO", "LTA", "Subscription"]).optional().or(z.literal('')),
 });
 
 const createClientSchema = z.object({
@@ -54,6 +63,15 @@ const createClientSchema = z.object({
   nameAr: z.string().min(1, 'Arabic name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
+  domain: z.string().optional(),
+  registrationId: z.string().optional(),
+  industry: z.string().optional(),
+  hqCity: z.string().optional(),
+  hqCountry: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  priceTier: z.string().optional(),
+  riskTier: z.enum(["A", "B", "C"]).optional().or(z.literal('')),
+  contractModel: z.enum(["PO", "LTA", "Subscription"]).optional().or(z.literal('')),
 });
 
 const passwordResetSchema = z.object({
@@ -74,6 +92,16 @@ interface ClientBasic {
   isAdmin: boolean;
   createdAt?: string;
   updatedAt?: string;
+  // Organization fields
+  domain?: string | null;
+  registrationId?: string | null;
+  industry?: string | null;
+  hqCity?: string | null;
+  hqCountry?: string | null;
+  paymentTerms?: string | null;
+  priceTier?: string | null;
+  riskTier?: string | null;
+  contractModel?: string | null;
 }
 
 interface Department {
@@ -1179,6 +1207,142 @@ export default function AdminClientsPage() {
                           )}
                         />
                       </div>
+
+                      {/* Organization Information Section */}
+                      <Separator />
+                      <h4 className="text-sm font-semibold text-muted-foreground">
+                        {language === 'ar' ? 'معلومات المنظمة (اختياري)' : 'Organization Information (Optional)'}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="domain"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'المجال' : 'Domain'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="registrationId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'رقم التسجيل / الضريبة' : 'Registration ID / VAT'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="industry"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'القطاع' : 'Industry'}</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl>
+                                  <SelectTrigger className="h-10 sm:h-11">
+                                    <SelectValue placeholder={language === 'ar' ? 'اختر القطاع' : 'Select industry'} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                                  <SelectItem value="technology">{language === 'ar' ? 'التكنولوجيا' : 'Technology'}</SelectItem>
+                                  <SelectItem value="manufacturing">{language === 'ar' ? 'التصنيع' : 'Manufacturing'}</SelectItem>
+                                  <SelectItem value="healthcare">{language === 'ar' ? 'الرعاية الصحية' : 'Healthcare'}</SelectItem>
+                                  <SelectItem value="finance">{language === 'ar' ? 'المالية' : 'Finance'}</SelectItem>
+                                  <SelectItem value="retail">{language === 'ar' ? 'التجزئة' : 'Retail'}</SelectItem>
+                                  <SelectItem value="education">{language === 'ar' ? 'التعليم' : 'Education'}</SelectItem>
+                                  <SelectItem value="logistics">{language === 'ar' ? 'اللوجستيات' : 'Logistics'}</SelectItem>
+                                  <SelectItem value="construction">{language === 'ar' ? 'البناء' : 'Construction'}</SelectItem>
+                                  <SelectItem value="hospitality">{language === 'ar' ? 'الضيافة' : 'Hospitality'}</SelectItem>
+                                  <SelectItem value="other">{language === 'ar' ? 'أخرى' : 'Other'}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="paymentTerms"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'شروط الدفع' : 'Payment Terms'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ''} placeholder={language === 'ar' ? 'مثال: 30 يوم' : 'e.g., Net 30'} className="h-10 sm:h-11" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="priceTier"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'فئة السعر' : 'Price Tier'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="riskTier"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'مستوى المخاطر' : 'Risk Tier'}</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl>
+                                  <SelectTrigger className="h-10 sm:h-11">
+                                    <SelectValue placeholder={language === 'ar' ? 'اختر المستوى' : 'Select tier'} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                                  <SelectItem value="A">{language === 'ar' ? 'أ - منخفض' : 'A - Low'}</SelectItem>
+                                  <SelectItem value="B">{language === 'ar' ? 'ب - متوسط' : 'B - Medium'}</SelectItem>
+                                  <SelectItem value="C">{language === 'ar' ? 'ج - عالي' : 'C - High'}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="contractModel"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'نموذج العقد' : 'Contract Model'}</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl>
+                                  <SelectTrigger className="h-10 sm:h-11">
+                                    <SelectValue placeholder={language === 'ar' ? 'اختر النموذج' : 'Select model'} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                                  <SelectItem value="PO">{language === 'ar' ? 'أمر شراء' : 'Purchase Order (PO)'}</SelectItem>
+                                  <SelectItem value="LTA">{language === 'ar' ? 'اتفاقية طويلة الأجل' : 'Long-Term Agreement (LTA)'}</SelectItem>
+                                  <SelectItem value="Subscription">{language === 'ar' ? 'اشتراك' : 'Subscription'}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       <DialogFooter className="pt-3 sm:pt-4">
                         <Button 
                           type="submit" 
@@ -1870,6 +2034,142 @@ export default function AdminClientsPage() {
                     )}
                   />
                 </div>
+
+                {/* Organization Information Section */}
+                <Separator />
+                <h4 className="text-sm font-semibold text-muted-foreground">
+                  {language === 'ar' ? 'معلومات المنظمة' : 'Organization Information'}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <FormField
+                    control={form.control}
+                    name="domain"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'المجال' : 'Domain'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="registrationId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'رقم التسجيل / الضريبة' : 'Registration ID / VAT'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'القطاع' : 'Industry'}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger className="h-10 sm:h-11">
+                              <SelectValue placeholder={language === 'ar' ? 'اختر القطاع' : 'Select industry'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                            <SelectItem value="technology">{language === 'ar' ? 'التكنولوجيا' : 'Technology'}</SelectItem>
+                            <SelectItem value="manufacturing">{language === 'ar' ? 'التصنيع' : 'Manufacturing'}</SelectItem>
+                            <SelectItem value="healthcare">{language === 'ar' ? 'الرعاية الصحية' : 'Healthcare'}</SelectItem>
+                            <SelectItem value="finance">{language === 'ar' ? 'المالية' : 'Finance'}</SelectItem>
+                            <SelectItem value="retail">{language === 'ar' ? 'التجزئة' : 'Retail'}</SelectItem>
+                            <SelectItem value="education">{language === 'ar' ? 'التعليم' : 'Education'}</SelectItem>
+                            <SelectItem value="logistics">{language === 'ar' ? 'اللوجستيات' : 'Logistics'}</SelectItem>
+                            <SelectItem value="construction">{language === 'ar' ? 'البناء' : 'Construction'}</SelectItem>
+                            <SelectItem value="hospitality">{language === 'ar' ? 'الضيافة' : 'Hospitality'}</SelectItem>
+                            <SelectItem value="other">{language === 'ar' ? 'أخرى' : 'Other'}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="paymentTerms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'شروط الدفع' : 'Payment Terms'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} placeholder={language === 'ar' ? 'مثال: 30 يوم' : 'e.g., Net 30'} className="h-10 sm:h-11" />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="priceTier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'فئة السعر' : 'Price Tier'}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="riskTier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'مستوى المخاطر' : 'Risk Tier'}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger className="h-10 sm:h-11">
+                              <SelectValue placeholder={language === 'ar' ? 'اختر المستوى' : 'Select tier'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                            <SelectItem value="A">{language === 'ar' ? 'أ - منخفض' : 'A - Low'}</SelectItem>
+                            <SelectItem value="B">{language === 'ar' ? 'ب - متوسط' : 'B - Medium'}</SelectItem>
+                            <SelectItem value="C">{language === 'ar' ? 'ج - عالي' : 'C - High'}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="contractModel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'نموذج العقد' : 'Contract Model'}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger className="h-10 sm:h-11">
+                              <SelectValue placeholder={language === 'ar' ? 'اختر النموذج' : 'Select model'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                            <SelectItem value="PO">{language === 'ar' ? 'أمر شراء' : 'Purchase Order (PO)'}</SelectItem>
+                            <SelectItem value="LTA">{language === 'ar' ? 'اتفاقية طويلة الأجل' : 'Long-Term Agreement (LTA)'}</SelectItem>
+                            <SelectItem value="Subscription">{language === 'ar' ? 'اشتراك' : 'Subscription'}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <DialogFooter className="pt-3 sm:pt-4">
                   <Button 
                     type="submit" 
@@ -2221,6 +2521,107 @@ function ClientDetailsCard({
                 </div>
               )}
             </div>
+
+            {/* Organization Information Section */}
+            {(clientDetails.client.domain || clientDetails.client.registrationId || clientDetails.client.industry || 
+              clientDetails.client.hqCity || clientDetails.client.hqCountry || clientDetails.client.paymentTerms || 
+              clientDetails.client.priceTier || clientDetails.client.riskTier || clientDetails.client.contractModel) && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  {language === 'ar' ? 'معلومات المنظمة' : 'Organization Information'}
+                </h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {clientDetails.client.domain && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'المجال' : 'Domain'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">{clientDetails.client.domain}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.registrationId && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'رقم التسجيل / الضريبة' : 'Registration ID / VAT'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">{clientDetails.client.registrationId}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.industry && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'القطاع' : 'Industry'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm capitalize">{clientDetails.client.industry}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.hqCity && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'مدينة المقر' : 'HQ City'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">{clientDetails.client.hqCity}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.hqCountry && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'بلد المقر' : 'HQ Country'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">{clientDetails.client.hqCountry}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.paymentTerms && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'شروط الدفع' : 'Payment Terms'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">{clientDetails.client.paymentTerms}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.priceTier && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'فئة السعر' : 'Price Tier'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">{clientDetails.client.priceTier}</div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.riskTier && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'مستوى المخاطر' : 'Risk Tier'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">
+                        <Badge variant={clientDetails.client.riskTier === 'A' ? 'default' : clientDetails.client.riskTier === 'B' ? 'secondary' : 'destructive'}>
+                          {clientDetails.client.riskTier}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {clientDetails.client.contractModel && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
+                      <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                        {language === 'ar' ? 'نموذج العقد' : 'Contract Model'}
+                      </div>
+                      <div className="font-medium text-foreground dark:text-white text-sm">
+                        <Badge variant="outline">{clientDetails.client.contractModel}</Badge>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Admin Toggle Section */}
             <div className="p-4 sm:p-5 border-2 rounded-xl bg-gradient-to-br from-primary/5 to-primary/[0.02] dark:from-[#d4af37]/5 dark:to-[#f9c800]/[0.02] border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] transition-all duration-300">

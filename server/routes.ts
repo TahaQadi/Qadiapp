@@ -823,10 +823,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin: Generate PDF for price request
+  // Admin: Generate PDF for price request - Using NEW template system
   app.post("/api/admin/price-requests/:id/generate-pdf", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
-      const { language = 'en' } = req.body;
+      const { language = 'ar' } = req.body; // Default to Arabic (template system is Arabic-only)
       const priceRequest = await db.query.priceRequests.findFirst({
         where: eq(schema.priceRequests.id, req.params.id)
       });
@@ -854,50 +854,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? JSON.parse(priceRequest.products)
         : priceRequest.products;
 
-      const productDetails = [];
+      const items = [];
       for (const item of products) {
         const product = await db.query.products.findFirst({
           where: eq(schema.products.id, item.productId)
         });
         if (product) {
-          productDetails.push({
+          items.push({
             sku: product.sku,
-            nameEn: product.nameEn,
             nameAr: product.nameAr,
+            nameEn: product.nameEn,
             quantity: item.quantity || 1,
-            contractPrice: product.sellingPricePiece || '0.00',
-            currency: 'ILS'
+            unitPrice: product.sellingPricePiece || '0.00'
           });
         }
       }
 
-      // Generate PDF using PDFGenerator
-      const { PDFGenerator } = await import('./pdf-generator');
-      const pdfBuffer = await PDFGenerator.generatePriceOffer({
-        offerId: priceRequest.requestNumber,
-        offerDate: new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'),
-        clientNameEn: client.nameEn,
-        clientNameAr: client.nameAr,
-        clientEmail: client.email || '',
-        clientPhone: client.phone || '',
-        ltaNameEn: lta.nameEn,
-        ltaNameAr: lta.nameAr,
-        items: productDetails,
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'),
-        notes: priceRequest.notes || '',
-        language: language as 'en' | 'ar'
+      // Use NEW template system with DocumentUtils
+      const documentResult = await DocumentUtils.generateDocument({
+        templateCategory: 'price_offer', // Use price_offer template for requests
+        variables: [
+          { key: 'date', value: new Date().toLocaleDateString('ar-SA') },
+          { key: 'offerNumber', value: priceRequest.requestNumber },
+          { key: 'clientName', value: client.nameAr },
+          { key: 'ltaName', value: lta.nameAr },
+          { key: 'validUntil', value: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-SA') },
+          { key: 'items', value: items },
+          { key: 'subtotal', value: items.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0).toFixed(2) },
+          { key: 'discount', value: '0' },
+          { key: 'total', value: items.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0).toFixed(2) },
+          { key: 'notes', value: priceRequest.notes || '' },
+          { key: 'validityDays', value: '30' },
+          { key: 'deliveryDays', value: '5' },
+          { key: 'paymentTerms', value: '30' },
+          { key: 'warrantyDays', value: '7' }
+        ],
+        clientId: priceRequest.clientId,
+        metadata: { 
+          priceRequestId: priceRequest.id,
+          ltaId: priceRequest.ltaId
+        },
+        force: true // Always generate new PDF for price requests (they're not reusable like offers)
       });
+
+      if (!documentResult.success || !documentResult.documentId) {
+        return res.status(500).json({
+          message: documentResult.error || 'Failed to generate PDF',
+          messageAr: 'فشل في إنشاء ملف PDF'
+        });
+      }
+
+      // Get the generated document
+      const document = await storage.getDocumentMetadata(documentResult.documentId);
+      if (!document) {
+        return res.status(500).json({
+          message: 'Document created but not found',
+          messageAr: 'تم إنشاء المستند ولكن لم يتم العثور عليه'
+        });
+      }
+
+      // Download the PDF from storage
+      const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
+      if (!downloadResult.ok || !downloadResult.data) {
+        return res.status(500).json({
+          message: downloadResult.error || 'Failed to download PDF',
+          messageAr: 'فشل تحميل ملف PDF'
+        });
+      }
 
       // Set response headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="price-request-${priceRequest.requestNumber}.pdf"`);
-      res.send(pdfBuffer);
+      res.send(downloadResult.data);
 
     } catch (error) {
       // Log error for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error generating PDF for price request:', error);
-      }
+      console.error('Error generating PDF for price request:', error);
       return res.status(500).json({
         message: error instanceof Error ? error.message : 'Failed to generate PDF',
         messageAr: 'فشل في إنشاء ملف PDF'
@@ -1150,6 +1182,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
+        domain: client.domain,
+        registrationId: client.registrationId,
+        industry: client.industry,
+        hqCity: client.hqCity,
+        hqCountry: client.hqCountry,
+        paymentTerms: client.paymentTerms,
+        priceTier: client.priceTier,
+        riskTier: client.riskTier,
+        contractModel: client.contractModel,
       }));
       res.json(clientsBasicInfo);
     } catch (error) {
@@ -1182,6 +1223,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: client.email || null,
           phone: client.phone || null,
           isAdmin: client.isAdmin || false,
+          // Organization fields
+          domain: client.domain || null,
+          registrationId: client.registrationId || null,
+          industry: client.industry || null,
+          hqCity: client.hqCity || null,
+          hqCountry: client.hqCountry || null,
+          paymentTerms: client.paymentTerms || null,
+          priceTier: client.priceTier || null,
+          riskTier: client.riskTier || null,
+          contractModel: client.contractModel || null,
         },
         departments: departments || [],
         locations: locations || [],
@@ -1207,6 +1258,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
+        domain: client.domain,
+        registrationId: client.registrationId,
+        industry: client.industry,
+        hqCity: client.hqCity,
+        hqCountry: client.hqCountry,
+        paymentTerms: client.paymentTerms,
+        priceTier: client.priceTier,
+        riskTier: client.riskTier,
+        contractModel: client.contractModel,
         message: "Client created successfully",
         messageAr: "تم إنشاء العميل بنجاح"
       });
@@ -1248,6 +1308,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
+        domain: client.domain,
+        registrationId: client.registrationId,
+        industry: client.industry,
+        hqCity: client.hqCity,
+        hqCountry: client.hqCountry,
+        paymentTerms: client.paymentTerms,
+        priceTier: client.priceTier,
+        riskTier: client.riskTier,
+        contractModel: client.contractModel,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -1,16 +1,13 @@
 #!/usr/bin/env tsx
 
-import { TemplateSeeder } from '../seed-templates';
+import { seedTemplates } from '../seed-templates.js';
 
 async function main() {
   try {
     console.log('🚀 Starting template seeding process...');
     
-    // First, try to load templates from production files
-    await TemplateSeeder.loadTemplatesFromFiles();
-    
-    // Then ensure we have default templates for each category
-    await TemplateSeeder.ensureDefaultTemplates();
+    // Seed default Arabic templates
+    await seedTemplates();
     
     console.log('✅ Template seeding process completed successfully!');
   } catch (error) {

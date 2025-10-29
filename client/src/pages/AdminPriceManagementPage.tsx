@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign, Trash2, Send, Edit, ChevronDown, Filter, Search, X } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign, Trash2, Send, Edit, ChevronDown, Filter, Search, X, Printer, FileSpreadsheet } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -517,6 +517,244 @@ export default function AdminPriceManagementPage() {
     window.open(`/api/price-offers/${offerId}/download`, '_blank');
   };
 
+  const handlePrintOffer = (offer: PriceOffer) => {
+    const items = safeJsonParse(offer.items, []);
+    const client = clients.find(c => c.id === offer.clientId);
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'فشل فتح نافذة الطباعة' : 'Failed to open print window',
+      });
+      return;
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html dir="${language === 'ar' ? 'rtl' : 'ltr'}">
+        <head>
+          <title>${language === 'ar' ? 'عرض سعر' : 'Price Offer'} #${offer.offerNumber}</title>
+          <meta charset="UTF-8">
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              direction: ${language === 'ar' ? 'rtl' : 'ltr'};
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 3px solid #d4af37;
+              padding-bottom: 20px;
+            }
+            .company-name {
+              font-size: 24px;
+              font-weight: bold;
+              color: #1a365d;
+              margin-bottom: 10px;
+            }
+            .offer-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .info-block {
+              border: 1px solid #e5e7eb;
+              padding: 15px;
+              border-radius: 8px;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #6b7280;
+              font-size: 12px;
+              margin-bottom: 5px;
+            }
+            .info-value {
+              color: #111827;
+              font-size: 14px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th {
+              background: #1a365d;
+              color: white;
+              padding: 12px;
+              text-align: ${language === 'ar' ? 'right' : 'left'};
+            }
+            td {
+              border-bottom: 1px solid #e5e7eb;
+              padding: 12px;
+              text-align: ${language === 'ar' ? 'right' : 'left'};
+            }
+            .total-section {
+              margin-top: 30px;
+              padding: 20px;
+              background: #f9fafb;
+              border-radius: 8px;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              font-size: 16px;
+            }
+            .grand-total {
+              font-size: 20px;
+              font-weight: bold;
+              border-top: 2px solid #d4af37;
+              padding-top: 12px;
+              margin-top: 12px;
+            }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">
+              ${language === 'ar' ? 'شركة القاضي التجارية' : 'Al Qadi Trading Company'}
+            </div>
+            <div style="color: #6b7280;">${language === 'ar' ? 'عرض سعر' : 'Price Offer'}</div>
+          </div>
+
+          <div class="offer-info">
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'رقم العرض' : 'Offer Number'}</div>
+              <div class="info-value">${offer.offerNumber}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'التاريخ' : 'Date'}</div>
+              <div class="info-value">${new Date(offer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'العميل' : 'Client'}</div>
+              <div class="info-value">${client ? (language === 'ar' ? client.nameAr : client.nameEn) : 'N/A'}</div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">${language === 'ar' ? 'الحالة' : 'Status'}</div>
+              <div class="info-value">${offer.status}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>${language === 'ar' ? '#' : 'No.'}</th>
+                <th>${language === 'ar' ? 'رمز المنتج' : 'SKU'}</th>
+                <th>${language === 'ar' ? 'المنتج' : 'Product'}</th>
+                <th>${language === 'ar' ? 'الكمية' : 'Qty'}</th>
+                <th>${language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</th>
+                <th>${language === 'ar' ? 'الإجمالي' : 'Total'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((item: any, idx: number) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${item.sku || '-'}</td>
+                  <td>${language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}</td>
+                  <td>${item.quantity}</td>
+                  <td>${parseFloat(item.unitPrice).toFixed(2)}</td>
+                  <td>${(parseFloat(item.unitPrice) * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-row">
+              <span>${language === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}:</span>
+              <span>${offer.subtotal}</span>
+            </div>
+            <div class="total-row">
+              <span>${language === 'ar' ? 'الضريبة' : 'Tax'}:</span>
+              <span>${offer.tax || 0}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>${language === 'ar' ? 'المجموع الكلي' : 'Grand Total'}:</span>
+              <span>${offer.total}</span>
+            </div>
+          </div>
+
+          <div class="no-print" style="text-align: center; margin-top: 40px;">
+            <button onclick="window.print(); setTimeout(() => window.close(), 100);" style="padding: 12px 24px; background: #1a365d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
+              ${language === 'ar' ? 'طباعة' : 'Print'}
+            </button>
+          </div>
+
+          <script>
+            if (document.readyState === 'complete') {
+              window.print();
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(() => {
+                  window.print();
+                }, 100);
+              });
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const handleExportToExcel = (offers: PriceOffer[]) => {
+    const headers = language === 'ar' 
+      ? ['رقم العرض', 'رقم الطلب', 'العميل', 'التاريخ', 'الحالة', 'المجموع الفرعي', 'الضريبة', 'الإجمالي']
+      : ['Offer Number', 'Request Number', 'Client', 'Date', 'Status', 'Subtotal', 'Tax', 'Total'];
+    
+    let csv = headers.join(',') + '\n';
+    
+    offers.forEach(offer => {
+      const client = clients.find(c => c.id === offer.clientId);
+      const clientName = client ? (language === 'ar' ? client.nameAr : client.nameEn) : 'N/A';
+      const request = requests.find(r => r.id === offer.requestId);
+      
+      const row = [
+        offer.offerNumber,
+        request?.requestNumber || '-',
+        clientName,
+        new Date(offer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'),
+        offer.status,
+        offer.subtotal,
+        offer.tax || 0,
+        offer.total
+      ];
+      
+      csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+    });
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `price-offers-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    toast({
+      title: language === 'ar' ? 'تم التصدير' : 'Exported',
+      description: language === 'ar' ? 'تم تصدير عروض الأسعار بنجاح' : 'Price offers exported successfully',
+    });
+  };
+
   const handleViewRequest = async (request: PriceRequest) => {
     try {
       // Fetch full request details with enriched product information
@@ -589,6 +827,17 @@ export default function AdminPriceManagementPage() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {filteredOffers.length > 0 && (
+              <Button
+                onClick={() => handleExportToExcel(filteredOffers)}
+                variant="outline"
+                size="sm"
+                className="h-9 sm:h-10 px-2 sm:px-3 gap-1"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">{language === 'ar' ? 'Excel' : 'Excel'}</span>
+              </Button>
+            )}
             <Button
               onClick={handleCreateOfferFromScratch}
               size="sm"
@@ -1100,6 +1349,14 @@ export default function AdminPriceManagementPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
+                                      onClick={() => handlePrintOffer(offer)}
+                                      title={language === 'ar' ? 'طباعة' : 'Print'}
+                                    >
+                                      <Printer className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       onClick={() => handleDownload(offer.id)}
                                     >
                                       <Download className="h-4 w-4" />
@@ -1265,6 +1522,15 @@ export default function AdminPriceManagementPage() {
                             >
                               <Eye className="h-4 w-4 me-1.5" />
                               <span className="text-xs">{language === 'ar' ? 'التفاصيل' : 'Details'}</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePrintOffer(offer)}
+                              className="h-10"
+                            >
+                              <Printer className="h-4 w-4 me-1.5" />
+                              <span className="text-xs">{language === 'ar' ? 'طباعة' : 'Print'}</span>
                             </Button>
                             <Button
                               size="sm"

@@ -160,7 +160,7 @@ function Router() {
       <AdminRoute path="/admin/issue-reports" component={IssueReportsPage} />
       <AdminRoute path="/admin/feedback" component={CustomerFeedbackPage} />
       <AdminRoute path="/admin/error-logs" component={AdminErrorLogsPage} />
-      <AdminRoute path="/admin/documents" component={AdminDocumentListPage} />
+      <AdminRoute path="/admin/documents" component={AdminDocumentsPage} />
       <AdminRoute path="/admin/ltas/:id" component={AdminLtaDetailPage} />
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <AdminRoute path="/admin/reports" component={AdminReportsPage} />

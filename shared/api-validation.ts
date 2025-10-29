@@ -242,6 +242,8 @@ export const respondToPriceOfferSchema = z.object({
 });
 
 // Template (PDF template) validation schemas
+// Note: This is for legacy order templates. 
+// For document templates, use @shared/template-schema.ts instead
 export const createTemplateSchema = z.object({
   nameEn: validators.nonEmptyString,
   nameAr: validators.nonEmptyString,

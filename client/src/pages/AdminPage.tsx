@@ -116,7 +116,7 @@ export default function AdminPage() {
     },
     {
       id: 'templates',
-      path: '/admin/templates/documents',
+      path: '/admin/documents',
       icon: Edit,
       titleEn: 'Document Templates',
       titleAr: 'مكتبة المستندات',

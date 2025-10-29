@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package, Trash2, FileSpreadsheet } from 'lucide-react';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateLocalized } from '@/lib/dateUtils';
@@ -594,6 +594,59 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleExportToExcel = (orders: Order[]) => {
+    const headers = language === 'ar' 
+      ? ['رقم الطلب', 'العميل', 'الاتفاقية', 'التاريخ', 'الحالة', 'عدد المنتجات', 'الإجمالي']
+      : ['Order ID', 'Client', 'LTA', 'Date', 'Status', 'Items', 'Total'];
+    
+    let csv = headers.join(',') + '\n';
+    
+    orders.forEach(order => {
+      const clientName = getClientName(order.clientId);
+      const ltaName = order.ltaId ? (ltas.find((l: any) => l.id === order.ltaId)?.[language === 'ar' ? 'nameAr' : 'nameEn'] || '-') : '-';
+      const items = safeJsonParse<OrderItem[]>(order.items, []);
+      
+      const statusLabels: Record<string, {en: string, ar: string}> = {
+        pending: {en: 'Pending', ar: 'قيد الانتظار'},
+        confirmed: {en: 'Confirmed', ar: 'مؤكد'},
+        processing: {en: 'Processing', ar: 'قيد المعالجة'},
+        shipped: {en: 'Shipped', ar: 'تم الشحن'},
+        delivered: {en: 'Delivered', ar: 'تم التوصيل'},
+        cancelled: {en: 'Cancelled', ar: 'ملغى'}
+      };
+      
+      const statusText = statusLabels[order.status]?.[language] || order.status;
+      
+      const row = [
+        order.id,
+        clientName,
+        ltaName,
+        formatDateLocalized(new Date(order.createdAt), language),
+        statusText,
+        items.length.toString(),
+        order.totalAmount
+      ];
+      
+      csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+    });
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    toast({
+      title: language === 'ar' ? 'تم التصدير' : 'Exported',
+      description: language === 'ar' ? 'تم تصدير الطلبات بنجاح' : 'Orders exported successfully',
+    });
+  };
+
   // Filter and search orders
   const filteredOrders = (orders || []).filter((order: Order) => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -859,6 +912,14 @@ export default function AdminOrdersPage() {
                     >
                       <Printer className="h-4 w-4 me-1" />
                       {language === 'ar' ? 'طباعة' : 'Print'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleExportToExcel(Array.from(selectedOrders).map(id => orders.find((o: Order) => o.id === id)).filter(Boolean) as Order[])}
+                    >
+                      <FileSpreadsheet className="h-4 w-4 me-1" />
+                      {language === 'ar' ? 'Excel' : 'Excel'}
                     </Button>
                     <Button
                       variant="outline"

@@ -27,6 +27,10 @@ interface OnboardingData {
     nameAr: string;
     email: string;
     phone: string;
+    // Organization Identity
+    domain: string;
+    registrationId: string;
+    industry: string;
   };
   headquarters: {
     nameEn: string;
@@ -62,6 +66,13 @@ const DEPARTMENT_TYPES = [
   { value: 'warehouse', labelEn: 'Warehouse', labelAr: 'المستودع' },
 ];
 
+// Initialize with 3 main departments by default
+const DEFAULT_DEPARTMENTS = [
+  { type: 'finance', contactName: '', contactEmail: '', contactPhone: '' },
+  { type: 'purchase', contactName: '', contactEmail: '', contactPhone: '' },
+  { type: 'warehouse', contactName: '', contactEmail: '', contactPhone: '' },
+];
+
 export default function OnboardingPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -70,12 +81,15 @@ export default function OnboardingPage() {
   
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     user: { email: '', password: '', confirmPassword: '' },
-    company: { nameEn: '', nameAr: '', email: '', phone: '' },
+    company: { 
+      nameEn: '', nameAr: '', email: '', phone: '',
+      domain: '', registrationId: '', industry: ''
+    },
     headquarters: { 
       nameEn: '', nameAr: '', addressEn: '', addressAr: '', 
       city: '', country: '', phone: '' 
     },
-    departments: [],
+    departments: DEFAULT_DEPARTMENTS,
     termsAccepted: false,
   });
 
@@ -442,6 +456,70 @@ export default function OnboardingPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Organization Identity Section */}
+                  <Separator className="my-6" />
+                  <h3 className="text-sm font-medium mb-4">
+                    {language === 'ar' ? 'معلومات المنظمة (اختياري)' : 'Organization Information (Optional)'}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="domain">
+                        {language === 'ar' ? 'المجال / النطاق' : 'Domain'}
+                      </Label>
+                      <Input
+                        id="domain"
+                        placeholder={language === 'ar' ? 'example.com' : 'example.com'}
+                        value={onboardingData.company.domain}
+                        onChange={(e) => setOnboardingData(prev => ({
+                          ...prev,
+                          company: { ...prev.company, domain: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="registrationId">
+                        {language === 'ar' ? 'رقم التسجيل / الضريبة' : 'Registration ID / VAT'}
+                      </Label>
+                      <Input
+                        id="registrationId"
+                        value={onboardingData.company.registrationId}
+                        onChange={(e) => setOnboardingData(prev => ({
+                          ...prev,
+                          company: { ...prev.company, registrationId: e.target.value }
+                        }))}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="industry">
+                      {language === 'ar' ? 'القطاع / الصناعة' : 'Industry'}
+                    </Label>
+                    <Select
+                      value={onboardingData.company.industry}
+                      onValueChange={(value) => setOnboardingData(prev => ({
+                        ...prev,
+                        company: { ...prev.company, industry: value }
+                      }))}
+                    >
+                      <SelectTrigger id="industry">
+                        <SelectValue placeholder={language === 'ar' ? 'اختر القطاع' : 'Select industry'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technology">{language === 'ar' ? 'التكنولوجيا' : 'Technology'}</SelectItem>
+                        <SelectItem value="manufacturing">{language === 'ar' ? 'التصنيع' : 'Manufacturing'}</SelectItem>
+                        <SelectItem value="healthcare">{language === 'ar' ? 'الرعاية الصحية' : 'Healthcare'}</SelectItem>
+                        <SelectItem value="finance">{language === 'ar' ? 'المالية' : 'Finance'}</SelectItem>
+                        <SelectItem value="retail">{language === 'ar' ? 'التجزئة' : 'Retail'}</SelectItem>
+                        <SelectItem value="education">{language === 'ar' ? 'التعليم' : 'Education'}</SelectItem>
+                        <SelectItem value="logistics">{language === 'ar' ? 'اللوجستيات' : 'Logistics'}</SelectItem>
+                        <SelectItem value="construction">{language === 'ar' ? 'البناء' : 'Construction'}</SelectItem>
+                        <SelectItem value="hospitality">{language === 'ar' ? 'الضيافة' : 'Hospitality'}</SelectItem>
+                        <SelectItem value="other">{language === 'ar' ? 'أخرى' : 'Other'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                 </div>
               )}
 
@@ -701,27 +779,42 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              <div className="flex justify-between pt-6">
+              <div className="flex justify-between pt-6 gap-4">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={handleBack}
                   disabled={currentStep === 1}
                   data-testid="button-back"
+                  className={`
+                    ${currentStep === 1 ? 'invisible' : 'visible'}
+                    border-border/50 dark:border-[#d4af37]/20 
+                    hover:border-primary dark:hover:border-[#d4af37] 
+                    hover:bg-primary/10 dark:hover:bg-[#d4af37]/10
+                    transition-all duration-300
+                  `}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   {language === 'ar' ? 'السابق' : 'Previous'}
                 </Button>
                 
                 {currentStep < STEPS.length ? (
-                  <Button onClick={handleNext} data-testid="button-next">
+                  <Button 
+                    type="button"
+                    onClick={handleNext} 
+                    data-testid="button-next"
+                    className="bg-gradient-to-r from-primary to-primary/90 dark:from-[#d4af37] dark:to-[#f9c800] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300"
+                  >
                     {language === 'ar' ? 'التالي' : 'Next'}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
                   <Button 
+                    type="button"
                     onClick={handleSubmit}
                     disabled={onboardingMutation.isPending}
                     data-testid="button-submit"
+                    className="bg-gradient-to-r from-primary to-primary/90 dark:from-[#d4af37] dark:to-[#f9c800] hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300"
                   >
                     {onboardingMutation.isPending 
                       ? (language === 'ar' ? 'جاري التسجيل...' : 'Submitting...') 

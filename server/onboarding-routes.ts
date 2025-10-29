@@ -21,6 +21,10 @@ const onboardingSchema = z.object({
     nameAr: z.string().min(1, 'Company name in Arabic is required / اسم الشركة بالعربية مطلوب'),
     email: z.string().email().optional().or(z.literal('')),
     phone: z.string().optional(),
+    // Organization Identity
+    domain: z.string().optional(),
+    registrationId: z.string().optional(),
+    industry: z.string().optional(),
   }),
   headquarters: z.object({
     nameEn: z.string().optional(),
@@ -82,6 +86,17 @@ router.post('/onboarding/complete', async (req, res) => {
       email: data.user.email,
       phone: data.company.phone || null,
       isAdmin: isFirstUser,
+      // Organization Identity
+      domain: data.company.domain || null,
+      registrationId: data.company.registrationId || null,
+      industry: data.company.industry || null,
+      hqCity: data.headquarters.city || null,
+      hqCountry: data.headquarters.country || null,
+      // Commercial Terms (not collected during onboarding, can be set by admin later)
+      paymentTerms: null,
+      priceTier: null,
+      riskTier: null,
+      contractModel: null,
     });
 
     // Create headquarters location

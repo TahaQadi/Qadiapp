@@ -138,7 +138,7 @@ export default function AdminDocumentsPage() {
   const accessLogs = accessLogsData?.logs || [];
 
   // Templates queries
-  const { data: templates, isLoading: isLoadingTemplates } = useQuery({
+  const { data: templatesData, isLoading: isLoadingTemplates } = useQuery({
     queryKey: ['/api/admin/templates', selectedCategory],
     queryFn: async () => {
       const url = selectedCategory === 'all'
@@ -148,6 +148,8 @@ export default function AdminDocumentsPage() {
       return res.json();
     },
   });
+
+  const templates = templatesData?.templates || [];
 
   // Template mutations
   const createMutation = useMutation({
@@ -409,7 +411,7 @@ export default function AdminDocumentsPage() {
 
                 {/* Summary Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50">
+                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold" data-testid="text-total-documents">{documents.length}</div>
                       <div className="text-sm text-muted-foreground">
@@ -418,7 +420,7 @@ export default function AdminDocumentsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-green-50 to-green-100/50">
+                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold" data-testid="text-storage-used">
                         {formatFileSize(documents.reduce((sum: number, doc: Document) => sum + doc.fileSize, 0))}
@@ -429,7 +431,7 @@ export default function AdminDocumentsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50">
+                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold" data-testid="text-total-views">
                         {documents.reduce((sum: number, doc: Document) => sum + (doc.viewCount || 0), 0)}
@@ -440,7 +442,7 @@ export default function AdminDocumentsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50">
+                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
                       <div className="text-2xl font-bold" data-testid="text-filtered-docs">
                         {documents.filter((d: Document) => (documentType && documentType !== 'all') ? d.documentType === documentType : true).length}
@@ -602,11 +604,11 @@ export default function AdminDocumentsPage() {
 
               <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10">
                 <CardContent className="pt-6">
-                  <div className="text-2xl font-bold" data-testid="text-bilingual-templates">
-                    {templates?.filter((t: any) => t.language === 'both').length || 0}
+                  <div className="text-2xl font-bold" data-testid="text-default-templates">
+                    {templates?.filter((t: any) => t.isDefault).length || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {language === 'ar' ? 'ثنائية اللغة' : 'Bilingual'}
+                    {language === 'ar' ? 'القوالب الافتراضية' : 'Default Templates'}
                   </div>
                 </CardContent>
               </Card>
@@ -671,11 +673,11 @@ export default function AdminDocumentsPage() {
                                 <FileText className="h-4 w-4 text-primary shrink-0" />
                               </div>
                               <CardTitle className="text-sm sm:text-base truncate font-semibold">
-                                {language === 'ar' ? template.nameAr : template.nameEn}
+                                {template.name}
                               </CardTitle>
                             </div>
                             <CardDescription className="text-xs line-clamp-2 mt-1">
-                              {language === 'ar' ? template.descriptionAr : template.descriptionEn}
+                              {template.description}
                             </CardDescription>
                             {/* Template metadata */}
                             <div className="flex gap-2 mt-2 flex-wrap">
@@ -733,10 +735,7 @@ export default function AdminDocumentsPage() {
                             variant="outline"
                             className="flex-1 min-h-[44px]"
                             onClick={() => {
-                              const newName = {
-                                en: `${template.nameEn} (Copy)`,
-                                ar: `${template.nameAr} (نسخة)`,
-                              };
+                              const newName = `${template.name} (نسخة)`;
                               duplicateMutation.mutate({ id: template.id, name: newName });
                             }}
                             data-testid={`button-duplicate-${template.id}`}
@@ -878,7 +877,7 @@ export default function AdminDocumentsPage() {
               {language === 'ar' ? 'معاينة القالب' : 'Template Preview'}
             </DialogTitle>
             <DialogDescription>
-              {previewTemplate && (language === 'ar' ? previewTemplate.nameAr : previewTemplate.nameEn)}
+              {previewTemplate && previewTemplate.name}
             </DialogDescription>
           </DialogHeader>
 
@@ -893,12 +892,8 @@ export default function AdminDocumentsPage() {
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center py-1 border-b">
-                      <span className="text-muted-foreground">{language === 'ar' ? 'الاسم (EN):' : 'Name (EN):'}</span>
-                      <span className="font-medium">{previewTemplate.nameEn || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1 border-b">
-                      <span className="text-muted-foreground">{language === 'ar' ? 'الاسم (AR):' : 'Name (AR):'}</span>
-                      <span className="font-medium">{previewTemplate.nameAr || 'N/A'}</span>
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الاسم:' : 'Name:'}</span>
+                      <span className="font-medium">{previewTemplate.name || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-center py-1 border-b">
                       <span className="text-muted-foreground">{language === 'ar' ? 'التصنيف:' : 'Category:'}</span>
@@ -931,18 +926,10 @@ export default function AdminDocumentsPage() {
                   <div className="space-y-3 text-sm">
                     <div>
                       <span className="text-muted-foreground font-medium block mb-1">
-                        {language === 'ar' ? 'الوصف (EN):' : 'Description (EN):'}
+                        {language === 'ar' ? 'الوصف:' : 'Description:'}
                       </span>
                       <p className="text-sm bg-muted/50 p-2 rounded">
-                        {previewTemplate.descriptionEn || 'No description'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground font-medium block mb-1">
-                        {language === 'ar' ? 'الوصف (AR):' : 'Description (AR):'}
-                      </span>
-                      <p className="text-sm bg-muted/50 p-2 rounded">
-                        {previewTemplate.descriptionAr || 'لا يوجد وصف'}
+                        {previewTemplate.description || (language === 'ar' ? 'لا يوجد وصف' : 'No description')}
                       </p>
                     </div>
                   </div>
