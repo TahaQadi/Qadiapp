@@ -238,18 +238,25 @@ describe('NotificationService', () => {
         });
       });
 
-      it('should handle different order statuses', () => {
-        const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+    it('should handle different order statuses', () => {
+      const statusTests = [
+        { status: 'pending', expectedText: 'pending confirmation' },
+        { status: 'confirmed', expectedText: 'confirmed' },
+        { status: 'processing', expectedText: 'being processed' },
+        { status: 'shipped', expectedText: 'shipped' },
+        { status: 'delivered', expectedText: 'delivered' },
+        { status: 'cancelled', expectedText: 'cancelled' },
+      ];
 
-        statuses.forEach((status) => {
-          const notification = notificationService.createOrderNotification(
-            'order-123',
-            'ORD-001',
-            status
-          );
-          expect(notification.messageEn).toContain(status);
-        });
+      statusTests.forEach(({ status, expectedText }) => {
+        const notification = notificationService.createOrderNotification(
+          'order-123',
+          'ORD-001',
+          status
+        );
+        expect(notification.messageEn).toContain(expectedText);
       });
+    });
     });
 
     describe('createPriceRequestNotification()', () => {

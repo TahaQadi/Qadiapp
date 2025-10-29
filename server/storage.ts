@@ -756,8 +756,7 @@ export class MemStorage implements IStorage {
       .insert(orderTemplates)
       .values({
         clientId: insertTemplate.clientId,
-        nameEn: insertTemplate.nameEn,
-        nameAr: insertTemplate.nameAr,
+        name: insertTemplate.name,
         items: insertTemplate.items,
       })
       .returning();

@@ -1,5 +1,5 @@
 import { TemplateStorage } from './template-storage';
-import { TemplateGenerator } from './template-generator';
+import { TemplatePDFGenerator } from './template-pdf-generator';
 import { DocumentTemplate, TemplateVariable } from '@shared/template-schema';
 
 export class TemplateManager {
@@ -15,9 +15,15 @@ export class TemplateManager {
           description: defaultTemplate.description,
           category: defaultTemplate.category,
           language: 'ar' as const, // Arabic-only
-          sections: JSON.parse(defaultTemplate.sections as string),
-          variables: JSON.parse(defaultTemplate.variables as string),
-          styles: JSON.parse(defaultTemplate.styles as string),
+          sections: typeof defaultTemplate.sections === 'string' 
+            ? JSON.parse(defaultTemplate.sections) 
+            : defaultTemplate.sections,
+          variables: typeof defaultTemplate.variables === 'string'
+            ? JSON.parse(defaultTemplate.variables)
+            : defaultTemplate.variables,
+          styles: typeof defaultTemplate.styles === 'string'
+            ? JSON.parse(defaultTemplate.styles)
+            : defaultTemplate.styles,
           isActive: defaultTemplate.isActive,
           isDefault: defaultTemplate.isDefault || false,
           version: 1,
@@ -36,9 +42,15 @@ export class TemplateManager {
           description: activeTemplate.description,
           category: activeTemplate.category,
           language: 'ar' as const, // Arabic-only
-          sections: JSON.parse(activeTemplate.sections as string),
-          variables: JSON.parse(activeTemplate.variables as string),
-          styles: JSON.parse(activeTemplate.styles as string),
+          sections: typeof activeTemplate.sections === 'string'
+            ? JSON.parse(activeTemplate.sections)
+            : activeTemplate.sections,
+          variables: typeof activeTemplate.variables === 'string'
+            ? JSON.parse(activeTemplate.variables)
+            : activeTemplate.variables,
+          styles: typeof activeTemplate.styles === 'string'
+            ? JSON.parse(activeTemplate.styles)
+            : activeTemplate.styles,
           isActive: activeTemplate.isActive,
           isDefault: activeTemplate.isDefault || false,
           version: 1,
@@ -72,9 +84,15 @@ export class TemplateManager {
             description: templateData.description,
             category: templateData.category,
             language: 'ar' as const, // Arabic-only
-            sections: JSON.parse(templateData.sections as string),
-            variables: JSON.parse(templateData.variables as string),
-            styles: JSON.parse(templateData.styles as string),
+            sections: typeof templateData.sections === 'string'
+              ? JSON.parse(templateData.sections)
+              : templateData.sections,
+            variables: typeof templateData.variables === 'string'
+              ? JSON.parse(templateData.variables)
+              : templateData.variables,
+            styles: typeof templateData.styles === 'string'
+              ? JSON.parse(templateData.styles)
+              : templateData.styles,
             isActive: templateData.isActive,
             isDefault: false,
             version: 1,
@@ -93,7 +111,20 @@ export class TemplateManager {
         throw new Error(`No template found for category: ${category}`);
       }
       
-      return await TemplateGenerator.generateFromTemplate(template, variables);
+      // Convert to TemplatePDFGenerator format
+      const templateForGenerator = {
+        ...template,
+        nameEn: template.name,
+        nameAr: template.name,
+        descriptionEn: template.description || '',
+        descriptionAr: template.description || ''
+      };
+      
+      return await TemplatePDFGenerator.generate({
+        template: templateForGenerator as any,
+        variables,
+        language: 'ar' // Arabic-only system
+      });
     } catch (error) {
       console.error('Error generating document:', error);
       return null;

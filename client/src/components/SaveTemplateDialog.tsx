@@ -16,20 +16,18 @@ import { useLanguage } from './LanguageProvider';
 interface SaveTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (nameEn: string, nameAr: string) => void;
+  onSave: (name: string) => void;
 }
 
 export function SaveTemplateDialog({ open, onOpenChange, onSave }: SaveTemplateDialogProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const [nameEn, setNameEn] = useState('');
-  const [nameAr, setNameAr] = useState('');
+  const [name, setName] = useState('');
 
   const handleSave = () => {
-    if (nameEn.trim() && nameAr.trim()) {
-      onSave(nameEn, nameAr);
-      setNameEn('');
-      setNameAr('');
+    if (name.trim()) {
+      onSave(name);
+      setName('');
       onOpenChange(false);
     }
   };
@@ -41,31 +39,22 @@ export function SaveTemplateDialog({ open, onOpenChange, onSave }: SaveTemplateD
           <DialogTitle>{t('saveTemplate')}</DialogTitle>
           <DialogDescription>
             {language === 'ar' 
-              ? 'قم بإعطاء قالبك اسمًا بكلتا اللغتين'
-              : 'Give your template a name in both languages'}
+              ? 'قم بإعطاء قالبك اسمًا'
+              : 'Give your template a name'}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name-en">English Name</Label>
+            <Label htmlFor="template-name">
+              {language === 'ar' ? 'اسم القالب' : 'Template Name'}
+            </Label>
             <Input
-              id="name-en"
-              value={nameEn}
-              onChange={(e) => setNameEn(e.target.value)}
-              placeholder="Weekly Office Supplies"
-              data-testid="input-template-name-en"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="name-ar">الاسم بالعربية</Label>
-            <Input
-              id="name-ar"
-              value={nameAr}
-              onChange={(e) => setNameAr(e.target.value)}
-              placeholder="مستلزمات مكتبية أسبوعية"
-              data-testid="input-template-name-ar"
+              id="template-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={language === 'ar' ? 'مستلزمات مكتبية أسبوعية' : 'Weekly Office Supplies'}
+              data-testid="input-template-name"
             />
           </div>
         </div>
@@ -80,7 +69,7 @@ export function SaveTemplateDialog({ open, onOpenChange, onSave }: SaveTemplateD
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!nameEn.trim() || !nameAr.trim()}
+            disabled={!name.trim()}
             data-testid="button-confirm-save-template"
           >
             {t('saveTemplate')}

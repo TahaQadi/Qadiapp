@@ -60,8 +60,7 @@ export interface CartItem {
 
 interface Template {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   items: string;
   createdAt: string;
 }
@@ -392,21 +391,20 @@ export default function OrderingPage() {
     setOrderConfirmationOpen(false);
   }, [cart, submitOrderMutation]);
 
-  const handleSaveTemplate = (nameEn: string, nameAr: string) => {
+  const handleSaveTemplate = (name: string) => {
     const items = cart.map(item => ({
       productId: item.productId,
       quantity: item.quantity,
     }));
 
     saveTemplateMutation.mutate({
-      nameEn,
-      nameAr,
+      name,
       items,
     });
     setSaveTemplateDialogOpen(false);
   };
 
-  const handleLoadTemplate = (templateData: { id: string; nameEn: string; nameAr: string; items: string; createdAt: Date }) => {
+  const handleLoadTemplate = (templateData: { id: string; name: string; items: string; createdAt: Date }) => {
     const templateItems = safeJsonParse(templateData.items, []) as any[];
     const newCartItems: CartItem[] = [];
 
@@ -432,7 +430,7 @@ export default function OrderingPage() {
       setCart(newCartItems);
       toast({
         title: t('templateLoaded'),
-        description: language === 'ar' ? templateData.nameAr : templateData.nameEn,
+        description: templateData.name,
       });
     } else {
       toast({
@@ -621,8 +619,7 @@ export default function OrderingPage() {
     const templateItems = safeJsonParse(template.items, []);
     return {
       id: template.id,
-      nameEn: template.nameEn,
-      nameAr: template.nameAr,
+      name: template.name,
       items: template.items,
       itemCount: templateItems.length,
       createdAt: new Date(template.createdAt),
@@ -1203,27 +1200,47 @@ export default function OrderingPage() {
               <TabsList className="w-full justify-start overflow-x-auto bg-card/50 dark:bg-card/30 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/20 h-auto p-1">
                 <TabsTrigger
                   value="lta-products"
-                  className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm"
+                  className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2"
                   data-testid="tab-lta-products"
                 >
                   <Package className="h-4 w-4 me-1 sm:me-2" />
                   <span className="hidden xs:inline">{language === 'ar' ? 'اتفاقياتي' : 'My LTAs'}</span>
                   <span className="xs:hidden">{language === 'ar' ? 'اتفاقياتي' : 'LTAs'}</span>
+                  {clientLtas.length > 0 && (
+                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
+                      {clientLtas.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="templates" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-templates">
+                <TabsTrigger value="templates" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-templates">
                   <FileText className="h-4 w-4 me-1 sm:me-2" />
                   <span className="hidden xs:inline">{t('templates')}</span>
                   <span className="xs:hidden">{language === 'ar' ? 'قوالب' : 'Temp'}</span>
+                  {templates.length > 0 && (
+                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
+                      {templates.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="price-offers" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-price-offers">
+                <TabsTrigger value="price-offers" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-price-offers">
                   <FileText className="h-4 w-4 me-1 sm:me-2" />
                   <span className="hidden xs:inline">{language === 'ar' ? 'عروض الأسعار' : 'Price Offers'}</span>
                   <span className="xs:hidden">{language === 'ar' ? 'عروض' : 'Offers'}</span>
+                  {priceOffers.length > 0 && (
+                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
+                      {priceOffers.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="history" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm" data-testid="tab-history">
+                <TabsTrigger value="history" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-history">
                   <History className="h-4 w-4 me-1 sm:me-2" />
                   <span className="hidden xs:inline">{t('history')}</span>
                   <span className="xs:hidden">{language === 'ar' ? 'سجل' : 'Hist'}</span>
+                  {orders.length > 0 && (
+                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
+                      {orders.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1449,8 +1466,7 @@ export default function OrderingPage() {
                     <OrderTemplateCard
                       key={template.id}
                       id={template.id}
-                      nameEn={template.nameEn}
-                      nameAr={template.nameAr}
+                      name={template.name}
                       itemCount={template.itemCount}
                       createdAt={template.createdAt}
                       onLoad={() => handleLoadTemplate(template)}
@@ -1756,7 +1772,7 @@ export default function OrderingPage() {
             quantity: item.quantity,
             price: item.price,
           }))}
-          totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) * 1.15}
+          totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0)}
           currency={cart[0]?.currency || 'ILS'}
           ltaName={clientLtas.find(lta => lta.id === activeLtaId)?.nameEn}
           onConfirm={handleConfirmOrder}

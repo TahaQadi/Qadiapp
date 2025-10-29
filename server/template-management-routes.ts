@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { requireAuth, requireAdmin, AuthenticatedRequest, AdminRequest } from "./auth";
 import { TemplateStorage } from "./template-storage";
 import { TemplateManager } from "./template-manager";
-import { TemplateGenerator } from "./template-generator";
+import { TemplatePDFGenerator } from "./template-pdf-generator";
 import { DocumentTemplate, TemplateVariable } from "@shared/template-schema";
 import { z } from "zod";
 
@@ -263,10 +263,20 @@ export function setupTemplateManagementRoutes(app: Express) {
         value: v.value
       }));
 
-      const pdfBuffer = await TemplateGenerator.generateFromTemplate(
-        documentTemplate,
-        templateVariables
-      );
+      // Convert to TemplatePDFGenerator format
+      const templateForGenerator = {
+        ...documentTemplate,
+        nameEn: documentTemplate.name,
+        nameAr: documentTemplate.name,
+        descriptionEn: documentTemplate.description || '',
+        descriptionAr: documentTemplate.description || ''
+      };
+
+      const pdfBuffer = await TemplatePDFGenerator.generate({
+        template: templateForGenerator as any,
+        variables: templateVariables,
+        language: language as 'ar'
+      });
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline; filename="preview.pdf"');

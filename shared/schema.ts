@@ -166,8 +166,7 @@ export const clientPricing = pgTable("client_pricing", {
 export const orderTemplates = pgTable("order_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
+  name: text("name").notNull(),
   items: text("items").notNull(), // JSON string
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -473,8 +472,7 @@ export const updateProductSchema = createProductSchema.partial();
 
 // Template save schema
 export const saveTemplateSchema = z.object({
-  nameEn: z.string().min(1),
-  nameAr: z.string().min(1),
+  name: z.string().min(1),
   items: z.array(z.object({
     productId: z.string(),
     quantity: z.number().int().positive(),

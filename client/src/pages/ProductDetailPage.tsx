@@ -255,12 +255,10 @@ export default function ProductDetailPage() {
           <Button
             variant="ghost"
             size="icon"
-            asChild
+            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = (user ? "/catalog" : "/landing")}
             className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
           >
-            <Link href={user ? '/ordering' : '/landing'}>
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Link>
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="Logo" className="h-8 w-8" />

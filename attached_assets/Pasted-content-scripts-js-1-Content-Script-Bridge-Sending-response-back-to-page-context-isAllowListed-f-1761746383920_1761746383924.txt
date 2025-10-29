@@ -1,0 +1,1849 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: {isAllowListed: false, isProtectionEnabled: true, isScamsProtectionEnabled: true}
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: {isAllowListed: false, isProtectionEnabled: true, isScamsProtectionEnabled: true}
+client:802 WebSocket connection to 'wss://localhost:5000/?token=SRarBtNbXC-0' failed: 
+createConnection @ client:802
+connect @ client:437
+connect @ client:811
+connect @ client:290
+connect @ client:383
+(anonymous) @ client:908
+client:841 [vite] failed to connect to websocket (Error: WebSocket closed without opened.). 
+overrideMethod @ hook.js:608
+connect @ client:841
+await in connect
+connect @ client:290
+connect @ client:383
+(anonymous) @ client:908
+client:882 [vite] Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (client:454:22)
+overrideMethod @ hook.js:608
+error @ client:882
+(anonymous) @ client:137
+Promise.catch
+send @ client:136
+send @ client:100
+sendError @ ordering:16
+(anonymous) @ ordering:24
+client:454 Uncaught (in promise) Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (client:454:22)
+(anonymous) @ client:454
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=83d19d2d:103
+flush @ @tanstack_react-query.js?v=83d19d2d:612
+batch @ @tanstack_react-query.js?v=83d19d2d:630
+dispatch_fn @ @tanstack_react-query.js?v=83d19d2d:1262
+setData @ @tanstack_react-query.js?v=83d19d2d:933
+fetch @ @tanstack_react-query.js?v=83d19d2d:1155
+await in fetch
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+securityAudit.ts:126 🔒 Security Audit Report
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=83d19d2d:103
+flush @ @tanstack_react-query.js?v=83d19d2d:612
+batch @ @tanstack_react-query.js?v=83d19d2d:630
+dispatch_fn @ @tanstack_react-query.js?v=83d19d2d:1262
+setData @ @tanstack_react-query.js?v=83d19d2d:933
+fetch @ @tanstack_react-query.js?v=83d19d2d:1155
+await in fetch
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=83d19d2d:103
+flush @ @tanstack_react-query.js?v=83d19d2d:612
+batch @ @tanstack_react-query.js?v=83d19d2d:630
+dispatch_fn @ @tanstack_react-query.js?v=83d19d2d:1262
+setData @ @tanstack_react-query.js?v=83d19d2d:933
+fetch @ @tanstack_react-query.js?v=83d19d2d:1155
+await in fetch
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+setTimeout
+systemSetTimeoutZero @ @tanstack_react-query.js?v=83d19d2d:103
+flush @ @tanstack_react-query.js?v=83d19d2d:612
+batch @ @tanstack_react-query.js?v=83d19d2d:630
+dispatch_fn @ @tanstack_react-query.js?v=83d19d2d:1262
+setData @ @tanstack_react-query.js?v=83d19d2d:933
+fetch @ @tanstack_react-query.js?v=83d19d2d:1155
+await in fetch
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-OLMJQVUO.js?v=83d19d2d:332:29)
+    at chunk-OLMJQVUO.js?v=83d19d2d:236:13
+    at chunk-OLMJQVUO.js?v=83d19d2d:159:58
+    at Presence (chunk-JNHQKRNZ.js?v=83d19d2d:24:11)
+    at chunk-OLMJQVUO.js?v=83d19d2d:150:64
+    at chunk-KQESEILF.js?v=83d19d2d:79:13
+    at chunk-KQESEILF.js?v=83d19d2d:56:13
+    at chunk-RE4EICNK.js?v=83d19d2d:43:13
+    at chunk-DHZ34LRN.js?v=83d19d2d:260:22
+    at Presence (chunk-JNHQKRNZ.js?v=83d19d2d:24:11)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at DialogPortal (chunk-OLMJQVUO.js?v=83d19d2d:112:11)
+    at _c3 (dialog.tsx:36:6)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at Dialog (chunk-OLMJQVUO.js?v=83d19d2d:52:5)
+    at div (<anonymous>)
+    at CatalogPage (CatalogPage.tsx:38:22)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-OLMJQVUO.js?v=83d19d2d:340
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+queryClient.ts:32  GET https://fe0bd286-1d6d-4b63-ab6e-abd17ed05130-00-mhgefc3d1xxb.kirk.replit.dev/api/client/templates 500 (Internal Server Error)
+(anonymous) @ queryClient.ts:32
+fetchFn @ @tanstack_react-query.js?v=83d19d2d:1099
+run @ @tanstack_react-query.js?v=83d19d2d:797
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:822
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:818
+Promise.catch
+run @ @tanstack_react-query.js?v=83d19d2d:801
+start @ @tanstack_react-query.js?v=83d19d2d:840
+fetch @ @tanstack_react-query.js?v=83d19d2d:1146
+executeFetch_fn @ @tanstack_react-query.js?v=83d19d2d:1644
+onSubscribe @ @tanstack_react-query.js?v=83d19d2d:1337
+subscribe @ @tanstack_react-query.js?v=83d19d2d:24
+(anonymous) @ @tanstack_react-query.js?v=83d19d2d:3303
+subscribeToStore @ chunk-SXRIVT2P.js?v=83d19d2d:12032
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+hook.js:608 `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog Error Component Stack
+    at TitleWarning (chunk-OLMJQVUO.js?v=83d19d2d:316:23)
+    at chunk-OLMJQVUO.js?v=83d19d2d:236:13
+    at chunk-OLMJQVUO.js?v=83d19d2d:159:58
+    at Presence (chunk-JNHQKRNZ.js?v=83d19d2d:24:11)
+    at chunk-OLMJQVUO.js?v=83d19d2d:150:64
+    at chunk-KQESEILF.js?v=83d19d2d:79:13
+    at chunk-KQESEILF.js?v=83d19d2d:56:13
+    at chunk-RE4EICNK.js?v=83d19d2d:43:13
+    at chunk-DHZ34LRN.js?v=83d19d2d:260:22
+    at Presence (chunk-JNHQKRNZ.js?v=83d19d2d:24:11)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at DialogPortal (chunk-OLMJQVUO.js?v=83d19d2d:112:11)
+    at _c3 (sheet.tsx:59:6)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at Dialog (chunk-OLMJQVUO.js?v=83d19d2d:52:5)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at header (<anonymous>)
+    at div (<anonymous>)
+    at OrderingPage (OrderingPage.tsx:79:20)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at ProtectedRoute (protected-route.tsx:6:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-OLMJQVUO.js?v=83d19d2d:326
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-OLMJQVUO.js?v=83d19d2d:332:29)
+    at chunk-OLMJQVUO.js?v=83d19d2d:236:13
+    at chunk-OLMJQVUO.js?v=83d19d2d:159:58
+    at Presence (chunk-JNHQKRNZ.js?v=83d19d2d:24:11)
+    at chunk-OLMJQVUO.js?v=83d19d2d:150:64
+    at chunk-KQESEILF.js?v=83d19d2d:79:13
+    at chunk-KQESEILF.js?v=83d19d2d:56:13
+    at chunk-RE4EICNK.js?v=83d19d2d:43:13
+    at chunk-DHZ34LRN.js?v=83d19d2d:260:22
+    at Presence (chunk-JNHQKRNZ.js?v=83d19d2d:24:11)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at DialogPortal (chunk-OLMJQVUO.js?v=83d19d2d:112:11)
+    at _c3 (sheet.tsx:59:6)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at Dialog (chunk-OLMJQVUO.js?v=83d19d2d:52:5)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at header (<anonymous>)
+    at div (<anonymous>)
+    at OrderingPage (OrderingPage.tsx:79:20)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at ProtectedRoute (protected-route.tsx:6:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-OLMJQVUO.js?v=83d19d2d:340
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+commitRootImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19469
+commitRoot @ chunk-SXRIVT2P.js?v=83d19d2d:19330
+performSyncWorkOnRoot @ chunk-SXRIVT2P.js?v=83d19d2d:18948
+flushSyncCallbacks @ chunk-SXRIVT2P.js?v=83d19d2d:9166
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:18677
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384
+PriceOfferCreationDialog.tsx:288 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at PriceOfferCreationDialog (PriceOfferCreationDialog.tsx:90:3)
+    at div (<anonymous>)
+    at AdminPriceManagementPage (AdminPriceManagementPage.tsx:106:24)
+    at Suspense (<anonymous>)
+    at Route (wouter.js?v=83d19d2d:280:16)
+    at AdminRoute (App.tsx:59:3)
+    at Switch (wouter.js?v=83d19d2d:336:17)
+    at Router (App.tsx:114:48)
+    at ErrorBoundary (ErrorBoundary.tsx:18:8)
+    at AppContent (App.tsx:179:31)
+    at Provider (chunk-OXZDJRWN.js?v=83d19d2d:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=83d19d2d:64:5)
+    at LanguageProvider (LanguageProvider.tsx:15:36)
+    at ThemeProvider (ThemeProvider.tsx:12:33)
+    at _a (react-helmet-async.js?v=83d19d2d:624:5)
+    at AppWithProviders (App.tsx:202:42)
+    at QueryClientProvider (@tanstack_react-query.js?v=83d19d2d:3086:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-SXRIVT2P.js?v=83d19d2d:521
+error @ chunk-SXRIVT2P.js?v=83d19d2d:505
+checkForNestedUpdates @ chunk-SXRIVT2P.js?v=83d19d2d:19718
+scheduleUpdateOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18583
+dispatchSetState @ chunk-SXRIVT2P.js?v=83d19d2d:12451
+(anonymous) @ PriceOfferCreationDialog.tsx:288
+commitHookEffectListMount @ chunk-SXRIVT2P.js?v=83d19d2d:16963
+commitPassiveMountOnFiber @ chunk-SXRIVT2P.js?v=83d19d2d:18206
+commitPassiveMountEffects_complete @ chunk-SXRIVT2P.js?v=83d19d2d:18179
+commitPassiveMountEffects_begin @ chunk-SXRIVT2P.js?v=83d19d2d:18169
+commitPassiveMountEffects @ chunk-SXRIVT2P.js?v=83d19d2d:18159
+flushPassiveEffectsImpl @ chunk-SXRIVT2P.js?v=83d19d2d:19543
+flushPassiveEffects @ chunk-SXRIVT2P.js?v=83d19d2d:19500
+(anonymous) @ chunk-SXRIVT2P.js?v=83d19d2d:19381
+workLoop @ chunk-SXRIVT2P.js?v=83d19d2d:197
+flushWork @ chunk-SXRIVT2P.js?v=83d19d2d:176
+performWorkUntilDeadline @ chunk-SXRIVT2P.js?v=83d19d2d:384

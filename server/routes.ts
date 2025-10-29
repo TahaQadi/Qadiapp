@@ -17,13 +17,13 @@ import feedbackAnalyticsRoutes from './feedback-analytics-routes';
 import { setupDocumentRoutes } from './document-routes';
 import { setupTemplateManagementRoutes } from './template-management-routes';
 import { setupInvoiceContractRoutes } from './invoice-contract-routes';
-import { documentTriggerService } from './document-triggers';
+// NOTE: documentTriggerService kept dormant - not imported (manual generation only)
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
-import { PDFGenerator } from "./pdf-generator";
 import { PDFStorage } from "./object-storage";
 import { TemplateStorage } from "./template-storage";
 import { TemplatePDFGenerator } from "./template-pdf-generator";
+import { TemplateManager } from "./template-manager";
 import { PDFAccessControl } from "./pdf-access-control";
 import { DocumentUtils } from "./document-utils";
 import {
@@ -162,38 +162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupTemplateManagementRoutes(app);
   setupInvoiceContractRoutes(app); // NEW: Invoice & Contract generation
 
-  // Test document triggers endpoint (for development)
-  app.post('/api/test/document-triggers', async (req: any, res) => {
-    try {
-      const { eventType, data } = req.body;
-
-      if (!eventType || !data) {
-        return res.status(400).json({ message: 'eventType and data are required' });
-      }
-
-      await documentTriggerService.queueEvent({
-        type: eventType,
-        data,
-        clientId: data.clientId || 'test-client',
-        timestamp: new Date()
-      });
-
-      res.json({
-        success: true,
-        message: 'Event queued successfully',
-        queueStatus: documentTriggerService.getQueueStatus()
-      });
-    } catch (error) {
-      // Log error for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Test document trigger error:', error);
-      }
-      res.status(500).json({
-        success: false,
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  // NOTE: Auto-trigger test endpoint removed - manual document generation only
+  // Use /api/documents/generate or /api/templates/generate for manual PDF creation
 
   // Feedback routes
   app.use('/api', feedbackRoutes);
@@ -2696,8 +2666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = saveTemplateSchema.parse(req.body);
       const template = await storage.createOrderTemplate({
         clientId: req.client.id,
-        nameEn: validatedData.nameEn,
-        nameAr: validatedData.nameAr,
+        name: validatedData.name,
         items: JSON.stringify(validatedData.items),
       });
       res.status(201).json(template);
@@ -4229,55 +4198,48 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   // DOCUMENT API ROUTES
   // ======================
 
-  // Generate PDF from template
+  // Generate PDF from template (uses DocumentUtils for deduplication & caching)
   app.post('/api/documents/generate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { templateId, variables, language = 'both' } = req.body;
+      const { templateId, variables, language = 'ar', force = false } = req.body;
 
       if (!templateId || !variables) {
         return res.status(400).json({ error: 'Template ID and variables are required' });
       }
 
-      // Get template
+      // Get template to determine category
       const template = await TemplateStorage.getTemplate(templateId);
       if (!template) {
         return res.status(404).json({ error: 'Template not found' });
       }
 
-      // Generate PDF
-      const pdfBuffer = await TemplatePDFGenerator.generateFromTemplate(template as any, variables, language);
+      // Convert variables to array format expected by DocumentUtils
+      const variablesArray = Array.isArray(variables) 
+        ? variables 
+        : Object.entries(variables).map(([key, value]) => ({ key, value }));
 
-      // Upload to object storage
-      const category = template.category.toUpperCase().replace('_', '_') as any;
-      const fileName = `${template.category}-${Date.now()}.pdf`;
-      const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, category);
-
-      if (!uploadResult.ok) {
-        return res.status(500).json({ error: uploadResult.error });
-      }
-
-      // Create document record
-      const document = await storage.createDocumentMetadata({
-        documentType: template.category as any,
-        fileName,
-        fileUrl: uploadResult.fileName!,
-        fileSize: pdfBuffer.length,
+      // Use DocumentUtils for optimized generation (with deduplication & caching)
+      const result = await DocumentUtils.generateDocument({
+        templateCategory: template.category,
+        variables: variablesArray,
+        language: language as 'ar',
         clientId: req.user!.isAdmin ? variables.clientId : req.user!.id,
-        ltaId: variables.ltaId,
-        orderId: variables.orderId,
-        priceOfferId: variables.priceOfferId,
-        checksum: uploadResult.checksum,
         metadata: {
-          templateId,
-          variables,
-          generatedBy: req.user!.id,
-          generatedAt: new Date().toISOString()
-        }
+          ltaId: variables.ltaId,
+          orderId: variables.orderId,
+          priceOfferId: variables.priceOfferId,
+          generatedBy: req.user!.id
+        },
+        force
       });
+
+      if (!result.success) {
+        return res.status(500).json({ error: result.error || 'Failed to generate document' });
+      }
 
       // Log generation
       await PDFAccessControl.logDocumentAccess({
-        documentId: document.id,
+        documentId: result.documentId!,
         clientId: req.user!.id,
         action: 'generate',
         ipAddress: req.ip,
@@ -4286,9 +4248,8 @@ Sitemap: ${baseUrl}/sitemap.xml`;
 
       res.json({
         success: true,
-        documentId: document.id,
-        fileName,
-        fileUrl: uploadResult.fileName
+        documentId: result.documentId,
+        fileName: result.fileName
       });
     } catch (error) {
       console.error('Document generation error:', error);
@@ -4472,13 +4433,23 @@ Sitemap: ${baseUrl}/sitemap.xml`;
         return res.status(404).json({ message: "Template not found" });
       }
 
-      const pdfBuffer = await TemplatePDFGenerator.generate({
-        template,
-        variables,
-        language: language || 'en',
-      });
+      // Convert variables to array format if needed
+      const variablesArray = Array.isArray(variables) 
+        ? variables 
+        : Object.entries(variables).map(([key, value]) => ({ key, value }));
 
-      const fileName = `${template.nameEn.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+      // Use TemplateManager for consistent PDF generation
+      const pdfBuffer = await TemplateManager.generateDocument(
+        template.category,
+        variablesArray,
+        templateId
+      );
+
+      if (!pdfBuffer) {
+        return res.status(500).json({ message: "Failed to generate PDF" });
+      }
+
+      const fileName = `${template.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
 
       // Store in object storage
       const fileUrl = await PDFStorage.savePDF(pdfBuffer, fileName);
@@ -4515,13 +4486,23 @@ Sitemap: ${baseUrl}/sitemap.xml`;
         return res.status(404).json({ message: "Template not found" });
       }
 
-      const pdfBuffer = await TemplatePDFGenerator.generate({
-        template,
-        variables: variables || [],
-        language: language || 'en',
-      });
+      // Convert variables to array format if needed
+      const variablesArray = Array.isArray(variables || []) 
+        ? (variables || [])
+        : Object.entries(variables || {}).map(([key, value]) => ({ key, value }));
 
-      const fileName = `${template.nameEn.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+      // Use TemplateManager for consistent PDF generation
+      const pdfBuffer = await TemplateManager.generateDocument(
+        template.category,
+        variablesArray,
+        id
+      );
+
+      if (!pdfBuffer) {
+        return res.status(500).json({ message: "Failed to generate PDF" });
+      }
+
+      const fileName = `${template.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
 
       if (saveToDocuments) {
         const fileUrl = await PDFStorage.savePDF(pdfBuffer, fileName);

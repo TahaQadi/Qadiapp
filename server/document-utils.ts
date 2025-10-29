@@ -89,11 +89,15 @@ export class DocumentUtils {
 
       // 3. Upload to storage
       const fileName = this.generateFileName(templateCategory, metadata);
+      console.log('📤 Uploading PDF:', fileName);
       const uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, templateCategory.toUpperCase());
 
-      if (!uploadResult.success) {
-        return { success: false, error: 'Failed to upload PDF' };
+      if (!uploadResult.ok) {
+        console.error('❌ Upload failed:', uploadResult.error);
+        return { success: false, error: `Failed to upload PDF: ${uploadResult.error}` };
       }
+      
+      console.log('✅ PDF uploaded successfully:', uploadResult.fileName);
 
       // 4. Create database record with variablesHash for deduplication
       const document = await storage.createDocumentMetadata({
@@ -161,8 +165,9 @@ export class DocumentUtils {
     console.log('🔍 Fetching template from database:', category);
     const templates = await TemplateStorage.getTemplates(category);
     
-    // Find active Arabic template (system is Arabic-only)
-    const template = templates.find(t => t.isActive && t.language === 'ar');
+    // Find default active Arabic template first, fallback to any active template
+    const template = templates.find(t => t.isDefault && t.isActive && t.language === 'ar') 
+                  || templates.find(t => t.isActive && t.language === 'ar');
 
     if (template) {
       // Validate template structure before caching

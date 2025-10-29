@@ -8,8 +8,7 @@ import { formatRelativeTime } from '@/lib/dateUtils';
 
 interface OrderTemplateCardProps {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   itemCount: number;
   createdAt: Date;
   onLoad: () => void;
@@ -18,8 +17,7 @@ interface OrderTemplateCardProps {
 
 export function OrderTemplateCard({
   id,
-  nameEn,
-  nameAr,
+  name,
   itemCount,
   createdAt,
   onLoad,
@@ -28,7 +26,6 @@ export function OrderTemplateCard({
   const { t } = useTranslation();
   const { language } = useLanguage();
 
-  const name = language === 'ar' ? nameAr : nameEn;
   const timeAgo = formatRelativeTime(createdAt, language);
 
   return (

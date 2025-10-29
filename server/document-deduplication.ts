@@ -81,7 +81,7 @@ export async function checkDuplicateDocument(
     }
     
     // Get all documents matching the criteria
-    const documents = await storage.searchDocuments(searchCriteria);
+    const { documents } = await storage.searchDocuments(searchCriteria);
     
     // Find document with matching template and variables hash
     const existingDoc = documents.find(doc => {
