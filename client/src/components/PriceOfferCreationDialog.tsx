@@ -470,7 +470,10 @@ export default function PriceOfferCreationDialog({
                     </FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
-                      setSelectedClientId(value); // Update selectedClientId state
+                      // Ensure setSelectedClientId is defined or remove if not used elsewhere
+                      // For now, assuming it might be used in a context not shown here.
+                      // If not, it can be removed.
+                      // setSelectedClientId(value); 
                     }} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
