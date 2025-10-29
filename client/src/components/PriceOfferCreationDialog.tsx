@@ -328,12 +328,12 @@ export default function PriceOfferCreationDialog({
             ...item,
             currency: selectedLtaCurrency || 'ILS'
           }));
-          form.setValue('items', updatedItems);
+          form.setValue('items', updatedItems, { shouldValidate: false });
         }
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open, form]);
+  }, [selectedLtaCurrency, open]);
 
   // Reset currency sync when dialog closes
   useEffect(() => {
