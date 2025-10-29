@@ -411,43 +411,43 @@ export default function AdminDocumentsPage() {
 
                 {/* Summary Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
+                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/30 border-blue-200 dark:border-blue-800/50 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold" data-testid="text-total-documents">{documents.length}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-2xl font-bold text-blue-900 dark:text-blue-100" data-testid="text-total-documents">{documents.length}</div>
+                      <div className="text-sm text-blue-700 dark:text-blue-300">
                         {language === 'ar' ? 'إجمالي المستندات' : 'Total Documents'}
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
+                  <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/50 dark:to-green-900/30 border-green-200 dark:border-green-800/50 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold" data-testid="text-storage-used">
+                      <div className="text-2xl font-bold text-green-900 dark:text-green-100" data-testid="text-storage-used">
                         {formatFileSize(documents.reduce((sum: number, doc: Document) => sum + doc.fileSize, 0))}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-green-700 dark:text-green-300">
                         {language === 'ar' ? 'المساحة المستخدمة' : 'Storage Used'}
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
+                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/50 dark:to-purple-900/30 border-purple-200 dark:border-purple-800/50 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold" data-testid="text-total-views">
+                      <div className="text-2xl font-bold text-purple-900 dark:text-purple-100" data-testid="text-total-views">
                         {documents.reduce((sum: number, doc: Document) => sum + (doc.viewCount || 0), 0)}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-purple-700 dark:text-purple-300">
                         {language === 'ar' ? 'إجمالي المشاهدات' : 'Total Views'}
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm border-border/50 dark:border-[#d4af37]/20 hover:shadow-lg transition-all duration-300">
+                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/50 dark:to-orange-900/30 border-orange-200 dark:border-orange-800/50 hover:shadow-lg transition-all duration-300">
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold" data-testid="text-filtered-docs">
+                      <div className="text-2xl font-bold text-orange-900 dark:text-orange-100" data-testid="text-filtered-docs">
                         {documents.filter((d: Document) => (documentType && documentType !== 'all') ? d.documentType === documentType : true).length}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-orange-700 dark:text-orange-300">
                         {language === 'ar' ? 'المستندات المفلترة' : 'Filtered Docs'}
                       </div>
                     </CardContent>

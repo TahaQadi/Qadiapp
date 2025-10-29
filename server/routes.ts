@@ -2040,29 +2040,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { order, client, lta, items, language } = req.body;
 
-      // Use NEW DocumentUtils with deduplication
+      // Calculate totals
+      const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0);
+      
+      // Use NEW DocumentUtils with DEFAULT template variables
+      // The default template expects: orderId, orderDate, clientName, deliveryAddress, etc.
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'order',
         variables: [
+          // Variables for DEFAULT order template
           { key: 'orderId', value: order.id },
           { key: 'orderDate', value: new Date(order.createdAt).toLocaleDateString('ar-SA') },
-          { key: 'clientName', value: client.nameAr || client.nameEn },
-          { key: 'deliveryAddress', value: order.deliveryAddress || client.address || '' },
-          { key: 'clientPhone', value: client.phone || '' },
+          { key: 'clientName', value: client?.nameAr || client?.nameEn || 'عميل' },
+          { key: 'deliveryAddress', value: order.deliveryAddress || client?.address || 'لم يحدد' },
+          { key: 'clientPhone', value: client?.phone || '' },
           { key: 'paymentMethod', value: order.paymentMethod || 'تحويل بنكي' },
           { key: 'reference', value: order.referenceNumber || lta?.referenceNumber || '' },
           { key: 'items', value: items },
-          { key: 'totalAmount', value: order.totalAmount?.toString() || '0' },
-          { key: 'deliveryDays', value: '5' }
+          { key: 'totalAmount', value: itemsTotal.toFixed(2) },
+          { key: 'deliveryDays', value: '5-7' }
         ],
-        clientId: client.id,
+        clientId: client?.id,
         metadata: { orderId: order.id }
       });
 
       if (!documentResult.success) {
+        console.error('❌ Document generation failed:', documentResult.error);
         return res.status(500).json({
           message: documentResult.error || 'Failed to generate PDF',
-          messageAr: 'فشل إنشاء PDF'
+          messageAr: 'فشل إنشاء PDF',
+          details: documentResult.error
         });
       }
 
@@ -2070,21 +2077,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const downloadResult = await PDFStorage.downloadPDF(documentResult.fileName!);
       
       if (!downloadResult.ok || !downloadResult.data) {
+        console.error('❌ PDF download failed:', downloadResult.error);
         return res.status(500).json({
           message: 'Failed to retrieve PDF',
-          messageAr: 'فشل استرجاع PDF'
+          messageAr: 'فشل استرجاع PDF',
+          details: downloadResult.error
         });
       }
 
+      console.log('✅ PDF export successful:', documentResult.fileName);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="order-${order.id.slice(0, 8)}.pdf"`);
       res.setHeader('Content-Length', downloadResult.data.length.toString());
       res.send(downloadResult.data);
     } catch (error) {
-      console.error('PDF export error:', error);
+      console.error('❌ PDF export error:', error);
       res.status(500).json({
         message: 'Failed to export PDF',
-        messageAr: 'فشل تصدير PDF'
+        messageAr: 'فشل تصدير PDF',
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
