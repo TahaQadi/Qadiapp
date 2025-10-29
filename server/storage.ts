@@ -1603,16 +1603,17 @@ export class MemStorage implements IStorage {
     return doc;
   }
 
-  async searchDocuments(filters: {
-    documentType?: string;
-    clientId?: string;
-    ltaId?: string;
-    orderId?: string;
-    priceOfferId?: string;
-    startDate?: Date;
-    endDate?: Date;
-    searchTerm?: string;
-  }, page: number = 1, pageSize: number = 20): Promise<{ documents: any[], totalCount: number }> {
+  async searchDocuments(
+    filters: {
+      documentType?: string;
+      clientId?: string;
+      ltaId?: string;
+      orderId?: string;
+      priceOfferId?: string;
+      startDate?: Date;
+      endDate?: Date;
+      searchTerm?: string;
+    }, page: number = 1, pageSize: number = 20): Promise<{ documents: any[], totalCount: number }> {
     let query = db.select().from(documents);
     let countQuery = db.select({ count: sql<number>`count(*)` }).from(documents);
     const conditions = [];
