@@ -141,7 +141,7 @@ export default function AdminOrdersPage() {
     },
   });
 
-  const { data: templates = [] } = useQuery<Template[]>({
+  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery<Template[]>({
     queryKey: ['/api/admin/templates', 'order'],
     queryFn: async () => {
       const response = await fetch('/api/admin/templates?category=order', {
@@ -150,6 +150,7 @@ export default function AdminOrdersPage() {
       if (!response.ok) throw new Error('Failed to fetch templates');
       return response.json();
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const updateStatusMutation = useMutation({
@@ -1309,14 +1310,22 @@ export default function AdminOrdersPage() {
           </DialogHeader>
           {selectedOrderForPdf && (
             <div className="space-y-4">
-              {templates.length > 0 && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {language === 'ar' ? 'القالب' : 'Template'}
-                  </p>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {language === 'ar' ? 'القالب' : 'Template'}
+                </p>
+                {isLoadingTemplates ? (
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'جاري تحميل القوالب...' : 'Loading templates...'}
+                  </div>
+                ) : templates.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد قوالب متاحة' : 'No templates available'}
+                  </div>
+                ) : (
                   <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                     <SelectTrigger>
-                      <SelectValue placeholder={language === 'ar' ? 'اختر القالب' : 'Select template'} />
+                      <SelectValue placeholder={language === 'ar' ? 'اختر القالب (افتراضي إذا لم يتم الاختيار)' : 'Select template (default if not selected)'} />
                     </SelectTrigger>
                     <SelectContent>
                       {templates.filter(t => t.isActive).map((template) => (
@@ -1327,8 +1336,8 @@ export default function AdminOrdersPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="flex justify-end gap-2">
                 <Button
@@ -1340,7 +1349,7 @@ export default function AdminOrdersPage() {
                 >
                   {language === 'ar' ? 'إلغاء' : 'Cancel'}
                 </Button>
-                <Button onClick={handleGeneratePDF}>
+                <Button onClick={handleGeneratePDF} disabled={isLoadingTemplates}>
                   <Download className="h-4 w-4 mr-2" />
                   {language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
                 </Button>
