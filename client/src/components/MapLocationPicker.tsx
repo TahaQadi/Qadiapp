@@ -71,9 +71,38 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
         setIsLoadingLocation(false);
       },
       (error) => {
-        console.error('Error getting location:', error);
-        alert(language === 'ar' ? 'فشل في الحصول على الموقع الحالي' : 'Failed to get current location');
+        console.error('Geolocation error:', error);
         setIsLoadingLocation(false);
+        
+        let errorMessage = '';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = language === 'ar' 
+              ? 'تم رفض الوصول إلى الموقع. يرجى تفعيل صلاحيات الموقع في المتصفح.'
+              : 'Location access denied. Please enable location permissions in your browser.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = language === 'ar'
+              ? 'معلومات الموقع غير متاحة.'
+              : 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = language === 'ar'
+              ? 'انتهت مهلة طلب الموقع.'
+              : 'Location request timed out.';
+            break;
+          default:
+            errorMessage = language === 'ar'
+              ? 'حدث خطأ غير معروف في تحديد الموقع.'
+              : 'An unknown error occurred while getting location.';
+        }
+        
+        alert(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     );
   };
