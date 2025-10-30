@@ -174,6 +174,32 @@ export default function AdminDocumentsPage() {
     },
   });
 
+  // Generate PDF from template mutation
+  const generatePdfMutation = useMutation({
+    mutationFn: async ({ templateId, variables }: { templateId: string; variables: any }) => {
+      const res = await apiRequest('POST', `/api/templates/${templateId}/generate`, {
+        variables,
+        language: 'ar',
+        saveToDocuments: true
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: language === 'ar' ? 'تم إنشاء المستند' : 'Document Generated',
+        description: language === 'ar' ? 'تم إنشاء المستند بنجاح' : 'Document generated successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل إنشاء المستند' : 'Failed to generate document'),
+      });
+    },
+  });
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: any) => {
       const res = await apiRequest('PUT', `/api/admin/templates/${id}`, data);
@@ -727,6 +753,29 @@ export default function AdminDocumentsPage() {
                           >
                             <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
                             <span className="hidden sm:inline">{language === 'ar' ? 'تعديل' : 'Edit'}</span>
+                          </Button>
+                        </div>
+                        <div className="flex gap-1 sm:gap-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="flex-1 min-h-[44px]"
+                            onClick={() => {
+                              // Generate test PDF with sample data
+                              generatePdfMutation.mutate({
+                                templateId: template.id,
+                                variables: {
+                                  date: new Date().toLocaleDateString('ar-SA'),
+                                  clientName: 'عميل تجريبي',
+                                  items: [],
+                                  total: '0.00'
+                                }
+                              });
+                            }}
+                            data-testid={`button-generate-${template.id}`}
+                          >
+                            <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء PDF' : 'Generate'}</span>
                           </Button>
                         </div>
                         <div className="flex gap-1 sm:gap-2">
