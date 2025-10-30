@@ -1,11 +1,10 @@
-
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../db';
-import { 
-  clients, 
-  products, 
-  ltas, 
-  ltaProducts, 
+import {
+  clients,
+  products,
+  ltas,
+  ltaProducts,
   ltaClients,
   orders,
   orderItems,
@@ -162,7 +161,7 @@ describe('Comprehensive Seeding and Data Integrity Tests', () => {
   describe('Phase 2: Product Seeding (50 products)', () => {
     it('should create 50 diverse products', async () => {
       const categories = ['Furniture', 'Technology', 'Office Supplies', 'Equipment', 'Accessories'];
-      
+
       for (let i = 1; i <= 50; i++) {
         const product = await storage.createProduct({
           sku: `STRESS-${i.toString().padStart(3, '0')}`,
@@ -174,7 +173,7 @@ describe('Comprehensive Seeding and Data Integrity Tests', () => {
         });
 
         testData.productIds.push(product.id);
-        
+
         if (i % 10 === 0) {
           console.log(`✅ Products created: ${i}/50`);
         }
@@ -258,11 +257,11 @@ describe('Comprehensive Seeding and Data Integrity Tests', () => {
   describe('Phase 4: Order Seeding (100 orders)', () => {
     it('should create 100 orders with items', async () => {
       const statuses = ['pending', 'approved', 'processing', 'shipped', 'delivered', 'cancelled'];
-      
+
       for (let i = 0; i < 100; i++) {
         const clientId = testData.clientIds[1 + (i % 10)]; // Distribute across clients
         const ltaId = testData.ltaIds[i % testData.ltaIds.length];
-        
+
         // Create order items
         const itemCount = Math.floor(Math.random() * 5) + 1;
         const items = [];
@@ -273,7 +272,7 @@ describe('Comprehensive Seeding and Data Integrity Tests', () => {
           const quantity = Math.floor(Math.random() * 10) + 1;
           const unitPrice = (Math.random() * 500 + 50).toFixed(2);
           const total = (parseFloat(unitPrice) * quantity).toFixed(2);
-          
+
           items.push({ productId, quantity, unitPrice, total });
           totalAmount += parseFloat(total);
         }

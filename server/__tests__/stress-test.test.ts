@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { db } from '../db';
 import { storage } from '../storage';
@@ -12,7 +11,7 @@ describe('System Stress Tests', () => {
   describe('Concurrent Read Operations', () => {
     it('should handle 100 concurrent product queries', async () => {
       const startTime = performance.now();
-      
+
       const promises = Array.from({ length: 100 }, () => 
         storage.getProducts()
       );
@@ -23,14 +22,14 @@ describe('System Stress Tests', () => {
 
       console.log(`✅ 100 concurrent queries completed in ${duration.toFixed(2)}ms`);
       console.log(`   Average: ${(duration / 100).toFixed(2)}ms per query`);
-      
+
       expect(results.length).toBe(100);
       expect(duration).toBeLessThan(10000); // Should complete within 10s
     });
 
     it('should handle 50 concurrent LTA queries', async () => {
       const startTime = performance.now();
-      
+
       const promises = Array.from({ length: 50 }, () => 
         db.query.ltas.findMany({ with: { products: true, clients: true } })
       );
@@ -40,7 +39,7 @@ describe('System Stress Tests', () => {
       const duration = endTime - startTime;
 
       console.log(`✅ 50 concurrent LTA queries in ${duration.toFixed(2)}ms`);
-      
+
       expect(results.length).toBe(50);
     });
   });
@@ -48,16 +47,17 @@ describe('System Stress Tests', () => {
   describe('Concurrent Write Operations', () => {
     it('should handle 20 concurrent client creations', async () => {
       const startTime = performance.now();
-      
+
+      // Create multiple clients concurrently
+      const hashedPassword = await hashPassword('test123');
       const promises = Array.from({ length: 20 }, (_, i) => 
         storage.createClient({
           username: `stress_client_${Date.now()}_${i}`,
-          password: await hashPassword('test123'),
-          nameEn: `Stress Client ${i}`,
-          nameAr: `عميل ضغط ${i}`,
+          password: hashedPassword,
+          nameEn: `Stress Test Client ${i}`,
+          nameAr: `عميل اختبار ${i}`,
           email: `stress${i}@test.com`,
-          phone: `+966${Math.floor(Math.random() * 1000000000)}`,
-          isAdmin: false,
+          contactNumber: `+966${i}00000000`,
         }).catch(err => ({ error: err.message }))
       );
 
@@ -67,13 +67,13 @@ describe('System Stress Tests', () => {
 
       const successful = results.filter(r => !('error' in r));
       console.log(`✅ ${successful.length}/20 clients created in ${duration.toFixed(2)}ms`);
-      
+
       expect(successful.length).toBeGreaterThan(0);
     });
 
     it('should handle 50 concurrent product creations', async () => {
       const startTime = performance.now();
-      
+
       const promises = Array.from({ length: 50 }, (_, i) => 
         storage.createProduct({
           sku: `STRESS-CONCURRENT-${Date.now()}-${i}`,
@@ -91,7 +91,7 @@ describe('System Stress Tests', () => {
 
       const successful = results.filter(r => !('error' in r));
       console.log(`✅ ${successful.length}/50 products created in ${duration.toFixed(2)}ms`);
-      
+
       expect(successful.length).toBeGreaterThan(0);
     });
   });
@@ -99,7 +99,7 @@ describe('System Stress Tests', () => {
   describe('Mixed Operations Under Load', () => {
     it('should handle mixed read/write operations', async () => {
       const startTime = performance.now();
-      
+
       const operations = [
         ...Array.from({ length: 30 }, () => storage.getProducts()),
         ...Array.from({ length: 20 }, () => db.query.orders.findMany()),
@@ -119,7 +119,7 @@ describe('System Stress Tests', () => {
 
       console.log(`✅ 60 mixed operations in ${duration.toFixed(2)}ms`);
       console.log(`   Average: ${(duration / 60).toFixed(2)}ms per operation`);
-      
+
       expect(results.length).toBe(60);
     });
   });
@@ -140,9 +140,9 @@ describe('System Stress Tests', () => {
         const startTime = performance.now();
         const result = await query();
         const duration = performance.now() - startTime;
-        
+
         console.log(`${name.padEnd(30)} ${duration.toFixed(2).padStart(8)}ms | ${result.length} rows`);
-        
+
         expect(duration).toBeLessThan(5000); // Each query < 5s
       }
 
@@ -154,7 +154,7 @@ describe('System Stress Tests', () => {
     it('should handle pagination efficiently', async () => {
       const pageSize = 20;
       const pages = 10;
-      
+
       const startMem = process.memoryUsage().heapUsed;
       const startTime = performance.now();
 
@@ -172,7 +172,7 @@ describe('System Stress Tests', () => {
 
       console.log(`✅ Paginated ${pages} pages in ${duration.toFixed(2)}ms`);
       console.log(`   Memory change: ${memDiff.toFixed(2)}MB`);
-      
+
       expect(duration).toBeLessThan(3000);
     });
   });
