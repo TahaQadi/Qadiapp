@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { QueryClient } from '@tanstack/react-query';
@@ -21,10 +20,20 @@ describe('Error Boundary Scenarios', () => {
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false },
+        queries: { 
+          retry: false,
+        },
         mutations: { retry: false },
       },
     });
+
+    // Setup basic fetch mock
+    global.fetch = vi.fn(() => 
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+    ) as any;
   });
 
   it('should catch network errors gracefully', async () => {

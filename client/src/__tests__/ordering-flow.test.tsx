@@ -29,12 +29,6 @@ describe('Ordering Flow Integration', () => {
       defaultOptions: {
         queries: { 
           retry: false,
-          queryFn: async ({ queryKey }) => {
-            const url = queryKey[0] as string;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('Network error');
-            return res.json();
-          },
         },
         mutations: { retry: false },
       },
@@ -42,27 +36,35 @@ describe('Ordering Flow Integration', () => {
 
     // Mock fetch
     global.fetch = vi.fn((url) => {
-      if (url.includes('/api/products')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([
-            {
-              id: '1',
-              sku: 'TEST-001',
-              nameEn: 'Test Product',
-              nameAr: 'منتج تجريبي',
-              contractPrice: '100.00',
-              ltaId: 'lta-1',
-              hasPrice: true,
-            },
-          ]),
-        });
-      }
-      if (url.includes('/api/client/ltas')) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([{ id: 'lta-1', nameEn: 'Test LTA', nameAr: 'اتفاقية تجريبية' }]),
-        });
+      if (typeof url === 'string') {
+        if (url.includes('/api/products')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([
+              {
+                id: '1',
+                sku: 'TEST-001',
+                nameEn: 'Test Product',
+                nameAr: 'منتج تجريبي',
+                contractPrice: '100.00',
+                ltaId: 'lta-1',
+                hasPrice: true,
+              },
+            ]),
+          });
+        }
+        if (url.includes('/api/client/ltas')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([{ id: 'lta-1', nameEn: 'Test LTA', nameAr: 'اتفاقية تجريبية' }]),
+          });
+        }
+        if (url.includes('/api/cart')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([]),
+          });
+        }
       }
       return Promise.resolve({
         ok: true,
