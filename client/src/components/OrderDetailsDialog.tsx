@@ -144,8 +144,8 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
           </DialogTitle>
           <DialogDescription>
             {language === 'ar'
-              ? 'عرض معلومات تفصيلية عن الطلب والسجل الزمني'
-              : 'View detailed order information and timeline'}
+              ? 'عرض تفاصيل الطلب الكاملة والحالة والعناصر'
+              : 'View complete order details, status, and items'}
           </DialogDescription>
         </DialogHeader>
 
