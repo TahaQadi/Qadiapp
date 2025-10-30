@@ -999,24 +999,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Use NEW optimized DocumentUtils with deduplication and caching
+      // Parse items and map to template format
       const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
+      const mappedItems = items.map((item: any, index: number) => ({
+        index: index + 1,
+        sku: item.sku || '',
+        nameAr: item.nameAr || item.name || '',
+        nameEn: item.nameEn || item.name || '',
+        unit: item.unit || 'قطعة',
+        quantity: item.quantity || 0,
+        unitPrice: parseFloat(item.unitPrice || '0').toFixed(2),
+        total: (parseFloat(item.unitPrice || '0') * (item.quantity || 0)).toFixed(2)
+      }));
       
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'price_offer',
         variables: [
-          { key: 'date', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
           { key: 'offerNumber', value: offer.offerNumber },
-          { key: 'clientName', value: client.nameAr },
+          { key: 'offerDate', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
           { key: 'validUntil', value: new Date(offer.validUntil).toLocaleDateString('ar-SA') },
-          { key: 'items', value: items },
-          { key: 'subtotal', value: offer.subtotal.toString() },
-          { key: 'discount', value: '0' },
-          { key: 'total', value: offer.total.toString() },
+          { key: 'clientName', value: client.nameAr || client.nameEn },
+          { key: 'clientNameAr', value: client.nameAr },
+          { key: 'clientNameEn', value: client.nameEn },
+          { key: 'products', value: mappedItems },
+          { key: 'items', value: mappedItems },
+          { key: 'subtotal', value: parseFloat(offer.subtotal).toFixed(2) },
+          { key: 'discount', value: '0.00' },
+          { key: 'total', value: parseFloat(offer.total).toFixed(2) },
+          { key: 'currency', value: 'شيكل' },
           { key: 'validityDays', value: '30' },
-          { key: 'deliveryDays', value: '5' },
-          { key: 'paymentTerms', value: '30' },
-          { key: 'warrantyDays', value: '7' }
+          { key: 'deliveryDays', value: '5-7' },
+          { key: 'paymentTerms', value: '30 يوم' },
+          { key: 'warrantyDays', value: '7' },
+          { key: 'companyPhone', value: '00970592555532' },
+          { key: 'companyEmail', value: 'info@qadi.ps' },
+          { key: 'taxNumber', value: '' },
+          { key: 'commercialRegister', value: '' }
         ],
         clientId: offer.clientId,
         metadata: { priceOfferId: offer.id },
@@ -1024,11 +1042,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!documentResult.success) {
+        console.error('❌ PDF generation failed:', documentResult.error);
         return res.status(500).json({
           message: documentResult.error || "Failed to generate PDF",
           messageAr: "فشل إنشاء ملف PDF"
         });
       }
+
+      console.log('✅ PDF generated:', documentResult.fileName);
 
       // Update offer with PDF and mark as sent
       await storage.updatePriceOffer(req.params.id, {
@@ -2014,26 +2035,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate totals
       const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0);
       
-      // Use NEW DocumentUtils with DEFAULT template variables
-      // The default template expects: orderId, orderDate, clientName, deliveryAddress, etc.
+      // Map items to template format
+      const mappedItems = items.map((item: any, index: number) => ({
+        index: index + 1,
+        sku: item.sku || '',
+        nameAr: item.nameAr || item.name || '',
+        nameEn: item.nameEn || item.name || '',
+        unit: item.unit || 'قطعة',
+        quantity: item.quantity || 0,
+        unitPrice: parseFloat(item.price || '0').toFixed(2),
+        total: (parseFloat(item.price || '0') * (item.quantity || 0)).toFixed(2)
+      }));
+      
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'order',
-        templateId: templateId, // Optional specific template ID
+        templateId: templateId,
         variables: [
-          // Variables for DEFAULT order template
+          { key: 'orderNumber', value: order.id.substring(0, 8) },
           { key: 'orderId', value: order.id },
           { key: 'orderDate', value: new Date(order.createdAt).toLocaleDateString('ar-SA') },
           { key: 'clientName', value: client?.nameAr || client?.nameEn || 'عميل' },
+          { key: 'clientNameAr', value: client?.nameAr || '' },
+          { key: 'clientNameEn', value: client?.nameEn || '' },
           { key: 'deliveryAddress', value: order.deliveryAddress || client?.address || 'لم يحدد' },
+          { key: 'deliveryLocation', value: order.deliveryAddress || client?.address || 'لم يحدد' },
           { key: 'clientPhone', value: client?.phone || '' },
           { key: 'paymentMethod', value: order.paymentMethod || 'تحويل بنكي' },
           { key: 'reference', value: order.referenceNumber || lta?.referenceNumber || '' },
-          { key: 'items', value: items },
+          { key: 'items', value: mappedItems },
+          { key: 'products', value: mappedItems },
           { key: 'totalAmount', value: itemsTotal.toFixed(2) },
-          { key: 'deliveryDays', value: '5-7' }
+          { key: 'total', value: itemsTotal.toFixed(2) },
+          { key: 'currency', value: 'شيكل' },
+          { key: 'deliveryDays', value: '5-7' },
+          { key: 'companyPhone', value: '00970592555532' },
+          { key: 'companyEmail', value: 'info@qadi.ps' }
         ],
         clientId: client?.id,
-        metadata: { orderId: order.id }
+        metadata: { orderId: order.id },
+        force: false
       });
 
       if (!documentResult.success) {

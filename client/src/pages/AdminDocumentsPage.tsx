@@ -761,15 +761,39 @@ export default function AdminDocumentsPage() {
                             variant="default"
                             className="flex-1 min-h-[44px]"
                             onClick={() => {
-                              // Generate test PDF with sample data
+                              // Generate test PDF with sample data based on template category
+                              const sampleData = template.category === 'price_offer' ? {
+                                offerNumber: 'TEST-' + Date.now(),
+                                offerDate: new Date().toLocaleDateString('ar-SA'),
+                                validUntil: new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString('ar-SA'),
+                                clientName: 'عميل تجريبي',
+                                clientNameAr: 'عميل تجريبي',
+                                products: [
+                                  { index: 1, sku: 'TEST-001', nameAr: 'منتج تجريبي', unit: 'قطعة', quantity: 10, unitPrice: '100.00', total: '1000.00' }
+                                ],
+                                items: [
+                                  { index: 1, sku: 'TEST-001', nameAr: 'منتج تجريبي', unit: 'قطعة', quantity: 10, unitPrice: '100.00', total: '1000.00' }
+                                ],
+                                subtotal: '1000.00',
+                                discount: '0.00',
+                                total: '1000.00',
+                                currency: 'شيكل',
+                                companyPhone: '00970592555532',
+                                companyEmail: 'info@qadi.ps'
+                              } : {
+                                orderNumber: 'TEST-' + Date.now(),
+                                orderDate: new Date().toLocaleDateString('ar-SA'),
+                                clientName: 'عميل تجريبي',
+                                products: [
+                                  { index: 1, sku: 'TEST-001', nameAr: 'منتج تجريبي', unit: 'قطعة', quantity: 5, unitPrice: '50.00', total: '250.00' }
+                                ],
+                                total: '250.00',
+                                currency: 'شيكل'
+                              };
+                              
                               generatePdfMutation.mutate({
                                 templateId: template.id,
-                                variables: {
-                                  date: new Date().toLocaleDateString('ar-SA'),
-                                  clientName: 'عميل تجريبي',
-                                  items: [],
-                                  total: '0.00'
-                                }
+                                variables: sampleData
                               });
                             }}
                             data-testid={`button-generate-${template.id}`}
