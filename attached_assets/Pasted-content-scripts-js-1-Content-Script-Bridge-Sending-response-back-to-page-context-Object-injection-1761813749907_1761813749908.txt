@@ -1,0 +1,54 @@
+content-scripts.js:1 Content Script Bridge: Sending response back to page context: Object
+injection-tss-mv3.js:1 TSS: Received response from checkDomainAndRun: Object
+api/price-offers:1  Failed to load resource: the server responded with a status of 429 ()
+api/client/templates:1  Failed to load resource: the server responded with a status of 429 ()
+api/client/ltas:1  Failed to load resource: the server responded with a status of 429 ()
+api/products:1  Failed to load resource: the server responded with a status of 429 ()
+api/client/orders:1  Failed to load resource: the server responded with a status of 429 ()
+api/admin/price-requests:1  Failed to load resource: the server responded with a status of 429 ()
+api/admin/price-requests:1  Failed to load resource: the server responded with a status of 429 ()
+api/products:1  Failed to load resource: the server responded with a status of 429 ()
+api/admin/price-requests:1  Failed to load resource: the server responded with a status of 429 ()
+api/products:1  Failed to load resource: the server responded with a status of 429 ()
+api/analytics:1  Failed to load resource: the server responded with a status of 429 ()
+api/analytics:1  Failed to load resource: the server responded with a status of 429 ()
+api/products:1  Failed to load resource: the server responded with a status of 429 ()
+api/client/notifications:1  Failed to load resource: the server responded with a status of 429 ()
+api/analytics:1  Failed to load resource: the server responded with a status of 429 ()
+api/analytics:1  Failed to load resource: the server responded with a status of 429 ()
+index-CZABEgHG.js:25  POST https://qadi-gate.replit.app/api/analytics 429 (Too Many Requests)
+flushEvents @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+setTimeout
+sendEvent @ index-CZABEgHG.js:25
+trackEvent @ index-CZABEgHG.js:25
+trackPerformance @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+PerformanceObserver.observe.type @ index-CZABEgHG.js:25
+index-CZABEgHG.js:25  POST https://qadi-gate.replit.app/api/analytics 429 (Too Many Requests)
+flushEvents @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+setTimeout
+sendEvent @ index-CZABEgHG.js:25
+trackEvent @ index-CZABEgHG.js:25
+trackPerformance @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+PerformanceObserver.observe.type @ index-CZABEgHG.js:25
+index-CZABEgHG.js:25  POST https://qadi-gate.replit.app/api/analytics 429 (Too Many Requests)
+flushEvents @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+setTimeout
+sendEvent @ index-CZABEgHG.js:25
+trackEvent @ index-CZABEgHG.js:25
+trackPerformance @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+PerformanceObserver.observe.type @ index-CZABEgHG.js:25
+index-CZABEgHG.js:25  POST https://qadi-gate.replit.app/api/analytics 429 (Too Many Requests)
+flushEvents @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+setTimeout
+sendEvent @ index-CZABEgHG.js:25
+trackEvent @ index-CZABEgHG.js:25
+trackPerformance @ index-CZABEgHG.js:25
+(anonymous) @ index-CZABEgHG.js:25
+PerformanceObserver.observe.type @ index-CZABEgHG.js:25
