@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Eye, Clock, CheckCircle, Package, Loader2, Send } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -12,6 +13,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import type { PriceRequest, Client, Lta } from "@shared/schema";
+
+interface Template {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  category: string;
+  isActive: boolean;
+  isDefault: boolean;
+}
 
 
 export default function AdminPriceRequestsPage() {
@@ -22,7 +32,8 @@ export default function AdminPriceRequestsPage() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [pdfRequest, setPdfRequest] = useState<PriceRequest | null>(null);
-  const [pdfLanguage, setPdfLanguage] = useState<'en' | 'ar'>('en');
+  const [pdfLanguage, setPdfLanguage] = useState<'en' | 'ar'>('ar');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
   const { data: requests = [], isLoading } = useQuery<PriceRequest[]>({
     queryKey: ["/api/admin/price-requests"],
@@ -34,6 +45,17 @@ export default function AdminPriceRequestsPage() {
 
   const { data: ltas = [] } = useQuery<Lta[]>({
     queryKey: ["/api/ltas"],
+  });
+
+  const { data: templates = [] } = useQuery<Template[]>({
+    queryKey: ["/api/admin/templates"],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/templates?category=price_offer', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    },
   });
 
   const getClientName = (clientId: string) => {
@@ -107,13 +129,19 @@ export default function AdminPriceRequestsPage() {
 
   const handleGeneratePDF = (request: PriceRequest) => {
     setPdfRequest(request);
+    // Find the default template for this category
+    const defaultTemplate = templates.find(t => t.isDefault && t.isActive);
+    if (defaultTemplate) {
+      setSelectedTemplateId(defaultTemplate.id);
+    }
     setPdfDialogOpen(true);
   };
 
   const generatePdfMutation = useMutation({
-    mutationFn: async (data: { requestId: string; language: 'en' | 'ar' }) => {
+    mutationFn: async (data: { requestId: string; language: 'en' | 'ar'; templateId?: string }) => {
       const res = await apiRequest('POST', `/api/admin/price-requests/${data.requestId}/generate-pdf`, {
-        language: data.language
+        language: data.language,
+        templateId: data.templateId || undefined
       });
       if (!res.ok) {
         const error = await res.json();
@@ -127,6 +155,7 @@ export default function AdminPriceRequestsPage() {
         description: data.message || (language === "ar" ? "تم إنشاء ملف PDF بنجاح" : "PDF generated successfully")
       });
       setPdfDialogOpen(false);
+      setSelectedTemplateId('');
       queryClient.invalidateQueries({ queryKey: ["/api/admin/price-requests"] });
     },
     onError: (error: any) => {
@@ -344,7 +373,7 @@ export default function AdminPriceRequestsPage() {
               {language === "ar" ? "إنشاء PDF لطلب السعر" : "Generate PDF for Price Request"}
             </DialogTitle>
             <DialogDescription>
-              {language === "ar" ? "اختر اللغة لإنشاء مستند PDF" : "Select language to generate PDF document"}
+              {language === "ar" ? "اختر اللغة والقالب لإنشاء مستند PDF" : "Select language and template to generate PDF document"}
             </DialogDescription>
           </DialogHeader>
           {pdfRequest && (
@@ -370,10 +399,35 @@ export default function AdminPriceRequestsPage() {
                   </Button>
                 </div>
               </div>
+              
+              {templates.length > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {language === "ar" ? "القالب" : "Template"}
+                  </p>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === "ar" ? "اختر القالب" : "Select template"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.filter(t => t.isActive).map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {language === "ar" ? template.nameAr : template.nameEn}
+                          {template.isDefault && ` (${language === "ar" ? "افتراضي" : "Default"})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setPdfDialogOpen(false)}
+                  onClick={() => {
+                    setPdfDialogOpen(false);
+                    setSelectedTemplateId('');
+                  }}
                 >
                   {language === "ar" ? "إلغاء" : "Cancel"}
                 </Button>
@@ -381,7 +435,8 @@ export default function AdminPriceRequestsPage() {
                   onClick={() => {
                     generatePdfMutation.mutate({
                       requestId: pdfRequest.id,
-                      language: pdfLanguage
+                      language: pdfLanguage,
+                      templateId: selectedTemplateId || undefined
                     });
                   }}
                   disabled={generatePdfMutation.isPending}

@@ -56,6 +56,15 @@ interface OrderItem {
   price: string;
 }
 
+interface Template {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  category: string;
+  isActive: boolean;
+  isDefault: boolean;
+}
+
 export default function AdminOrdersPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -70,6 +79,9 @@ export default function AdminOrdersPage() {
   const itemsPerPage = 10;
   const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
   const [hideDoneAndCancelled, setHideDoneAndCancelled] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [selectedOrderForPdf, setSelectedOrderForPdf] = useState<Order | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const queryClient = useQueryClient();
 
 
@@ -126,6 +138,17 @@ export default function AdminOrdersPage() {
       });
       if (!res.ok) throw new Error('Failed to fetch LTAs');
       return res.json();
+    },
+  });
+
+  const { data: templates = [] } = useQuery<Template[]>({
+    queryKey: ['/api/admin/templates', 'order'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/templates?category=order', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
     },
   });
 
@@ -489,36 +512,50 @@ export default function AdminOrdersPage() {
     printWindow.document.close();
   };
 
-  const handleExportPDF = async (order: Order) => {
+  const handleExportPDF = (order: Order) => {
+    // Find the default template for this category
+    const defaultTemplate = templates.find(t => t.isDefault && t.isActive);
+    if (defaultTemplate) {
+      setSelectedTemplateId(defaultTemplate.id);
+    }
+    setSelectedOrderForPdf(order);
+    setPdfDialogOpen(true);
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!selectedOrderForPdf) return;
+
     try {
-      const items = safeJsonParse<OrderItem[]>(order.items, []);
-      const client = clients.find(c => c.id === order.clientId);
-      const lta = ltas.find(l => l.id === order.ltaId);
+      const items = safeJsonParse<OrderItem[]>(selectedOrderForPdf.items, []);
+      const client = clients.find(c => c.id === selectedOrderForPdf.clientId);
+      const lta = ltas.find(l => l.id === selectedOrderForPdf.ltaId);
 
       const response = await apiRequest('POST', '/api/admin/orders/export-pdf', {
         order: {
-          id: order.id,
-          createdAt: order.createdAt,
-          status: order.status,
-          totalAmount: order.totalAmount,
+          id: selectedOrderForPdf.id,
+          createdAt: selectedOrderForPdf.createdAt,
+          status: selectedOrderForPdf.status,
+          totalAmount: selectedOrderForPdf.totalAmount,
         },
         client: client ? {
           nameEn: client.nameEn,
           nameAr: client.nameAr,
+          id: client.id,
         } : null,
         lta: lta ? {
           nameEn: lta.nameEn,
           nameAr: lta.nameAr,
         } : null,
         items: items,
-        language: language,
+        language: 'ar', // Arabic-only system
+        templateId: selectedTemplateId || undefined,
       });
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `order-${order.id.slice(0, 8)}.pdf`;
+      a.download = `order-${selectedOrderForPdf.id.slice(0, 8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -528,6 +565,9 @@ export default function AdminOrdersPage() {
         title: language === 'ar' ? 'تم التصدير' : 'Exported',
         description: language === 'ar' ? 'تم تصدير الطلب إلى PDF بنجاح' : 'Order exported to PDF successfully',
       });
+      
+      setPdfDialogOpen(false);
+      setSelectedTemplateId('');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -1250,6 +1290,60 @@ export default function AdminOrdersPage() {
                     {language === 'ar' ? 'مشاركة' : 'Share'}
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Generation Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'ar' ? 'تصدير الطلب إلى PDF' : 'Export Order to PDF'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'ar' ? 'اختر القالب لتصدير المستند' : 'Select template to export document'}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOrderForPdf && (
+            <div className="space-y-4">
+              {templates.length > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {language === 'ar' ? 'القالب' : 'Template'}
+                  </p>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'ar' ? 'اختر القالب' : 'Select template'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.filter(t => t.isActive).map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {language === 'ar' ? template.nameAr : template.nameEn}
+                          {template.isDefault && ` (${language === 'ar' ? 'افتراضي' : 'Default'})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPdfDialogOpen(false);
+                    setSelectedTemplateId('');
+                  }}
+                >
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button onClick={handleGeneratePDF}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
+                </Button>
               </div>
             </div>
           )}

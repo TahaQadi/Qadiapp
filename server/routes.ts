@@ -796,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Generate PDF for price request - Using NEW template system
   app.post("/api/admin/price-requests/:id/generate-pdf", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
-      const { language = 'ar' } = req.body; // Default to Arabic (template system is Arabic-only)
+      const { language = 'ar', templateId } = req.body; // Default to Arabic (template system is Arabic-only)
       const priceRequest = await db.query.priceRequests.findFirst({
         where: eq(schema.priceRequests.id, req.params.id)
       });
@@ -843,6 +843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use NEW template system with DocumentUtils
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'price_offer', // Use price_offer template for requests
+        templateId: templateId, // Optional specific template ID
         variables: [
           { key: 'date', value: new Date().toLocaleDateString('ar-SA') },
           { key: 'offerNumber', value: priceRequest.requestNumber },
@@ -2008,7 +2009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export order to PDF (admin only) - Using NEW template system
   app.post('/api/admin/orders/export-pdf', requireAdmin, async (req: any, res) => {
     try {
-      const { order, client, lta, items, language } = req.body;
+      const { order, client, lta, items, language, templateId } = req.body;
 
       // Calculate totals
       const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0);
@@ -2017,6 +2018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // The default template expects: orderId, orderDate, clientName, deliveryAddress, etc.
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'order',
+        templateId: templateId, // Optional specific template ID
         variables: [
           // Variables for DEFAULT order template
           { key: 'orderId', value: order.id },

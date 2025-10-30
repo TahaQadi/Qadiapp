@@ -11,6 +11,7 @@ interface GenerateDocumentOptions {
   variables: Array<{ key: string; value: any }>;
   language?: 'ar'; // Arabic-only
   clientId: string;
+  templateId?: string; // Optional specific template ID
   metadata?: {
     orderId?: string;
     priceOfferId?: string;
@@ -39,15 +40,23 @@ export class DocumentUtils {
    * Generate a document from template with all necessary steps
    */
   static async generateDocument(options: GenerateDocumentOptions): Promise<GenerateDocumentResult> {
-    const { templateCategory, variables, language = 'ar', clientId, metadata = {}, force = false } = options;
+    const { templateCategory, variables, language = 'ar', clientId, templateId, metadata = {}, force = false } = options;
 
     try {
-      // 1. Get active template (with caching)
-      const template = await this.getActiveTemplate(templateCategory);
+      // 1. Get template (with caching) - use specific ID if provided, otherwise get active
+      let template;
+      if (templateId) {
+        template = await TemplateStorage.getTemplate(templateId);
+      } else {
+        template = await this.getActiveTemplate(templateCategory);
+      }
+      
       if (!template) {
         return {
           success: false,
-          error: `No active template found for category: ${templateCategory}`
+          error: templateId 
+            ? `Template not found: ${templateId}`
+            : `No active template found for category: ${templateCategory}`
         };
       }
 
