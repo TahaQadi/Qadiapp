@@ -315,7 +315,7 @@ export default function PriceOfferCreationDialog({
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open]); // form and setSelectedProducts are stable
+  }, [priceRequest, open, form])
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -333,7 +333,7 @@ export default function PriceOfferCreationDialog({
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open]);
+  }, [selectedLtaCurrency, open, form]);
 
   // Reset currency sync when dialog closes
   useEffect(() => {
@@ -342,7 +342,7 @@ export default function PriceOfferCreationDialog({
       form.reset();
       setSelectedProducts([]);
     }
-  }, [open]); // form.reset and setSelectedProducts are stable, don't need them in deps
+  }, [open, form]);
 
   const handleAddProduct = (product: Product) => {
     const currentItems = form.getValues('items');
