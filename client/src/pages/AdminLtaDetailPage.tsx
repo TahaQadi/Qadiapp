@@ -474,13 +474,16 @@ export default function AdminLtaDetailPage() {
 
   const handleEditLta = () => {
     if (lta) {
+      const startDate = new Date(lta.startDate);
+      const endDate = new Date(lta.endDate);
+      
       editLtaForm.reset({
         nameEn: lta.nameEn,
         nameAr: lta.nameAr,
         descriptionEn: lta.descriptionEn || '',
         descriptionAr: lta.descriptionAr || '',
-        startDate: new Date(lta.startDate),
-        endDate: new Date(lta.endDate),
+        startDate: isNaN(startDate.getTime()) ? new Date() : startDate,
+        endDate: isNaN(endDate.getTime()) ? new Date() : endDate,
         status: lta.status,
       });
       setEditLtaDialogOpen(true);
@@ -507,7 +510,9 @@ export default function AdminLtaDetailPage() {
   };
 
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr; // Return original string if invalid
     return format(date, 'PP', { locale: language === 'ar' ? ar : undefined });
   };
 
