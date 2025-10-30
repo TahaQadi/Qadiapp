@@ -51,7 +51,7 @@ class RateLimiter {
    */
   getRemaining(key: string, maxRequests: number): number {
     const entry = this.limits.get(key);
-    
+
     if (!entry || Date.now() > entry.resetTime) {
       return maxRequests;
     }
@@ -64,7 +64,7 @@ class RateLimiter {
    */
   getResetTime(key: string): number | null {
     const entry = this.limits.get(key);
-    
+
     if (!entry || Date.now() > entry.resetTime) {
       return null;
     }
@@ -77,7 +77,7 @@ class RateLimiter {
    */
   private cleanup() {
     const now = Date.now();
-    
+
     for (const [key, entry] of Array.from(this.limits.entries())) {
       if (now > entry.resetTime) {
         this.limits.delete(key);
@@ -129,20 +129,25 @@ export function rateLimit(options: RateLimitOptions = {}) {
   } = options;
 
   return (req: Request, res: Response, next: NextFunction) => {
+    // Skip rate limiting for internal routes or health checks
+    if (req.path.startsWith('/internal') || req.path === '/health') {
+      return next();
+    }
+
     const key = keyGenerator(req);
-    
+
     // Check rate limit
     const allowed = rateLimiter.checkLimit(key, max, windowMs);
-    
+
     if (!allowed) {
       const resetTime = rateLimiter.getResetTime(key);
       const retryAfter = resetTime ? Math.ceil((resetTime - Date.now()) / 1000) : 60;
-      
+
       res.setHeader('Retry-After', retryAfter.toString());
       res.setHeader('X-RateLimit-Limit', max.toString());
       res.setHeader('X-RateLimit-Remaining', '0');
       res.setHeader('X-RateLimit-Reset', resetTime?.toString() || '');
-      
+
       return res.status(429).json(
         createErrorResponse(
           ErrorCode.RATE_LIMIT_EXCEEDED,
@@ -155,7 +160,7 @@ export function rateLimit(options: RateLimitOptions = {}) {
     // Add rate limit headers
     const remaining = rateLimiter.getRemaining(key, max);
     const resetTime = rateLimiter.getResetTime(key);
-    
+
     res.setHeader('X-RateLimit-Limit', max.toString());
     res.setHeader('X-RateLimit-Remaining', remaining.toString());
     if (resetTime) {
@@ -167,7 +172,7 @@ export function rateLimit(options: RateLimitOptions = {}) {
       const originalSend = res.send;
       res.send = function (body?: any): Response {
         const statusCode = res.statusCode;
-        
+
         if (
           (skipSuccessfulRequests && statusCode >= 200 && statusCode < 300) ||
           (skipFailedRequests && statusCode >= 400)
@@ -178,7 +183,7 @@ export function rateLimit(options: RateLimitOptions = {}) {
             entry.count = Math.max(0, entry.count - 1);
           }
         }
-        
+
         return originalSend.call(this, body);
       };
     }
@@ -200,11 +205,11 @@ export const RateLimitPresets = {
   },
 
   /**
-   * Moderate rate limit for API endpoints (100 requests per 15 minutes)
+   * Moderate rate limit for API endpoints (500 requests per 15 minutes in production)
    */
   API: {
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 500, // increased from 100 for production
   },
 
   /**

@@ -34,7 +34,14 @@ app.use(express.urlencoded({ extended: false }));
 
 // Phase 4: Rate limiting for API routes (lenient for development)
 if (!isDev) {
-  app.use('/api/', rateLimit(RateLimitPresets.API));
+  // Exempt high-frequency endpoints from strict rate limiting
+  app.use('/api/', (req, res, next) => {
+    // Skip rate limiting for analytics and notifications (they batch requests)
+    if (req.path.startsWith('/analytics') || req.path.startsWith('/client/notifications')) {
+      return next();
+    }
+    return rateLimit(RateLimitPresets.API)(req, res, next);
+  });
 }
 
 // Serve static files from attached_assets directory BEFORE other middlewares

@@ -12,6 +12,9 @@ class Analytics {
   private enabled: boolean = false;
   private eventQueue: AnalyticsEvent[] = [];
   private flushTimeout: NodeJS.Timeout | null = null;
+  // Flush events every 30 seconds or when batch size reaches 20 (reduced frequency)
+  private flushInterval = 30000;
+  private batchSize = 20;
 
   constructor() {
     // Check if analytics should be enabled (e.g., not in development)
@@ -84,34 +87,41 @@ class Analytics {
       clearTimeout(this.flushTimeout);
     }
 
-    // Flush queue after 2 seconds or when it reaches 10 events
-    if (this.eventQueue.length >= 10) {
+    // Flush queue after flushInterval or when it reaches batchSize
+    if (this.eventQueue.length >= this.batchSize) {
       this.flushEvents();
     } else {
-      this.flushTimeout = setTimeout(() => this.flushEvents(), 2000);
+      this.flushTimeout = setTimeout(() => this.flushEvents(), this.flushInterval);
     }
   }
 
-  private async flushEvents() {
+  private async flushEvents(): Promise<void> {
     if (this.eventQueue.length === 0) return;
 
     const events = [...this.eventQueue];
     this.eventQueue = [];
 
     try {
-      // Send events in batch (but send only the last event for simplicity)
-      // In production, you'd batch all events
-      await fetch('/api/analytics', {
+      const response = await fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(events[events.length - 1]),
-        // Don't wait for response
-        keepalive: true,
+        body: JSON.stringify({ events }),
       });
+
+      // If rate limited, don't re-queue (just drop the events to prevent flooding)
+      if (response.status === 429) {
+        console.warn('Analytics rate limited - events dropped');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Analytics failed: ${response.status}`);
+      }
     } catch (error) {
-      // Silently fail - analytics should never break the app
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Analytics] Failed to send events:', error);
+      // Only re-queue on network errors, not rate limits
+      if (error instanceof TypeError) {
+        console.error('Failed to send analytics:', error);
+        this.eventQueue.unshift(...events);
       }
     }
   }
