@@ -840,22 +840,6 @@ export default function AdminPriceManagementPage() {
                 <span className="hidden sm:inline">{language === 'ar' ? 'Excel' : 'Excel'}</span>
               </Button>
             )}
-            <Button
-              onClick={handleCreateOfferFromScratch}
-              size="sm"
-              className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-md hover:shadow-lg transition-all duration-300 h-9 sm:h-10 px-2 sm:px-4"
-            >
-              <Plus className="h-4 w-4 sm:me-2" />
-              <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}</span>
-            </Button>
-            <Button
-              onClick={() => setDocumentGenDialogOpen(true)}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300 h-9 sm:h-10 px-2 sm:px-4"
-            >
-              <FileText className="h-4 w-4 sm:me-2" />
-              <span className="hidden sm:inline">{language === 'ar' ? 'توليد مستند' : 'Generate Document'}</span>
-            </Button>
             <div className="hidden sm:flex items-center gap-2">
               <LanguageToggle />
               <ThemeToggle />
@@ -882,28 +866,49 @@ export default function AdminPriceManagementPage() {
         )}
 
         <Tabs defaultValue="requests" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50 dark:bg-muted/30 shadow-sm">
-            <TabsTrigger 
-              value="requests" 
-              className="gap-1.5 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-[#d4af37] dark:data-[state=active]:text-black data-[state=active]:shadow-md transition-all duration-300 py-2.5 sm:py-3 text-xs sm:text-sm"
-            >
-              <Package className="h-4 w-4 shrink-0" />
-              <span className="truncate">{language === 'ar' ? 'الطلبات' : 'Requests'}</span>
-              {priceRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">{priceRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="offers" 
-              className="gap-1.5 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-[#d4af37] dark:data-[state=active]:text-black data-[state=active]:shadow-md transition-all duration-300 py-2.5 sm:py-3 text-xs sm:text-sm"
-            >
-              <FileText className="h-4 w-4 shrink-0" />
-              <span className="truncate">{language === 'ar' ? 'العروض' : 'Offers'}</span>
-              {offers.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">{offers.length}</Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <TabsList className="grid grid-cols-2 h-auto p-1 bg-muted/50 dark:bg-muted/30 shadow-sm w-full sm:w-auto">
+              <TabsTrigger 
+                value="requests" 
+                className="gap-1.5 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-[#d4af37] dark:data-[state=active]:text-black data-[state=active]:shadow-md transition-all duration-300 py-2.5 sm:py-3 text-xs sm:text-sm"
+              >
+                <Package className="h-4 w-4 shrink-0" />
+                <span className="truncate">{language === 'ar' ? 'الطلبات' : 'Requests'}</span>
+                {priceRequests.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">{priceRequests.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="offers" 
+                className="gap-1.5 sm:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-[#d4af37] dark:data-[state=active]:text-black data-[state=active]:shadow-md transition-all duration-300 py-2.5 sm:py-3 text-xs sm:text-sm"
+              >
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="truncate">{language === 'ar' ? 'العروض' : 'Offers'}</span>
+                {offers.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">{offers.length}</Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCreateOfferFromScratch}
+                size="sm"
+                className="bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 text-primary-foreground dark:text-black shadow-md hover:shadow-lg transition-all duration-300 flex-1 sm:flex-none"
+              >
+                <Plus className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
+              </Button>
+              <Button
+                onClick={() => setDocumentGenDialogOpen(true)}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300 flex-1 sm:flex-none"
+              >
+                <FileText className="h-4 w-4 me-2" />
+                {language === 'ar' ? 'توليد مستند' : 'Generate Document'}
+              </Button>
+            </div>
+          </div>
 
           {/* Price Requests Tab */}
           <TabsContent value="requests" className="space-y-4">
