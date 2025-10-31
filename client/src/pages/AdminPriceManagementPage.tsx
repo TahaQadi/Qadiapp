@@ -128,6 +128,8 @@ export default function AdminPriceManagementPage() {
   const [requestSearchQuery, setRequestSearchQuery] = useState('');
   const [offerSearchQuery, setOfferSearchQuery] = useState('');
   const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
+  const [documentGenDialogOpen, setDocumentGenDialogOpen] = useState(false);
+  const [selectedOfferForDoc, setSelectedOfferForDoc] = useState<PriceOffer | null>(null);
 
   const { data: notifications = [], isLoading: isLoadingRequests } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -716,14 +718,14 @@ export default function AdminPriceManagementPage() {
     const headers = language === 'ar' 
       ? ['رقم العرض', 'رقم الطلب', 'العميل', 'التاريخ', 'الحالة', 'المجموع الفرعي', 'الضريبة', 'الإجمالي']
       : ['Offer Number', 'Request Number', 'Client', 'Date', 'Status', 'Subtotal', 'Tax', 'Total'];
-    
+
     let csv = headers.join(',') + '\n';
-    
+
     offers.forEach(offer => {
       const client = clients.find(c => c.id === offer.clientId);
       const clientName = client ? (language === 'ar' ? client.nameAr : client.nameEn) : 'N/A';
       const request = requests.find(r => r.id === offer.requestId);
-      
+
       const row = [
         offer.offerNumber,
         request?.requestNumber || '-',
@@ -734,7 +736,7 @@ export default function AdminPriceManagementPage() {
         offer.tax || 0,
         offer.total
       ];
-      
+
       csv += row.map(cell => `"${cell}"`).join(',') + '\n';
     });
 
@@ -845,6 +847,14 @@ export default function AdminPriceManagementPage() {
             >
               <Plus className="h-4 w-4 sm:me-2" />
               <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}</span>
+            </Button>
+            <Button
+              onClick={() => setDocumentGenDialogOpen(true)}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300 h-9 sm:h-10 px-2 sm:px-4"
+            >
+              <FileText className="h-4 w-4 sm:me-2" />
+              <span className="hidden sm:inline">{language === 'ar' ? 'توليد مستند' : 'Generate Document'}</span>
             </Button>
             <div className="hidden sm:flex items-center gap-2">
               <LanguageToggle />
@@ -2326,6 +2336,121 @@ export default function AdminPriceManagementPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Generation Dialog */}
+      <Dialog open={documentGenDialogOpen} onOpenChange={setDocumentGenDialogOpen}>
+        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {language === 'ar' ? 'توليد مستند عرض السعر' : 'Generate Price Offer Document'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="doc-gen-offer-select" className="text-xs sm:text-sm">
+                {language === 'ar' ? 'اختر عرض السعر' : 'Select Price Offer'}
+              </Label>
+              <Select value={selectedOfferForDoc?.id || ''} onValueChange={(offerId) => {
+                const offer = offers.find(o => o.id === offerId);
+                setSelectedOfferForDoc(offer || null);
+              }}>
+                <SelectTrigger id="doc-gen-offer-select" className="h-10 text-sm">
+                  <SelectValue placeholder={language === 'ar' ? 'اختر عرض سعر' : 'Select a price offer'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {offers.map((offer) => (
+                    <SelectItem key={offer.id} value={offer.id}>
+                      {offer.offerNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="doc-gen-lta-select" className="text-xs sm:text-sm">
+                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
+              </Label>
+              <Select value={pdfLtaId} onValueChange={setPdfLtaId}>
+                <SelectTrigger id="doc-gen-lta-select" className="h-10 text-sm">
+                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {ltas.map((lta) => (
+                    <SelectItem key={lta.id} value={lta.id}>
+                      {language === 'ar' ? lta.nameAr : lta.nameEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="doc-gen-validity-days" className="text-xs sm:text-sm">
+                {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Offer Validity (days)'}
+              </Label>
+              <Input
+                id="doc-gen-validity-days"
+                type="number"
+                value={pdfValidityDays}
+                onChange={(e) => setPdfValidityDays(e.target.value)}
+                placeholder="30"
+                className="h-10 text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="doc-gen-notes" className="text-xs sm:text-sm">
+                {language === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Additional Notes (Optional)'}
+              </Label>
+              <Textarea
+                id="doc-gen-notes"
+                value={pdfNotes}
+                onChange={(e) => setPdfNotes(e.target.value)}
+                placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
+                rows={4}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDocumentGenDialogOpen(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={() => {
+                if (!selectedOfferForDoc || !pdfLtaId) {
+                  toast({
+                    variant: 'destructive',
+                    title: language === 'ar' ? 'خطأ' : 'Error',
+                    description: language === 'ar' ? 'يرجى اختيار عرض سعر واتفاقية' : 'Please select an offer and an LTA',
+                  });
+                  return;
+                }
+                // This mutation will be reused from the pdfDialogOpen logic
+                generatePdfMutation.mutate({
+                  notificationId: selectedOfferForDoc.id, // Assuming notificationId is the offerId for document generation
+                  ltaId: pdfLtaId,
+                  validityDays: parseInt(pdfValidityDays) || 30,
+                  notes: pdfNotes || undefined,
+                });
+              }}
+              disabled={generatePdfMutation.isPending || !selectedOfferForDoc || !pdfLtaId}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
+              {generatePdfMutation.isPending
+                ? (language === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
+                : (language === 'ar' ? 'إنشاء مستند' : 'Generate Document')
+              }
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

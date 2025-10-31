@@ -981,6 +981,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Generate document for price offer (manual)
+  app.post("/api/admin/price-offers/:id/generate-document", requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { templateId, notes, force = true } = req.body;
+      const offer = await storage.getPriceOffer(req.params.id);
+
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
+      }
+
+      const client = await storage.getClient(offer.clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found", messageAr: "العميل غير موجود" });
+      }
+
+      const items = typeof offer.items === 'string' ? JSON.parse(offer.items) : offer.items;
+      const mappedItems = items.map((item: any, index: number) => ({
+        index: index + 1,
+        sku: item.sku || '',
+        nameAr: item.nameAr || item.name || '',
+        nameEn: item.nameEn || item.name || '',
+        unit: item.unit || 'قطعة',
+        quantity: item.quantity || 0,
+        unitPrice: parseFloat(item.unitPrice || '0').toFixed(2),
+        total: (parseFloat(item.unitPrice || '0') * (item.quantity || 0)).toFixed(2)
+      }));
+
+      const documentResult = await DocumentUtils.generateDocument({
+        templateCategory: 'price_offer',
+        templateId: templateId,
+        variables: [
+          { key: 'offerNumber', value: offer.offerNumber },
+          { key: 'offerDate', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
+          { key: 'validUntil', value: new Date(offer.validUntil).toLocaleDateString('ar-SA') },
+          { key: 'clientName', value: client.nameAr || client.nameEn },
+          { key: 'clientNameAr', value: client.nameAr },
+          { key: 'clientNameEn', value: client.nameEn },
+          { key: 'products', value: mappedItems },
+          { key: 'items', value: mappedItems },
+          { key: 'subtotal', value: parseFloat(offer.subtotal).toFixed(2) },
+          { key: 'discount', value: '0.00' },
+          { key: 'total', value: parseFloat(offer.total).toFixed(2) },
+          { key: 'currency', value: 'شيكل' },
+          { key: 'notes', value: notes || offer.notes || '' },
+          { key: 'validityDays', value: '30' },
+          { key: 'deliveryDays', value: '5-7' },
+          { key: 'paymentTerms', value: '30 يوم' },
+          { key: 'warrantyDays', value: '7' },
+          { key: 'companyPhone', value: '00970592555532' },
+          { key: 'companyEmail', value: 'info@qadi.ps' },
+        ],
+        clientId: offer.clientId,
+        metadata: { priceOfferId: offer.id },
+        force: force
+      });
+
+      if (!documentResult.success) {
+        return res.status(500).json({
+          message: documentResult.error || "Failed to generate document",
+          messageAr: "فشل إنشاء المستند"
+        });
+      }
+
+      // Update offer with PDF filename if not already set
+      if (!offer.pdfFileName) {
+        await storage.updatePriceOffer(req.params.id, {
+          pdfFileName: documentResult.fileName || ''
+        });
+      }
+
+      res.json({
+        success: true,
+        documentId: documentResult.documentId,
+        fileName: documentResult.fileName,
+        message: "Document generated successfully",
+        messageAr: "تم إنشاء المستند بنجاح"
+      });
+    } catch (error) {
+      console.error('Document generation error:', error);
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'فشل إنشاء المستند'
+      });
+    }
+  });
+
   // Admin: Send price offer (generates PDF and sends to client)
   app.post("/api/admin/price-offers/:id/send", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
