@@ -919,8 +919,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
       }
 
-      // Check if user has access (must be the offer's client or admin)
-      if (offer.clientId !== req.user?.id && req.user?.role !== 'admin') {
+      // Check if user has access (client, company user, or admin)
+      const userId = req.user?.id;
+      const userCompanyId = req.client?.id; // For company users
+      const isAdmin = req.user?.isAdmin || req.client?.isAdmin;
+      
+      const hasAccess = 
+        offer.clientId === userId || // Direct client match
+        offer.clientId === userCompanyId || // Company user match
+        isAdmin; // Admin access
+
+      if (!hasAccess) {
+        console.error('[Download Auth] Access denied:', {
+          offerId,
+          offerClientId: offer.clientId,
+          userId,
+          userCompanyId,
+          isAdmin
+        });
         return res.status(403).json({ 
           message: "Access denied", 
           messageAr: "غير مصرح بالوصول" 
