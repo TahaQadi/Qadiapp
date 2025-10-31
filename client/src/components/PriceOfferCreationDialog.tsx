@@ -290,7 +290,7 @@ export default function PriceOfferCreationDialog({
 
   // Auto-fill from price request if provided
   useEffect(() => {
-    if (priceRequest && open) {
+    if (priceRequest && open && requestId) {
       // Set LTA and client first
       if (priceRequest.ltaId) {
         form.setValue('ltaId', priceRequest.ltaId);
@@ -315,7 +315,7 @@ export default function PriceOfferCreationDialog({
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open, form])
+  }, [priceRequest, open, requestId, form])
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -333,7 +333,7 @@ export default function PriceOfferCreationDialog({
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open]);
+  }, [selectedLtaCurrency, open, form]);
 
   // Reset currency sync when dialog closes
   useEffect(() => {
