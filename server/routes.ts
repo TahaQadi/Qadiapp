@@ -909,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client: Download price offer PDF
-  app.get("/api/price-offers/:id/download", isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/price-offers/:id/download", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const offerId = req.params.id;
       
@@ -919,23 +919,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Offer not found", messageAr: "العرض غير موجود" });
       }
 
-      // Check if user has access (client, company user, or admin)
-      const userId = req.user?.id;
-      const userCompanyId = req.client?.id; // For company users
-      const isAdmin = req.user?.isAdmin || req.client?.isAdmin;
-      
-      const hasAccess = 
-        offer.clientId === userId || // Direct client match
-        offer.clientId === userCompanyId || // Company user match
-        isAdmin; // Admin access
+      // Check authorization - req.client is populated by requireAuth middleware
+      const hasAccess = offer.clientId === req.client.id || req.client.isAdmin;
 
       if (!hasAccess) {
         console.error('[Download Auth] Access denied:', {
           offerId,
           offerClientId: offer.clientId,
-          userId,
-          userCompanyId,
-          isAdmin
+          requestClientId: req.client.id,
+          isAdmin: req.client.isAdmin
         });
         return res.status(403).json({ 
           message: "Access denied", 
@@ -944,9 +936,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find the document by price offer ID
-      const documentsResult = await storage.searchDocuments({ priceOfferId: offerId });
-      const documents = Array.isArray(documentsResult) ? documentsResult : [];
-      const document = documents.find(doc => doc.priceOfferId === offerId);
+      const documents = await storage.searchDocuments({ priceOfferId: offerId });
+      const document = Array.isArray(documents) && documents.length > 0 ? documents[0] : null;
 
       if (!document || !document.fileUrl) {
         return res.status(404).json({ 
@@ -959,6 +950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
       
       if (!downloadResult.ok || !downloadResult.data) {
+        console.error('[Download Error] Storage download failed:', downloadResult.error);
         return res.status(500).json({ 
           message: "Failed to download PDF", 
           messageAr: "فشل تحميل PDF" 

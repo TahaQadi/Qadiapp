@@ -107,10 +107,41 @@ export default function ClientPriceOffersPage() {
     );
   };
 
-  const generateDownloadUrl = (offer: PriceOffer) => {
-    if (!offer.pdfFileName) return "#";
-    // No token needed - uses session authentication
-    return `/api/price-offers/${offer.id}/download`;
+  const handleDownload = async (offer: PriceOffer) => {
+    if (!offer.pdfFileName) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'لم يتم إنشاء PDF بعد' : 'PDF not generated yet',
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/price-offers/${offer.id}/download`, {
+        credentials: 'include' // Important: include session cookie
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${offer.offerNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF',
+      });
+    }
   };
 
   const handlePrintOffer = (offer: PriceOffer) => {
@@ -527,13 +558,11 @@ export default function ClientPriceOffersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          asChild
+                          onClick={() => handleDownload(offer)}
                           data-testid={`button-download-${offer.id}`}
                         >
-                          <a href={generateDownloadUrl(offer)} download>
-                            <Download className="h-4 w-4 mr-2" />
-                            {language === "ar" ? "تحميل" : "PDF"}
-                          </a>
+                          <Download className="h-4 w-4 mr-2" />
+                          {language === "ar" ? "تحميل" : "PDF"}
                         </Button>
                       )}
                       {canRespond && (
