@@ -333,7 +333,7 @@ export default function PriceOfferCreationDialog({
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open, form]);
+  }, [selectedLtaCurrency, open]);
 
   // Reset currency sync when dialog closes
   useEffect(() => {

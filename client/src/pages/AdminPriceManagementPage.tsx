@@ -899,14 +899,6 @@ export default function AdminPriceManagementPage() {
                 <Plus className="h-4 w-4 me-2" />
                 {language === 'ar' ? 'إنشاء عرض' : 'Create Offer'}
               </Button>
-              <Button
-                onClick={() => setDocumentGenDialogOpen(true)}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300 flex-1 sm:flex-none"
-              >
-                <FileText className="h-4 w-4 me-2" />
-                {language === 'ar' ? 'توليد مستند' : 'Generate Document'}
-              </Button>
             </div>
           </div>
 
@@ -1364,6 +1356,17 @@ export default function AdminPriceManagementPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
+                                      onClick={() => {
+                                        setSelectedOfferForDoc(offer);
+                                        setDocumentGenDialogOpen(true);
+                                      }}
+                                      title={language === 'ar' ? 'توليد مستند' : 'Generate Document'}
+                                    >
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       onClick={() => handlePrintOffer(offer)}
                                       title={language === 'ar' ? 'طباعة' : 'Print'}
                                     >
@@ -1537,6 +1540,18 @@ export default function AdminPriceManagementPage() {
                             >
                               <Eye className="h-4 w-4 me-1.5" />
                               <span className="text-xs">{language === 'ar' ? 'التفاصيل' : 'Details'}</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedOfferForDoc(offer);
+                                setDocumentGenDialogOpen(true);
+                              }}
+                              className="h-10"
+                            >
+                              <FileText className="h-4 w-4 me-1.5" />
+                              <span className="text-xs">{language === 'ar' ? 'مستند' : 'Document'}</span>
                             </Button>
                             <Button
                               variant="outline"
@@ -2345,7 +2360,15 @@ export default function AdminPriceManagementPage() {
       </Dialog>
 
       {/* Document Generation Dialog */}
-      <Dialog open={documentGenDialogOpen} onOpenChange={setDocumentGenDialogOpen}>
+      <Dialog open={documentGenDialogOpen} onOpenChange={(open) => {
+        setDocumentGenDialogOpen(open);
+        if (!open) {
+          setSelectedOfferForDoc(null);
+          setPdfLtaId('');
+          setPdfValidityDays('30');
+          setPdfNotes('');
+        }
+      }}>
         <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
@@ -2354,43 +2377,29 @@ export default function AdminPriceManagementPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 sm:space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="doc-gen-offer-select" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'اختر عرض السعر' : 'Select Price Offer'}
-              </Label>
-              <Select value={selectedOfferForDoc?.id || ''} onValueChange={(offerId) => {
-                const offer = offers.find(o => o.id === offerId);
-                setSelectedOfferForDoc(offer || null);
-              }}>
-                <SelectTrigger id="doc-gen-offer-select" className="h-10 text-sm">
-                  <SelectValue placeholder={language === 'ar' ? 'اختر عرض سعر' : 'Select a price offer'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {offers.map((offer) => (
-                    <SelectItem key={offer.id} value={offer.id}>
-                      {offer.offerNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {selectedOfferForDoc && (
+              <div className="p-3 bg-muted/50 rounded-lg border border-border/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">{language === 'ar' ? 'عرض السعر' : 'Price Offer'}</span>
+                  <Badge variant="secondary">{selectedOfferForDoc.offerNumber}</Badge>
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>{language === 'ar' ? 'العميل:' : 'Client:'} {getClientName(selectedOfferForDoc.clientId)}</div>
+                  <div>{language === 'ar' ? 'الاتفاقية:' : 'LTA:'} {getLtaName(selectedOfferForDoc.ltaId)}</div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="doc-gen-lta-select" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
+                {language === 'ar' ? 'الاتفاقية' : 'LTA'}
               </Label>
-              <Select value={pdfLtaId} onValueChange={setPdfLtaId}>
-                <SelectTrigger id="doc-gen-lta-select" className="h-10 text-sm">
-                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ltas.map((lta) => (
-                    <SelectItem key={lta.id} value={lta.id}>
-                      {language === 'ar' ? lta.nameAr : lta.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="doc-gen-lta-display"
+                value={selectedOfferForDoc?.ltaId ? getLtaName(selectedOfferForDoc.ltaId) : ''}
+                disabled
+                className="h-10 text-sm bg-muted"
+              />
             </div>
 
             <div className="space-y-2">
@@ -2413,7 +2422,7 @@ export default function AdminPriceManagementPage() {
               </Label>
               <Textarea
                 id="doc-gen-notes"
-                value={pdfNotes}
+                value={pdfNotes || selectedOfferForDoc?.notes || ''}
                 onChange={(e) => setPdfNotes(e.target.value)}
                 placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
                 rows={4}
@@ -2431,23 +2440,22 @@ export default function AdminPriceManagementPage() {
             </Button>
             <Button
               onClick={() => {
-                if (!selectedOfferForDoc || !pdfLtaId) {
+                if (!selectedOfferForDoc) {
                   toast({
                     variant: 'destructive',
                     title: language === 'ar' ? 'خطأ' : 'Error',
-                    description: language === 'ar' ? 'يرجى اختيار عرض سعر واتفاقية' : 'Please select an offer and an LTA',
+                    description: language === 'ar' ? 'يرجى اختيار عرض سعر' : 'Please select an offer',
                   });
                   return;
                 }
-                // This mutation will be reused from the pdfDialogOpen logic
                 generatePdfMutation.mutate({
-                  notificationId: selectedOfferForDoc.id, // Assuming notificationId is the offerId for document generation
-                  ltaId: pdfLtaId,
+                  notificationId: selectedOfferForDoc.id,
+                  ltaId: selectedOfferForDoc.ltaId || '',
                   validityDays: parseInt(pdfValidityDays) || 30,
-                  notes: pdfNotes || undefined,
+                  notes: pdfNotes || selectedOfferForDoc.notes || undefined,
                 });
               }}
-              disabled={generatePdfMutation.isPending || !selectedOfferForDoc || !pdfLtaId}
+              disabled={generatePdfMutation.isPending || !selectedOfferForDoc}
               className="w-full sm:w-auto order-1 sm:order-2"
             >
               {generatePdfMutation.isPending
