@@ -1246,7 +1246,7 @@ export default function AdminDocumentsPage() {
 
       {/* Analytics Dialog */}
       <Dialog open={analyticsDialogOpen} onOpenChange={setAnalyticsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{language === 'ar' ? 'إحصائيات القالب' : 'Template Analytics'}</DialogTitle>
             <DialogDescription>
@@ -1260,35 +1260,72 @@ export default function AdminDocumentsPage() {
               <p className="text-muted-foreground">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</p>
             </div>
           ) : analyticsData?.analytics && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'إجمالي المستندات' : 'Total Generated'}</p>
+            <div className="space-y-6">
+              {/* Key Metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10">
+                  <p className="text-xs text-muted-foreground mb-1">{language === 'ar' ? 'إجمالي المستندات' : 'Total Generated'}</p>
                   <p className="text-2xl font-bold">{analyticsData.analytics.totalGenerations}</p>
                 </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'معدل النجاح' : 'Success Rate'}</p>
-                  <p className="text-2xl font-bold">
-                    {((analyticsData.analytics.successfulGenerations / analyticsData.analytics.totalGenerations) * 100).toFixed(1)}%
+                <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10">
+                  <p className="text-xs text-muted-foreground mb-1">{language === 'ar' ? 'معدل النجاح' : 'Success Rate'}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {analyticsData.analytics.totalGenerations > 0 
+                      ? ((analyticsData.analytics.successfulGenerations / analyticsData.analytics.totalGenerations) * 100).toFixed(1)
+                      : 0}%
                   </p>
                 </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'متوسط الوقت' : 'Avg Time'}</p>
+                <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10">
+                  <p className="text-xs text-muted-foreground mb-1">{language === 'ar' ? 'متوسط الوقت' : 'Avg Time'}</p>
                   <p className="text-2xl font-bold">{analyticsData.analytics.averageGenerationTime.toFixed(0)}ms</p>
                 </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الفشل' : 'Failed'}</p>
-                  <p className="text-2xl font-bold text-destructive">{analyticsData.analytics.failedGenerations}</p>
+                <Card className="p-4 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10">
+                  <p className="text-xs text-muted-foreground mb-1">{language === 'ar' ? 'الفشل' : 'Failed'}</p>
+                  <p className="text-2xl font-bold text-red-600">{analyticsData.analytics.failedGenerations}</p>
                 </Card>
               </div>
 
+              {/* Performance Indicator */}
               <Card className="p-4">
-                <h4 className="font-semibold mb-3">{language === 'ar' ? 'حسب النوع' : 'By Document Type'}</h4>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  {language === 'ar' ? 'مؤشر الأداء' : 'Performance Score'}
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{language === 'ar' ? 'الموثوقية' : 'Reliability'}</span>
+                    <span className="font-semibold">
+                      {analyticsData.analytics.totalGenerations > 0 
+                        ? ((analyticsData.analytics.successfulGenerations / analyticsData.analytics.totalGenerations) * 100).toFixed(0)
+                        : 0}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>{language === 'ar' ? 'السرعة' : 'Speed'}</span>
+                    <span className="font-semibold">
+                      {analyticsData.analytics.averageGenerationTime < 1000 ? language === 'ar' ? 'ممتاز' : 'Excellent' :
+                       analyticsData.analytics.averageGenerationTime < 2000 ? language === 'ar' ? 'جيد' : 'Good' :
+                       language === 'ar' ? 'يحتاج تحسين' : 'Needs Improvement'}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Usage by Type */}
+              <Card className="p-4">
+                <h4 className="font-semibold mb-3">{language === 'ar' ? 'الاستخدام حسب النوع' : 'Usage by Document Type'}</h4>
                 <div className="space-y-2">
                   {Object.entries(analyticsData.analytics.byDocumentType).map(([type, count]: [string, any]) => (
-                    <div key={type} className="flex justify-between items-center">
-                      <span className="text-sm">{type}</span>
-                      <Badge>{count}</Badge>
+                    <div key={type} className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/50">
+                      <span className="text-sm font-medium">{type}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{count}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {analyticsData.analytics.totalGenerations > 0 
+                            ? `${((count / analyticsData.analytics.totalGenerations) * 100).toFixed(1)}%`
+                            : '0%'}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>

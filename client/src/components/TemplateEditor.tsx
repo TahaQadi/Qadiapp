@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLanguage } from '@/components/LanguageProvider';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, MoveUp, MoveDown, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TemplatePreview } from './TemplatePreview';
+import { toast } from '@/components/ui/use-toast';
 
 interface Section {
   type: string;
@@ -87,7 +87,7 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
     const newSections = [...sections];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newSections.length) return;
-    
+
     [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
     newSections.forEach((section, i) => section.order = i);
     setSections(newSections);
@@ -100,11 +100,47 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
   };
 
   const handleSave = () => {
+    // Validation
+    if (!name.trim()) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'اسم القالب مطلوب' : 'Template name is required',
+      });
+      return;
+    }
+
+    if (sections.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'يجب إضافة قسم واحد على الأقل' : 'At least one section is required',
+      });
+      return;
+    }
+
+    // Validate table sections have headers
+    const invalidTables = sections.filter(s => 
+      s.type === 'table' && 
+      (!s.content.headers || !Array.isArray(s.content.headers) || s.content.headers.length === 0)
+    );
+
+    if (invalidTables.length > 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ في الجدول' : 'Table Error',
+        description: language === 'ar' 
+          ? 'جميع أقسام الجداول يجب أن تحتوي على عناوين أعمدة' 
+          : 'All table sections must have column headers',
+      });
+      return;
+    }
+
     const template = {
-      name,
-      description,
+      name: name.trim(),
+      description: description.trim(),
       category,
-      language: 'ar', // Always Arabic
+      language: 'ar' as const,
       sections,
       variables,
       styles: {
@@ -112,13 +148,17 @@ export function TemplateEditor({ initialTemplate, onSave, onCancel }: TemplateEd
         secondaryColor,
         accentColor,
         fontSize,
-        fontFamily: 'Helvetica',
-        headerHeight: 120,
-        footerHeight: 70,
-        margins: { top: 140, bottom: 90, left: 50, right: 50 }
+        fontFamily: 'NotoSansArabic',
+        margins: {
+          top: 120,
+          bottom: 80,
+          left: 50,
+          right: 50,
+        },
       },
-      isActive: true
+      isActive: true,
     };
+
     onSave(template);
   };
 

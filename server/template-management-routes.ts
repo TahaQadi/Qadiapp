@@ -191,10 +191,39 @@ export function setupTemplateManagementRoutes(app: Express) {
       
       const result = await TemplateManager.validateTemplate(template as DocumentTemplate);
 
+      // Additional structural validation
+      const warnings: string[] = [];
+      
+      // Check for tables without dataSource
+      template.sections.forEach((section, idx) => {
+        if (section.type === 'table') {
+          if (!section.content.dataSource) {
+            warnings.push(`Table section ${idx + 1} missing dataSource`);
+          }
+          if (!section.content.headers || section.content.headers.length === 0) {
+            result.errors.push(`Table section ${idx + 1} missing headers`);
+          }
+        }
+      });
+
+      // Check for undefined variables
+      const usedVariables = new Set<string>();
+      JSON.stringify(template.sections).replace(/\{\{([^}]+)\}\}/g, (_, v) => {
+        usedVariables.add(v.trim());
+        return '';
+      });
+
+      usedVariables.forEach(v => {
+        if (!template.variables.includes(v) && !v.includes('.')) {
+          warnings.push(`Variable {{${v}}} used but not declared`);
+        }
+      });
+
       res.json({
         success: true,
-        valid: result.valid,
-        errors: result.errors
+        valid: result.errors.length === 0,
+        errors: result.errors,
+        warnings
       });
 
     } catch (error) {
