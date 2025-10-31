@@ -928,7 +928,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find the document by price offer ID
-      const documents = await storage.searchDocuments({ priceOfferId: offerId });
+      const documentsResult = await storage.searchDocuments({ priceOfferId: offerId });
+      const documents = Array.isArray(documentsResult) ? documentsResult : [];
       const document = documents.find(doc => doc.priceOfferId === offerId);
 
       if (!document || !document.fileUrl) {
