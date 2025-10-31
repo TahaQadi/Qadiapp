@@ -79,6 +79,14 @@ interface Product {
   currency?: string;
 }
 
+interface Template {
+  id: string;
+  name: string;
+  category: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
 interface PriceOfferCreationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -101,6 +109,8 @@ export default function PriceOfferCreationDialog({
   const lastSyncedCurrencyRef = useRef<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]); // State for clients
   const [ltas, setLtas] = useState<LTA[]>([]); // State for LTAs
+  const [templates, setTemplates] = useState<Template[]>([]); // State for templates
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined); // State for selected template
 
   const form = useForm<PriceOfferFormValues>({
     resolver: zodResolver(priceOfferSchema),
@@ -137,6 +147,33 @@ export default function PriceOfferCreationDialog({
       .catch(err => console.error('Failed to fetch LTAs:', err));
   }, [open]);
 
+  // Fetch all templates for price offers
+  useEffect(() => {
+    if (!open) return;
+    const fetchTemplates = async () => {
+      try {
+        const response = await fetch('/api/admin/templates?category=price_offer', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const fetchedTemplates = data.templates || [];
+          setTemplates(fetchedTemplates);
+
+          // Set default template if available
+          if (fetchedTemplates.length > 0 && !selectedTemplateId) {
+            const defaultTemplate = fetchedTemplates.find(t => t.isDefault);
+            if (defaultTemplate) {
+              setSelectedTemplateId(defaultTemplate.id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch templates:', error);
+      }
+    };
+    fetchTemplates();
+  }, [open]); // Only run when the dialog opens
 
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -219,6 +256,7 @@ export default function PriceOfferCreationDialog({
           requestId: requestId || null,
           clientId: data.clientId,
           ltaId: data.ltaId,
+          templateId: selectedTemplateId, // Include selected template ID
           items: data.items,
           subtotal: calculateSubtotal(data.items),
           tax: 0, // Can be calculated later if needed
@@ -249,6 +287,7 @@ export default function PriceOfferCreationDialog({
       onOpenChange(false);
       form.reset();
       setSelectedProducts([]);
+      setSelectedTemplateId(undefined); // Reset selected template
       queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
       onSuccess?.();
     },
@@ -335,12 +374,13 @@ export default function PriceOfferCreationDialog({
     }
   }, [selectedLtaCurrency, open, form]);
 
-  // Reset currency sync when dialog closes
+  // Reset currency sync and form when dialog closes
   useEffect(() => {
     if (!open) {
       lastSyncedCurrencyRef.current = null;
       form.reset();
       setSelectedProducts([]);
+      setSelectedTemplateId(undefined); // Reset selected template
     }
   }, [open, form]);
 
@@ -470,10 +510,6 @@ export default function PriceOfferCreationDialog({
                     </FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
-                      // Ensure setSelectedClientId is defined or remove if not used elsewhere
-                      // For now, assuming it might be used in a context not shown here.
-                      // If not, it can be removed.
-                      // setSelectedClientId(value); 
                     }} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -745,6 +781,45 @@ export default function PriceOfferCreationDialog({
                       className="text-sm"
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Template Selection */}
+            <FormField
+              control={form.control}
+              name="templateId" // Assuming a templateId field will be added to your form schema
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-sm">
+                    <FileText className="h-4 w-4" />
+                    {language === 'ar' ? 'قالب المستند' : 'Document Template'}
+                  </FormLabel>
+                  <Select
+                    value={selectedTemplateId}
+                    onValueChange={(value) => {
+                      setSelectedTemplateId(value);
+                      field.onChange(value); // Update react-hook-form value
+                    }}
+                  >
+                    <SelectTrigger id="template" className="w-full">
+                      <SelectValue placeholder={language === 'ar' ? 'اختر القالب' : 'Select template'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.filter(t => t.isActive).map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                          {template.isDefault && ` (${language === 'ar' ? 'افتراضي' : 'Default'})`}
+                        </SelectItem>
+                      ))}
+                      {templates.filter(t => t.isActive).length === 0 && (
+                        <SelectItem value="" disabled>
+                          {language === 'ar' ? 'لا توجد قوالب متاحة' : 'No templates available'}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
