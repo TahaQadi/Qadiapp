@@ -345,4 +345,74 @@ export function setupTemplateManagementRoutes(app: Express) {
       });
     }
   });
+
+  // 9. Get Template Version History
+  app.get('/api/admin/templates/:id/versions', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const versions = await TemplateStorage.getTemplateVersions(id);
+
+      res.json({
+        success: true,
+        versions
+      });
+
+    } catch (error) {
+      console.error('Get template versions error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get template versions'
+      });
+    }
+  });
+
+  // 10. Restore Template Version
+  app.post('/api/admin/templates/:id/restore/:versionId', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { id, versionId } = req.params;
+      
+      const restored = await TemplateStorage.restoreTemplateVersion(id, versionId, req.user?.id);
+
+      if (!restored) {
+        return res.status(404).json({
+          success: false,
+          error: 'Failed to restore template version'
+        });
+      }
+
+      res.json({
+        success: true,
+        template: restored
+      });
+
+    } catch (error) {
+      console.error('Restore template version error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to restore template version'
+      });
+    }
+  });
+
+  // 11. Get Template Analytics
+  app.get('/api/admin/templates/analytics/:id?', requireAdmin, async (req: AdminRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const analytics = await TemplateStorage.getTemplateAnalytics(id);
+
+      res.json({
+        success: true,
+        analytics
+      });
+
+    } catch (error) {
+      console.error('Get template analytics error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get template analytics'
+      });
+    }
+  });
 }

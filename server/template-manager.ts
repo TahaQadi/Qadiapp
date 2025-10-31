@@ -70,8 +70,12 @@ export class TemplateManager {
   static async generateDocument(
     category: string,
     variables: TemplateVariable[],
-    templateId?: string
+    templateId?: string,
+    userId?: string
   ): Promise<Buffer | null> {
+    const startTime = Date.now();
+    let usedTemplateId = templateId;
+    
     try {
       let template: DocumentTemplate | null = null;
       
@@ -110,6 +114,8 @@ export class TemplateManager {
       if (!template) {
         throw new Error(`No template found for category: ${category}`);
       }
+
+      usedTemplateId = template.id;
       
       // Convert to TemplatePDFGenerator format
       const templateForGenerator = {
@@ -120,13 +126,40 @@ export class TemplateManager {
         descriptionAr: template.description || ''
       };
       
-      return await TemplatePDFGenerator.generate({
+      const pdfBuffer = await TemplatePDFGenerator.generate({
         template: templateForGenerator as any,
         variables,
         language: 'ar' // Arabic-only system
       });
+
+      // Track successful usage
+      const generationTime = Date.now() - startTime;
+      await TemplateStorage.trackTemplateUsage(
+        usedTemplateId,
+        category,
+        userId,
+        true,
+        undefined,
+        generationTime
+      );
+
+      return pdfBuffer;
     } catch (error) {
       console.error('Error generating document:', error);
+      
+      // Track failed usage
+      if (usedTemplateId) {
+        const generationTime = Date.now() - startTime;
+        await TemplateStorage.trackTemplateUsage(
+          usedTemplateId,
+          category,
+          userId,
+          false,
+          error instanceof Error ? error.message : 'Unknown error',
+          generationTime
+        );
+      }
+      
       return null;
     }
   }

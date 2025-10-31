@@ -89,6 +89,10 @@ export default function AdminDocumentsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [versionHistoryTemplate, setVersionHistoryTemplate] = useState<any>(null);
+  const [versionHistoryDialogOpen, setVersionHistoryDialogOpen] = useState(false);
+  const [analyticsTemplate, setAnalyticsTemplate] = useState<any>(null);
+  const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false);
 
   // Documents queries
   const { data, isLoading } = useQuery<{ documents: Document[] }>({
@@ -150,6 +154,26 @@ export default function AdminDocumentsPage() {
   });
 
   const templates = templatesData?.templates || [];
+
+  // Template versions query
+  const { data: versionsData, isLoading: loadingVersions } = useQuery({
+    queryKey: ['/api/admin/templates', versionHistoryTemplate?.id, 'versions'],
+    enabled: !!versionHistoryTemplate?.id,
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/admin/templates/${versionHistoryTemplate.id}/versions`);
+      return res.json();
+    },
+  });
+
+  // Template analytics query
+  const { data: analyticsData, isLoading: loadingAnalytics } = useQuery({
+    queryKey: ['/api/admin/templates/analytics', analyticsTemplate?.id],
+    enabled: !!analyticsTemplate?.id,
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/admin/templates/analytics/${analyticsTemplate.id || ''}`);
+      return res.json();
+    },
+  });
 
   // Template mutations
   const createMutation = useMutation({
@@ -240,6 +264,21 @@ export default function AdminDocumentsPage() {
         title: language === 'ar' ? 'تم النسخ' : 'Duplicated',
         description: language === 'ar' ? 'تم نسخ القالب بنجاح' : 'Template duplicated successfully',
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
+    },
+  });
+
+  const restoreVersionMutation = useMutation({
+    mutationFn: async ({ templateId, versionId }: any) => {
+      const res = await apiRequest('POST', `/api/admin/templates/${templateId}/restore/${versionId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: language === 'ar' ? 'تمت الاستعادة' : 'Restored',
+        description: language === 'ar' ? 'تم استعادة الإصدار بنجاح' : 'Version restored successfully',
+      });
+      setVersionHistoryDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/templates'] });
     },
   });
@@ -758,6 +797,32 @@ export default function AdminDocumentsPage() {
                         <div className="flex gap-1 sm:gap-2">
                           <Button
                             size="sm"
+                            variant="outline"
+                            className="flex-1 min-h-[44px]"
+                            onClick={() => {
+                              setVersionHistoryTemplate(template);
+                              setVersionHistoryDialogOpen(true);
+                            }}
+                          >
+                            <History className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{language === 'ar' ? 'الإصدارات' : 'Versions'}</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 min-h-[44px]"
+                            onClick={() => {
+                              setAnalyticsTemplate(template);
+                              setAnalyticsDialogOpen(true);
+                            }}
+                          >
+                            <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{language === 'ar' ? 'الإحصائيات' : 'Stats'}</span>
+                          </Button>
+                        </div>
+                        <div className="flex gap-1 sm:gap-2">
+                          <Button
+                            size="sm"
                             variant="default"
                             className="flex-1 min-h-[44px]"
                             onClick={() => {
@@ -1124,6 +1189,112 @@ export default function AdminDocumentsPage() {
               setEditingTemplate(null);
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Version History Dialog */}
+      <Dialog open={versionHistoryDialogOpen} onOpenChange={setVersionHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{language === 'ar' ? 'سجل الإصدارات' : 'Version History'}</DialogTitle>
+            <DialogDescription>
+              {versionHistoryTemplate?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingVersions ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {versionsData?.versions?.map((version: any) => (
+                <Card key={version.id} className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === 'ar' ? 'الإصدار' : 'Version'} {version.versionNumber}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(version.createdAt), 'PPp')}
+                      </p>
+                      {version.changeReason && (
+                        <p className="text-sm mt-1">{version.changeReason}</p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(language === 'ar' ? 'هل تريد استعادة هذا الإصدار؟' : 'Restore this version?')) {
+                          restoreVersionMutation.mutate({
+                            templateId: versionHistoryTemplate.id,
+                            versionId: version.id
+                          });
+                        }
+                      }}
+                    >
+                      {language === 'ar' ? 'استعادة' : 'Restore'}
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Analytics Dialog */}
+      <Dialog open={analyticsDialogOpen} onOpenChange={setAnalyticsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{language === 'ar' ? 'إحصائيات القالب' : 'Template Analytics'}</DialogTitle>
+            <DialogDescription>
+              {analyticsTemplate?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingAnalytics ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</p>
+            </div>
+          ) : analyticsData?.analytics && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'إجمالي المستندات' : 'Total Generated'}</p>
+                  <p className="text-2xl font-bold">{analyticsData.analytics.totalGenerations}</p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'معدل النجاح' : 'Success Rate'}</p>
+                  <p className="text-2xl font-bold">
+                    {((analyticsData.analytics.successfulGenerations / analyticsData.analytics.totalGenerations) * 100).toFixed(1)}%
+                  </p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'متوسط الوقت' : 'Avg Time'}</p>
+                  <p className="text-2xl font-bold">{analyticsData.analytics.averageGenerationTime.toFixed(0)}ms</p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الفشل' : 'Failed'}</p>
+                  <p className="text-2xl font-bold text-destructive">{analyticsData.analytics.failedGenerations}</p>
+                </Card>
+              </div>
+
+              <Card className="p-4">
+                <h4 className="font-semibold mb-3">{language === 'ar' ? 'حسب النوع' : 'By Document Type'}</h4>
+                <div className="space-y-2">
+                  {Object.entries(analyticsData.analytics.byDocumentType).map(([type, count]: [string, any]) => (
+                    <div key={type} className="flex justify-between items-center">
+                      <span className="text-sm">{type}</span>
+                      <Badge>{count}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
