@@ -766,6 +766,42 @@ export default function PriceOfferCreationDialog({
               )}
             </div>
 
+            {/* Template Selection - Moved before Notes */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4" />
+                {language === 'ar' ? 'قالب المستند' : 'Document Template'}
+              </Label>
+              <Select
+                value={selectedTemplateId}
+                onValueChange={(value) => {
+                  setSelectedTemplateId(value);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={language === 'ar' ? 'اختر القالب' : 'Select template'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.filter(t => t.isActive).map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                      {template.isDefault && ` (${language === 'ar' ? 'افتراضي' : 'Default'})`}
+                    </SelectItem>
+                  ))}
+                  {templates.filter(t => t.isActive).length === 0 && (
+                    <SelectItem value="" disabled>
+                      {language === 'ar' ? 'لا توجد قوالب متاحة' : 'No templates available'}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              {templates.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ar' ? 'لا توجد قوالب متاحة حالياً' : 'No templates available at this time'}
+                </p>
+              )}
+            </div>
+
             {/* Notes */}
             <FormField
               control={form.control}
@@ -781,45 +817,6 @@ export default function PriceOfferCreationDialog({
                       className="text-sm"
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Template Selection */}
-            <FormField
-              control={form.control}
-              name="templateId" // Assuming a templateId field will be added to your form schema
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-sm">
-                    <FileText className="h-4 w-4" />
-                    {language === 'ar' ? 'قالب المستند' : 'Document Template'}
-                  </FormLabel>
-                  <Select
-                    value={selectedTemplateId}
-                    onValueChange={(value) => {
-                      setSelectedTemplateId(value);
-                      field.onChange(value); // Update react-hook-form value
-                    }}
-                  >
-                    <SelectTrigger id="template" className="w-full">
-                      <SelectValue placeholder={language === 'ar' ? 'اختر القالب' : 'Select template'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.filter(t => t.isActive).map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                          {template.isDefault && ` (${language === 'ar' ? 'افتراضي' : 'Default'})`}
-                        </SelectItem>
-                      ))}
-                      {templates.filter(t => t.isActive).length === 0 && (
-                        <SelectItem value="" disabled>
-                          {language === 'ar' ? 'لا توجد قوالب متاحة' : 'No templates available'}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
