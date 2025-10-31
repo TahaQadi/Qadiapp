@@ -362,12 +362,12 @@ export class TemplatePDFGenerator {
   ) {
     const content = section.content as any;
 
-    // Support both naming conventions: headers/headersAr and columnsEn/columnsAr
+    // Support multiple naming conventions for headers
     let headers: string[];
     if (language === 'ar') {
-      headers = content.headersAr || content.columnsAr;
+      headers = content.headersAr || content.headers || content.columnsAr || content.columns;
     } else {
-      headers = content.headers || content.columnsEn;
+      headers = content.headers || content.columnsEn || content.columns;
     }
 
     const dataSource = content.dataSource || content.rows;
