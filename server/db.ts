@@ -58,3 +58,19 @@ export const templateUsageStats = sqliteTable('template_usage_stats', {
   errorMessage: text('error_message'),
   generationTimeMs: integer('generation_time_ms'),
 });
+
+// Update templates table schema to include the new columns for advanced editor UI
+export const templates = sqliteTable('templates', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category').notNull(),
+  language: text('language').notNull().default('ar'),
+  sections: text('sections', { mode: 'json' }).notNull(),
+  variables: text('variables', { mode: 'json' }).notNull(),
+  styles: text('styles', { mode: 'json' }).notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  isDefault: integer('is_default', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
