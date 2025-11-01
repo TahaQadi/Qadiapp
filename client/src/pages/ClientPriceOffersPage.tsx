@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { FileText, Eye, Check, X, ArrowLeft, User, LogOut, Package, Download, Printer, FileSpreadsheet } from "lucide-react";
+import { FileText, Eye, Check, X, ArrowLeft, User, LogOut, Package, Printer, FileSpreadsheet } from "lucide-react";
 import { Link } from "wouter";
 import { formatDateLocalized } from "@/lib/dateUtils";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -105,43 +105,6 @@ export default function ClientPriceOffersPage() {
         {language === "ar" ? config.labelAr : config.label}
       </Badge>
     );
-  };
-
-  const handleDownload = async (offer: PriceOffer) => {
-    if (!offer.pdfFileName) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'لم يتم إنشاء PDF بعد' : 'PDF not generated yet',
-      });
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/price-offers/${offer.id}/download`, {
-        credentials: 'include' // Important: include session cookie
-      });
-      
-      if (!response.ok) {
-        throw new Error('Download failed');
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${offer.offerNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF',
-      });
-    }
   };
 
   const handlePrintOffer = (offer: PriceOffer) => {
@@ -554,17 +517,6 @@ export default function ClientPriceOffersPage() {
                       >
                         <Printer className="h-4 w-4" />
                       </Button>
-                      {offer.pdfFileName && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(offer)}
-                          data-testid={`button-download-${offer.id}`}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          {language === "ar" ? "تحميل" : "PDF"}
-                        </Button>
-                      )}
                       {canRespond && (
                         <>
                           <Button

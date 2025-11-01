@@ -173,7 +173,8 @@ export default function PriceOfferCreationDialog({
       }
     };
     fetchTemplates();
-  }, [open]); // Only run when the dialog opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]); // Only run when the dialog opens - selectedTemplateId intentionally excluded to prevent loop
 
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/all'],
@@ -354,7 +355,8 @@ export default function PriceOfferCreationDialog({
         setSelectedProducts(priceRequest.products);
       }
     }
-  }, [priceRequest, open, requestId, form])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceRequest, open, requestId])
 
   // Update currency for all items when LTA changes
   useEffect(() => {
@@ -372,7 +374,8 @@ export default function PriceOfferCreationDialog({
         lastSyncedCurrencyRef.current = selectedLtaCurrency;
       }
     }
-  }, [selectedLtaCurrency, open, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLtaCurrency, open]);
 
   // Reset currency sync and form when dialog closes
   useEffect(() => {
@@ -382,7 +385,8 @@ export default function PriceOfferCreationDialog({
       setSelectedProducts([]);
       setSelectedTemplateId(undefined); // Reset selected template
     }
-  }, [open, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleAddProduct = (product: Product) => {
     const currentItems = form.getValues('items');

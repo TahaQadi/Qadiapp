@@ -1,6 +1,6 @@
 
 import { TemplatePDFGenerator } from './template-pdf-generator';
-import { TemplateStorage } from './template-storage';
+import { TemplateManager } from './template-manager';
 import { PDFStorage } from './object-storage';
 import { storage } from './storage';
 import { PDFAccessControl } from './pdf-access-control';
@@ -33,9 +33,6 @@ interface GenerateDocumentResult {
  * Handles template lookup, PDF generation, storage, and metadata creation
  */
 export class DocumentUtils {
-  private static templateCache = new Map<string, any>();
-  private static cacheExpiry = 60 * 60 * 1000; // 1 hour (increased from 5 minutes)
-
   /**
    * Generate a document from template with all necessary steps
    */
@@ -43,20 +40,13 @@ export class DocumentUtils {
     const { templateCategory, variables, language = 'ar', clientId, templateId, metadata = {}, force = false } = options;
 
     try {
-      // 1. Get template (with caching) - use specific ID if provided, otherwise get active
-      let template;
-      if (templateId) {
-        template = await TemplateStorage.getTemplate(templateId);
-      } else {
-        template = await this.getActiveTemplate(templateCategory);
-      }
+      // 1. Get hardcoded template for category (templateId is ignored)
+      const template = await TemplateManager.getDefaultTemplate(templateCategory);
       
       if (!template) {
         return {
           success: false,
-          error: templateId 
-            ? `Template not found: ${templateId}`
-            : `No active template found for category: ${templateCategory}`
+          error: `No template found for category: ${templateCategory}`
         };
       }
 
@@ -85,12 +75,13 @@ export class DocumentUtils {
         };
       }
 
-      // 2. Generate PDF
-      const pdfBuffer = await TemplatePDFGenerator.generate({
-        template,
+      // 2. Generate PDF using TemplateManager (which uses hardcoded templates)
+      const pdfBuffer = await TemplateManager.generateDocument(
+        templateCategory,
         variables,
-        language
-      });
+        undefined, // templateId ignored
+        undefined // userId
+      );
 
       if (!pdfBuffer || pdfBuffer.length === 0) {
         return { success: false, error: 'PDF generation failed' };
@@ -120,7 +111,7 @@ export class DocumentUtils {
         priceOfferId: metadata.priceOfferId,
         ltaId: metadata.ltaId,
         metadata: {
-          templateId: template.id,
+          templateId: 'hardcoded', // Mark as using hardcoded template
           variablesHash: dedupeResult.variablesHash,
           generatedAt: new Date().toISOString(),
           ...metadata
@@ -150,52 +141,6 @@ export class DocumentUtils {
     }
   }
 
-  /**
-   * Get active template with caching and validation
-   */
-  private static async getActiveTemplate(category: string): Promise<any> {
-    const cacheKey = `${category}_active`;
-    const cached = this.templateCache.get(cacheKey);
-
-    // Check cache validity
-    if (cached && (Date.now() - cached.timestamp) < this.cacheExpiry) {
-      // Validate cached template still has required fields
-      if (cached.template?.id && cached.template?.sections && cached.template?.isActive) {
-        console.log('📋 Using cached template:', { category, templateId: cached.template.id });
-        return cached.template;
-      } else {
-        // Invalid cache entry, remove it
-        console.warn('⚠️ Invalid cached template, removing from cache:', category);
-        this.templateCache.delete(cacheKey);
-      }
-    }
-
-    // Fetch from database
-    console.log('🔍 Fetching template from database:', category);
-    const templates = await TemplateStorage.getTemplates(category);
-    
-    // Find default active Arabic template first, fallback to any active template
-    const template = templates.find(t => t.isDefault && t.isActive && t.language === 'ar') 
-                  || templates.find(t => t.isActive && t.language === 'ar');
-
-    if (template) {
-      // Validate template structure before caching
-      if (!template.sections || !Array.isArray(template.sections)) {
-        console.error('❌ Template has invalid sections:', template.id);
-        return null;
-      }
-      
-      this.templateCache.set(cacheKey, {
-        template,
-        timestamp: Date.now()
-      });
-      console.log('✅ Template cached:', { category, templateId: template.id });
-    } else {
-      console.warn('⚠️ No active template found for category:', category);
-    }
-
-    return template;
-  }
 
   /**
    * Generate standardized filename
@@ -206,10 +151,4 @@ export class DocumentUtils {
     return `${category}_${id}_${timestamp}.pdf`;
   }
 
-  /**
-   * Clear template cache (useful after template updates)
-   */
-  static clearCache(): void {
-    this.templateCache.clear();
-  }
 }

@@ -1756,7 +1756,9 @@ export default function OrderingPage() {
           onOpenChange={setOrderDetailsDialogOpen}
           order={selectedOrder ? {
             ...selectedOrder,
-            createdAt: new Date(selectedOrder.createdAt)
+            createdAt: new Date(selectedOrder.createdAt),
+            clientId: (selectedOrder as any).clientId,
+            ltaId: (selectedOrder as any).ltaId || null
           } : null}
         />
 

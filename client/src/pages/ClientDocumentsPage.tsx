@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
-  Download, 
   Search, 
   Calendar, 
   Eye, 
@@ -111,42 +110,6 @@ export default function ClientDocumentsPage() {
   const totalCount = documentsData?.totalCount || 0;
   const totalPages = documentsData?.totalPages || 1;
 
-  // Download mutation
-  const downloadMutation = useMutation({
-    mutationFn: async (documentId: string) => {
-      // Get download token
-      const tokenResponse = await fetch(`/api/documents/${documentId}/token`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to get download token');
-      }
-
-      const { token } = await tokenResponse.json();
-      
-      // Download the file
-      const downloadUrl = `/api/documents/${documentId}/download?token=${token}`;
-      window.open(downloadUrl, '_blank');
-      
-      return { success: true };
-    },
-    onSuccess: () => {
-      toast({
-        title: language === 'ar' ? 'تم بدء التنزيل' : 'Download Started',
-        description: language === 'ar' ? 'سيبدأ تنزيل المستند قريباً' : 'Document download will start shortly'
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message || (language === 'ar' ? 'فشل تنزيل المستند' : 'Failed to download document'),
-        variant: 'destructive'
-      });
-    }
-  });
 
   // Document request mutation
   const requestMutation = useMutation({
@@ -175,9 +138,6 @@ export default function ClientDocumentsPage() {
     }
   });
 
-  const handleDownload = (document: Document) => {
-    downloadMutation.mutate(document.id);
-  };
 
   const handlePreview = (document: Document) => {
     setSelectedDocument(document);
@@ -473,19 +433,6 @@ export default function ClientDocumentsPage() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDownload(doc)}
-                                disabled={downloadMutation.isPending}
-                                title={language === 'ar' ? 'تنزيل' : 'Download'}
-                              >
-                                {downloadMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Download className="h-4 w-4" />
-                                )}
-                              </Button>
                             </div>
                           </div>
                         </Card>
@@ -655,25 +602,6 @@ export default function ClientDocumentsPage() {
                     <Eye className="h-4 w-4 text-primary" />
                     {language === 'ar' ? 'الإجراءات' : 'Actions'}
                   </h4>
-                  <div className="space-y-2">
-                    <Button
-                      onClick={() => handleDownload(selectedDocument)}
-                      disabled={downloadMutation.isPending}
-                      className="w-full"
-                    >
-                      {downloadMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {language === 'ar' ? 'جاري التنزيل...' : 'Downloading...'}
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-4 w-4 mr-2" />
-                          {language === 'ar' ? 'تنزيل المستند' : 'Download Document'}
-                        </>
-                      )}
-                    </Button>
-                  </div>
                 </Card>
               </div>
             </div>

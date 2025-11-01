@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Check, Clock, Package, Download, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign, Trash2, Send, Edit, ChevronDown, Filter, Search, X, Printer, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Package, Archive, FileText, Eye, CheckCircle, XCircle, AlertCircle, Plus, Users, Calendar as CalendarIcon, DollarSign, Trash2, Send, Edit, ChevronDown, Filter, Search, X, Printer, FileSpreadsheet } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -102,6 +102,60 @@ interface LTA {
   nameAr: string;
 }
 
+interface Product {
+  id: string;
+  sku: string;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr?: string | null;
+  descriptionEn?: string | null;
+  unit?: string | null;
+  unitType?: string | null;
+}
+
+// Price Offer Template Configuration
+const PRICE_OFFER_TEMPLATE = {
+  company: {
+    nameAr: 'شركة القاضي للمواد الاستهلاكية والتسويق',
+    nameEn: 'Al Qadi Trading Company',
+    addressAr: 'البيرة – أمّ الشرايط، فلسطين',
+    addressEn: 'Al-Bireh – Um Al-Shrayt, Palestine',
+    phone: '009705925555532',
+    phoneLabel: '(قسم المبيعات)',
+    email: 'info@qadi.ps',
+    website: 'qadi.ps',
+    taxRegistrationNumber: '...',
+  },
+  headerTitle: {
+    ar: 'عرض سعر',
+    en: 'Price Offer',
+  },
+  termsAndConditions: {
+    ar: `الأسعار: تشمل ضريبة القيمة المضافة دائمًا.
+الصلاحية: يسري العرض لمدة ({validityDays} يومًا) من تاريخ الإصدار.
+التوريد: خلال ({deliveryDays} أيام عمل) من تأكيد الطلب/الدفع، حسب التوفّر.
+التسليم: إلى موقع العميل، وقد تُضاف كلفة شحن بحسب الموقع والكمية.
+الدفع: ({paymentTerms}) حسب الاتفاق المكتوب.
+الضمان: مطابقة المواصفات، وتُقبل الملاحظات خلال ({warrantyDays} أيام) من التسليم.
+الإلغاء: قبل بدء التجهيز الفعلي؛ وتُحمّل أي تكاليف مترتبة على طالب الإلغاء.
+أخرى: يحق للشركة مراجعة المواعيد عند ظروف قاهرة أو تغيّرات سوقية جوهرية.`,
+    en: `Prices: Always include VAT.
+Validity: Offer is valid for ({validityDays} days) from the issue date.
+Supply: Within ({deliveryDays} working days) from order confirmation/payment, subject to availability.
+Delivery: To client location, shipping costs may be added based on location and quantity.
+Payment: ({paymentTerms}) as per written agreement.
+Warranty: Specification compliance, and comments accepted within ({warrantyDays} days) of delivery.
+Cancellation: Before actual preparation begins; any costs incurred are charged to the cancelling party.
+Other: The company reserves the right to review schedules in case of force majeure or significant market changes.`,
+  },
+  footer: {
+    ar: `شركة القاضي – info@qadi.ps – qadi.ps
+المبيعات: 00970592555532 | اللوجستيات والتسليم: 0592555534 | الحسابات: 0592555536`,
+    en: `Al Qadi Company – info@qadi.ps – qadi.ps
+Sales: 00970592555532 | Logistics & Delivery: 0592555534 | Accounts: 0592555536`,
+  },
+};
+
 export default function AdminPriceManagementPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -115,11 +169,6 @@ export default function AdminPriceManagementPage() {
   const [selectedLtaId, setSelectedLtaId] = useState('');
   const [requestStatusFilter, setRequestStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [offerStatusFilter, setOfferStatusFilter] = useState<string>('all');
-  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-  const [selectedRequestForPdf, setSelectedRequestForPdf] = useState<Notification | null>(null);
-  const [pdfLtaId, setPdfLtaId] = useState('');
-  const [pdfValidityDays, setPdfValidityDays] = useState('30');
-  const [pdfNotes, setPdfNotes] = useState('');
   const [linkedRequestId, setLinkedRequestId] = useState<string | null>(null);
   const [createOfferDialogOpen, setCreateOfferDialogOpen] = useState(false);
   const [selectedRequestForOffer, setSelectedRequestForOffer] = useState<PriceRequest | null>(null);
@@ -128,8 +177,7 @@ export default function AdminPriceManagementPage() {
   const [requestSearchQuery, setRequestSearchQuery] = useState('');
   const [offerSearchQuery, setOfferSearchQuery] = useState('');
   const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
-  const [documentGenDialogOpen, setDocumentGenDialogOpen] = useState(false);
-  const [selectedOfferForDoc, setSelectedOfferForDoc] = useState<PriceOffer | null>(null);
+  const [editableTerms, setEditableTerms] = useState<string>('');
 
   const { data: notifications = [], isLoading: isLoadingRequests } = useQuery<Notification[]>({
     queryKey: ['/api/client/notifications'],
@@ -149,6 +197,11 @@ export default function AdminPriceManagementPage() {
 
   const { data: ltas = [] } = useQuery<LTA[]>({
     queryKey: ['/api/admin/ltas'],
+  });
+
+  // Fetch products for enriching offer items with description and unit
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['/api/products/all'],
   });
 
   const { data: ltaAssignments } = useQuery<{
@@ -239,38 +292,6 @@ export default function AdminPriceManagementPage() {
         variant: 'destructive',
         title: language === 'ar' ? 'خطأ' : 'Error',
         description: error.message,
-      });
-    },
-  });
-
-  const generatePdfMutation = useMutation({
-    mutationFn: async (data: { notificationId: string; ltaId: string; validityDays: number; notes?: string }) => {
-      const res = await apiRequest('POST', `/api/admin/price-requests/${data.notificationId}/generate-pdf`, {
-        language,
-        ltaId: data.ltaId,
-        validityDays: data.validityDays,
-        notes: data.notes,
-      });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: language === 'ar' ? 'تم إنشاء PDF' : 'PDF Generated',
-        description: data.message || (language === 'ar' ? 'تم إنشاء مستند عرض السعر بنجاح' : 'Price offer document generated successfully'),
-      });
-      setPdfDialogOpen(false);
-      setPdfLtaId('');
-      setPdfValidityDays('30');
-      setPdfNotes('');
-      setSelectedRequestForPdf(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/client/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/price-offers'] });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message || (language === 'ar' ? 'فشل إنشاء PDF' : 'Failed to generate PDF'),
       });
     },
   });
@@ -514,13 +535,60 @@ export default function AdminPriceManagementPage() {
     }
   };
 
-  const handleDownload = async (offerId: string) => {
-    // Use new authenticated download endpoint
-    window.open(`/api/price-offers/${offerId}/download`, '_blank');
+  // Helper function to enrich offer items with product details
+  const enrichOfferItems = (items: any[]): any[] => {
+    return items.map((item: any) => {
+      // Try to find product by productId first, then by SKU
+      const product = products.find((p: Product) => 
+        p.id === item.productId || p.sku === item.sku
+      );
+      
+      return {
+        ...item,
+        descriptionAr: product?.descriptionAr || item.descriptionAr || '-',
+        descriptionEn: product?.descriptionEn || item.descriptionEn || '-',
+        unit: product?.unit || item.unit || '-',
+        discount: item.discount || 0,
+      };
+    });
+  };
+
+  // Helper function to calculate validity days from offer
+  const calculateValidityDays = (validUntil: string): number => {
+    const now = new Date();
+    const valid = new Date(validUntil);
+    const diffTime = valid.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  // Helper function to escape HTML to prevent XSS
+  const escapeHtml = (text: string | null | undefined): string => {
+    if (!text) return '';
+    // Use browser's native escaping via textContent
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
+  // Helper function to format terms and conditions with dynamic values
+  const formatTermsAndConditions = (offer: PriceOffer): string => {
+    const validityDays = calculateValidityDays(offer.validUntil);
+    const deliveryDays = 30; // Default, can be customized
+    const paymentTerms = 'تحويل بنكي/نقدًا عند التسليم/آجل 30 يومًا'; // Default
+    const warrantyDays = 7; // Default
+    
+    const termsTemplate = PRICE_OFFER_TEMPLATE.termsAndConditions[language === 'ar' ? 'ar' : 'en'];
+    return termsTemplate
+      .replace('{validityDays}', validityDays.toString())
+      .replace('{deliveryDays}', deliveryDays.toString())
+      .replace('{paymentTerms}', paymentTerms)
+      .replace('{warrantyDays}', warrantyDays.toString());
   };
 
   const handlePrintOffer = (offer: PriceOffer) => {
     const items = safeJsonParse(offer.items, []);
+    const enrichedItems = enrichOfferItems(items);
     const client = clients.find(c => c.id === offer.clientId);
 
     const printWindow = window.open('', '_blank');
@@ -533,101 +601,241 @@ export default function AdminPriceManagementPage() {
       return;
     }
 
+    const companyName = language === 'ar' ? PRICE_OFFER_TEMPLATE.company.nameAr : PRICE_OFFER_TEMPLATE.company.nameEn;
+    const headerTitle = language === 'ar' ? PRICE_OFFER_TEMPLATE.headerTitle.ar : PRICE_OFFER_TEMPLATE.headerTitle.en;
+    const footerText = language === 'ar' ? PRICE_OFFER_TEMPLATE.footer.ar : PRICE_OFFER_TEMPLATE.footer.en;
+    const termsText = editableTerms || formatTermsAndConditions(offer);
+    const currency = enrichedItems[0]?.currency || 'ILS';
+    const subtotal = enrichedItems.reduce((sum: number, item: any) => {
+      const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+      const quantity = Number(item.quantity) || 0;
+      const discount = parseFloat(String(item.discount || '0')) || 0;
+      return sum + (price * quantity - discount);
+    }, 0);
+    const tax = parseFloat(offer.tax || '0');
+    const total = parseFloat(offer.total || subtotal.toString());
+
     const html = `
       <!DOCTYPE html>
       <html dir="${language === 'ar' ? 'rtl' : 'ltr'}">
         <head>
-          <title>${language === 'ar' ? 'عرض سعر' : 'Price Offer'} #${offer.offerNumber}</title>
+          <title>${headerTitle} #${offer.offerNumber}</title>
           <meta charset="UTF-8">
           <style>
-            * { box-sizing: border-box; }
+            @page {
+              size: A4;
+              margin: 15mm;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
             body {
-              font-family: Arial, sans-serif;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif;
+              padding: 20px;
+              max-width: 100%;
               direction: ${language === 'ar' ? 'rtl' : 'ltr'};
+              font-size: 11pt;
+              line-height: 1.5;
+              color: #2c3e50;
             }
             .header {
               text-align: center;
-              margin-bottom: 40px;
-              border-bottom: 3px solid #d4af37;
-              padding-bottom: 20px;
+              margin-bottom: 25px;
+              padding-bottom: 15px;
+              border-bottom: 4px solid #d4af37;
+              position: relative;
+            }
+            .header::after {
+              content: '';
+              position: absolute;
+              bottom: -4px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 100px;
+              height: 4px;
+              background: #1a365d;
             }
             .company-name {
-              font-size: 24px;
+              font-size: 22pt;
               font-weight: bold;
               color: #1a365d;
-              margin-bottom: 10px;
+              margin-bottom: 8px;
+              letter-spacing: 0.5px;
+            }
+            .company-details {
+              font-size: 10pt;
+              color: #555;
+              margin-top: 8px;
+              line-height: 1.8;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 0 20px;
+              justify-items: start;
+            }
+            .company-details div {
+              margin: 2px 0;
+            }
+            .offer-title {
+              color: #555;
+              margin-top: 12px;
+              font-size: 18pt;
+              font-weight: 600;
             }
             .offer-info {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 20px;
-              margin-bottom: 30px;
+              gap: 12px;
+              margin-bottom: 20px;
             }
             .info-block {
-              border: 1px solid #e5e7eb;
-              padding: 15px;
-              border-radius: 8px;
+              border: 1.5px solid #ddd;
+              padding: 12px;
+              border-radius: 4px;
+              background: #fafafa;
             }
             .info-label {
-              font-weight: bold;
-              color: #6b7280;
-              font-size: 12px;
-              margin-bottom: 5px;
+              font-weight: 600;
+              color: #666;
+              font-size: 9pt;
+              margin-bottom: 4px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
             }
             .info-value {
-              color: #111827;
-              font-size: 14px;
+              color: #1a365d;
+              font-size: 11pt;
+              font-weight: 500;
             }
             table {
               width: 100%;
               border-collapse: collapse;
-              margin-top: 20px;
+              margin-top: 15px;
+              margin-bottom: 20px;
+              font-size: 9pt;
+              page-break-inside: auto;
             }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
             th {
               background: #1a365d;
               color: white;
-              padding: 12px;
+              padding: 8px 6px;
               text-align: ${language === 'ar' ? 'right' : 'left'};
+              font-weight: 600;
+              font-size: 9pt;
+              border: 1px solid #1a365d;
             }
             td {
-              border-bottom: 1px solid #e5e7eb;
-              padding: 12px;
+              border-bottom: 1px solid #e0e0e0;
+              padding: 8px 6px;
               text-align: ${language === 'ar' ? 'right' : 'left'};
+              vertical-align: top;
+            }
+            tbody tr:hover {
+              background: #f8f9fa;
+            }
+            tbody tr:last-child td {
+              border-bottom: 2px solid #1a365d;
             }
             .total-section {
-              margin-top: 30px;
-              padding: 20px;
-              background: #f9fafb;
-              border-radius: 8px;
+              margin-top: 20px;
+              margin-bottom: 20px;
+              padding: 15px;
+              background: #f8f9fa;
+              border: 1px solid #e0e0e0;
+              border-radius: 4px;
             }
             .total-row {
               display: flex;
               justify-content: space-between;
-              padding: 8px 0;
-              font-size: 16px;
+              padding: 6px 0;
+              font-size: 11pt;
             }
             .grand-total {
-              font-size: 20px;
+              font-size: 14pt;
               font-weight: bold;
               border-top: 2px solid #d4af37;
-              padding-top: 12px;
-              margin-top: 12px;
+              padding-top: 10px;
+              margin-top: 10px;
+              color: #1a365d;
+            }
+            .terms-section {
+              margin-top: 20px;
+              margin-bottom: 20px;
+              padding: 15px;
+              background: #f8f9fa;
+              border-left: ${language === 'ar' ? 'none' : '4px solid #1a365d'};
+              border-right: ${language === 'ar' ? '4px solid #1a365d' : 'none'};
+              border-radius: 4px;
+              font-size: 9pt;
+              line-height: 1.8;
+            }
+            .terms-title {
+              font-weight: bold;
+              font-size: 11pt;
+              margin-bottom: 8px;
+              color: #1a365d;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            .notes-section {
+              margin-top: 20px;
+              margin-bottom: 20px;
+              padding: 15px;
+              background: #fffbf0;
+              border: 1px dashed #d4af37;
+              border-radius: 4px;
+              font-size: 9pt;
+              line-height: 1.8;
+            }
+            .notes-title {
+              font-weight: bold;
+              font-size: 11pt;
+              margin-bottom: 8px;
+              color: #1a365d;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #e0e0e0;
+              text-align: center;
+              font-size: 9pt;
+              color: #666;
+              line-height: 1.8;
+            }
+            .footer div {
+              margin: 3px 0;
             }
             @media print {
-              body { padding: 20px; }
-              .no-print { display: none; }
+              body { 
+                padding: 0;
+                margin: 0;
+              }
+              .no-print { display: none !important; }
+              .header { page-break-after: avoid; }
+              table { page-break-inside: avoid; }
+              .total-section { page-break-inside: avoid; }
+            }
+            @media screen {
+              body {
+                max-width: 21cm;
+                margin: 0 auto;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                padding: 40px;
+                background: white;
+              }
             }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="company-name">
-              ${language === 'ar' ? 'شركة القاضي التجارية' : 'Al Qadi Trading Company'}
+            <div class="company-name">${companyName}</div>
+            <div class="company-details">
+              <div>${language === 'ar' ? PRICE_OFFER_TEMPLATE.company.addressAr : PRICE_OFFER_TEMPLATE.company.addressEn}</div>
+              <div>${language === 'ar' ? `الهاتف: ${PRICE_OFFER_TEMPLATE.company.phone} ${PRICE_OFFER_TEMPLATE.company.phoneLabel}` : `Phone: ${PRICE_OFFER_TEMPLATE.company.phone}`}</div>
+              <div>${language === 'ar' ? `البريد الإلكتروني: ${PRICE_OFFER_TEMPLATE.company.email}` : `Email: ${PRICE_OFFER_TEMPLATE.company.email}`}</div>
+              <div>${language === 'ar' ? `الموقع: ${PRICE_OFFER_TEMPLATE.company.website}` : `Website: ${PRICE_OFFER_TEMPLATE.company.website}`}</div>
+              <div>${language === 'ar' ? `الرقم الضريبي: ${PRICE_OFFER_TEMPLATE.company.taxRegistrationNumber}` : `Tax Registration: ${PRICE_OFFER_TEMPLATE.company.taxRegistrationNumber}`}</div>
             </div>
-            <div style="color: #6b7280;">${language === 'ar' ? 'عرض سعر' : 'Price Offer'}</div>
+            <div class="offer-title">${headerTitle}</div>
           </div>
 
           <div class="offer-info">
@@ -652,41 +860,64 @@ export default function AdminPriceManagementPage() {
           <table>
             <thead>
               <tr>
-                <th>${language === 'ar' ? '#' : 'No.'}</th>
-                <th>${language === 'ar' ? 'رمز المنتج' : 'SKU'}</th>
-                <th>${language === 'ar' ? 'المنتج' : 'Product'}</th>
+                <th>${language === 'ar' ? 'رقم الصنف' : 'Item No.'}</th>
+                <th>${language === 'ar' ? 'اسم الصنف' : 'Product Name'}</th>
+                <th>${language === 'ar' ? 'الوصف' : 'Description'}</th>
+                <th>${language === 'ar' ? 'الوحدة' : 'Unit'}</th>
                 <th>${language === 'ar' ? 'الكمية' : 'Qty'}</th>
-                <th>${language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</th>
+                <th>${language === 'ar' ? 'سعر الوحدة (شيكل) – شامل الضريبة' : 'Unit Price (ILS) – VAT Included'}</th>
+                <th>${language === 'ar' ? 'الخصم' : 'Discount'}</th>
                 <th>${language === 'ar' ? 'الإجمالي' : 'Total'}</th>
               </tr>
             </thead>
             <tbody>
-              ${items.map((item: any, idx: number) => `
-                <tr>
-                  <td>${idx + 1}</td>
-                  <td>${item.sku || '-'}</td>
-                  <td>${language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}</td>
-                  <td>${item.quantity}</td>
-                  <td>${parseFloat(item.unitPrice).toFixed(2)}</td>
-                  <td>${(parseFloat(item.unitPrice) * item.quantity).toFixed(2)}</td>
-                </tr>
-              `).join('')}
+              ${enrichedItems.map((item: any, idx: number) => {
+                const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                const itemQuantity = Number(item.quantity) || 0;
+                const discount = parseFloat(String(item.discount || '0')) || 0;
+                const itemTotal = (itemPrice * itemQuantity) - discount;
+                const name = language === 'ar' 
+                  ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || '-')
+                  : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || '-');
+                const description = language === 'ar' ? (item.descriptionAr || '-') : (item.descriptionEn || '-');
+
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>${name}</td>
+                    <td>${description}</td>
+                    <td>${item.unit || '-'}</td>
+                    <td>${itemQuantity}</td>
+                    <td>${itemPrice.toFixed(2)} ${currency}</td>
+                    <td>${discount > 0 ? discount.toFixed(2) : '-'}</td>
+                    <td>${itemTotal.toFixed(2)} ${currency}</td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
 
           <div class="total-section">
-            <div class="total-row">
-              <span>${language === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}:</span>
-              <span>${offer.subtotal}</span>
-            </div>
-            <div class="total-row">
-              <span>${language === 'ar' ? 'الضريبة' : 'Tax'}:</span>
-              <span>${offer.tax || 0}</span>
-            </div>
             <div class="total-row grand-total">
               <span>${language === 'ar' ? 'المجموع الكلي' : 'Grand Total'}:</span>
-              <span>${offer.total}</span>
+              <span>${total.toFixed(2)} ${currency}</span>
             </div>
+          </div>
+
+          ${offer.notes ? `
+          <div class="notes-section">
+            <div class="notes-title">${language === 'ar' ? 'ملاحظات' : 'Notes'}</div>
+            <div style="white-space: pre-line;">${escapeHtml(offer.notes)}</div>
+          </div>
+          ` : ''}
+
+          <div class="terms-section">
+            <div class="terms-title">${language === 'ar' ? 'الشروط والأحكام' : 'Terms and Conditions'}</div>
+            <div style="white-space: pre-line;">${termsText}</div>
+          </div>
+
+          <div class="footer">
+            ${footerText.split('\n').map(line => `<div>${line}</div>`).join('')}
           </div>
 
           <div class="no-print" style="text-align: center; margin-top: 40px;">
@@ -724,7 +955,7 @@ export default function AdminPriceManagementPage() {
     offers.forEach(offer => {
       const client = clients.find(c => c.id === offer.clientId);
       const clientName = client ? (language === 'ar' ? client.nameAr : client.nameEn) : 'N/A';
-      const request = requests.find(r => r.id === offer.requestId);
+      const request = priceRequests.find((r: any) => r.id === offer.requestId);
 
       const row = [
         offer.offerNumber,
@@ -732,7 +963,10 @@ export default function AdminPriceManagementPage() {
         clientName,
         new Date(offer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'),
         offer.status,
-        offer.subtotal,
+        (() => {
+          const items = safeJsonParse(offer.items, []);
+          return items.reduce((sum: number, item: any) => sum + (parseFloat(item.unitPrice || '0') * (item.quantity || 0)), 0).toFixed(2);
+        })(),
         offer.tax || 0,
         offer.total
       ];
@@ -794,6 +1028,8 @@ export default function AdminPriceManagementPage() {
 
   const handleViewOffer = (offer: PriceOffer) => {
     setSelectedOffer(offer);
+    const termsText = formatTermsAndConditions(offer);
+    setEditableTerms(termsText);
     setViewOfferDialogOpen(true);
   };
 
@@ -1356,28 +1592,10 @@ export default function AdminPriceManagementPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => {
-                                        setSelectedOfferForDoc(offer);
-                                        setDocumentGenDialogOpen(true);
-                                      }}
-                                      title={language === 'ar' ? 'توليد مستند' : 'Generate Document'}
-                                    >
-                                      <FileText className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
                                       onClick={() => handlePrintOffer(offer)}
                                       title={language === 'ar' ? 'طباعة' : 'Print'}
                                     >
                                       <Printer className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDownload(offer.id)}
-                                    >
-                                      <Download className="h-4 w-4" />
                                     </Button>
                                     <Button
                                       variant="ghost"
@@ -1544,37 +1762,8 @@ export default function AdminPriceManagementPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                setSelectedOfferForDoc(offer);
-                                setDocumentGenDialogOpen(true);
-                              }}
-                              className="h-10"
-                            >
-                              <FileText className="h-4 w-4 me-1.5" />
-                              <span className="text-xs">{language === 'ar' ? 'مستند' : 'Document'}</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePrintOffer(offer)}
-                              className="h-10"
-                            >
-                              <Printer className="h-4 w-4 me-1.5" />
-                              <span className="text-xs">{language === 'ar' ? 'طباعة' : 'Print'}</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleDownload(offer.id)}
-                              className="h-10 bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90 shadow-sm hover:shadow-md transition-all"
-                            >
-                              <Download className="h-4 w-4 me-1.5" />
-                              <span className="text-xs">{language === 'ar' ? 'تحميل' : 'Download'}</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
                               onClick={() => handleDeleteOffer(offer.id)}
-                              className="col-span-2 h-10 border-destructive/30 hover:bg-destructive/10 hover:text-destructive border-destructive text-destructive"
+                              className="h-10 border-destructive/30 hover:bg-destructive/10 hover:text-destructive border-destructive text-destructive"
                             >
                               <Trash2 className="h-4 w-4 me-1.5" />
                               <span className="text-xs">{language === 'ar' ? 'حذف' : 'Delete'}</span>
@@ -1855,98 +2044,6 @@ export default function AdminPriceManagementPage() {
         </DialogContent>
       </Dialog>
 
-      {/* PDF Generation Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">
-              {language === 'ar' ? 'إنشاء مستند عرض السعر' : 'Generate Price Offer Document'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 sm:space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="pdf-lta-select" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
-              </Label>
-              <Select value={pdfLtaId} onValueChange={setPdfLtaId}>
-                <SelectTrigger id="pdf-lta-select" className="h-10 text-sm">
-                  <SelectValue placeholder={language === 'ar' ? 'اختر اتفاقية' : 'Select an LTA'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ltas.map((lta) => (
-                    <SelectItem key={lta.id} value={lta.id}>
-                      {language === 'ar' ? lta.nameAr : lta.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="validity-days" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Offer Validity (days)'}
-              </Label>
-              <Input
-                id="validity-days"
-                type="number"
-                value={pdfValidityDays}
-                onChange={(e) => setPdfValidityDays(e.target.value)}
-                placeholder="30"
-                className="h-10 text-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="pdf-notes" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Additional Notes (Optional)'}
-              </Label>
-              <Textarea
-                id="pdf-notes"
-                value={pdfNotes}
-                onChange={(e) => setPdfNotes(e.target.value)}
-                placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
-                rows={4}
-                className="text-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setPdfDialogOpen(false)}
-              className="w-full sm:w-auto order-2 sm:order-1"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={() => {
-                if (!pdfLtaId || !selectedRequestForPdf) {
-                  toast({
-                    variant: 'destructive',
-                    title: language === 'ar' ? 'خطأ' : 'Error',
-                    description: language === 'ar' ? 'يرجى اختيار اتفاقية' : 'Please select an LTA',
-                  });
-                  return;
-                }
-                generatePdfMutation.mutate({
-                  notificationId: selectedRequestForPdf.id,
-                  ltaId: pdfLtaId,
-                  validityDays: parseInt(pdfValidityDays) || 30,
-                  notes: pdfNotes || undefined,
-                });
-              }}
-              disabled={generatePdfMutation.isPending}
-              className="w-full sm:w-auto order-1 sm:order-2"
-            >
-              {generatePdfMutation.isPending
-                ? (language === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
-                : (language === 'ar' ? 'إنشاء PDF' : 'Generate PDF')
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* View Offer Details Dialog */}
       <Dialog open={viewOfferDialogOpen} onOpenChange={setViewOfferDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -1956,514 +2053,231 @@ export default function AdminPriceManagementPage() {
               {language === 'ar' ? 'تفاصيل عرض السعر' : 'Price Offer Details'}
             </DialogTitle>
           </DialogHeader>
-          {selectedOffer && (
-            <div className="space-y-4 sm:space-y-6">
-              {/* Header Card with Key Info */}
-              <Card className="border-l-4 border-l-primary dark:border-l-[#d4af37] bg-gradient-to-r from-primary/5 to-transparent dark:from-[#d4af37]/5">
-                <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="text-2xl font-bold font-mono mb-1">
-                        {selectedOffer.offerNumber}
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {getStatusBadge(selectedOffer.status)}
-                        {new Date(selectedOffer.validUntil) < new Date() && (
-                          <Badge variant="destructive" className="text-xs">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            {language === 'ar' ? 'منتهي' : 'Expired'}
-                          </Badge>
-                        )}
-                        {selectedOffer.requestId && (
-                          <Badge variant="outline" className="text-xs">
-                            <FileText className="h-3 w-3 mr-1" />
-                            {language === 'ar' ? 'من طلب' : 'From Request'}
-                          </Badge>
-                        )}
-                      </div>
+          {selectedOffer && (() => {
+            const items = safeJsonParse(selectedOffer.items, []);
+            const enrichedItems = enrichOfferItems(items);
+            const client = clients.find(c => c.id === selectedOffer.clientId);
+            const currency = enrichedItems[0]?.currency || 'ILS';
+            const subtotal = enrichedItems.reduce((sum: number, item: any) => {
+              const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+              const quantity = Number(item.quantity) || 0;
+              const discount = parseFloat(String(item.discount || '0')) || 0;
+              return sum + (price * quantity - discount);
+            }, 0);
+            const tax = parseFloat(selectedOffer.tax || '0');
+            const total = parseFloat(selectedOffer.total || subtotal.toString());
+            const companyName = language === 'ar' ? PRICE_OFFER_TEMPLATE.company.nameAr : PRICE_OFFER_TEMPLATE.company.nameEn;
+            const headerTitle = language === 'ar' ? PRICE_OFFER_TEMPLATE.headerTitle.ar : PRICE_OFFER_TEMPLATE.headerTitle.en;
+            const footerText = language === 'ar' ? PRICE_OFFER_TEMPLATE.footer.ar : PRICE_OFFER_TEMPLATE.footer.en;
+            const termsText = formatTermsAndConditions(selectedOffer);
+
+            return (
+              <div className="space-y-6 py-4" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                {/* Print Preview Header - Matching Print Template */}
+                <div className="text-center mb-8 pb-4 border-b-[3px] border-[#d4af37]">
+                  <div className="text-2xl font-bold text-[#1a365d] mb-3">
+                    {companyName}
+                  </div>
+                  <div className="text-sm text-[#6b7280] grid grid-cols-2 gap-x-4 gap-y-1 justify-items-start mt-2">
+                    <div>{language === 'ar' ? PRICE_OFFER_TEMPLATE.company.addressAr : PRICE_OFFER_TEMPLATE.company.addressEn}</div>
+                    <div>{language === 'ar' ? `الهاتف: ${PRICE_OFFER_TEMPLATE.company.phone} ${PRICE_OFFER_TEMPLATE.company.phoneLabel}` : `Phone: ${PRICE_OFFER_TEMPLATE.company.phone}`}</div>
+                    <div>{language === 'ar' ? `البريد الإلكتروني: ${PRICE_OFFER_TEMPLATE.company.email}` : `Email: ${PRICE_OFFER_TEMPLATE.company.email}`}</div>
+                    <div>{language === 'ar' ? `الموقع: ${PRICE_OFFER_TEMPLATE.company.website}` : `Website: ${PRICE_OFFER_TEMPLATE.company.website}`}</div>
+                    <div>{language === 'ar' ? `الرقم الضريبي: ${PRICE_OFFER_TEMPLATE.company.taxRegistrationNumber}` : `Tax Registration: ${PRICE_OFFER_TEMPLATE.company.taxRegistrationNumber}`}</div>
+                  </div>
+                  <div className="text-[#6b7280] mt-4 text-lg">
+                    {headerTitle}
+                  </div>
+                </div>
+
+                {/* Offer Info Grid - Matching Print Template */}
+                <div className="grid grid-cols-2 gap-5 mb-8">
+                  <div className="border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="font-bold text-[#6b7280] text-xs mb-1">
+                      {language === 'ar' ? 'رقم العرض' : 'Offer Number'}
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {language === 'ar' ? 'تم الإنشاء في' : 'Created on'}
-                      </div>
-                      <div className="text-sm font-medium">
-                        {new Date(selectedOffer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </div>
+                    <div className="text-[#111827] text-sm">
+                      {selectedOffer.offerNumber}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Offer Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}</span>
+                  <div className="border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="font-bold text-[#6b7280] text-xs mb-1">
+                      {language === 'ar' ? 'التاريخ' : 'Date'}
                     </div>
-                    <div className="font-medium text-sm">{getClientName(selectedOffer.clientId)}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}</span>
+                    <div className="text-[#111827] text-sm">
+                      {new Date(selectedOffer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                     </div>
-                    <div className="font-medium text-sm">{getLtaName(selectedOffer.ltaId)}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{language === 'ar' ? 'صالح حتى' : 'Valid Until'}</span>
+                  </div>
+                  <div className="border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="font-bold text-[#6b7280] text-xs mb-1">
+                      {language === 'ar' ? 'العميل' : 'Client'}
                     </div>
-                    <div className={`font-medium text-sm ${new Date(selectedOffer.validUntil) < new Date() ? 'text-destructive' : ''}`}>
-                      {new Date(selectedOffer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                    <div className="text-[#111827] text-sm">
+                      {client ? (language === 'ar' ? client.nameAr : client.nameEn) : 'N/A'}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div className="border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="font-bold text-[#6b7280] text-xs mb-1">
+                      {language === 'ar' ? 'الحالة' : 'Status'}
+                    </div>
+                    <div className="text-[#111827] text-sm">
+                      {selectedOffer.status}
+                    </div>
+                  </div>
+                </div>
 
-                {selectedOffer.sentAt && (
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تاريخ الإرسال' : 'Sent Date'}</span>
-                      </div>
-                      <div className="font-medium text-sm">
-                        {new Date(selectedOffer.sentAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
+                {/* Items Table - Matching Print Template */}
+                {enrichedItems.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse mt-5 text-xs">
+                      <thead>
+                        <tr>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'رقم الصنف' : 'Item No.'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'اسم الصنف' : 'Product Name'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'الوصف' : 'Description'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'الوحدة' : 'Unit'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'الكمية' : 'Qty'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'سعر الوحدة (شيكل) – شامل الضريبة' : 'Unit Price (ILS) – VAT Included'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'الخصم' : 'Discount'}
+                          </th>
+                          <th className="bg-[#1a365d] text-white p-2 text-left" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                            {language === 'ar' ? 'الإجمالي' : 'Total'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {enrichedItems.map((item: any, idx: number) => {
+                          const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
+                          const itemQuantity = Number(item.quantity) || 0;
+                          const discount = parseFloat(String(item.discount || '0')) || 0;
+                          const itemTotal = (itemPrice * itemQuantity) - discount;
+                          const name = language === 'ar' 
+                            ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || '-')
+                            : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || '-');
+                          const description = language === 'ar' ? (item.descriptionAr || '-') : (item.descriptionEn || '-');
+
+                          return (
+                            <tr key={idx} className="border-b border-[#e5e7eb]">
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>{idx + 1}</td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>{name}</td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>{description}</td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>{item.unit || '-'}</td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>{itemQuantity}</td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                                {itemPrice.toFixed(2)} {item.currency || currency}
+                              </td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                                {discount > 0 ? discount.toFixed(2) : '-'}
+                              </td>
+                              <td className="p-2" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
+                                {itemTotal.toFixed(2)} {item.currency || currency}
+                              </td>
+                            </tr>
+                          );
                         })}
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-sm text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد منتجات في هذا العرض' : 'No items in this offer'}
+                  </div>
                 )}
 
-                {selectedOffer.viewedAt && (
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تاريخ المشاهدة' : 'Viewed Date'}</span>
-                      </div>
-                      <div className="font-medium text-sm">
-                        {new Date(selectedOffer.viewedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                {/* Total Section - Matching Print Template */}
+                <div className="mt-8 p-5 bg-[#f9fafb] rounded-lg">
+                  <div className="flex justify-between items-center text-xl font-bold">
+                    <span>{language === 'ar' ? 'المجموع الكلي' : 'Grand Total'}:</span>
+                    <span>{total.toFixed(2)} {currency}</span>
+                  </div>
+                </div>
 
-                {selectedOffer.respondedAt && (
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{language === 'ar' ? 'تاريخ الرد' : 'Response Date'}</span>
-                      </div>
-                      <div className="font-medium text-sm">
-                        {new Date(selectedOffer.respondedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Items Table */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Package className="h-5 w-5" />
-                    {language === 'ar' ? 'منتجات العرض' : 'Offer Items'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {(() => {
-                    try {
-                      const items = typeof selectedOffer.items === 'string' 
-                        ? JSON.parse(selectedOffer.items) 
-                        : (Array.isArray(selectedOffer.items) ? selectedOffer.items : []);
-
-                      if (!Array.isArray(items) || items.length === 0) {
-                        return (
-                          <div className="text-center py-8 text-sm text-muted-foreground">
-                            {language === 'ar' ? 'لا توجد منتجات في هذا العرض' : 'No items in this offer'}
-                          </div>
-                        );
-                      }
-
-                      // Get currency (assume all items have same currency)
-                      const currency = items[0]?.currency || 'ILS';
-
-                      return (
-                        <>
-                          {/* Desktop Table */}
-                          <div className="hidden md:block">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-12">#</TableHead>
-                                  <TableHead>{language === 'ar' ? 'المنتج' : 'Product'}</TableHead>
-                                  <TableHead className="w-32">{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                                  <TableHead className="w-24 text-right">{language === 'ar' ? 'الكمية' : 'Qty'}</TableHead>
-                                  <TableHead className="w-32 text-right">{language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</TableHead>
-                                  <TableHead className="w-32 text-right">{language === 'ar' ? 'المجموع' : 'Total'}</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {items.map((item: any, idx: number) => {
-                                  const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
-                                  const itemQuantity = Number(item.quantity) || 0;
-                                  const total = itemPrice * itemQuantity;
-                                  const name = language === 'ar' 
-                                    ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
-                                    : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
-
-                                  return (
-                                    <TableRow key={idx}>
-                                      <TableCell className="font-medium">{idx + 1}</TableCell>
-                                      <TableCell>
-                                        <div className="font-medium">{name}</div>
-                                      </TableCell>
-                                      <TableCell>
-                                        <code className="text-xs bg-muted px-2 py-1 rounded">{item.sku || 'N/A'}</code>
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium">{itemQuantity}</TableCell>
-                                      <TableCell className="text-right">
-                                        {itemPrice.toFixed(2)} {item.currency || currency}
-                                      </TableCell>
-                                      <TableCell className="text-right font-semibold">
-                                        {total.toFixed(2)} {item.currency || currency}
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
-                          </div>
-
-                          {/* Mobile Cards */}
-                          <div className="md:hidden space-y-3 p-4">
-                            {items.map((item: any, idx: number) => {
-                              const itemPrice = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
-                              const itemQuantity = Number(item.quantity) || 0;
-                              const total = itemPrice * itemQuantity;
-                              const name = language === 'ar' 
-                                ? (item.nameAr || item.productNameAr || item.nameEn || item.productNameEn || item.name || 'منتج غير معروف')
-                                : (item.nameEn || item.productNameEn || item.nameAr || item.productNameAr || item.name || 'Unknown Product');
-
-                              return (
-                                <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/30">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <Badge variant="outline" className="text-xs shrink-0">#{idx + 1}</Badge>
-                                        <div className="font-medium text-sm truncate">{name}</div>
-                                      </div>
-                                      <code className="text-xs bg-background px-2 py-1 rounded">
-                                        {item.sku || 'N/A'}
-                                      </code>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-2 text-xs">
-                                    <div className="text-center p-2 bg-background rounded">
-                                      <div className="text-muted-foreground mb-1">{language === 'ar' ? 'الكمية' : 'Qty'}</div>
-                                      <div className="font-semibold">{itemQuantity}</div>
-                                    </div>
-                                    <div className="text-center p-2 bg-background rounded">
-                                      <div className="text-muted-foreground mb-1">{language === 'ar' ? 'السعر' : 'Price'}</div>
-                                      <div className="font-semibold">{itemPrice.toFixed(2)}</div>
-                                    </div>
-                                    <div className="text-center p-2 bg-primary/10 dark:bg-[#d4af37]/10 rounded">
-                                      <div className="text-muted-foreground mb-1">{language === 'ar' ? 'المجموع' : 'Total'}</div>
-                                      <div className="font-bold">{total.toFixed(2)}</div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </>
-                      );
-                    } catch (error) {
-                      console.error('Error parsing offer items:', error);
-                      return (
-                        <div className="text-center py-8 text-sm text-muted-foreground p-4">
-                          {language === 'ar' ? 'خطأ في عرض المنتجات' : 'Error displaying items'}
-                        </div>
-                      );
-                    }
-                  })()}
-                </CardContent>
-              </Card>
-
-              {/* Financial Summary */}
-              {(() => {
-                const items = typeof selectedOffer.items === 'string' 
-                  ? JSON.parse(selectedOffer.items) 
-                  : selectedOffer.items || [];
-                if (items.length > 0) {
-                  const currency = items[0]?.currency || 'ILS';
-                  const subtotal = items.reduce((sum: number, item: any) => {
-                    const price = parseFloat(String(item.unitPrice || '0').replace(/[^0-9.-]/g, '')) || 0;
-                    const quantity = Number(item.quantity) || 0;
-                    return sum + (price * quantity);
-                  }, 0);
-                  const tax = parseFloat(selectedOffer.tax || '0');
-                  const total = parseFloat(selectedOffer.total || subtotal.toString());
-
-                  return (
-                    <Card className="border-2 border-primary/20 dark:border-[#d4af37]/20 bg-gradient-to-br from-primary/5 to-transparent dark:from-[#d4af37]/5">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 mb-3">
-                            <DollarSign className="h-5 w-5 text-primary dark:text-[#d4af37]" />
-                            <h4 className="font-semibold">{language === 'ar' ? 'الملخص المالي' : 'Financial Summary'}</h4>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">{language === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}:</span>
-                              <span className="font-medium">{subtotal.toFixed(2)} {currency}</span>
-                            </div>
-                            {tax > 0 && (
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">{language === 'ar' ? 'الضريبة' : 'Tax'}:</span>
-                                <span className="font-medium">{tax.toFixed(2)} {currency}</span>
-                              </div>
-                            )}
-                            <div className="border-t pt-2 flex justify-between items-center text-lg font-bold">
-                              <span>{language === 'ar' ? 'المجموع الإجمالي' : 'Total Amount'}:</span>
-                              <span className="text-primary dark:text-[#d4af37]">{total.toFixed(2)} {currency}</span>
-                            </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground pt-2 border-t">
-                            {language === 'ar' 
-                              ? `${items.length} منتج • إجمالي ${items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)} وحدة`
-                              : `${items.length} item${items.length !== 1 ? 's' : ''} • ${items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)} total units`
-                            }
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                }
-                return null;
-              })()}
-
-              {/* Notes and Response */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Notes Section - Matching Print Template */}
                 {selectedOffer.notes && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        {language === 'ar' ? 'ملاحظات العرض' : 'Offer Notes'}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
-                        {selectedOffer.notes}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className="mt-8 p-5 bg-[#f9fafb] rounded-lg">
+                    <div className="font-bold text-[#1a365d] mb-3 text-sm">
+                      {language === 'ar' ? 'ملاحظات' : 'Notes'}
+                    </div>
+                    <div className="text-xs leading-relaxed whitespace-pre-line">
+                      {selectedOffer.notes}
+                    </div>
+                  </div>
                 )}
 
-                {selectedOffer.responseNote && (
-                  <Card className={selectedOffer.status === 'accepted' ? 'border-green-200 dark:border-green-900' : 'border-red-200 dark:border-red-900'}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        {selectedOffer.status === 'accepted' ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-600" />
-                        )}
-                        {language === 'ar' ? 'رد العميل' : 'Client Response'}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
-                        {selectedOffer.responseNote}
-                      </p>
-                      {selectedOffer.respondedAt && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(selectedOffer.respondedAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                {/* Terms and Conditions Section */}
+                <div className="mt-8 p-5 bg-[#f9fafb] rounded-lg">
+                  <div className="font-bold text-[#1a365d] mb-3 text-sm">
+                    {language === 'ar' ? 'الشروط والأحكام' : 'Terms and Conditions'}
+                  </div>
+                  <Textarea
+                    value={editableTerms}
+                    onChange={(e) => setEditableTerms(e.target.value)}
+                    className="text-xs leading-relaxed min-h-[120px] resize-y"
+                    placeholder={language === 'ar' ? 'أدخل الشروط والأحكام' : 'Enter terms and conditions'}
+                  />
+                </div>
 
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row justify-between gap-2 pt-4 border-t">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  {selectedOffer.requestId && (
+                {/* Footer Section */}
+                <div className="mt-8 pt-5 border-t border-[#e5e7eb] text-center text-xs text-[#6b7280] leading-relaxed">
+                  {footerText.split('\n').map((line, idx) => (
+                    <div key={idx}>{line}</div>
+                  ))}
+                </div>
+
+                {/* Dialog Actions */}
+                <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2 pt-4 border-t">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {selectedOffer.requestId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const request = priceRequests.find(r => r.id === selectedOffer.requestId);
+                          if (request) {
+                            handleViewRequest(request);
+                            setViewOfferDialogOpen(false);
+                          }
+                        }}
+                        className="w-full sm:w-auto"
+                      >
+                        <FileText className="h-4 w-4 me-2" />
+                        {language === 'ar' ? 'عرض الطلب الأصلي' : 'View Original Request'}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2">
                     <Button
                       variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const request = priceRequests.find(r => r.id === selectedOffer.requestId);
-                        if (request) {
-                          handleViewRequest(request);
-                          setViewOfferDialogOpen(false);
-                        }
-                      }}
+                      onClick={() => setViewOfferDialogOpen(false)}
                       className="w-full sm:w-auto"
                     >
-                      <FileText className="h-4 w-4 me-2" />
-                      {language === 'ar' ? 'عرض الطلب الأصلي' : 'View Original Request'}
+                      {language === 'ar' ? 'إغلاق' : 'Close'}
                     </Button>
-                  )}
-                </div>
-                <div className="flex flex-col-reverse sm:flex-row gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setViewOfferDialogOpen(false)}
-                    className="w-full sm:w-auto"
-                  >
-                    {language === 'ar' ? 'إغلاق' : 'Close'}
-                  </Button>
-                  <Button
-                    onClick={() => handleDownload(selectedOffer.id)}
-                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 dark:bg-[#d4af37] dark:hover:bg-[#d4af37]/90"
-                  >
-                    <Download className="h-4 w-4 me-2" />
-                    {language === 'ar' ? 'تحميل PDF' : 'Download PDF'}
-                  </Button>
-                </div>
+                    <Button
+                      onClick={() => handlePrintOffer(selectedOffer)}
+                      className="w-full sm:w-auto bg-[#1a365d] hover:bg-[#1a365d]/90 text-white"
+                    >
+                      <Printer className="h-4 w-4 me-2" />
+                      {language === 'ar' ? 'طباعة' : 'Print'}
+                    </Button>
+                  </div>
+                </DialogFooter>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Document Generation Dialog */}
-      <Dialog open={documentGenDialogOpen} onOpenChange={(open) => {
-        setDocumentGenDialogOpen(open);
-        if (!open) {
-          setSelectedOfferForDoc(null);
-          setPdfLtaId('');
-          setPdfValidityDays('30');
-          setPdfNotes('');
-        }
-      }}>
-        <DialogContent className="max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {language === 'ar' ? 'توليد مستند عرض السعر' : 'Generate Price Offer Document'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 sm:space-y-6">
-            {selectedOfferForDoc && (
-              <div className="p-3 bg-muted/50 rounded-lg border border-border/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{language === 'ar' ? 'عرض السعر' : 'Price Offer'}</span>
-                  <Badge variant="secondary">{selectedOfferForDoc.offerNumber}</Badge>
-                </div>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>{language === 'ar' ? 'العميل:' : 'Client:'} {getClientName(selectedOfferForDoc.clientId)}</div>
-                  <div>{language === 'ar' ? 'الاتفاقية:' : 'LTA:'} {getLtaName(selectedOfferForDoc.ltaId)}</div>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="doc-gen-lta-select" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'الاتفاقية' : 'LTA'}
-              </Label>
-              <Input
-                id="doc-gen-lta-display"
-                value={selectedOfferForDoc?.ltaId ? getLtaName(selectedOfferForDoc.ltaId) : ''}
-                disabled
-                className="h-10 text-sm bg-muted"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="doc-gen-validity-days" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Offer Validity (days)'}
-              </Label>
-              <Input
-                id="doc-gen-validity-days"
-                type="number"
-                value={pdfValidityDays}
-                onChange={(e) => setPdfValidityDays(e.target.value)}
-                placeholder="30"
-                className="h-10 text-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="doc-gen-notes" className="text-xs sm:text-sm">
-                {language === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Additional Notes (Optional)'}
-              </Label>
-              <Textarea
-                id="doc-gen-notes"
-                value={pdfNotes || selectedOfferForDoc?.notes || ''}
-                onChange={(e) => setPdfNotes(e.target.value)}
-                placeholder={language === 'ar' ? 'أدخل أي ملاحظات إضافية...' : 'Enter any additional notes...'}
-                rows={4}
-                className="text-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setDocumentGenDialogOpen(false)}
-              className="w-full sm:w-auto order-2 sm:order-1"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={() => {
-                if (!selectedOfferForDoc) {
-                  toast({
-                    variant: 'destructive',
-                    title: language === 'ar' ? 'خطأ' : 'Error',
-                    description: language === 'ar' ? 'يرجى اختيار عرض سعر' : 'Please select an offer',
-                  });
-                  return;
-                }
-                generatePdfMutation.mutate({
-                  notificationId: selectedOfferForDoc.id,
-                  ltaId: selectedOfferForDoc.ltaId || '',
-                  validityDays: parseInt(pdfValidityDays) || 30,
-                  notes: pdfNotes || selectedOfferForDoc.notes || undefined,
-                });
-              }}
-              disabled={generatePdfMutation.isPending || !selectedOfferForDoc}
-              className="w-full sm:w-auto order-1 sm:order-2"
-            >
-              {generatePdfMutation.isPending
-                ? (language === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
-                : (language === 'ar' ? 'إنشاء مستند' : 'Generate Document')
-              }
-            </Button>
-          </DialogFooter>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

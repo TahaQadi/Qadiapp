@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { safeJsonParse } from '@/lib/safeJson';
 import { formatDateLocalized } from '@/lib/dateUtils';
-import { Package, Calendar, CreditCard, FileText, TrendingUp, XCircle, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Package, Calendar, CreditCard, FileText, TrendingUp, XCircle, AlertTriangle, MessageSquare, MapPin, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -44,6 +44,8 @@ interface OrderDetailsDialogProps {
     createdAt: Date;
     currency: string;
     pipefyCardId?: string;
+    clientId?: string;
+    ltaId?: string | null;
   } | null;
 }
 
@@ -73,6 +75,50 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
     },
     enabled: !!order?.id && open,
   });
+
+  // Fetch client information
+  const { data: clientData } = useQuery({
+    queryKey: ['/api/admin/clients', order?.clientId],
+    queryFn: async () => {
+      if (!order?.clientId) return null;
+      const res = await apiRequest('GET', `/api/admin/clients/${order.clientId}`);
+      if (!res.ok) throw new Error('Failed to fetch client');
+      return res.json();
+    },
+    enabled: !!order?.clientId && open,
+  });
+
+  const client = clientData?.client;
+  const clientLocations = clientData?.locations || [];
+  const clientDepartments = clientData?.departments || [];
+
+  // Find headquarters or first available location
+  const deliveryLocation = clientLocations.find((loc: any) => loc.isHeadquarters) || clientLocations[0];
+
+  // Find warehouse department
+  const warehouseDepartment = clientDepartments.find((dept: any) => dept.departmentType === 'warehouse');
+
+  // Fetch LTA information
+  const { data: ltaData } = useQuery({
+    queryKey: ['/api/admin/ltas', order?.ltaId],
+    queryFn: async () => {
+      if (!order?.ltaId) return null;
+      const res = await apiRequest('GET', `/api/admin/ltas/${order.ltaId}`);
+      if (!res.ok) throw new Error('Failed to fetch LTA');
+      return res.json();
+    },
+    enabled: !!order?.ltaId && open,
+  });
+
+  // Helper function to generate map navigation URL
+  const getMapNavigationUrl = (latitude: string | number | null, longitude: string | number | null): string | null => {
+    if (!latitude || !longitude) return null;
+    const lat = typeof latitude === 'string' ? parseFloat(latitude) : latitude;
+    const lng = typeof longitude === 'string' ? parseFloat(longitude) : longitude;
+    if (isNaN(lat) || isNaN(lng)) return null;
+    // Use Google Maps (works on all platforms)
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+  };
 
   const cancelMutation = useMutation({
     mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
@@ -140,7 +186,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            {language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}
+            {language === 'ar' ? 'تأكيد الطلب' : 'Order Confirmation'}
           </DialogTitle>
           <DialogDescription>
             {language === 'ar'
@@ -150,23 +196,119 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Order Info Section */}
+          {/* Order Details Labels Section */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-lg">
+              {language === 'ar' ? 'معلومات تفصيلية عن الطلب والجدول الزمني' : 'Detailed Order Information'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'رقم الطلب:' : 'Order Number:'}
+                </p>
+                <p className="font-mono text-sm">#{order.id}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {language === 'ar' ? 'تاريخ الطلب:' : 'Order Date:'}
+                </p>
+                <p className="text-sm">{formatDateLocalized(order.createdAt, language, 'PPp')}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'اسم العميل/الجهة:' : 'Client/Entity Name:'}
+                </p>
+                <p className="text-sm">{client?.nameAr || client?.nameEn || (language === 'ar' ? 'غير محدد' : 'Not specified')}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'العنوان:' : 'Address:'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm flex-1">
+                    {deliveryLocation 
+                      ? (language === 'ar' ? deliveryLocation.addressAr : deliveryLocation.addressEn)
+                      : (language === 'ar' ? 'غير محدد' : 'Not specified')
+                    }
+                  </p>
+                  {deliveryLocation?.latitude && deliveryLocation?.longitude && (
+                    <a
+                      href={getMapNavigationUrl(deliveryLocation.latitude, deliveryLocation.longitude) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80 flex items-center gap-1"
+                      title={language === 'ar' ? 'فتح في الخرائط' : 'Open in Maps'}
+                    >
+                      <MapPin className="h-4 w-4" />
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'رقم الاتصال:' : 'Contact Phone:'}
+                </p>
+                <p className="text-sm">
+                  {client?.phone || deliveryLocation?.phone || (language === 'ar' ? 'غير محدد' : 'Not specified')}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'طريقة الدفع:' : 'Payment Method:'}
+                </p>
+                <p className="text-sm">{language === 'ar' ? 'سيتم تحديدها لاحقاً' : 'To be determined'}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'ar' ? 'المرجع (عرض السعر/اتفاق):' : 'Reference (Price Offer/Agreement):'}
+                </p>
+                <p className="text-sm">
+                  {ltaData 
+                    ? (language === 'ar' ? ltaData.nameAr : ltaData.nameEn)
+                    : (language === 'ar' ? 'غير محدد' : 'Not specified')
+                  }
+                </p>
+              </div>
+
+              {warehouseDepartment && (
+                <div className="space-y-1 md:col-span-2">
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'ar' ? 'معلومات المستودع:' : 'Warehouse Information:'}
+                  </p>
+                  <div className="text-sm space-y-1">
+                    {warehouseDepartment.contactName && (
+                      <p>
+                        {language === 'ar' ? 'اسم المسؤول:' : 'Contact Name:'} {warehouseDepartment.contactName}
+                      </p>
+                    )}
+                    {warehouseDepartment.contactPhone && (
+                      <p>
+                        {language === 'ar' ? 'هاتف:' : 'Phone:'} {warehouseDepartment.contactPhone}
+                      </p>
+                    )}
+                    {warehouseDepartment.contactEmail && (
+                      <p>
+                        {language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'} {warehouseDepartment.contactEmail}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Order Status Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">
-                {language === 'ar' ? 'رقم الطلب' : 'Order ID'}
-              </p>
-              <p className="font-mono text-sm">{order.id}</p>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {language === 'ar' ? 'تاريخ الطلب' : 'Order Date'}
-              </p>
-              <p className="text-sm">{formatDateLocalized(order.createdAt, language, 'PPp')}</p>
-            </div>
-
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">
                 {language === 'ar' ? 'الحالة' : 'Status'}
@@ -250,6 +392,64 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
             </>
           )}
 
+          {/* Delivery Information Section */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-lg">
+              {language === 'ar' ? 'معلومات التسليم' : 'Delivery Information'}
+            </h3>
+            <div className="p-4 rounded-lg bg-muted/50 text-sm leading-relaxed">
+              <p className={language === 'ar' ? 'text-right' : 'text-left'}>
+                {language === 'ar' 
+                  ? 'سيجري تجهيز وتسليم الطلب خلال (… أيام عمل) إلى عنوان التسليم الموضّح. يرجى توفير جهة اتصال للتنسيق والاستلام. أي فروقات تُوثّق على سند التسليم فور الوصول. الأسعار شاملة لضريبة القيمة المضافة.'
+                  : 'The order will be prepared and delivered within (… working days) to the delivery address specified. Please provide a contact for coordination and receipt. Any discrepancies will be documented on the delivery note upon arrival. Prices include VAT.'
+                }
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Department Contacts Section */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-lg">
+              {language === 'ar' ? 'جهات الاتصال' : 'Department Contacts'}
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="font-medium mb-1">
+                  {language === 'ar' ? 'قسم المبيعات:' : 'Sales Department:'}
+                </p>
+                <p className="text-muted-foreground">00970592555532 | taha@qadi.ps</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="font-medium mb-1">
+                  {language === 'ar' ? 'اللوجستيات والتسليم:' : 'Logistics & Delivery:'}
+                </p>
+                <p className="text-muted-foreground">0592555534 | issam@qadi.ps</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="font-medium mb-1">
+                  {language === 'ar' ? 'الحسابات والفوترة:' : 'Accounts & Billing:'}
+                </p>
+                <p className="text-muted-foreground">0592555536 | info@qadi.ps</p>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Thank You Message */}
+          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 text-center">
+            <p className="text-sm font-medium">
+              {language === 'ar' 
+                ? 'شكرًا لثقتكم بشركة القاضي. نلتزم بسرعة التنفيذ وجودة الخدمة.'
+                : 'Thank you for your trust in Al Qadi Company. We are committed to speed of execution and quality of service.'
+              }
+            </p>
+          </div>
+
+          <Separator />
+
           {/* Total Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
@@ -272,6 +472,18 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                   : 'All prices are according to your Long-Term Agreement contract terms.'}
               </p>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Footer Section */}
+          <div className="text-center text-xs text-muted-foreground pt-4 border-t">
+            <p>
+              {language === 'ar'
+                ? 'شركة القاضي – info@qadi.ps – qadi.ps | جميع العمليات خاضعة لشروط وأحكام الشركة.'
+                : 'Al Qadi Company – info@qadi.ps – qadi.ps | All operations are subject to the terms and conditions of the company.'
+              }
+            </p>
           </div>
         </div>
 

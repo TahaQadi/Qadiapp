@@ -467,9 +467,12 @@ export default function OrdersPage() {
         onOpenChange={setDetailsOpen}
         order={selectedOrder ? { 
           ...selectedOrder, 
+          createdAt: new Date(selectedOrder.createdAt),
           currency: 'SAR',
           status: selectedOrder.status as 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled',
-          pipefyCardId: selectedOrder.pipefyCardId || undefined
+          pipefyCardId: selectedOrder.pipefyCardId || undefined,
+          clientId: selectedOrder.clientId,
+          ltaId: selectedOrder.ltaId || null
         } : null}
       />
 

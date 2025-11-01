@@ -1,10 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Clock, FileText, Trash2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useLanguage } from './LanguageProvider';
-import { formatRelativeTime } from '@/lib/dateUtils';
+import { FileText, Trash2, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface OrderTemplateCardProps {
   id: string;
@@ -16,59 +14,55 @@ interface OrderTemplateCardProps {
 }
 
 export function OrderTemplateCard({
-  id,
   name,
   itemCount,
   createdAt,
   onLoad,
   onDelete,
-}: OrderTemplateCardProps) {
-  const { t } = useTranslation();
+}: OrderTemplateCardProps): JSX.Element {
   const { language } = useLanguage();
 
-  const timeAgo = formatRelativeTime(createdAt, language);
+  const formattedDate = format(createdAt, language === 'ar' ? 'dd/MM/yyyy' : 'MMM dd, yyyy');
 
   return (
-    <Card className="p-4" data-testid={`card-template-${id}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-            <h3 className="font-medium text-sm truncate">{name}</h3>
+    <Card className="flex flex-col h-full transition-all hover:shadow-md">
+      <CardContent className="flex-1 p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <FileText className="h-5 w-5 text-primary" />
           </div>
-          
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Badge variant="secondary" className="text-xs">
-                {itemCount} {t('items')}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {timeAgo}
-            </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm mb-1 truncate">{name}</h3>
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' ? `${itemCount} عنصر` : `${itemCount} items`}
+            </p>
           </div>
         </div>
-
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            onClick={onLoad}
-            data-testid={`button-load-template-${id}`}
-          >
-            {t('loadTemplate')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={onDelete}
-            data-testid={`button-delete-template-${id}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+        <div className="text-xs text-muted-foreground mt-2">
+          {language === 'ar' ? 'تم الإنشاء:' : 'Created:'} {formattedDate}
         </div>
-      </div>
+      </CardContent>
+      <CardFooter className="flex gap-2 p-4 pt-0">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onLoad}
+          className="flex-1"
+        >
+          <Loader2 className="h-4 w-4 me-2" />
+          {language === 'ar' ? 'تحميل' : 'Load'}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={onDelete}
+          className="flex-1"
+        >
+          <Trash2 className="h-4 w-4 me-2" />
+          {language === 'ar' ? 'حذف' : 'Delete'}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
+

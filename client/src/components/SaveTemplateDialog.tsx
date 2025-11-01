@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
+import { Save } from 'lucide-react';
 
 interface SaveTemplateDialogProps {
   open: boolean;
@@ -19,63 +19,70 @@ interface SaveTemplateDialogProps {
   onSave: (name: string) => void;
 }
 
-export function SaveTemplateDialog({ open, onOpenChange, onSave }: SaveTemplateDialogProps) {
-  const { t } = useTranslation();
+export function SaveTemplateDialog({
+  open,
+  onOpenChange,
+  onSave,
+}: SaveTemplateDialogProps): JSX.Element {
   const { language } = useLanguage();
-  const [name, setName] = useState('');
+  const [templateName, setTemplateName] = useState('');
 
-  const handleSave = () => {
-    if (name.trim()) {
-      onSave(name);
-      setName('');
-      onOpenChange(false);
+  const handleSave = (): void => {
+    if (templateName.trim()) {
+      onSave(templateName.trim());
+      setTemplateName('');
     }
+  };
+
+  const handleCancel = (): void => {
+    setTemplateName('');
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{t('saveTemplate')}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Save className="h-5 w-5 text-primary" />
+            {language === 'ar' ? 'حفظ القالب' : 'Save Template'}
+          </DialogTitle>
           <DialogDescription>
-            {language === 'ar' 
-              ? 'قم بإعطاء قالبك اسمًا'
-              : 'Give your template a name'}
+            {language === 'ar'
+              ? 'أدخل اسمًا للقالب لحفظ العناصر الحالية في السلة'
+              : 'Enter a name for the template to save current cart items'}
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
             <Label htmlFor="template-name">
               {language === 'ar' ? 'اسم القالب' : 'Template Name'}
             </Label>
             <Input
               id="template-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={language === 'ar' ? 'مستلزمات مكتبية أسبوعية' : 'Weekly Office Supplies'}
-              data-testid="input-template-name"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder={language === 'ar' ? 'أدخل اسم القالب' : 'Enter template name'}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && templateName.trim()) {
+                  handleSave();
+                }
+              }}
+              autoFocus
             />
           </div>
         </div>
-
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            data-testid="button-cancel-template"
-          >
-            {t('cancel')}
+          <Button variant="outline" onClick={handleCancel}>
+            {language === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!name.trim()}
-            data-testid="button-confirm-save-template"
-          >
-            {t('saveTemplate')}
+          <Button onClick={handleSave} disabled={!templateName.trim()}>
+            <Save className="h-4 w-4 me-2" />
+            {language === 'ar' ? 'حفظ' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+

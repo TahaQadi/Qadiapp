@@ -15,16 +15,12 @@ import demoRequestRoutes from './demo-request-routes';
 import feedbackRoutes from './feedback-routes';
 import feedbackAnalyticsRoutes from './feedback-analytics-routes';
 import { setupDocumentRoutes } from './document-routes';
-import { setupTemplateManagementRoutes } from './template-management-routes';
 import { setupInvoiceContractRoutes } from './invoice-contract-routes';
 // NOTE: documentTriggerService kept dormant - not imported (manual generation only)
 import { ApiHandler, AuthenticatedHandler, AdminHandler, AuthenticatedRequest, AdminRequest } from "./types";
 import multer from "multer";
 import { PDFStorage } from "./object-storage";
-import { TemplateStorage } from "./template-storage";
-import { TemplatePDFGenerator } from "./template-pdf-generator";
 import { TemplateManager } from "./template-manager";
-import { PDFAccessControl } from "./pdf-access-control";
 import { DocumentUtils } from "./document-utils";
 import {
   loginSchema,
@@ -51,7 +47,6 @@ import {
   bulkAssignProductsSchema,
   type CartItem,
 } from "@shared/schema";
-import { createTemplateSchema, updateTemplateSchema } from "@shared/template-schema";
 import { z } from "zod";
 import path from "path";
 import crypto from "crypto";
@@ -62,7 +57,7 @@ import { generateSitemap } from "./sitemap";
 
 // --- Database imports for specific operations within the routes ---
 import { db, schema, orders, notifications, orderFeedback } from './db';
-import { eq } from 'drizzle-orm';
+import { eq, gte, lte, desc, count, sql, and } from 'drizzle-orm';
 import webpush from 'web-push'; // Assuming web-push is installed and configured for push notifications
 
 // Placeholder for web-push configuration (replace with your actual VAPID keys)
@@ -159,7 +154,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Document routes
   setupDocumentRoutes(app);
-  setupTemplateManagementRoutes(app);
   setupInvoiceContractRoutes(app); // NEW: Invoice & Contract generation
 
   // NOTE: Auto-trigger test endpoint removed - manual document generation only
@@ -744,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate offer number
       const count = (await storage.getAllPriceOffers()).length + 1;
-      const offerNumber = `PO-${Date.now()}-${count.toString().padStart(4, '0')}`;
+      const offerNumber = `PO-${clientId.substring(0, 8).toUpperCase()}-${count.toString().padStart(4, '0')}`;
 
       // Create price offer with enriched items
       const offer = await storage.createPriceOffer({
@@ -796,7 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Generate PDF for price request - Using NEW template system
   app.post("/api/admin/price-requests/:id/generate-pdf", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
-      const { language = 'ar', templateId } = req.body; // Default to Arabic (template system is Arabic-only)
+      const { language = 'ar' } = req.body; // Default to Arabic (template system is Arabic-only)
       const priceRequest = await db.query.priceRequests.findFirst({
         where: eq(schema.priceRequests.id, req.params.id)
       });
@@ -843,7 +837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use NEW template system with DocumentUtils
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'price_offer', // Use price_offer template for requests
-        templateId: templateId, // Optional specific template ID
         variables: [
           { key: 'date', value: new Date().toLocaleDateString('ar-SA') },
           { key: 'offerNumber', value: priceRequest.requestNumber },
@@ -957,14 +950,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Log access
-      await PDFAccessControl.logDocumentAccess({
-        documentId: document.id,
-        clientId: offer.clientId,
-        action: 'download',
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('User-Agent') || 'unknown'
-      });
 
       // Send PDF
       res.setHeader('Content-Type', 'application/pdf');
@@ -984,7 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Generate document for price offer (manual)
   app.post("/api/admin/price-offers/:id/generate-document", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
-      const { templateId, notes, force = true } = req.body;
+      const { notes, force = true } = req.body;
       const offer = await storage.getPriceOffer(req.params.id);
 
       if (!offer) {
@@ -1010,7 +995,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'price_offer',
-        templateId: templateId,
         variables: [
           { key: 'offerNumber', value: offer.offerNumber },
           { key: 'offerDate', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
@@ -2098,6 +2082,196 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Dashboard Stats Endpoint  
+  app.get("/api/admin/dashboard/stats", requireAdmin, async (req: any, res) => {
+    try {
+      const { range = '30d' } = req.query;
+      
+      // Calculate date threshold based on range
+      const now = new Date();
+      let startDate = new Date();
+      switch (range) {
+        case '7d':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case '90d':
+          startDate.setDate(now.getDate() - 90);
+          break;
+        case 'all':
+          startDate = new Date(0);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
+      }
+
+      // Get all data in parallel
+      const [
+        allOrders,
+        allClients,
+        allProducts,
+        allLtas,
+        allPriceRequests,
+        allDemoRequests,
+        ltaClients,
+        ltaProducts
+      ] = await Promise.all([
+        db.select().from(schema.orders),
+        db.select().from(schema.clients).where(eq(schema.clients.isAdmin, false)),
+        db.select().from(schema.products),
+        db.select().from(schema.ltas),
+        db.select().from(schema.priceRequests),
+        db.select().from(schema.demoRequests),
+        db.select().from(schema.ltaClients),
+        db.select().from(schema.ltaProducts)
+      ]);
+
+      // Filter orders by date range
+      const ordersInRange = allOrders.filter(order => 
+        new Date(order.createdAt) >= startDate
+      );
+
+      // Summary metrics
+      const totalOrders = allOrders.length;
+      const totalRevenue = allOrders.reduce((sum, order) => 
+        sum + parseFloat(order.totalAmount.toString()), 0
+      );
+      const activeClients = allClients.length;
+      const totalProducts = allProducts.length;
+      const activeLtas = allLtas.filter(lta => lta.status === 'active').length;
+      const pendingPriceRequests = allPriceRequests.filter(pr => pr.status === 'pending').length;
+      const pendingDemoRequests = allDemoRequests.filter(dr => dr.status === 'pending').length;
+
+      // Revenue trends (daily for last 30 days)
+      const revenueTrends: { date: string; revenue: number }[] = [];
+      const ordersTrends: { date: string; count: number }[] = [];
+      
+      const daysToShow = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : 30;
+      const dateMap = new Map<string, { revenue: number; count: number }>();
+      
+      for (let i = daysToShow - 1; i >= 0; i--) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        dateMap.set(dateStr, { revenue: 0, count: 0 });
+      }
+
+      ordersInRange.forEach(order => {
+        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+        const existing = dateMap.get(orderDate);
+        if (existing) {
+          existing.revenue += parseFloat(order.totalAmount.toString());
+          existing.count += 1;
+        }
+      });
+
+      dateMap.forEach((value, date) => {
+        revenueTrends.push({ date, revenue: value.revenue });
+        ordersTrends.push({ date, count: value.count });
+      });
+
+      // Order status distribution
+      const statusCounts = new Map<string, number>();
+      allOrders.forEach(order => {
+        statusCounts.set(order.status, (statusCounts.get(order.status) || 0) + 1);
+      });
+      const orderStatusDistribution = Array.from(statusCounts.entries()).map(([status, count]) => ({
+        status,
+        count
+      }));
+
+      // Top products by order count
+      const productOrderCounts = new Map<string, { nameEn: string; nameAr: string; orderCount: number; revenue: number }>();
+      allOrders.forEach(order => {
+        try {
+          const items = JSON.parse(order.items);
+          items.forEach((item: any) => {
+            const productId = item.productId;
+            const existing = productOrderCounts.get(productId) || {
+              nameEn: item.nameEn || 'Unknown',
+              nameAr: item.nameAr || 'غير معروف',
+              orderCount: 0,
+              revenue: 0
+            };
+            existing.orderCount += item.quantity || 0;
+            existing.revenue += parseFloat(item.price || '0') * (item.quantity || 0);
+            productOrderCounts.set(productId, existing);
+          });
+        } catch (e) {
+          // Skip invalid JSON
+        }
+      });
+      const topProducts = Array.from(productOrderCounts.values())
+        .sort((a, b) => b.orderCount - a.orderCount)
+        .slice(0, 10);
+
+      // Top clients by orders
+      const clientOrderCounts = new Map<string, { clientName: string; orderCount: number; revenue: number }>();
+      allOrders.forEach(order => {
+        const client = allClients.find(c => c.id === order.clientId);
+        if (client) {
+          const existing = clientOrderCounts.get(order.clientId) || {
+            clientName: client.nameEn || client.nameAr,
+            orderCount: 0,
+            revenue: 0
+          };
+          existing.orderCount += 1;
+          existing.revenue += parseFloat(order.totalAmount.toString());
+          clientOrderCounts.set(order.clientId, existing);
+        }
+      });
+      const topClients = Array.from(clientOrderCounts.values())
+        .sort((a, b) => b.orderCount - a.orderCount)
+        .slice(0, 10);
+
+      // Recent orders (last 10)
+      const recentOrders = allOrders
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10)
+        .map(order => ({
+          id: order.id,
+          clientId: order.clientId,
+          totalAmount: order.totalAmount.toString(),
+          status: order.status,
+          createdAt: order.createdAt,
+          ltaId: order.ltaId
+        }));
+
+      res.json({
+        summary: {
+          totalOrders,
+          totalRevenue,
+          activeClients,
+          totalProducts,
+          activeLtas,
+          pendingPriceRequests,
+          pendingDemoRequests
+        },
+        trends: {
+          revenue: revenueTrends,
+          orders: ordersTrends
+        },
+        distributions: {
+          orderStatus: orderStatusDistribution,
+          topProducts,
+          topClients
+        },
+        recentOrders
+      });
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/admin/dashboard/stats',
+        userId: req.client?.id
+      });
+      res.status(500).json({
+        message: "Error fetching dashboard stats",
+        messageAr: "خطأ في جلب إحصائيات لوحة التحكم"
+      });
+    }
+  });
+
   // Get order history (authenticated users)
   app.get('/api/orders/:id/history', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -2125,7 +2299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export order to PDF (admin only) - Using NEW template system
   app.post('/api/admin/orders/export-pdf', requireAdmin, async (req: any, res) => {
     try {
-      const { order, client, lta, items, language, templateId } = req.body;
+      const { order, client, lta, items, language } = req.body;
 
       // Calculate totals
       const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0);
@@ -2144,7 +2318,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'order',
-        templateId: templateId,
         variables: [
           { key: 'orderNumber', value: order.id.substring(0, 8) },
           { key: 'orderId', value: order.id },
@@ -2653,125 +2826,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
-  // Document Template Management (Admin)
-  app.get("/api/admin/templates", requireAdmin, async (req, res) => {
-    try {
-      const category = req.query.category as string | undefined;
-      const templates = await TemplateStorage.getTemplates(category);
-      res.json(templates);
-    } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  app.get("/api/admin/templates/:id", requireAdmin, async (req, res) => {
-    try {
-      const template = await TemplateStorage.getTemplate(req.params.id);
-      if (!template) {
-        return res.status(404).json({ message: "Template not found" });
-      }
-      res.json(template);
-    } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  app.post("/api/admin/templates", requireAdmin, async (req, res) => {
-    try {
-      const validatedData = createTemplateSchema.parse(req.body);
-      const template = await TemplateStorage.createTemplate(validatedData);
-      res.json(template);
-    } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : 'Invalid data' });
-    }
-  });
-
-  app.put("/api/admin/templates/:id", requireAdmin, async (req, res) => {
-    try {
-      const validatedData = updateTemplateSchema.parse(req.body);
-      const template = await TemplateStorage.updateTemplate(req.params.id, validatedData);
-      res.json(template);
-    } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : 'Invalid data' });
-    }
-  });
-
-  app.delete("/api/admin/templates/:id", requireAdmin, async (req, res) => {
-    try {
-      await TemplateStorage.deleteTemplate(req.params.id);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  // Template duplicate
-  app.post("/api/admin/templates/:id/duplicate", requireAdmin, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const { name } = req.body;
-
-      const duplicate = await TemplateStorage.duplicateTemplate(id, name);
-      res.json(duplicate);
-    } catch (error: any) {
-      log("Template duplication error:", error);
-      res.status(500).json({
-        message: "Failed to duplicate template",
-        messageAr: "فشل نسخ القالب"
-      });
-    }
-  });
-
-  // Template import
-  app.post("/api/admin/templates/import", requireAdmin, uploadMemory.single('file'), async (req: any, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          message: "No file uploaded",
-          messageAr: "لم يتم تحميل أي ملف",
-        });
-      }
-
-      const fileContent = req.file.buffer.toString('utf-8');
-      let templateData;
-
-      try {
-        templateData = JSON.parse(fileContent);
-      } catch (parseError) {
-        return res.status(400).json({
-          message: "Invalid JSON format",
-          messageAr: "تنسيق JSON غير صالح",
-        });
-      }
-
-      // Handle both single template and array of templates
-      const templates = Array.isArray(templateData) ? templateData : [templateData];
-      const results = { success: 0, errors: [] as string[] };
-
-      for (const template of templates) {
-        try {
-          // Validate template structure
-          const validated = createTemplateSchema.parse(template);
-          await TemplateStorage.createTemplate(validated);
-          results.success++;
-        } catch (error: any) {
-          const errorMsg = `Template "${template.nameEn || 'unknown'}": ${error.message}`;
-          results.errors.push(errorMsg);
-          log("Template import error:", errorMsg);
-        }
-      }
-
-      res.json(results);
-    } catch (error: any) {
-      log("Template import error:", error);
-      res.status(500).json({
-        message: error.message || "Failed to import templates",
-        messageAr: "فشل استيراد القوالب",
-      });
-    }
-  });
-
 
   // Order Templates Routes (User cart templates)
   app.get("/api/client/templates", requireAuth, async (req: any, res) => {
@@ -3725,137 +3779,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate secure download token for PDF
-  app.post('/api/pdf/generate-token/:documentId', requireAuth, async (req: any, res) => {
-    try {
-      const { PDFAccessControl } = await import('./pdf-access-control');
-      const documentId = req.params.documentId;
-
-      // Check access permission
-      const { allowed, reason } = await PDFAccessControl.canAccessDocument(
-        documentId,
-        req.client.id,
-        req.client.isAdmin
-      );
-
-      if (!allowed) {
-        return res.status(403).json({
-          message: reason || "Access denied",
-          messageAr: "الوصول مرفوض"
-        });
-      }
-
-      const token = PDFAccessControl.generateDownloadToken(documentId, req.client.id);
-
-      // Log token generation
-      await PDFAccessControl.logDocumentAccess({
-        documentId,
-        clientId: req.client.id,
-        action: 'view',
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent')
-      });
-
-      res.json({ token, expiresIn: '2 hours' });
-    } catch (error) {
-      console.error('Token generation error:', error);
-      res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
-        messageAr: "فشل إنشاء رمز التنزيل"
-      });
-    }
-  });
-
-  // Download PDF from Object Storage with token verification
-  app.get('/api/pdf/download/:fileName(*)', async (req: any, res) => {
-    try {
-      const { PDFAccessControl } = await import('./pdf-access-control');
-      const fileName = req.params.fileName;
-      const token = req.query.token as string;
-
-      if (!fileName) {
-        return res.status(400).json({
-          message: "File name is required",
-          messageAr: "اسم الملف مطلوب"
-        });
-      }
-
-      if (!token) {
-        return res.status(401).json({
-          message: "Download token required",
-          messageAr: "رمز التنزيل مطلوب"
-        });
-      }
-
-      // Verify token
-      const verification = PDFAccessControl.verifyDownloadToken(token);
-      if (!verification.valid) {
-        return res.status(401).json({
-          message: verification.error || "Invalid or expired token",
-          messageAr: "رمز غير صالح أو منتهي الصلاحية"
-        });
-      }
-
-      const downloadResult = await PDFStorage.downloadPDF(fileName);
-
-      if (!downloadResult.ok || !downloadResult.data) {
-        console.error('PDF download failed:', fileName, 'Error:', downloadResult.error);
-        return res.status(404).json({
-          message: "PDF not found or corrupted",
-          messageAr: "لم يتم العثور على PDF أو الملف تالف",
-          error: downloadResult.error
-        });
-      }
-
-      // Extract just the filename for the download
-      const displayFileName = fileName.split('/').pop() || 'document.pdf';
-
-      // Ensure we're sending a proper Buffer
-      const pdfBuffer = Buffer.isBuffer(downloadResult.data)
-        ? downloadResult.data
-        : Buffer.from(downloadResult.data);
-
-
-      // Validate buffer has PDF header
-      const pdfHeader = pdfBuffer.slice(0, 4).toString();
-      if (pdfHeader !== '%PDF') {
-        console.error('Downloaded file is not a valid PDF. Header:', pdfHeader);
-        return res.status(500).json({
-          message: "Downloaded file is not a valid PDF",
-          messageAr: "الملف المحمل ليس PDF صالح"
-        });
-      }
-
-      // Log download
-      if (verification.documentId && verification.clientId) {
-        await PDFAccessControl.logDocumentAccess({
-          documentId: verification.documentId,
-          clientId: verification.clientId,
-          action: 'download',
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent')
-        });
-      }
-
-      // Set headers for PDF download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Length', pdfBuffer.length.toString());
-      res.setHeader('Content-Disposition', `attachment; filename="${displayFileName}"`);
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-
-      // Send buffer
-      res.send(pdfBuffer);
-    } catch (error) {
-      console.error('PDF download error:', error);
-      res.status(500).json({
-        message: error instanceof Error ? error.message : 'Unknown error',
-        messageAr: "فشل تنزيل PDF"
-      });
-    }
-  });
-
 
   // Client LTA Endpoints
   app.get('/api/client/ltas', requireAuth, async (req: any, res) => {
@@ -4338,16 +4261,10 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   // Generate PDF from template (uses DocumentUtils for deduplication & caching)
   app.post('/api/documents/generate', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { templateId, variables, language = 'ar', force = false } = req.body;
+      const { category, variables, language = 'ar', force = false } = req.body;
 
-      if (!templateId || !variables) {
-        return res.status(400).json({ error: 'Template ID and variables are required' });
-      }
-
-      // Get template to determine category
-      const template = await TemplateStorage.getTemplate(templateId);
-      if (!template) {
-        return res.status(404).json({ error: 'Template not found' });
+      if (!category || !variables) {
+        return res.status(400).json({ error: 'Category and variables are required' });
       }
 
       // Convert variables to array format expected by DocumentUtils
@@ -4357,7 +4274,7 @@ Sitemap: ${baseUrl}/sitemap.xml`;
 
       // Use DocumentUtils for optimized generation (with deduplication & caching)
       const result = await DocumentUtils.generateDocument({
-        templateCategory: template.category,
+        templateCategory: category,
         variables: variablesArray,
         language: language as 'ar',
         clientId: req.user!.isAdmin ? variables.clientId : req.user!.id,
@@ -4374,14 +4291,6 @@ Sitemap: ${baseUrl}/sitemap.xml`;
         return res.status(500).json({ error: result.error || 'Failed to generate document' });
       }
 
-      // Log generation
-      await PDFAccessControl.logDocumentAccess({
-        documentId: result.documentId!,
-        clientId: req.user!.id,
-        action: 'generate',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
-      });
 
       res.json({
         success: true,
@@ -4394,84 +4303,6 @@ Sitemap: ${baseUrl}/sitemap.xml`;
     }
   });
 
-  // Get document download token
-  app.post('/api/documents/:id/token', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const document = await storage.getDocumentById(id);
-
-      if (!document) {
-        return res.status(404).json({ error: 'Document not found' });
-      }
-
-      // Check permissions
-      if (!req.user!.isAdmin && document.clientId !== req.user!.id) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-
-      // Generate token
-      const token = PDFAccessControl.generateDownloadToken(
-        id,
-        req.user!.id,
-        { expiresInHours: 2 }
-      );
-
-      res.json({ token });
-    } catch (error) {
-      console.error('Token generation error:', error);
-      res.status(500).json({ error: 'Failed to generate token' });
-    }
-  });
-
-  // Download document with token
-  app.get('/api/documents/:id/download', async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { token } = req.query;
-
-      if (!token || typeof token !== 'string') {
-        return res.status(400).json({ error: 'Token is required' });
-      }
-
-      // Verify token
-      const verification = PDFAccessControl.verifyDownloadToken(token);
-      if (!verification.valid || verification.documentId !== id) {
-        return res.status(401).json({ error: verification.error || 'Invalid token' });
-      }
-
-      // Get document
-      const document = await storage.getDocumentById(id);
-      if (!document) {
-        return res.status(404).json({ error: 'Document not found' });
-      }
-
-      // Download from storage
-      const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
-      if (!downloadResult.ok) {
-        return res.status(500).json({ error: downloadResult.error });
-      }
-
-      // Log download
-      await PDFAccessControl.logDocumentAccess({
-        documentId: id,
-        clientId: verification.clientId!,
-        action: 'download',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
-      });
-
-      // Increment view count
-      await storage.incrementDocumentViewCount(id);
-
-      // Send file
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
-      res.send(downloadResult.data);
-    } catch (error) {
-      console.error('Download error:', error);
-      res.status(500).json({ error: 'Failed to download document' });
-    }
-  });
 
   // List/search documents
   app.get('/api/documents', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
@@ -4559,15 +4390,10 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   // PDF generation endpoint
   app.post("/api/admin/generate-pdf", async (req: AdminRequest, res: Response) => {
     try {
-      const { templateId, variables, language } = req.body;
+      const { category, variables, language } = req.body;
 
-      if (!templateId || !variables) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-
-      const template = await TemplateStorage.getTemplate(templateId);
-      if (!template) {
-        return res.status(404).json({ message: "Template not found" });
+      if (!category || !variables) {
+        return res.status(400).json({ message: "Category and variables are required" });
       }
 
       // Convert variables to array format if needed
@@ -4577,16 +4403,15 @@ Sitemap: ${baseUrl}/sitemap.xml`;
 
       // Use TemplateManager for consistent PDF generation
       const pdfBuffer = await TemplateManager.generateDocument(
-        template.category,
-        variablesArray,
-        templateId
+        category,
+        variablesArray
       );
 
       if (!pdfBuffer) {
         return res.status(500).json({ message: "Failed to generate PDF" });
       }
 
-      const fileName = `${template.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+      const fileName = `${category}_${Date.now()}.pdf`;
 
       // Store in object storage
       const fileUrl = await PDFStorage.savePDF(pdfBuffer, fileName);
@@ -4595,7 +4420,7 @@ Sitemap: ${baseUrl}/sitemap.xml`;
       const document = await storage.createDocument({
         fileName,
         fileUrl,
-        documentType: template.category,
+        documentType: category,
         fileSize: pdfBuffer.length,
         uploadedBy: req.user!.id,
       });
@@ -4612,64 +4437,6 @@ Sitemap: ${baseUrl}/sitemap.xml`;
     }
   });
 
-  // Generate PDF from template with data
-  app.post("/api/templates/:id/generate", async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { variables, language, saveToDocuments } = req.body;
-
-      const template = await TemplateStorage.getTemplate(id);
-      if (!template) {
-        return res.status(404).json({ message: "Template not found" });
-      }
-
-      // Convert variables to array format if needed
-      const variablesArray = Array.isArray(variables || []) 
-        ? (variables || [])
-        : Object.entries(variables || {}).map(([key, value]) => ({ key, value }));
-
-      // Use TemplateManager for consistent PDF generation
-      const pdfBuffer = await TemplateManager.generateDocument(
-        template.category,
-        variablesArray,
-        id
-      );
-
-      if (!pdfBuffer) {
-        return res.status(500).json({ message: "Failed to generate PDF" });
-      }
-
-      const fileName = `${template.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
-
-      if (saveToDocuments) {
-        const fileUrl = await PDFStorage.savePDF(pdfBuffer, fileName);
-
-        const document = await storage.createDocument({
-          fileName,
-          fileUrl,
-          documentType: template.category,
-          fileSize: pdfBuffer.length,
-          uploadedBy: req.user!.id,
-          clientId: req.user!.isAdmin ? undefined : req.user!.id,
-        });
-
-        return res.json({
-          success: true,
-          documentId: document.id,
-          fileUrl,
-          fileName,
-        });
-      }
-
-      // Return PDF directly
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      res.send(pdfBuffer);
-    } catch (error: any) {
-      log(`Template PDF generation error: ${error.message}`);
-      res.status(500).json({ message: "Failed to generate PDF from template" });
-    }
-  });
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {

@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Download, Package, Trash2, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Package, Trash2, FileSpreadsheet, MapPin, ExternalLink, FileText, Calendar } from 'lucide-react';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateLocalized } from '@/lib/dateUtils';
@@ -56,13 +57,663 @@ interface OrderItem {
   price: string;
 }
 
-interface Template {
-  id: string;
-  nameEn: string;
-  nameAr: string;
-  category: string;
-  isActive: boolean;
-  isDefault: boolean;
+// Admin Order Details Content Component
+function AdminOrderDetailsContent({ 
+  order, 
+  language
+}: { 
+  order: Order; 
+  language: string;
+}) {
+  const { toast } = useToast();
+  // Fetch client information
+  const { data: clientData } = useQuery({
+    queryKey: ['/api/admin/clients', order.clientId],
+    queryFn: async () => {
+      if (!order.clientId) return null;
+      const res = await apiRequest('GET', `/api/admin/clients/${order.clientId}`);
+      if (!res.ok) throw new Error('Failed to fetch client');
+      return res.json();
+    },
+    enabled: !!order.clientId,
+  });
+
+  const client = clientData?.client;
+  const clientLocations = clientData?.locations || [];
+  const clientDepartments = clientData?.departments || [];
+
+  // Find headquarters or first available location
+  const deliveryLocation = clientLocations.find((loc: any) => loc.isHeadquarters) || clientLocations[0];
+
+  // Find warehouse department
+  const warehouseDepartment = clientDepartments.find((dept: any) => dept.departmentType === 'warehouse');
+
+  // Fetch LTA information
+  const { data: ltaData } = useQuery({
+    queryKey: ['/api/admin/ltas', order.ltaId],
+    queryFn: async () => {
+      if (!order.ltaId) return null;
+      const res = await apiRequest('GET', `/api/admin/ltas/${order.ltaId}`);
+      if (!res.ok) throw new Error('Failed to fetch LTA');
+      return res.json();
+    },
+    enabled: !!order.ltaId,
+  });
+
+  // Helper function to generate map navigation URL
+  const getMapNavigationUrl = (latitude: string | number | null, longitude: string | number | null): string | null => {
+    if (!latitude || !longitude) return null;
+    const lat = typeof latitude === 'string' ? parseFloat(latitude) : latitude;
+    const lng = typeof longitude === 'string' ? parseFloat(longitude) : longitude;
+    if (isNaN(lat) || isNaN(lng)) return null;
+    // Use Google Maps (works on all platforms)
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+  };
+
+  const items: OrderItem[] = safeJsonParse<OrderItem[]>(order.items, []);
+  const mapUrl = deliveryLocation ? getMapNavigationUrl(deliveryLocation.latitude, deliveryLocation.longitude) : null;
+
+  // Print function
+  const handlePrintOrderConfirmation = useMemo(() => {
+    return () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'فشل فتح نافذة الطباعة' : 'Failed to open print window',
+      });
+      return;
+    }
+
+    // Format date
+    const orderDate = formatDateLocalized(new Date(order.createdAt), language as 'ar' | 'en');
+
+    // Company information
+    const companyName = 'شركة القاضي للمواد الاستهلاكية والتسويق';
+    const companyAddress = 'البيرة – أمّ الشرايط، فلسطين';
+    const companyPhone = '009705925555532 (قسم المبيعات)';
+    const companyEmail = 'info@qadi.ps';
+    const companyWebsite = 'qadi.ps';
+    const taxNumber = '562565515';
+
+    // Client and address information
+    const clientName = client?.nameAr || client?.nameEn || (language === 'ar' ? 'غير محدد' : 'Not specified');
+    const addressText = deliveryLocation
+      ? language === 'ar'
+        ? deliveryLocation.addressAr || deliveryLocation.addressEn
+        : deliveryLocation.addressEn || deliveryLocation.addressAr
+      : language === 'ar'
+      ? 'غير محدد'
+      : 'Not specified';
+    const contactPhone = client?.phone || deliveryLocation?.phone || (language === 'ar' ? 'غير محدد' : 'Not specified');
+    const paymentMethod = language === 'ar' ? 'سيتم تحديدها لاحقاً' : 'To be determined later';
+    const referenceName = ltaData
+      ? language === 'ar'
+        ? ltaData.nameAr || ltaData.nameEn
+        : ltaData.nameEn || ltaData.nameAr
+      : language === 'ar'
+      ? 'غير محدد'
+      : 'Not specified';
+
+    const html = `
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <title>${language === 'ar' ? 'تأكيد الطلب' : 'Order Confirmation'} #${order.id}</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            @page {
+              size: A4;
+              margin: 1.2cm 1cm;
+            }
+            body {
+              font-family: 'Arial', 'Tahoma', sans-serif;
+              direction: rtl;
+              text-align: right;
+              font-size: 11pt;
+              line-height: 1.5;
+              color: #1a1a1a;
+              background: white;
+              width: 100%;
+              max-width: 19cm;
+              margin: 0 auto;
+              padding: 0;
+            }
+            .no-print {
+              display: none !important;
+            }
+            /* Header Section */
+            .header {
+              margin-bottom: 15px;
+              padding-bottom: 12px;
+              border-bottom: 2.5px solid #1a365d;
+            }
+            .company-name {
+              font-size: 16pt;
+              font-weight: bold;
+              color: #1a365d;
+              margin-bottom: 8px;
+              text-align: center;
+            }
+            .company-info {
+              font-size: 9pt;
+              color: #4a5568;
+              line-height: 1.6;
+              text-align: center;
+            }
+            .company-info-item {
+              display: inline-block;
+              margin: 0 8px;
+            }
+            /* Document Title */
+            .document-title {
+              text-align: center;
+              font-size: 14pt;
+              font-weight: bold;
+              color: #1a365d;
+              margin: 12px 0 15px;
+              padding: 10px;
+              background: #f0f4f8;
+              border: 1.5px solid #1a365d;
+              border-radius: 4px;
+            }
+            /* Order Info Section */
+            .order-info-container {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+              margin-bottom: 15px;
+              font-size: 10pt;
+            }
+            .info-box {
+              padding: 8px 10px;
+              border: 1px solid #cbd5e0;
+              border-radius: 3px;
+              background: #fafafa;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #4a5568;
+              font-size: 9pt;
+              margin-bottom: 3px;
+              display: block;
+            }
+            .info-value {
+              color: #1a1a1a;
+              font-size: 10pt;
+              word-break: break-word;
+            }
+            .info-full-width {
+              grid-column: 1 / -1;
+            }
+            .font-mono {
+              font-family: 'Courier New', monospace;
+              font-size: 9.5pt;
+            }
+            /* Items Section */
+            .section-title {
+              font-size: 12pt;
+              font-weight: bold;
+              color: #1a365d;
+              margin: 15px 0 8px;
+              padding-bottom: 5px;
+              border-bottom: 1.5px solid #cbd5e0;
+            }
+            .table-container {
+              margin: 10px 0;
+              overflow: visible;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 9.5pt;
+              page-break-inside: auto;
+            }
+            thead {
+              display: table-header-group;
+            }
+            tbody {
+              display: table-row-group;
+            }
+            tr {
+              page-break-inside: avoid;
+              page-break-after: auto;
+            }
+            th {
+              background: #1a365d;
+              color: white;
+              padding: 7px 6px;
+              text-align: right;
+              font-weight: bold;
+              font-size: 9.5pt;
+              border: 1px solid #1a365d;
+            }
+            th.text-center {
+              text-align: center;
+            }
+            td {
+              padding: 6px 6px;
+              border: 1px solid #cbd5e0;
+              text-align: right;
+              font-size: 9pt;
+              vertical-align: top;
+            }
+            td.text-center {
+              text-align: center;
+            }
+            tbody tr:nth-child(even) {
+              background: #f7fafc;
+            }
+            tbody tr:hover {
+              background: #edf2f7;
+            }
+            /* Total Section */
+            .total-container {
+              margin-top: 12px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px 15px;
+              background: #f0f4f8;
+              border: 2px solid #1a365d;
+              border-radius: 4px;
+            }
+            .total-label {
+              font-size: 12pt;
+              font-weight: bold;
+              color: #1a365d;
+            }
+            .total-value {
+              font-size: 16pt;
+              font-weight: bold;
+              color: #1a1a1a;
+              font-family: 'Courier New', monospace;
+            }
+            /* Footer */
+            .footer {
+              margin-top: 15px;
+              padding-top: 10px;
+              border-top: 1px solid #cbd5e0;
+              text-align: center;
+              font-size: 8.5pt;
+              color: #718096;
+            }
+            /* Print Optimizations */
+            @media print {
+              body {
+                width: 100%;
+                max-width: none;
+                padding: 0;
+              }
+              .header {
+                margin-bottom: 12px;
+                padding-bottom: 10px;
+              }
+              .order-info-container {
+                gap: 6px;
+                margin-bottom: 12px;
+              }
+              .section-title {
+                margin: 12px 0 6px;
+              }
+              .table-container {
+                margin: 8px 0;
+              }
+              table {
+                font-size: 9pt;
+              }
+              th, td {
+                padding: 5px 4px;
+                font-size: 8.5pt;
+              }
+              .total-container {
+                margin-top: 10px;
+                padding: 10px 12px;
+              }
+              .total-label {
+                font-size: 11pt;
+              }
+              .total-value {
+                font-size: 14pt;
+              }
+              .footer {
+                margin-top: 12px;
+                padding-top: 8px;
+                font-size: 8pt;
+              }
+              /* Prevent page breaks */
+              .order-info-container,
+              .total-container {
+                page-break-inside: avoid;
+              }
+              tbody tr {
+                page-break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Header -->
+          <div class="header">
+            <div class="company-name">${companyName}</div>
+            <div class="company-info">
+              <span class="company-info-item">${companyAddress}</span>
+              <span class="company-info-item">${companyPhone}</span>
+              <span class="company-info-item">${companyEmail}</span>
+              <span class="company-info-item">${companyWebsite}</span>
+              <span class="company-info-item">الرقم الضريبي: ${taxNumber}</span>
+            </div>
+          </div>
+
+          <!-- Document Title -->
+          <div class="document-title">${language === 'ar' ? 'تأكيد الطلب' : 'Order Confirmation'}</div>
+
+          <!-- Order Information -->
+          <div class="order-info-container">
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'رقم الطلب:' : 'Order Number:'}</span>
+              <span class="info-value font-mono">#${order.id}</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'تاريخ الطلب:' : 'Order Date:'}</span>
+              <span class="info-value">${orderDate}</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'اسم العميل/الجهة:' : 'Client/Entity Name:'}</span>
+              <span class="info-value">${clientName}</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'رقم الاتصال:' : 'Contact Phone:'}</span>
+              <span class="info-value">${contactPhone}</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'العنوان:' : 'Address:'}</span>
+              <span class="info-value">${addressText}</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'طريقة الدفع:' : 'Payment Method:'}</span>
+              <span class="info-value">${paymentMethod}</span>
+            </div>
+            ${referenceName !== (language === 'ar' ? 'غير محدد' : 'Not specified') ? `
+            <div class="info-box">
+              <span class="info-label">${language === 'ar' ? 'المرجع (عرض السعر/اتفاق):' : 'Reference (Quote/Agreement):'}</span>
+              <span class="info-value">${referenceName}</span>
+            </div>
+            ` : ''}
+            ${warehouseDepartment ? `
+            <div class="info-box info-full-width">
+              <span class="info-label">${language === 'ar' ? 'معلومات المستودع:' : 'Warehouse Information:'}</span>
+              <span class="info-value">
+                ${warehouseDepartment.contactName ? `${language === 'ar' ? 'اسم المسؤول:' : 'Contact Name:'} ${warehouseDepartment.contactName} | ` : ''}
+                ${warehouseDepartment.contactPhone ? `${language === 'ar' ? 'هاتف:' : 'Phone:'} ${warehouseDepartment.contactPhone} | ` : ''}
+                ${warehouseDepartment.contactEmail ? `${language === 'ar' ? 'البريد:' : 'Email:'} ${warehouseDepartment.contactEmail}` : ''}
+              </span>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Items Section -->
+          <div class="section-title">${language === 'ar' ? 'العناصر المطلوبة' : 'Order Items'}</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 15%;">${language === 'ar' ? 'رمز المنتج' : 'SKU'}</th>
+                  <th style="width: 35%;">${language === 'ar' ? 'اسم المنتج' : 'Product Name'}</th>
+                  <th class="text-center" style="width: 12%;">${language === 'ar' ? 'الكمية' : 'Qty'}</th>
+                  <th class="text-center" style="width: 18%;">${language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</th>
+                  <th class="text-center" style="width: 20%;">${language === 'ar' ? 'الإجمالي' : 'Total'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map((item, index) => `
+                  <tr>
+                    <td class="font-mono">${item.sku}</td>
+                    <td>${language === 'ar' ? item.nameAr : item.nameEn}</td>
+                    <td class="text-center">${item.quantity}</td>
+                    <td class="text-center font-mono">${item.price}</td>
+                    <td class="text-center font-mono">${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total Section -->
+          <div class="total-container">
+            <div class="total-label">${language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'}</div>
+            <div class="total-value">${order.totalAmount} SAR</div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            ${companyName} – ${companyEmail} – ${companyWebsite}
+          </div>
+
+          <script>
+            if (document.readyState === 'complete') {
+              setTimeout(() => window.print(), 300);
+            } else {
+              window.addEventListener('load', function() {
+                setTimeout(() => window.print(), 300);
+              });
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    };
+  }, [
+    order, language, client, deliveryLocation, ltaData, warehouseDepartment, items, toast
+  ]);
+
+  // Format date
+  const orderDate = formatDateLocalized(new Date(order.createdAt), language as 'ar' | 'en');
+  const companyName = 'شركة القاضي للمواد الاستهلاكية والتسويق';
+  const companyAddress = 'البيرة – أمّ الشرايط، فلسطين';
+  const companyPhone = '009705925555532 (قسم المبيعات)';
+  const companyEmail = 'info@qadi.ps';
+  const companyWebsite = 'qadi.ps';
+  const taxNumber = '562565515';
+  const clientName = client?.nameAr || client?.nameEn || (language === 'ar' ? 'غير محدد' : 'Not specified');
+  const addressText = deliveryLocation
+    ? language === 'ar'
+      ? deliveryLocation.addressAr || deliveryLocation.addressEn
+      : deliveryLocation.addressEn || deliveryLocation.addressAr
+    : language === 'ar'
+    ? 'غير محدد'
+    : 'Not specified';
+  const contactPhone = client?.phone || deliveryLocation?.phone || (language === 'ar' ? 'غير محدد' : 'Not specified');
+  const paymentMethod = language === 'ar' ? 'سيتم تحديدها لاحقاً' : 'To be determined later';
+  const referenceName = ltaData
+    ? language === 'ar'
+      ? ltaData.nameAr || ltaData.nameEn
+      : ltaData.nameEn || ltaData.nameAr
+    : language === 'ar'
+    ? 'غير محدد'
+    : 'Not specified';
+
+  return (
+    <div className="space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Company Header */}
+      <div className="border-b-2 border-primary pb-3 mb-4">
+        <div className="text-center mb-2">
+          <h1 className="text-xl font-bold text-primary">
+            {companyName}
+          </h1>
+        </div>
+        <div className="text-center text-xs text-muted-foreground space-x-2">
+          <span>{companyAddress}</span>
+          <span>|</span>
+          <span>{companyPhone}</span>
+          <span>|</span>
+          <span>{companyEmail}</span>
+          <span>|</span>
+          <span>{companyWebsite}</span>
+          <span>|</span>
+          <span>{language === 'ar' ? 'الرقم الضريبي:' : 'Tax Number:'} {taxNumber}</span>
+        </div>
+      </div>
+
+      {/* Document Title */}
+      <div className="text-center py-2 px-4 bg-primary/10 border border-primary rounded">
+        <h2 className="text-lg font-bold text-primary">
+          {language === 'ar' ? 'تأكيد الطلب' : 'Order Confirmation'}
+        </h2>
+      </div>
+
+      {/* Order Information - Compact Horizontal */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-muted-foreground">
+            {language === 'ar' ? 'رقم الطلب:' : 'Order #:'}
+          </span>
+          <span className="font-mono">#{order.id}</span>
+        </div>
+        <span className="text-muted-foreground">|</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-muted-foreground">
+            {language === 'ar' ? 'التاريخ:' : 'Date:'}
+          </span>
+          <span>{orderDate}</span>
+        </div>
+        <span className="text-muted-foreground">|</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-muted-foreground">
+            {language === 'ar' ? 'العميل:' : 'Client:'}
+          </span>
+          <span className="truncate max-w-[150px]">{clientName}</span>
+        </div>
+        <span className="text-muted-foreground">|</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-muted-foreground">
+            {language === 'ar' ? 'الهاتف:' : 'Phone:'}
+          </span>
+          <span>{contactPhone}</span>
+        </div>
+        <span className="text-muted-foreground">|</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-muted-foreground">
+            {language === 'ar' ? 'الدفع:' : 'Payment:'}
+          </span>
+          <span>{paymentMethod}</span>
+        </div>
+        {referenceName !== (language === 'ar' ? 'غير محدد' : 'Not specified') && (
+          <>
+            <span className="text-muted-foreground">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-muted-foreground">
+                {language === 'ar' ? 'المرجع:' : 'Reference:'}
+              </span>
+              <span className="truncate max-w-[120px]">{referenceName}</span>
+            </div>
+          </>
+        )}
+        {warehouseDepartment && (
+          <>
+            <span className="text-muted-foreground">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-muted-foreground">
+                {language === 'ar' ? 'المستودع:' : 'Warehouse:'}
+              </span>
+              <span className="text-xs">
+                {warehouseDepartment.contactName ? `${warehouseDepartment.contactName}` : ''}
+                {warehouseDepartment.contactPhone ? ` | ${warehouseDepartment.contactPhone}` : ''}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+      {/* Address Row */}
+      <div className="flex items-center gap-2 text-xs mt-1.5">
+        <span className="font-semibold text-muted-foreground">
+          {language === 'ar' ? 'العنوان:' : 'Address:'}
+        </span>
+        <span className="flex-1">{addressText}</span>
+        {mapUrl && (
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+            title={language === 'ar' ? 'افتح في الخريطة' : 'Open in Maps'}
+          >
+            <MapPin className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
+      <Separator />
+
+      {/* Order Items Section */}
+      <div>
+        <h3 className="text-base font-bold text-primary mb-2 pb-1 border-b">
+          {language === 'ar' ? 'العناصر المطلوبة' : 'Order Items'}
+        </h3>
+        <div className="border rounded-lg overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-primary text-primary-foreground">
+                <TableHead style={{ width: '15%' }}>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
+                <TableHead style={{ width: '35%' }}>{language === 'ar' ? 'اسم المنتج' : 'Product Name'}</TableHead>
+                <TableHead style={{ width: '12%' }} className="text-center">{language === 'ar' ? 'الكمية' : 'Qty'}</TableHead>
+                <TableHead style={{ width: '18%' }} className="text-center">{language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</TableHead>
+                <TableHead style={{ width: '20%' }} className="text-center">{language === 'ar' ? 'الإجمالي' : 'Total'}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((item, index) => (
+                <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
+                  <TableCell className="font-mono text-xs">{item.sku}</TableCell>
+                  <TableCell className="text-xs">{language === 'ar' ? item.nameAr : item.nameEn}</TableCell>
+                  <TableCell className="text-center text-xs">{item.quantity}</TableCell>
+                  <TableCell className="text-center font-mono text-xs">{item.price}</TableCell>
+                  <TableCell className="text-center font-mono text-xs">
+                    {(parseFloat(item.price) * item.quantity).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Total Section */}
+      <div className="flex justify-between items-center p-3 bg-primary/10 border-2 border-primary rounded">
+        <span className="text-base font-bold text-primary">
+          {language === 'ar' ? 'المجموع الكلي:' : 'Total Amount:'}
+        </span>
+        <span className="text-xl font-bold font-mono">{order.totalAmount} SAR</span>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center text-xs text-muted-foreground pt-3 border-t">
+        <p>
+          {companyName} – {companyEmail} – {companyWebsite}
+        </p>
+      </div>
+
+      {/* Print Button */}
+      <div className="flex justify-end pt-4 border-t">
+        <Button
+          onClick={handlePrintOrderConfirmation}
+          className="flex items-center gap-2"
+        >
+          <Printer className="h-4 w-4" />
+          {language === 'ar' ? 'طباعة' : 'Print'}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminOrdersPage() {
@@ -79,9 +730,6 @@ export default function AdminOrdersPage() {
   const itemsPerPage = 10;
   const [useVirtualScrolling, setUseVirtualScrolling] = useState(false);
   const [hideDoneAndCancelled, setHideDoneAndCancelled] = useState(false);
-  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-  const [selectedOrderForPdf, setSelectedOrderForPdf] = useState<Order | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const queryClient = useQueryClient();
 
 
@@ -141,17 +789,6 @@ export default function AdminOrdersPage() {
     },
   });
 
-  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery<Template[]>({
-    queryKey: ['/api/admin/templates', 'order'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/templates?category=order', {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch templates');
-      return response.json();
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
@@ -308,6 +945,7 @@ export default function AdminOrdersPage() {
     const statusConfig: Record<string, { className: string; label: string; labelAr: string }> = {
       pending: { className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800', label: 'Pending', labelAr: 'قيد الانتظار' },
       confirmed: { className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-300 dark:border-blue-800', label: 'Confirmed', labelAr: 'مؤكد' },
+      processing: { className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border-indigo-300 dark:border-indigo-800', label: 'Processing', labelAr: 'قيد المعالجة' },
       shipped: { className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-300 dark:border-purple-800', label: 'Shipped', labelAr: 'تم الشحن' },
       delivered: { className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-800', label: 'Delivered', labelAr: 'تم التسليم' },
       cancelled: { className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-300 dark:border-red-800', label: 'Cancelled', labelAr: 'ملغي' },
@@ -513,70 +1151,6 @@ export default function AdminOrdersPage() {
     printWindow.document.close();
   };
 
-  const handleExportPDF = (order: Order) => {
-    // Find the default template for this category
-    const defaultTemplate = templates.find(t => t.isDefault && t.isActive);
-    if (defaultTemplate) {
-      setSelectedTemplateId(defaultTemplate.id);
-    }
-    setSelectedOrderForPdf(order);
-    setPdfDialogOpen(true);
-  };
-
-  const handleGeneratePDF = async () => {
-    if (!selectedOrderForPdf) return;
-
-    try {
-      const items = safeJsonParse<OrderItem[]>(selectedOrderForPdf.items, []);
-      const client = clients.find(c => c.id === selectedOrderForPdf.clientId);
-      const lta = ltas.find(l => l.id === selectedOrderForPdf.ltaId);
-
-      const response = await apiRequest('POST', '/api/admin/orders/export-pdf', {
-        order: {
-          id: selectedOrderForPdf.id,
-          createdAt: selectedOrderForPdf.createdAt,
-          status: selectedOrderForPdf.status,
-          totalAmount: selectedOrderForPdf.totalAmount,
-        },
-        client: client ? {
-          nameEn: client.nameEn,
-          nameAr: client.nameAr,
-          id: client.id,
-        } : null,
-        lta: lta ? {
-          nameEn: lta.nameEn,
-          nameAr: lta.nameAr,
-        } : null,
-        items: items,
-        language: 'ar', // Arabic-only system
-        templateId: selectedTemplateId || undefined,
-      });
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `order-${selectedOrderForPdf.id.slice(0, 8)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: language === 'ar' ? 'تم التصدير' : 'Exported',
-        description: language === 'ar' ? 'تم تصدير الطلب إلى PDF بنجاح' : 'Order exported to PDF successfully',
-      });
-      
-      setPdfDialogOpen(false);
-      setSelectedTemplateId('');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: error.message,
-      });
-    }
-  };
 
   const handleShareOrder = (order: Order) => {
     const shareUrl = `${window.location.origin}/admin/orders?orderId=${order.id}`;
@@ -628,12 +1202,6 @@ export default function AdminOrdersPage() {
     });
   };
 
-  const handleBulkExportPDF = async () => {
-    for (const orderId of Array.from(selectedOrders)) {
-      const order = orders.find((o: Order) => o.id === orderId);
-      if (order) await handleExportPDF(order);
-    }
-  };
 
   const handleExportToExcel = (orders: Order[]) => {
     const headers = language === 'ar' 
@@ -715,10 +1283,8 @@ export default function AdminOrdersPage() {
   };
 
   const handleStatusFilterChange = (value: string) => {
-    startTransition(() => {
-      setStatusFilter(value);
-      setCurrentPage(1);
-    });
+    setStatusFilter(value);
+    setCurrentPage(1);
   };
 
   const renderOrderCard = (order: Order) => (
@@ -791,29 +1357,11 @@ export default function AdminOrdersPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handlePrintOrder(order)}
-            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
-            title={language === 'ar' ? 'طباعة' : 'Print'}
-          >
-            <Printer className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
             onClick={() => handleShareOrder(order)}
             className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
             title={language === 'ar' ? 'مشاركة' : 'Share'}
           >
             <Share2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleExportPDF(order)}
-            className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
-            title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
-          >
-            <Download className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -908,6 +1456,7 @@ export default function AdminOrdersPage() {
                     <SelectItem value="all">{language === 'ar' ? 'جميع الحالات' : 'All Statuses'}</SelectItem>
                     <SelectItem value="pending">{language === 'ar' ? 'قيد الانتظار' : 'Pending'}</SelectItem>
                     <SelectItem value="confirmed">{language === 'ar' ? 'مؤكد' : 'Confirmed'}</SelectItem>
+                    <SelectItem value="processing">{language === 'ar' ? 'قيد المعالجة' : 'Processing'}</SelectItem>
                     <SelectItem value="shipped">{language === 'ar' ? 'تم الشحن' : 'Shipped'}</SelectItem>
                     <SelectItem value="delivered">{language === 'ar' ? 'تم التسليم' : 'Delivered'}</SelectItem>
                     <SelectItem value="cancelled">{language === 'ar' ? 'ملغي' : 'Cancelled'}</SelectItem>
@@ -961,14 +1510,6 @@ export default function AdminOrdersPage() {
                     >
                       <FileSpreadsheet className="h-4 w-4 me-1" />
                       {language === 'ar' ? 'Excel' : 'Excel'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleBulkExportPDF}
-                    >
-                      <Download className="h-4 w-4 me-1" />
-                      {language === 'ar' ? 'تصدير' : 'Export'}
                     </Button>
                     <Button
                       variant="destructive"
@@ -1121,15 +1662,6 @@ export default function AdminOrdersPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleExportPDF(order)}
-                                className="h-9 w-9 p-0 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 hover:text-primary dark:hover:text-[#d4af37] transition-all"
-                                title={language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
                                 onClick={() => handleDeleteOrder(order.id)}
                                 className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive transition-all"
                                 title={language === 'ar' ? 'حذف' : 'Delete'}
@@ -1186,178 +1718,26 @@ export default function AdminOrdersPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="dialog-order-details">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
-              {language === 'ar' ? 'تفاصيل الطلب' : 'Order Details'}
+              <FileText className="h-5 w-5" />
+              {language === 'ar' ? 'تأكيد الطلب' : 'Order Confirmation'}
             </DialogTitle>
             <DialogDescription>
-              {language === 'ar' ? 'معلومات تفصيلية عن الطلب والجدول الزمني' : 'Detailed information about the order and timeline'}
+              {language === 'ar'
+                ? 'عرض تفاصيل الطلب الكاملة والحالة والعناصر'
+                : 'View complete order details, status, and items'}
             </DialogDescription>
           </DialogHeader>
           {selectedOrder && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</p>
-                  <p className="font-mono">#{selectedOrder.id.slice(0, 8)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'العميل' : 'Client'}</p>
-                  <p>{getClientName(selectedOrder.clientId)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الاتفاقية' : 'LTA'}</p>
-                  <p>{getLtaName(selectedOrder.ltaId)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}</p>
-                  {getStatusBadge(selectedOrder.status)}
-                </div>
-                {selectedOrder.pipefyCardId && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">{language === 'ar' ? 'معرف Pipefy' : 'Pipefy ID'}</p>
-                    <p className="font-mono">{selectedOrder.pipefyCardId}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-muted-foreground">{language === 'ar' ? 'التاريخ' : 'Date'}</p>
-                  <p>{formatDate(selectedOrder.createdAt)}</p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  {language === 'ar' ? 'العناصر المطلوبة' : 'Order Items'}
-                </h3>
-                <div className="border rounded-lg overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{language === 'ar' ? 'رمز المنتج' : 'SKU'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الكمية' : 'Qty'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'السعر' : 'Price'}</TableHead>
-                        <TableHead>{language === 'ar' ? 'الإجمالي' : 'Total'}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {safeJsonParse<OrderItem[]>(selectedOrder.items, []).map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-mono">{item.sku}</TableCell>
-                          <TableCell>{language === 'ar' ? item.nameAr : item.nameEn}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell className="font-mono">{item.price}</TableCell>
-                          <TableCell className="font-mono">
-                            {(parseFloat(item.price) * item.quantity).toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t space-y-3">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 dark:bg-[#d4af37]/5 border border-primary/20 dark:border-[#d4af37]/20">
-                  <span className="font-semibold text-lg">
-                    {language === 'ar' ? 'المجموع الكلي' : 'Total Amount'}
-                  </span>
-                  <span className="font-bold text-2xl font-mono">{selectedOrder.totalAmount}</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handlePrintOrder(selectedOrder)}
-                  >
-                    <Printer className="h-4 w-4 me-2" />
-                    {language === 'ar' ? 'طباعة' : 'Print'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleExportPDF(selectedOrder)}
-                  >
-                    <Download className="h-4 w-4 me-2" />
-                    {language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleShareOrder(selectedOrder)}
-                  >
-                    <Share2 className="h-4 w-4 me-2" />
-                    {language === 'ar' ? 'مشاركة' : 'Share'}
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <>
+              <AdminOrderDetailsContent 
+                order={selectedOrder} 
+                language={language}
+              />
+            </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* PDF Generation Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'ar' ? 'تصدير الطلب إلى PDF' : 'Export Order to PDF'}
-            </DialogTitle>
-            <DialogDescription>
-              {language === 'ar' ? 'اختر القالب لتصدير المستند' : 'Select template to export document'}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedOrderForPdf && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {language === 'ar' ? 'القالب' : 'Template'}
-                </p>
-                {isLoadingTemplates ? (
-                  <div className="text-sm text-muted-foreground">
-                    {language === 'ar' ? 'جاري تحميل القوالب...' : 'Loading templates...'}
-                  </div>
-                ) : templates.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    {language === 'ar' ? 'لا توجد قوالب متاحة' : 'No templates available'}
-                  </div>
-                ) : (
-                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={language === 'ar' ? 'اختر القالب (افتراضي إذا لم يتم الاختيار)' : 'Select template (default if not selected)'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.filter(t => t.isActive).map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {language === 'ar' ? template.nameAr : template.nameEn}
-                          {template.isDefault && ` (${language === 'ar' ? 'افتراضي' : 'Default'})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setPdfDialogOpen(false);
-                    setSelectedTemplateId('');
-                  }}
-                >
-                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                </Button>
-                <Button onClick={handleGeneratePDF} disabled={isLoadingTemplates}>
-                  <Download className="h-4 w-4 mr-2" />
-                  {language === 'ar' ? 'تصدير PDF' : 'Export PDF'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -1,25 +1,22 @@
 import type { Express, Request, Response } from "express";
 import { requireAuth, requireAdmin, AuthenticatedRequest, AdminRequest } from "./auth";
 import { TemplatePDFGenerator } from "./template-pdf-generator";
-import { TemplateStorage } from "./template-storage";
 import { TemplateManager } from "./template-manager";
 import { PDFStorage } from "./object-storage";
 import { PDFAccessControl } from "./pdf-access-control";
 import { storage } from "./storage";
 import { DocumentUtils } from "./document-utils";
-import { DocumentTemplate, TemplateVariable } from "@shared/template-schema";
-import { PreviewCache } from "./preview-cache";
-import { computeVariablesHash } from "./document-deduplication";
+import { TemplateVariable } from "@shared/template-schema";
 import { z } from "zod";
 
 // Validation schemas
 const generateDocumentSchema = z.object({
-  templateId: z.string().uuid(),
+  category: z.enum(['price_offer', 'order', 'invoice', 'contract', 'report', 'other']),
   variables: z.array(z.object({
     key: z.string(),
     value: z.any()
   })),
-  language: z.enum(['en', 'ar', 'both']).default('both'),
+  language: z.enum(['en', 'ar', 'both']).default('ar'),
   saveToDocuments: z.boolean().default(true),
   clientId: z.string().uuid().optional(),
   ltaId: z.string().uuid().optional(),
@@ -55,88 +52,32 @@ export function setupDocumentRoutes(app: Express) {
         });
       }
 
-      const { templateId, variables, language, saveToDocuments, clientId, ltaId, orderId, priceOfferId } = validation.data;
+      const { category, variables, language, saveToDocuments, clientId, ltaId, orderId, priceOfferId } = validation.data;
 
       console.log('📄 Document generation request:', {
-        templateId,
+        category,
         language,
         variableCount: variables.length,
         clientId,
         userId: req.user?.id
       });
 
-      // Get template
-      let template;
-      try {
-        template = await TemplateStorage.getTemplate(templateId);
-      } catch (templateError) {
-        console.error('❌ Failed to fetch template:', templateError);
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to retrieve template from database'
-        });
-      }
-
-      if (!template) {
-        console.error('❌ Template not found:', templateId);
-        return res.status(404).json({
-          success: false,
-          error: 'Template not found'
-        });
-      }
-
-      if (!template.isActive) {
-        console.error('❌ Template is inactive:', templateId);
-        return res.status(400).json({
-          success: false,
-          error: 'Template is not active'
-        });
-      }
-
-      // Validate template structure
-      if (!template.sections || !Array.isArray(template.sections)) {
-        console.error('❌ Template has invalid sections:', templateId);
-        return res.status(400).json({
-          success: false,
-          error: 'Template has invalid structure'
-        });
-      }
-
       // Generate PDF with comprehensive error handling
       let pdfBuffer: Buffer;
       try {
         console.log('🔨 Starting PDF generation...');
         
-        // Convert template to DocumentTemplate format
-        const documentTemplate: DocumentTemplate = {
-          id: template.id,
-          nameEn: template.nameEn,
-          nameAr: template.nameAr,
-          descriptionEn: template.descriptionEn,
-          descriptionAr: template.descriptionAr,
-          category: template.category,
-          language: template.language,
-          sections: JSON.parse(template.sections),
-          variables: JSON.parse(template.variables),
-          styles: JSON.parse(template.styles),
-          isActive: template.isActive,
-          isDefault: template.isDefault,
-          version: template.version || 1,
-          tags: template.tags || [],
-          createdAt: template.createdAt,
-          updatedAt: template.updatedAt
-        };
-
         // Convert variables to TemplateVariable format
         const templateVariables: TemplateVariable[] = variables.map(v => ({
           key: v.key,
           value: v.value
         }));
 
+        // Use TemplateManager which uses hardcoded templates
         pdfBuffer = await TemplateManager.generateDocument(
-          template.category,
+          category,
           templateVariables,
-          templateId
+          undefined // templateId ignored for hardcoded templates
         );
 
         if (!pdfBuffer || pdfBuffer.length === 0) {
@@ -151,7 +92,7 @@ export function setupDocumentRoutes(app: Express) {
         console.error('❌ PDF generation failed:', {
           error: pdfError instanceof Error ? pdfError.message : 'Unknown error',
           stack: pdfError instanceof Error ? pdfError.stack : undefined,
-          templateId,
+          category,
           language,
           variableCount: variables.length
         });
@@ -164,7 +105,7 @@ export function setupDocumentRoutes(app: Express) {
 
       // Generate filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileName = `${template.category}_${timestamp}.pdf`;
+      const fileName = `${category}_${timestamp}.pdf`;
 
       let documentId: string | undefined;
       let fileUrl: string | undefined;
@@ -174,7 +115,7 @@ export function setupDocumentRoutes(app: Express) {
         let uploadResult;
         try {
           console.log('📤 Uploading PDF to storage...');
-          uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, template.category);
+          uploadResult = await PDFStorage.uploadPDF(pdfBuffer, fileName, category.toUpperCase());
           
           if (!uploadResult.success) {
             throw new Error(uploadResult.error || 'Upload failed');
@@ -195,7 +136,7 @@ export function setupDocumentRoutes(app: Express) {
         try {
           console.log('💾 Creating document metadata...');
           document = await storage.createDocumentMetadata({
-            documentType: template.category as any,
+            documentType: category as any,
             fileName,
             fileUrl: uploadResult.fileName!,
             fileSize: pdfBuffer.length,
@@ -205,7 +146,8 @@ export function setupDocumentRoutes(app: Express) {
             orderId,
             priceOfferId,
             metadata: {
-              templateId,
+              templateId: 'hardcoded',
+              category,
               language,
               generatedAt: new Date().toISOString(),
               generatedBy: req.user!.id
@@ -258,113 +200,7 @@ export function setupDocumentRoutes(app: Express) {
     }
   });
 
-  // 2. Generate Secure Download Token
-  app.post('/api/documents/:id/token', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const document = await storage.getDocumentById(id);
-
-      if (!document) {
-        return res.status(404).json({
-          success: false,
-          error: 'Document not found'
-        });
-      }
-
-      // Check permissions
-      if (!req.user!.isAdmin && document.clientId !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied'
-        });
-      }
-
-      const token = PDFAccessControl.generateDownloadToken(id, req.user!.id);
-      const expiresIn = '2h'; // Token expires in 2 hours
-
-      res.json({
-        success: true,
-        token,
-        expiresIn
-      });
-
-    } catch (error) {
-      console.error('Token generation error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to generate token'
-      });
-    }
-  });
-
-  // 3. Download Document
-  app.get('/api/documents/:id/download', async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { token } = req.query;
-
-      if (!token || typeof token !== 'string') {
-        return res.status(400).json({
-          success: false,
-          error: 'Download token required'
-        });
-      }
-
-      // Verify token
-      const verification = PDFAccessControl.verifyDownloadToken(token);
-      if (!verification.valid || verification.documentId !== id) {
-        return res.status(401).json({
-          success: false,
-          error: verification.error || 'Invalid or expired token'
-        });
-      }
-
-      // Get document
-      const document = await storage.getDocumentById(id);
-      if (!document) {
-        return res.status(404).json({
-          success: false,
-          error: 'Document not found'
-        });
-      }
-
-      // Download from storage
-      const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
-      if (!downloadResult.ok) {
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to download document from storage'
-        });
-      }
-
-      // Log download
-      await PDFAccessControl.logDocumentAccess({
-        documentId: id,
-        clientId: verification.clientId!,
-        action: 'download',
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
-      });
-
-      // Increment view count
-      await storage.incrementDocumentViewCount(id);
-
-      // Send file
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
-      res.setHeader('Content-Length', downloadResult.data.length);
-      res.send(downloadResult.data);
-
-    } catch (error) {
-      console.error('Download error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to download document'
-      });
-    }
-  });
-
-  // 4. List/Search Documents
+  // 2. List/Search Documents
   app.get('/api/documents', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const validation = documentSearchSchema.safeParse(req.query);
@@ -511,211 +347,4 @@ export function setupDocumentRoutes(app: Express) {
     }
   });
 
-  // 8. Template Operations (Admin Only)
-  app.get('/api/admin/templates', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const { category } = req.query;
-      const templates = await TemplateStorage.getTemplates(category as string);
-
-      res.json({
-        success: true,
-        templates
-      });
-
-    } catch (error) {
-      console.error('Get templates error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get templates'
-      });
-    }
-  });
-
-  app.post('/api/admin/templates', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const template = await TemplateStorage.createTemplate(req.body);
-
-      res.status(201).json({
-        success: true,
-        template
-      });
-
-    } catch (error) {
-      console.error('Create template error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to create template'
-      });
-    }
-  });
-
-  app.get('/api/admin/templates/:id', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const template = await TemplateStorage.getTemplate(id);
-
-      if (!template) {
-        return res.status(404).json({
-          success: false,
-          error: 'Template not found'
-        });
-      }
-
-      res.json({
-        success: true,
-        template
-      });
-
-    } catch (error) {
-      console.error('Get template error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get template'
-      });
-    }
-  });
-
-  app.put('/api/admin/templates/:id', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const template = await TemplateStorage.updateTemplate(id, req.body);
-
-      if (!template) {
-        return res.status(404).json({
-          success: false,
-          error: 'Template not found'
-        });
-      }
-
-      res.json({
-        success: true,
-        template
-      });
-
-    } catch (error) {
-      console.error('Update template error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to update template'
-      });
-    }
-  });
-
-  app.delete('/api/admin/templates/:id', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const deleted = await TemplateStorage.deleteTemplate(id);
-
-      if (!deleted) {
-        return res.status(404).json({
-          success: false,
-          error: 'Template not found'
-        });
-      }
-
-      res.json({
-        success: true,
-        message: 'Template deleted successfully'
-      });
-
-    } catch (error) {
-      console.error('Delete template error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to delete template'
-      });
-    }
-  });
-
-  app.post('/api/admin/templates/:id/duplicate', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { nameEn, nameAr } = req.body;
-
-      if (!nameEn || !nameAr) {
-        return res.status(400).json({
-          success: false,
-          error: 'Template names (English and Arabic) are required'
-        });
-      }
-
-      const duplicate = await TemplateStorage.duplicateTemplate(id, { en: nameEn, ar: nameAr });
-
-      res.status(201).json({
-        success: true,
-        template: duplicate
-      });
-
-    } catch (error) {
-      console.error('Duplicate template error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to duplicate template'
-      });
-    }
-  });
-
-  // 9. Preview Template with Sample Data (Admin Only) - with caching
-  app.post('/api/admin/templates/:id/preview', requireAdmin, async (req: AdminRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { variables, language = 'ar', force = false } = req.body;
-
-      const template = await TemplateStorage.getTemplate(id);
-      if (!template) {
-        return res.status(404).json({
-          success: false,
-          error: 'Template not found'
-        });
-      }
-
-      const normalizedVariables = variables || [];
-      const normalizedLanguage = language as 'ar'; // Arabic-only
-
-      // Check preview cache (unless force=true)
-      let pdfBuffer: Buffer;
-      if (!force) {
-        const cachedPreview = await PreviewCache.get({
-          templateId: id,
-          variables: normalizedVariables,
-          language: normalizedLanguage
-        });
-
-        if (cachedPreview) {
-          console.log('✅ Serving cached preview');
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', 'inline; filename="preview.pdf"');
-          res.setHeader('X-Preview-Cache', 'HIT');
-          return res.send(cachedPreview);
-        }
-      }
-
-      // Generate new preview
-      console.log('📄 Generating new preview...');
-      pdfBuffer = await TemplatePDFGenerator.generate({
-        template,
-        variables: normalizedVariables,
-        language: normalizedLanguage
-      });
-
-      // Cache the preview
-      await PreviewCache.set({
-        templateId: id,
-        variables: normalizedVariables,
-        language: normalizedLanguage
-      }, pdfBuffer);
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline; filename="preview.pdf"');
-      res.setHeader('X-Preview-Cache', 'MISS');
-      res.send(pdfBuffer);
-
-    } catch (error) {
-      console.error('Template preview error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to generate preview'
-      });
-    }
-  });
 }

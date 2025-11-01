@@ -35,6 +35,7 @@ import ProductDetailPage from '@/pages/ProductDetailPage';
 import CatalogPage from '@/pages/CatalogPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminDemoRequestsPage from "@/pages/AdminDemoRequestsPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import { ProtectedRoute } from '@/lib/protected-route';
 import "./lib/i18n";
 import { HelmetProvider } from 'react-helmet-async';
@@ -149,7 +150,9 @@ function Router() {
       )}
 
       {/* Admin routes */}
-      <AdminRoute path="/admin" component={AdminPage} />
+      <AdminRoute path="/admin" component={AdminDashboardPage} />
+      <AdminRoute path="/admin/features" component={AdminPage} />
+      <AdminRoute path="/admin/dashboard" component={AdminDashboardPage} />
       <AdminRoute path="/admin/products" component={AdminProductsPage} />
       <AdminRoute path="/admin/vendors" component={AdminVendorsPage} />
       <AdminRoute path="/admin/clients" component={AdminClientsPage} />

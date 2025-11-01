@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp, PlayCircle } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp, PlayCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -176,7 +176,7 @@ export default function AdminPage() {
             />
             <div className="min-w-0">
               <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'لوحة الإدارة' : 'Admin Dashboard'}
+                {language === 'ar' ? 'جميع الميزات' : 'All Features'}
               </h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
                 {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
@@ -301,14 +301,28 @@ export default function AdminPage() {
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Welcome Section */}
         <div className="mb-8 animate-slide-down">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-            {language === 'ar' ? 'لوحة التحكم الرئيسية' : 'Main Control Panel'}
-          </h2>
-          <p className="text-muted-foreground">
-            {language === 'ar' 
-              ? 'إدارة جميع جوانب النظام من مكان واحد' 
-              : 'Manage all aspects of the system from one place'}
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+                {language === 'ar' ? 'جميع الميزات' : 'All Features'}
+              </h2>
+              <p className="text-muted-foreground">
+                {language === 'ar' 
+                  ? 'إدارة جميع جوانب النظام' 
+                  : 'Manage all aspects of the system'}
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/admin">
+                {language === 'ar' ? 'العودة للوحة التحكم' : 'Back to Dashboard'}
+                {language === 'ar' ? (
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                ) : (
+                  <ArrowLeft className="ml-2 h-4 w-4" />
+                )}
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Dashboard Cards */}
