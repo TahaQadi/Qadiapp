@@ -310,6 +310,17 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              asChild
+              className="gap-2"
+            >
+              <Link href="/ordering">
+                <ShoppingCart className="h-4 w-4" />
+                <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء طلب' : 'Create Order'}</span>
+              </Link>
+            </Button>
+
             <Select value={timeRange} onValueChange={(value) => setTimeRange(value as typeof timeRange)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
