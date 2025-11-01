@@ -2,10 +2,6 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
-import { sqliteTable, text, integer, sqliteSchema } from 'drizzle-orm/sqlite-core';
-import crypto from 'crypto';
-import { users } from '@shared/schema';
-
 
 neonConfig.webSocketConstructor = ws;
 
@@ -29,35 +25,3 @@ export { notifications, orders, orderFeedback, priceOffers, templates, clientLoc
 
 // Re-export schema for use in routes
 export * as schema from '@shared/schema';
-
-// All table schemas are now defined in shared/schema.ts
-// This file only contains the database connection and configuration
-
-// Add template_versions table for version history
-export const templateVersions = sqliteTable('template_versions', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  templateId: text('template_id').notNull().references(() => templates.id, { onDelete: 'cascade' }),
-  versionNumber: integer('version_number').notNull(),
-  name: text('name').notNull(),
-  description: text('description'),
-  sections: text('sections', { mode: 'json' }).notNull(),
-  variables: text('variables', { mode: 'json' }).notNull(),
-  styles: text('styles', { mode: 'json' }).notNull(),
-  changedBy: text('changed_by').references(() => users.id),
-  changeReason: text('change_reason'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-});
-
-export const templateUsageStats = sqliteTable('template_usage_stats', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  templateId: text('template_id').notNull().references(() => templates.id, { onDelete: 'cascade' }),
-  generatedAt: integer('generated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-  userId: text('user_id').references(() => users.id),
-  documentType: text('document_type').notNull(),
-  success: integer('success', { mode: 'boolean' }).notNull().default(true),
-  errorMessage: text('error_message'),
-  generationTimeMs: integer('generation_time_ms'),
-});
-
-// Templates table is now defined in shared/schema.ts
-// No need to redefine it here
