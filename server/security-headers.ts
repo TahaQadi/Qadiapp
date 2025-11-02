@@ -80,7 +80,8 @@ export function securityHeaders(options: SecurityHeadersOptions = {}) {
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
     // Permissions Policy (formerly Feature Policy)
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Allow geolocation for location picker functionality
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 
     next();
   };

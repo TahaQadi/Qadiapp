@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -21,74 +21,90 @@ interface MapLocationPickerProps {
   onLocationSelect: (lat: number, lng: number) => void;
 }
 
-function LocationMarker({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
-  const [position, setPosition] = useState<[number, number] | null>(null);
+interface LocationMarkerProps {
+  onLocationSelect: (lat: number, lng: number) => void;
+  markerPosition: [number, number] | null;
+}
 
-  const map = useMapEvents({
+function MapCenterUpdater({ center }: { center: [number, number] }): null {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [map, center]);
+  
+  return null;
+}
+
+function LocationMarker({ onLocationSelect, markerPosition }: LocationMarkerProps): JSX.Element | null {
+  useMapEvents({
     click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
       onLocationSelect(e.latlng.lat, e.latlng.lng);
     },
   });
 
-  return position === null ? null : <Marker position={position} />;
+  return markerPosition === null ? null : <Marker position={markerPosition} />;
 }
 
 export function MapLocationPicker({ latitude, longitude, onLocationSelect }: MapLocationPickerProps) {
   const { language } = useLanguage();
-  const [center, setCenter] = useState<[number, number]>([24.7136, 46.6753]); // Default: Riyadh
+  // Default: 31°53'29.2"N 35°12'35.5"E (Jerusalem area)
+  // Precise coordinates: 31.8914444444, 35.2098611111
+  const [center, setCenter] = useState<[number, number]>([31.8914444444, 35.2098611111]);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
     latitude && longitude ? [latitude, longitude] : null
   );
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (latitude && longitude) {
-      setCenter([latitude, longitude]);
-      setMarkerPosition([latitude, longitude]);
+      const newCenter: [number, number] = [latitude, longitude];
+      setCenter(newCenter);
+      setMarkerPosition(newCenter);
+      setError(null);
+    } else {
+      // If no coordinates provided, use default address
+      const defaultCenter: [number, number] = [31.8914444444, 35.2098611111];
+      setCenter(defaultCenter);
     }
   }, [latitude, longitude]);
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setMarkerPosition([lat, lng]);
+    setError(null);
     onLocationSelect(lat, lng);
   };
 
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert(language === 'ar' ? 'المتصفح لا يدعم تحديد الموقع' : 'Geolocation is not supported by your browser');
+      const message = language === 'ar' 
+        ? 'المتصفح لا يدعم تحديد الموقع' 
+        : 'Geolocation is not supported by your browser';
+      setError(message);
+      alert(message);
       return;
     }
 
-    // Check if we need to request permission first
-    if (navigator.permissions) {
-      try {
-        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-        
-        if (permissionStatus.state === 'denied') {
-          const message = language === 'ar'
-            ? 'تم رفض الوصول إلى الموقع سابقاً.\n\nلتفعيل الموقع:\n\n1. انقر على أيقونة القفل/المعلومات بجانب عنوان الموقع\n2. ابحث عن "الموقع" أو "Location"\n3. غير الإعداد إلى "السماح" أو "Allow"\n4. أعد تحميل الصفحة'
-            : 'Location access was previously denied.\n\nTo enable location:\n\n1. Click the lock/info icon next to the site URL\n2. Look for "Location" permission\n3. Change it to "Allow"\n4. Reload the page';
-          
-          alert(message);
-          return;
-        }
-      } catch (e) {
-        // Permission API not supported, continue with normal flow
-        console.log('Permission API not supported, continuing...');
-      }
-    }
-
     setIsLoadingLocation(true);
+    setError(null);
     
+    // Call getCurrentPosition directly - this will trigger the browser's native permission prompt
+    // The browser will show its own permission dialog if permission hasn't been granted yet
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy; // accuracy in meters
+        
         setCenter([lat, lng]);
         setMarkerPosition([lat, lng]);
         onLocationSelect(lat, lng);
         setIsLoadingLocation(false);
+        setError(null);
+        
+        // Log accuracy for debugging
+        console.log(`Location acquired: ${lat}, ${lng} (accuracy: ±${Math.round(accuracy)}m)`);
       },
       (error) => {
         console.error('Geolocation error:', error);
@@ -103,8 +119,15 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
               ? 'تم رفض الوصول إلى الموقع'
               : 'Location access denied';
             errorDetails = language === 'ar'
-              ? '\n\nلتفعيل الموقع:\n\n• Chrome/Edge: انقر على أيقونة القفل → الموقع → السماح\n• Firefox: انقر على (i) → الأذونات → الموقع → السماح\n• Safari: الإعدادات → الخصوصية → خدمات الموقع\n\nثم أعد تحميل الصفحة'
-              : '\n\nTo enable:\n\n• Chrome/Edge: Click lock icon → Location → Allow\n• Firefox: Click (i) → Permissions → Location → Allow\n• Safari: Settings → Privacy → Location Services\n\nThen reload the page';
+              ? '\n\nلتفعيل الموقع:\n\n• Chrome/Edge: انقر على أيقونة القفل (🔒) أو (i) بجانب عنوان الموقع → الموقع → السماح\n• Firefox: انقر على (i) → الأذونات → الموقع → السماح\n• Safari: الإعدادات → الخصوصية → خدمات الموقع\n\nثم أعد تحميل الصفحة'
+              : '\n\nTo enable:\n\n• Chrome/Edge: Click lock icon (🔒) or (i) next to site URL → Location → Allow\n• Firefox: Click (i) → Permissions → Location → Allow\n• Safari: Settings → Privacy → Location Services\n\nThen reload the page';
+            
+            // Check if it's a permissions policy violation
+            if (error.message && error.message.includes('permissions policy')) {
+              errorDetails += language === 'ar'
+                ? '\n\nملاحظة: قد تحتاج إلى تحديث الصفحة بعد تغيير الإعدادات.'
+                : '\n\nNote: You may need to refresh the page after changing settings.';
+            }
             break;
           case error.POSITION_UNAVAILABLE:
             errorMessage = language === 'ar'
@@ -128,12 +151,14 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
               : 'Error getting location';
         }
         
-        alert(errorMessage + errorDetails);
+        const fullError = errorMessage + errorDetails;
+        setError(errorMessage);
+        alert(fullError);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
+        enableHighAccuracy: true, // Request high accuracy
+        timeout: 20000, // Increased timeout for better accuracy
+        maximumAge: 0 // Don't use cached position
       }
     );
   };
@@ -158,15 +183,21 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
         {markerPosition && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground px-3 border rounded-md">
             <MapPin className="h-4 w-4" />
-            <span>{markerPosition[0].toFixed(6)}, {markerPosition[1].toFixed(6)}</span>
+            <span>{markerPosition[0].toFixed(8)}, {markerPosition[1].toFixed(8)}</span>
           </div>
         )}
       </div>
       
+      {error && (
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+          {error}
+        </div>
+      )}
+      
       <div className="h-[400px] rounded-lg overflow-hidden border">
         <MapContainer
           center={center}
-          zoom={13}
+          zoom={15}
           style={{ height: '100%', width: '100%' }}
           data-testid="map-container"
         >
@@ -174,8 +205,8 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {markerPosition && <Marker position={markerPosition} />}
-          <LocationMarker onLocationSelect={handleLocationSelect} />
+          <MapCenterUpdater center={center} />
+          <LocationMarker onLocationSelect={handleLocationSelect} markerPosition={markerPosition} />
         </MapContainer>
       </div>
       
