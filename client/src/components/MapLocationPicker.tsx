@@ -54,13 +54,33 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
     onLocationSelect(lat, lng);
   };
 
-  const getCurrentLocation = () => {
+  const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
       alert(language === 'ar' ? 'المتصفح لا يدعم تحديد الموقع' : 'Geolocation is not supported by your browser');
       return;
     }
 
+    // Check if we need to request permission first
+    if (navigator.permissions) {
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        
+        if (permissionStatus.state === 'denied') {
+          const message = language === 'ar'
+            ? 'تم رفض الوصول إلى الموقع سابقاً.\n\nلتفعيل الموقع:\n\n1. انقر على أيقونة القفل/المعلومات بجانب عنوان الموقع\n2. ابحث عن "الموقع" أو "Location"\n3. غير الإعداد إلى "السماح" أو "Allow"\n4. أعد تحميل الصفحة'
+            : 'Location access was previously denied.\n\nTo enable location:\n\n1. Click the lock/info icon next to the site URL\n2. Look for "Location" permission\n3. Change it to "Allow"\n4. Reload the page';
+          
+          alert(message);
+          return;
+        }
+      } catch (e) {
+        // Permission API not supported, continue with normal flow
+        console.log('Permission API not supported, continuing...');
+      }
+    }
+
     setIsLoadingLocation(true);
+    
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude;
@@ -75,33 +95,44 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
         setIsLoadingLocation(false);
         
         let errorMessage = '';
+        let errorDetails = '';
+        
         switch (error.code) {
           case error.PERMISSION_DENIED:
             errorMessage = language === 'ar' 
-              ? 'تم رفض الوصول إلى الموقع. يرجى تفعيل صلاحيات الموقع في المتصفح.'
-              : 'Location access denied. Please enable location permissions in your browser.';
+              ? 'تم رفض الوصول إلى الموقع'
+              : 'Location access denied';
+            errorDetails = language === 'ar'
+              ? '\n\nلتفعيل الموقع:\n\n• Chrome/Edge: انقر على أيقونة القفل → الموقع → السماح\n• Firefox: انقر على (i) → الأذونات → الموقع → السماح\n• Safari: الإعدادات → الخصوصية → خدمات الموقع\n\nثم أعد تحميل الصفحة'
+              : '\n\nTo enable:\n\n• Chrome/Edge: Click lock icon → Location → Allow\n• Firefox: Click (i) → Permissions → Location → Allow\n• Safari: Settings → Privacy → Location Services\n\nThen reload the page';
             break;
           case error.POSITION_UNAVAILABLE:
             errorMessage = language === 'ar'
-              ? 'معلومات الموقع غير متاحة.'
-              : 'Location information is unavailable.';
+              ? 'معلومات الموقع غير متاحة'
+              : 'Location information unavailable';
+            errorDetails = language === 'ar'
+              ? '\n\nتأكد من:\n• تفعيل GPS على جهازك\n• الاتصال بالإنترنت'
+              : '\n\nMake sure:\n• GPS is enabled on your device\n• You have internet connection';
             break;
           case error.TIMEOUT:
             errorMessage = language === 'ar'
-              ? 'انتهت مهلة طلب الموقع.'
-              : 'Location request timed out.';
+              ? 'انتهت مهلة طلب الموقع'
+              : 'Location request timed out';
+            errorDetails = language === 'ar'
+              ? '\n\nحاول مرة أخرى'
+              : '\n\nPlease try again';
             break;
           default:
             errorMessage = language === 'ar'
-              ? 'حدث خطأ غير معروف في تحديد الموقع.'
-              : 'An unknown error occurred while getting location.';
+              ? 'حدث خطأ في تحديد الموقع'
+              : 'Error getting location';
         }
         
-        alert(errorMessage);
+        alert(errorMessage + errorDetails);
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0
       }
     );
