@@ -29,8 +29,14 @@ app.use(securityHeaders(isDev ? SecurityPresets.DEVELOPMENT : SecurityPresets.PR
 // Phase 3: Performance monitoring middleware
 app.use(performanceMonitoringMiddleware);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// Set UTF-8 encoding for all responses
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
 
 // Phase 4: Rate limiting for API routes (lenient for development)
 if (!isDev) {

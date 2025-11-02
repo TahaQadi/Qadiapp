@@ -309,6 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products Routes - Get all products with client's LTA prices (if any)
   app.get("/api/products", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       const products = await storage.getAllProductsWithClientPrices(req.client.id);
       res.json(products);
     } catch (error) {
@@ -388,7 +389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Notify admins using NotificationService (automatically sends push notifications)
       const client = await storage.getClient(req.client.id);
-      
+
       await notificationService.sendToAllAdmins(
         notificationService.createPriceRequestNotification(
           { en: client?.name || 'Client', ar: client?.name || 'عميل' },
@@ -894,7 +895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/price-offers/:id/download", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const offerId = req.params.id;
-      
+
       // Get price offer
       const offer = await storage.getPriceOffer(offerId);
       if (!offer) {
@@ -930,7 +931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Download from storage
       const downloadResult = await PDFStorage.downloadPDF(document.fileUrl, document.checksum || undefined);
-      
+
       if (!downloadResult.ok || !downloadResult.data) {
         console.error('[Download Error] Storage download failed:', downloadResult.error);
         return res.status(500).json({ 
@@ -997,7 +998,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { key: 'discount', value: '0.00' },
           { key: 'total', value: parseFloat(offer.total).toFixed(2) },
           { key: 'currency', value: 'شيكل' },
-          { key: 'notes', value: notes || offer.notes || '' },
           { key: 'validityDays', value: '30' },
           { key: 'deliveryDays', value: '5-7' },
           { key: 'paymentTerms', value: '30 يوم' },
@@ -1079,7 +1079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         unitPrice: parseFloat(item.unitPrice || '0').toFixed(2),
         total: (parseFloat(item.unitPrice || '0') * (item.quantity || 0)).toFixed(2)
       }));
-      
+
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'price_offer',
         variables: [
@@ -1183,7 +1183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/orders/:id", requireAdmin, async (req: AdminRequest, res: Response) => {
     try {
       const orderId = req.params.id;
-      
+
       // Check if order exists
       const order = await storage.getOrder(orderId);
       if (!order) {
@@ -1459,7 +1459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/clients/bulk-import", requireAdmin, async (req: any, res) => {
     try {
       const { clients } = req.body;
-      
+
       if (!Array.isArray(clients) || clients.length === 0) {
         return res.status(400).json({
           message: "Clients array is required and must not be empty",
@@ -1476,7 +1476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process each client
       for (let i = 0; i < clients.length; i++) {
         const clientData = clients[i];
-        
+
         try {
           // Validate required fields
           if (!clientData.username || !clientData.password || !clientData.nameEn || !clientData.nameAr) {
@@ -2068,7 +2068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/dashboard/stats", requireAdmin, async (req: any, res) => {
     try {
       const { range = '30d' } = req.query;
-      
+
       // Calculate date threshold based on range
       const now = new Date();
       let startDate = new Date();
@@ -2129,10 +2129,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Revenue trends (daily for last 30 days)
       const revenueTrends: { date: string; revenue: number }[] = [];
       const ordersTrends: { date: string; count: number }[] = [];
-      
+
       const daysToShow = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : 30;
       const dateMap = new Map<string, { revenue: number; count: number }>();
-      
+
       for (let i = daysToShow - 1; i >= 0; i--) {
         const date = new Date(startDate);
         date.setDate(date.getDate() + i);
@@ -2285,7 +2285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate totals
       const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0);
-      
+
       // Map items to template format
       const mappedItems = items.map((item: any, index: number) => ({
         index: index + 1,
@@ -2297,7 +2297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         unitPrice: parseFloat(item.price || '0').toFixed(2),
         total: (parseFloat(item.price || '0') * (item.quantity || 0)).toFixed(2)
       }));
-      
+
       const documentResult = await DocumentUtils.generateDocument({
         templateCategory: 'order',
         variables: [
@@ -2337,7 +2337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Download the generated PDF and send to client
       const downloadResult = await PDFStorage.downloadPDF(documentResult.fileName!);
-      
+
       if (!downloadResult.ok || !downloadResult.data) {
         console.error('❌ PDF download failed:', downloadResult.error);
         return res.status(500).json({
@@ -2931,7 +2931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Step 3: Get LTA products with pricing and validate
       const ltaProducts = await storage.getProductsForLta(ltaId);
-      
+
       // Create a map of productId -> pricing info
       const ltaProductMap = new Map(
         ltaProducts
@@ -3078,14 +3078,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/client/notifications", requireAuth, async (req: any, res) => {
     try {
       const { limit, offset, type, isRead } = req.query;
-      
+
       const options: {limit?: number; offset?: number; type?: string; isRead?: boolean} = {};
-      
+
       if (limit) options.limit = parseInt(limit as string);
       if (offset) options.offset = parseInt(offset as string);
       if (type) options.type = type as string;
       if (isRead !== undefined) options.isRead = isRead === 'true';
-      
+
       const notifications = await storage.getClientNotifications(req.client.id, options);
       res.json(notifications);
     } catch (error) {
