@@ -1001,16 +1001,16 @@ export default function OrderingPage() {
         noIndex={true}
       />
       <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={isArabic ? 'rtl' : 'ltr'} data-testid="page-ordering">
-          {/* Animated background elements */}
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-[#0a0a0a]" dir={isArabic ? 'rtl' : 'ltr'} data-testid="page-ordering">
+          {/* Animated background elements - Optimized for mobile */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute top-1/4 sm:top-1/3 left-1/4 sm:left-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 sm:bottom-1/3 right-1/4 sm:right-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
             {/* Floating particles - hidden on mobile */}
-            <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float hidden sm:block"></div>
-            <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float hidden sm:block" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float hidden sm:block" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block"></div>
+            <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block" style={{ animationDelay: '2s' }}></div>
           </div>
 
           {/* Sidebar */}
@@ -1026,20 +1026,23 @@ export default function OrderingPage() {
 
           {/* Main Content Area */}
           <SidebarInset>
-            {/* Header */}
-            <div className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm safe-top">
-              <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 min-w-0">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <SidebarTrigger className="h-9 w-9 flex-shrink-0" />
+            {/* Header - Mobile Optimized */}
+            <div className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/30 bg-background/98 dark:bg-black/95 backdrop-blur-xl shadow-lg dark:shadow-[#d4af37]/10 safe-top">
+              <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-3 min-w-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <SidebarTrigger className="h-11 w-11 sm:h-10 sm:w-10 flex-shrink-0 touch-target hover:bg-primary/10 dark:hover:bg-[#d4af37]/20 rounded-lg transition-colors" />
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
+                    <h1 className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate leading-tight">
                       {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
                     </h1>
+                    <p className="text-xs text-muted-foreground dark:text-[#d4af37]/60 hidden sm:block mt-0.5">
+                      {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
+                    </p>
                   </div>
                 </div>
 
                 {/* Right Section - Action Buttons */}
-                <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <OrderingHeader
                     cartItemCount={cartItemCount}
                     onCartOpen={() => setCartOpen(true)}
@@ -1051,40 +1054,40 @@ export default function OrderingPage() {
 
             {/* Main Content */}
             <main className="container mx-auto px-3 sm:px-4 py-3 sm:py-6 relative z-10 safe-bottom">
-          {/* Welcome Section - Condensed for mobile */}
-          <div className="mb-4 sm:mb-8 animate-slide-down">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">
+          {/* Welcome Section - Mobile Optimized */}
+          <div className="mb-6 sm:mb-8 animate-slide-down">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
               {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground dark:text-[#d4af37]/70">
               {language === 'ar'
                 ? 'إدارة الطلبات وسلة التسوق من مكان واحد'
                 : 'Manage your orders and shopping cart from one place'}
             </p>
           </div>
 
-          {/* Catalog Link Banner - Mobile optimized */}
-          <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 hover:border-primary/40 transition-all duration-300 animate-fade-in">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                <div className="flex items-start gap-2 sm:gap-3 lg:gap-4 flex-1 min-w-0 w-full">
-                  <div className="p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-primary/10 flex-shrink-0">
-                    <Package className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-primary" />
+          {/* Catalog Link Banner - Mobile Optimized with Enhanced Branding */}
+          <Card className="mb-6 sm:mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background dark:from-[#d4af37]/15 dark:via-[#d4af37]/5 dark:to-background border-primary/30 dark:border-[#d4af37]/40 hover:border-primary/50 dark:hover:border-[#d4af37]/60 hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300 animate-fade-in">
+            <CardContent className="p-4 sm:p-5 lg:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
+                <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-primary/15 dark:bg-[#d4af37]/20 flex-shrink-0 ring-2 ring-primary/20 dark:ring-[#d4af37]/30">
+                    <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-xs sm:text-sm lg:text-base mb-0.5 sm:mb-1">
+                    <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-1 text-foreground dark:text-[#d4af37]">
                       {language === 'ar' ? 'تصفح كتالوج المنتجات' : 'Browse Product Catalog'}
                     </h3>
-                    <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-[#d4af37]/70 line-clamp-2">
                       {language === 'ar'
                         ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار'
                         : 'Explore all available products and request price quotes'}
                     </p>
                   </div>
                 </div>
-                <Button asChild size="sm" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[44px] touch-target">
+                <Button asChild size="lg" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[48px] touch-target-large font-semibold shadow-md hover:shadow-lg dark:bg-[#d4af37] dark:hover:bg-[#f9c800] dark:text-black transition-all">
                   <Link href="/catalog">
-                    <Boxes className="h-4 w-4 me-2" />
+                    <Boxes className="h-5 w-5 me-2" />
                     {language === 'ar' ? 'عرض الكتالوج' : 'View Catalog'}
                   </Link>
                 </Button>
@@ -1093,70 +1096,70 @@ export default function OrderingPage() {
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4 lg:space-y-6">
-            <div className="sticky top-[56px] sm:top-[64px] z-40 -mx-3 sm:-mx-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-background/95 dark:bg-black/80 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/20 safe-top">
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-                <TabsList className="w-max sm:w-full inline-flex justify-start bg-card/50 dark:bg-card/30 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/20 h-auto p-1 gap-0.5 sm:gap-1">
+            <div className="sticky top-[64px] sm:top-[72px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 sm:py-3 bg-background/98 dark:bg-black/95 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/30 shadow-sm dark:shadow-[#d4af37]/5 safe-top">
+              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+                <TabsList className="w-max sm:w-full inline-flex justify-start bg-card/60 dark:bg-card/40 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/30 h-auto p-1.5 gap-1 sm:gap-2 rounded-xl">
                   <TabsTrigger
                     value="lta-products"
-                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target"
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg"
                     data-testid="tab-lta-products"
                   >
-                    <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <Package className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
                     <span>{language === 'ar' ? 'الاتفاقيات' : 'LTAs'}</span>
                     {clientLtas.length > 0 && (
-                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {clientLtas.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="templates" 
-                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
                     data-testid="tab-templates"
                   >
-                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
                     <span>{language === 'ar' ? 'قوالب' : 'Templates'}</span>
                     {templates.length > 0 && (
-                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {templates.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="price-offers" 
-                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
                     data-testid="tab-price-offers"
                   >
-                    <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
                     <span>{language === 'ar' ? 'عروض' : 'Offers'}</span>
                     {priceOffers.length > 0 && (
-                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {priceOffers.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="history" 
-                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
                     data-testid="tab-history"
                   >
-                    <History className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <History className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
                     <span>{language === 'ar' ? 'سجل' : 'History'}</span>
                     {orders.length > 0 && (
-                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {orders.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="lta-documents" 
-                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
                     data-testid="tab-lta-documents"
                   >
-                    <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
                     <span>{language === 'ar' ? 'مستندات' : 'Docs'}</span>
                     {ltaDocuments.length > 0 && (
-                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {ltaDocuments.length}
                       </Badge>
                     )}
