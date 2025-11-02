@@ -220,9 +220,9 @@ export default function OrderingPage() {
     },
     onSuccess: (newOrder) => { // Changed to capture newOrder
       toast({
-        title: language === 'ar' ? '?? ????? ????? ?????' : 'Order created successfully',
+        title: language === 'ar' ? 'تم إنشاء الطلب بنجاح' : 'Order created successfully',
         description: language === 'ar'
-          ? `??? ?????: ${newOrder.id}`
+          ? `معرف الطلب: ${newOrder.id}`
           : `Order ID: ${newOrder.id}`,
       });
 
@@ -271,8 +271,8 @@ export default function OrderingPage() {
     },
     onSuccess: () => {
       toast({
-        title: language === 'ar' ? '?? ????? ?????' : 'Offer Created',
-        description: language === 'ar' ? '?? ????? ??? ????? ?????' : 'Price offer created successfully',
+        title: language === 'ar' ? 'تم إنشاء عرض السعر' : 'Offer Created',
+        description: language === 'ar' ? 'تم إنشاء عرض السعر بنجاح' : 'Price offer created successfully',
       });
       setCreateOfferDialogOpen(false);
       setOfferItems(new Map());
@@ -286,8 +286,8 @@ export default function OrderingPage() {
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        title: language === 'ar' ? '???' : 'Error',
-        description: error.message || (language === 'ar' ? '??? ????? ?????' : 'Failed to create offer'),
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: error.message || (language === 'ar' ? 'فشل إنشاء عرض السعر' : 'Failed to create offer'),
       });
     },
   });
@@ -297,10 +297,10 @@ export default function OrderingPage() {
     if (!product.hasPrice || !product.contractPrice || !product.ltaId) {
       toast({
         variant: 'destructive',
-        title: language === 'en' ? 'No Price Available' : '?? ???? ???',
+        title: language === 'en' ? 'No Price Available' : 'السعر غير متوفر',
         description: language === 'en'
           ? 'Please request a price offer for this product first.'
-          : '???? ??? ??? ??? ???? ?????? ?????.',
+          : 'الرجاء طلب عرض سعر لهذا المنتج أولاً.',
       });
       return;
     }
@@ -308,10 +308,10 @@ export default function OrderingPage() {
     if (activeLtaId && activeLtaId !== product.ltaId) {
       toast({
         variant: 'destructive',
-        title: language === 'en' ? 'Different Contract' : '??? ?????',
+        title: language === 'en' ? 'Different Contract' : 'عقد مختلف',
         description: language === 'en'
           ? 'This product is from a different LTA contract. Please complete or clear your current order first.'
-          : '??? ?????? ?? ??? ??????? ?????. ???? ????? ?? ??? ???? ?????? ?????.',
+          : 'هذا المنتج من عقد اتفاقية طويل الأجل مختلف. الرجاء إكمال أو مسح طلبك الحالي أولاً.',
       });
       return;
     }
@@ -373,10 +373,10 @@ export default function OrderingPage() {
     if (ltaIds.length > 1) {
       toast({
         variant: 'destructive',
-        title: language === 'en' ? 'Order Error' : '??? ?? ?????',
+        title: language === 'en' ? 'Order Error' : 'خطأ في الطلب',
         description: language === 'en'
           ? 'All items must be from the same LTA contract'
-          : '??? ?? ???? ???? ??????? ?? ??? ??? ?????????',
+          : 'يجب أن تكون جميع العناصر من نفس عقد الاتفاقية طويل الأجل',
       });
       return;
     }
@@ -447,8 +447,8 @@ export default function OrderingPage() {
       });
     } else {
       toast({
-        title: language === 'ar' ? '??? ?? ????? ??????' : 'Error loading template',
-        description: language === 'ar' ? '?? ??? ?????? ??? ?????? ????? ?? ??????' : 'No valid products found in template',
+        title: language === 'ar' ? 'خطأ في تحميل القالب' : 'Error loading template',
+        description: language === 'ar' ? 'لم يتم العثور على منتجات صالحة في القالب' : 'No valid products found in template',
         variant: 'destructive',
       });
     }
@@ -496,8 +496,8 @@ export default function OrderingPage() {
     if (!selectedPriceRequestId || offerItems.size === 0) {
       toast({
         variant: 'destructive',
-        title: language === 'ar' ? '???' : 'Error',
-        description: language === 'ar' ? '???? ????? ?????? ??????' : 'Please add products and prices',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'الرجاء إضافة منتجات وأسعار' : 'Please add products and prices',
       });
       return;
     }
@@ -506,9 +506,9 @@ export default function OrderingPage() {
     if (missingPrices.length > 0) {
       toast({
         variant: 'destructive',
-        title: language === 'ar' ? '???' : 'Error',
+        title: language === 'ar' ? 'خطأ' : 'Error',
         description: language === 'ar'
-          ? `???? ????? ????? ????? ????? ???????? (${missingPrices.length} ???? ???? ???)`
+          ? `الرجاء إدخال أسعار صالحة لجميع المنتجات (${missingPrices.length} عنصرًا ينقصه السعر)`
           : `Please enter valid prices for all products (${missingPrices.length} items missing prices)`,
       });
       return;
@@ -587,12 +587,12 @@ export default function OrderingPage() {
     if (newCartItems.length > 0) {
       setCart(newCartItems);
       toast({
-        title: language === 'ar' ? '?? ????? ????? ??? ?????' : 'Order loaded to cart',
+        title: language === 'ar' ? 'تم تحميل الطلب إلى عربة التسوق' : 'Order loaded to cart',
       });
     } else {
       toast({
-        title: language === 'ar' ? '??? ?? ????? ?????' : 'Error loading order',
-        description: language === 'ar' ? '?? ??? ?????? ??? ?????? ????? ?? ?????' : 'No valid products found in order',
+        title: language === 'ar' ? 'خطأ في تحميل الطلب' : 'Error loading order',
+        description: language === 'ar' ? 'لم يتم العثور على منتجات صالحة في الطلب' : 'No valid products found in order',
         variant: 'destructive',
       });
     }
@@ -732,7 +732,7 @@ export default function OrderingPage() {
                 className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm text-xs px-1.5 py-0.5"
                 data-testid={`badge-in-cart-${product.id}`}
               >
-                {cartItem.quantity} {language === 'ar' ? '?? ?????' : 'in cart'}
+                {cartItem.quantity} {language === 'ar' ? 'في العربية' : 'in cart'}
               </Badge>
             )}
             {product.category && (
@@ -763,7 +763,7 @@ export default function OrderingPage() {
             <p className="text-[10px] text-muted-foreground font-mono">SKU: {product.sku}</p>
             {product.unitPerBox && (
               <Badge variant="outline" className="text-[9px] px-1 py-0">
-                ?? {product.unitPerBox} {language === 'ar' ? '???/?????' : 'pcs/box'}
+                {language === 'ar' ? `${product.unitPerBox} قطعة/صندوق` : `${product.unitPerBox} pcs/box`}
               </Badge>
             )}
           </div>
@@ -785,18 +785,18 @@ export default function OrderingPage() {
             ) : product.sellingPricePiece ? (
               <div className="space-y-0.5">
                 <p className="text-base font-bold font-mono text-muted-foreground" data-testid={`text-price-${product.id}`}>
-                  {product.sellingPricePiece} <span className="text-xs font-normal">{language === 'ar' ? '?' : 'ILS'}</span>
+                  {product.sellingPricePiece} <span className="text-xs font-normal">{language === 'ar' ? ' شيكل' : 'ILS'}</span>
                 </p>
                 <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="w-2.5 h-2.5" />
-                  {language === 'ar' ? '??? ?????? (?????)' : 'Reference Price'}
+                  {language === 'ar' ? 'سعر مرجعي (تقريبي)' : 'Reference Price'}
                 </p>
               </div>
             ) : (
               <div className="space-y-0.5">
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="w-2.5 h-2.5" />
-                  {language === 'ar' ? '????? ??? ?????' : 'Price not available'}
+                  {language === 'ar' ? 'السعر غير متوفر' : 'Price not available'}
                 </p>
               </div>
             )}
@@ -823,7 +823,7 @@ export default function OrderingPage() {
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="font-semibold text-xs text-center flex-1">{cartItem.quantity} {language === 'ar' ? '?? ?????' : 'in cart'}</span>
+                  <span className="font-semibold text-xs text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في العربية' : 'in cart'}</span>
                   <Button
                     size="icon"
                     variant="outline"
@@ -858,7 +858,7 @@ export default function OrderingPage() {
                         )}
                         data-testid={`button-select-pcs-${product.id}`}
                       >
-                        {language === 'ar' ? '???' : 'Pieces'}
+                        {language === 'ar' ? 'قطع' : 'Pieces'}
                       </button>
                       <button
                         onClick={(e) => {
@@ -874,7 +874,7 @@ export default function OrderingPage() {
                         )}
                         data-testid={`button-select-box-${product.id}`}
                       >
-                        ?? {language === 'ar' ? '??????' : 'Boxes'}
+                        {language === 'ar' ? `علب ${product.unitPerBox}` : `Boxes ${product.unitPerBox}`}
                       </button>
                     </div>
                   )}
@@ -933,8 +933,8 @@ export default function OrderingPage() {
                       <ShoppingCart className="w-3 h-3 me-1" />
                       <span className="truncate">
                         {isDifferentLta
-                          ? (language === 'ar' ? '??? ?????' : 'Different Contract')
-                          : (language === 'ar' ? '???' : 'Add')
+                          ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
+                          : (language === 'ar' ? 'إضافة' : 'Add')
                         }
                       </span>
                     </Button>
@@ -943,7 +943,7 @@ export default function OrderingPage() {
                   {/* Show total pieces when box is selected */}
                   {quantityType === 'box' && product.unitPerBox && customQuantity > 0 && (
                     <p className="text-[10px] text-muted-foreground text-center">
-                      = {getFinalQuantity(customQuantity)} {language === 'ar' ? '????' : 'pieces'}
+                      = {getFinalQuantity(customQuantity)} {language === 'ar' ? 'قطعة' : 'pieces'}
                     </p>
                   )}
                 </div>
@@ -963,7 +963,7 @@ export default function OrderingPage() {
             >
               <Heart className="w-3 h-3 me-1" />
               <span>
-                {language === 'ar' ? '??? ??? ???' : 'Request Quote'}
+                {language === 'ar' ? 'طلب عرض سعر' : 'Request Quote'}
               </span>
             </Button>
           )}
@@ -977,15 +977,15 @@ export default function OrderingPage() {
     return (
       <>
         <SEO
-          title={isArabic ? "???????" : "Orders"}
-          description={isArabic ? "????? ?????? ???? ??????" : "Manage your orders and shopping cart"}
+          title={isArabic ? "الطلبات" : "Orders"}
+          description={isArabic ? "إدارة الطلبات وسلة التسوق" : "Manage your orders and shopping cart"}
           noIndex={true}
         />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="text-muted-foreground">
-              {language === 'ar' ? '???? ???????...' : 'Loading...'}
+              {language === 'ar' ? 'جار التحميل...' : 'Loading...'}
             </p>
           </div>
         </div>
@@ -996,21 +996,21 @@ export default function OrderingPage() {
   return (
     <>
       <SEO
-        title={isArabic ? "???????" : "Orders"}
-        description={isArabic ? "????? ?????? ???? ??????" : "Manage your orders and shopping cart"}
+        title={isArabic ? "الطلبات" : "Orders"}
+        description={isArabic ? "إدارة الطلبات وسلة التسوق" : "Manage your orders and shopping cart"}
         noIndex={true}
       />
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={isArabic ? 'rtl' : 'ltr'} data-testid="page-ordering">
           {/* Animated background elements */}
           <div className="fixed inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
             <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-            {/* Floating particles */}
-            <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
-            <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+            {/* Floating particles - hidden on mobile */}
+            <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float hidden sm:block"></div>
+            <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float hidden sm:block" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float hidden sm:block" style={{ animationDelay: '2s' }}></div>
           </div>
 
           {/* Sidebar */}
@@ -1027,127 +1027,142 @@ export default function OrderingPage() {
           {/* Main Content Area */}
           <SidebarInset>
             {/* Header */}
-            <div className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-              <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <SidebarTrigger className="h-9 w-9" />
-                  <div className="min-w-0 hidden md:block">
+            <div className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm safe-top">
+              <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <SidebarTrigger className="h-9 w-9 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
                     <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                      {language === 'ar' ? '???? ???????' : 'Ordering Dashboard'}
+                      {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
                     </h1>
                   </div>
                 </div>
 
                 {/* Right Section - Action Buttons */}
-                <OrderingHeader
-                  cartItemCount={cartItemCount}
-                  onCartOpen={() => setCartOpen(true)}
-                  userName={user?.name}
-                />
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <OrderingHeader
+                    cartItemCount={cartItemCount}
+                    onCartOpen={() => setCartOpen(true)}
+                    userName={user?.name}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Main Content */}
-            <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 relative z-10">
-          {/* Welcome Section */}
-          <div className="mb-8 animate-slide-down">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-              {language === 'ar' ? '???? ???????' : 'Ordering Dashboard'}
+            <main className="container mx-auto px-3 sm:px-4 py-3 sm:py-6 relative z-10 safe-bottom">
+          {/* Welcome Section - Condensed for mobile */}
+          <div className="mb-4 sm:mb-8 animate-slide-down">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">
+              {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {language === 'ar'
-                ? '????? ?????? ???? ?????? ?? ???? ????'
+                ? 'إدارة الطلبات وسلة التسوق من مكان واحد'
                 : 'Manage your orders and shopping cart from one place'}
             </p>
           </div>
 
-          {/* Catalog Link Banner */}
-          <Card className="mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 hover:border-primary/40 transition-all duration-300 animate-fade-in">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full">
-                  <div className="p-2 sm:p-3 rounded-xl bg-primary/10 flex-shrink-0">
-                    <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          {/* Catalog Link Banner - Mobile optimized */}
+          <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 hover:border-primary/40 transition-all duration-300 animate-fade-in">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <div className="flex items-start gap-2 sm:gap-3 lg:gap-4 flex-1 min-w-0 w-full">
+                  <div className="p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-primary/10 flex-shrink-0">
+                    <Package className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-1">
-                      {language === 'ar' ? '???? ?????? ????????' : 'Browse Product Catalog'}
+                    <h3 className="font-semibold text-xs sm:text-sm lg:text-base mb-0.5 sm:mb-1">
+                      {language === 'ar' ? 'تصفح كتالوج المنتجات' : 'Browse Product Catalog'}
                     </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground line-clamp-2">
                       {language === 'ar'
-                        ? '?????? ???? ???????? ??????? ????? ???? ???????'
+                        ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار'
                         : 'Explore all available products and request price quotes'}
                     </p>
                   </div>
                 </div>
-                <Button asChild size="default" className="w-full sm:w-auto sm:flex-shrink-0">
+                <Button asChild size="sm" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[44px] touch-target">
                   <Link href="/catalog">
                     <Boxes className="h-4 w-4 me-2" />
-                    {language === 'ar' ? '??? ????????' : 'View Catalog'}
+                    {language === 'ar' ? 'عرض الكتالوج' : 'View Catalog'}
                   </Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-            <div className="sticky top-[56px] sm:top-[64px] z-40 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 bg-background/95 dark:bg-black/80 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/20">
-              <TabsList className="w-full justify-start overflow-x-auto bg-card/50 dark:bg-card/30 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/20 h-auto p-1">
-                <TabsTrigger
-                  value="lta-products"
-                  className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2"
-                  data-testid="tab-lta-products"
-                >
-                  <Package className="h-4 w-4 me-1 sm:me-2" />
-                  <span className="hidden xs:inline">{language === 'ar' ? '?????????' : 'My LTAs'}</span>
-                  <span className="xs:hidden">{language === 'ar' ? '?????????' : 'LTAs'}</span>
-                  {clientLtas.length > 0 && (
-                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
-                      {clientLtas.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="templates" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-templates">
-                  <FileText className="h-4 w-4 me-1 sm:me-2" />
-                  <span className="hidden xs:inline">{t('templates')}</span>
-                  <span className="xs:hidden">{language === 'ar' ? '?????' : 'Temp'}</span>
-                  {templates.length > 0 && (
-                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
-                      {templates.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="price-offers" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-price-offers">
-                  <FileText className="h-4 w-4 me-1 sm:me-2" />
-                  <span className="hidden xs:inline">{language === 'ar' ? '???? ???????' : 'Price Offers'}</span>
-                  <span className="xs:hidden">{language === 'ar' ? '????' : 'Offers'}</span>
-                  {priceOffers.length > 0 && (
-                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
-                      {priceOffers.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="history" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-history">
-                  <History className="h-4 w-4 me-1 sm:me-2" />
-                  <span className="hidden xs:inline">{t('history')}</span>
-                  <span className="xs:hidden">{language === 'ar' ? '???' : 'Hist'}</span>
-                  {orders.length > 0 && (
-                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
-                      {orders.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="lta-documents" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-lta-documents">
-                  <FolderOpen className="h-4 w-4 me-1 sm:me-2" />
-                  <span className="hidden xs:inline">{language === 'ar' ? '??????? ??????????' : 'LTA Documents'}</span>
-                  <span className="xs:hidden">{language === 'ar' ? '???????' : 'Docs'}</span>
-                  {ltaDocuments.length > 0 && (
-                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
-                      {ltaDocuments.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4 lg:space-y-6">
+            <div className="sticky top-[56px] sm:top-[64px] z-40 -mx-3 sm:-mx-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-background/95 dark:bg-black/80 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/20 safe-top">
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+                <TabsList className="w-max sm:w-full inline-flex justify-start bg-card/50 dark:bg-card/30 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/20 h-auto p-1 gap-0.5 sm:gap-1">
+                  <TabsTrigger
+                    value="lta-products"
+                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target"
+                    data-testid="tab-lta-products"
+                  >
+                    <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <span>{language === 'ar' ? 'الاتفاقيات' : 'LTAs'}</span>
+                    {clientLtas.length > 0 && (
+                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                        {clientLtas.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="templates" 
+                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    data-testid="tab-templates"
+                  >
+                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <span>{language === 'ar' ? 'قوالب' : 'Templates'}</span>
+                    {templates.length > 0 && (
+                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                        {templates.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="price-offers" 
+                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    data-testid="tab-price-offers"
+                  >
+                    <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <span>{language === 'ar' ? 'عروض' : 'Offers'}</span>
+                    {priceOffers.length > 0 && (
+                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                        {priceOffers.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="history" 
+                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    data-testid="tab-history"
+                  >
+                    <History className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <span>{language === 'ar' ? 'سجل' : 'History'}</span>
+                    {orders.length > 0 && (
+                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                        {orders.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="lta-documents" 
+                    className="min-h-[44px] px-2.5 sm:px-3 lg:px-4 flex-shrink-0 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap touch-target" 
+                    data-testid="tab-lta-documents"
+                  >
+                    <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 me-1 sm:me-1.5" />
+                    <span>{language === 'ar' ? 'مستندات' : 'Docs'}</span>
+                    {ltaDocuments.length > 0 && (
+                      <Badge variant="secondary" className="ms-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-xs">
+                        {ltaDocuments.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             </div>
 
             {/* LTA Products Tab - Shows only LTA-filtered products */}
@@ -1180,11 +1195,11 @@ export default function OrderingPage() {
                         <Package className="w-10 h-10 text-muted-foreground/50" />
                       </div>
                       <h3 className="text-xl font-semibold text-foreground">
-                        {language === 'ar' ? '?? ???? ????????' : 'No LTA Agreements'}
+                        {language === 'ar' ? 'لا توجد اتفاقيات طويلة الأجل' : 'No LTA Agreements'}
                       </h3>
                       <p className="text-muted-foreground">
                         {language === 'ar'
-                          ? '?? ??? ????? ?? ???????? ????? ????? ?????? ???.'
+                          ? 'لم يتم تعيين أي اتفاقيات طويلة الأجل لحسابك بعد.'
                           : 'No Long-Term Agreements have been assigned to your account yet.'}
                       </p>
                     </div>
@@ -1208,7 +1223,7 @@ export default function OrderingPage() {
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                           <Input
                             type="search"
-                            placeholder={language === 'ar' ? '???? ?? ????????...' : 'Search products...'}
+                            placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full h-11 ps-10 border-2 focus-visible:ring-2"
@@ -1227,11 +1242,11 @@ export default function OrderingPage() {
                         </div>
                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                           <SelectTrigger className="w-full sm:w-[220px] h-11 border-2" data-testid="select-category">
-                            <SelectValue placeholder={language === 'ar' ? '?????' : 'Category'} />
+                            <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">
-                              {language === 'ar' ? '???? ??????' : 'All Categories'} ({products.filter(p => selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter).length})
+                              {language === 'ar' ? `كل الفئات (${products.filter(p => selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter).length})` : `All Categories (${products.filter(p => selectedLtaFilter === 'all' || p.ltaId === selectedLtaFilter).length})`}
                             </SelectItem>
                             {categories.filter(c => c !== 'all').map((category) => {
                               const count = products.filter(p =>
@@ -1240,7 +1255,7 @@ export default function OrderingPage() {
                               ).length;
                               return (
                                 <SelectItem key={category} value={category || ''}>
-                                  {category || (language === 'ar' ? '??? ????' : 'Uncategorized')} ({count})
+                                  {category || (language === 'ar' ? 'غير مصنف' : 'Uncategorized')} ({count})
                                 </SelectItem>
                               );
                             })}
@@ -1252,11 +1267,11 @@ export default function OrderingPage() {
                       {(searchQuery || selectedCategory !== 'all') && (
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm text-muted-foreground">
-                            {language === 'ar' ? '??????? ??????:' : 'Active filters:'}
+                            {language === 'ar' ? 'عوامل التصفية النشطة:' : 'Active filters:'}
                           </span>
                           {searchQuery && (
                             <Badge variant="secondary" className="gap-1">
-                              {language === 'ar' ? '???:' : 'Search:'} "{searchQuery}"
+                              {language === 'ar' ? `بحث: "${searchQuery}"` : `Search: "${searchQuery}"`}
                               <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} />
                             </Badge>
                           )}
@@ -1275,7 +1290,7 @@ export default function OrderingPage() {
                             }}
                             className="h-6 text-xs"
                           >
-                            {language === 'ar' ? '??? ????' : 'Clear all'}
+                            {language === 'ar' ? 'مسح الكل' : 'Clear all'}
                           </Button>
                         </div>
                       )}
@@ -1289,7 +1304,7 @@ export default function OrderingPage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>
-                      {language === 'ar' ? '???? ????? ????????...' : 'Loading products...'}
+                      {language === 'ar' ? 'جارٍ تحميل المنتجات...' : 'Loading products...'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
@@ -1313,21 +1328,21 @@ export default function OrderingPage() {
                       <Package className="w-10 h-10 text-muted-foreground/50" />
                     </div>
                     <h3 className="text-xl font-semibold text-foreground">
-                      {language === 'ar' ? '?? ???? ??????' : 'No Products Found'}
+                      {language === 'ar' ? 'لا توجد منتجات' : 'No Products Found'}
                     </h3>
                     <p className="text-muted-foreground">
                       {searchQuery || selectedCategory !== 'all'
                         ? (language === 'ar'
-                          ? '?? ????? ?? ?????? ??? ?? ?????? ????? ?????? ????? ?????? ??.'
+                          ? 'لم نتمكن من العثور على أي منتجات تطابق معايير البحث الخاصة بك.'
                           : 'We couldn\'t find any products matching your search criteria.')
                         : (language === 'ar'
-                          ? '?? ??? ????? ?? ?????? ???? ????????? ????? ?? ???.'
+                          ? 'لم يتم تعيين أي منتجات لعقد الاتفاقية طويل الأجل الخاص بك بعد.'
                           : 'No products are assigned to your LTA contract yet.')
                       }
                     </p>
                     {(searchQuery || selectedCategory !== 'all') && (
                       <Button onClick={handleClearFilters} variant="outline">
-                        {language === 'ar' ? '??? ???????' : 'Clear Filters'}
+                        {language === 'ar' ? 'مسح عوامل التصفية' : 'Clear Filters'}
                       </Button>
                     )}
                   </div>
@@ -1336,9 +1351,9 @@ export default function OrderingPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      {language === 'ar' ? '???' : 'Showing'}{' '}
+                      {language === 'ar' ? 'عرض' : 'Showing'}{' '}
                       <span className="font-semibold text-foreground">{filteredProducts.length}</span>{' '}
-                      {language === 'ar' ? '????' : 'products'}
+                      {language === 'ar' ? 'منتجات' : 'products'}
                     </p>
                   </div>
 
@@ -1358,9 +1373,9 @@ export default function OrderingPage() {
                   <CardContent className="py-8 sm:py-12">
                     <EmptyState
                       icon={FileText}
-                      title={isArabic ? '?? ???? ?????' : 'No Templates'}
-                      description={isArabic ? '?? ?????? ???? ?? ????? ???? ?????? ????????' : 'Create a template from your cart to save recurring orders'}
-                      actionLabel={isArabic ? '?????? ?????' : 'Back to Cart'}
+                      title={isArabic ? 'لا توجد قوالب' : 'No Templates'}
+                      description={isArabic ? 'قم بإنشاء قالب من عربة التسوق الخاصة بك لحفظ الطلبات المتكررة' : 'Create a template from your cart to save recurring orders'}
+                      actionLabel={isArabic ? 'العودة إلى عربة التسوق' : 'Back to Cart'}
                       onAction={() => setActiveTab('cart')} // Assuming 'cart' is a valid tab value or a way to show cart
                     />
                   </CardContent>
@@ -1389,7 +1404,7 @@ export default function OrderingPage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>
-                      {language === 'ar' ? '???? ????? ??????...' : 'Loading offers...'}
+                      {language === 'ar' ? 'جارٍ تحميل عروض الأسعار...' : 'Loading offers...'}
                     </span>
                   </div>
                 </div>
@@ -1398,9 +1413,9 @@ export default function OrderingPage() {
                   <CardContent className="py-8 sm:py-12">
                     <EmptyState
                       icon={FileText}
-                      title={isArabic ? '?? ???? ???? ?????' : 'No Price Offers'}
-                      description={isArabic ? '?? ????? ?? ???? ????? ???' : 'You have not received any price offers yet'}
-                      actionLabel={isArabic ? '??? ??? ???' : 'Request Quote'}
+                      title={isArabic ? 'لا توجد عروض أسعار' : 'No Price Offers'}
+                      description={isArabic ? 'لم تتلق أي عروض أسعار بعد' : 'You have not received any price offers yet'}
+                      actionLabel={isArabic ? 'طلب عرض سعر' : 'Request Quote'}
                       onAction={() => window.location.href = '/catalog'}
                     />
                   </CardContent>
@@ -1433,12 +1448,12 @@ export default function OrderingPage() {
                               offer.status === 'draft' ? 'outline' : 'outline'
                             }>
                               {language === 'ar' ? 
-                                (offer.status === 'draft' ? '?????' :
-                                 offer.status === 'sent' ? '????' :
-                                 offer.status === 'viewed' ? '??? ????????' :
-                                 offer.status === 'accepted' ? '?????' :
-                                 offer.status === 'rejected' ? '?????' :
-                                 isExpired ? '?????' : offer.status) :
+                                (offer.status === 'draft' ? 'مسودة' :
+                                 offer.status === 'sent' ? 'مرسل' :
+                                 offer.status === 'viewed' ? 'تمت المشاهدة' :
+                                 offer.status === 'accepted' ? 'مقبول' :
+                                 offer.status === 'rejected' ? 'مرفوض' :
+                                 isExpired ? 'منتهي الصلاحية' : offer.status) :
                                 (isExpired ? 'Expired' : offer.status.charAt(0).toUpperCase() + offer.status.slice(1))
                               }
                             </Badge>
@@ -1447,20 +1462,20 @@ export default function OrderingPage() {
                         <CardContent className="space-y-3">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">
-                              {language === 'ar' ? '??? ????????' : 'Products'}
+                              {language === 'ar' ? 'المنتجات' : 'Products'}
                             </span>
                             <span className="font-medium">{items?.length || 0}</span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">
-                              {language === 'ar' ? '????????' : 'Total'}
+                              {language === 'ar' ? 'الإجمالي' : 'Total'}
                             </span>
                             <span className="font-bold text-lg">${offer.total || '0.00'}</span>
                           </div>
                           {offer.validUntil && (
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">
-                                {language === 'ar' ? '???? ???' : 'Valid Until'}
+                                {language === 'ar' ? 'صالح حتى' : 'Valid Until'}
                               </span>
                               <span className={cn("font-medium", isExpired && "text-destructive")}>
                                 {new Date(offer.validUntil).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
@@ -1476,7 +1491,7 @@ export default function OrderingPage() {
                             onClick={() => window.location.href = '/price-offers'}
                           >
                             <Eye className="h-4 w-4 me-2" />
-                            {language === 'ar' ? '??? ????????' : 'View Details'}
+                            {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
                           </Button>
                         </CardFooter>
                       </Card>
@@ -1493,9 +1508,9 @@ export default function OrderingPage() {
                   <CardContent className="py-8 sm:py-12">
                     <EmptyState
                       icon={Package}
-                      title={isArabic ? '?? ???? ?????' : 'No Orders Yet'}
-                      description={isArabic ? '???? ?????? ?????? ???? ?????' : 'Start shopping to create your first order'}
-                      actionLabel={isArabic ? '???? ????????' : 'Browse Products'}
+                      title={isArabic ? 'لم يتم تقديم طلبات بعد' : 'No Orders Yet'}
+                      description={isArabic ? 'ابدأ التسوق لإنشاء طلبك الأول' : 'Start shopping to create your first order'}
+                      actionLabel={isArabic ? 'تصفح المنتجات' : 'Browse Products'}
                       onAction={() => window.location.href = '/catalog'}
                     />
                   </CardContent>
@@ -1550,12 +1565,12 @@ export default function OrderingPage() {
                               className="flex-shrink-0 text-xs"
                             >
                               {language === 'ar' ?
-                                (order.status === 'pending' ? '??? ????????' :
-                                 order.status === 'confirmed' ? '????' :
-                                 order.status === 'processing' ? '??? ????????' :
-                                 order.status === 'shipped' ? '?? ?????' :
-                                 order.status === 'delivered' ? '?? ???????' :
-                                 order.status === 'cancelled' ? '????' : order.status) :
+                                (order.status === 'pending' ? 'قيد الانتظار' :
+                                 order.status === 'confirmed' ? 'تم التأكيد' :
+                                 order.status === 'processing' ? 'قيد المعالجة' :
+                                 order.status === 'shipped' ? 'تم الشحن' :
+                                 order.status === 'delivered' ? 'تم التسليم' :
+                                 order.status === 'cancelled' ? 'ملغى' : order.status) :
                                 order.status.charAt(0).toUpperCase() + order.status.slice(1)
                               }
                             </Badge>
@@ -1566,7 +1581,7 @@ export default function OrderingPage() {
                             <div className="flex items-center gap-1.5 sm:gap-2">
                               <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
                               <span className="text-xs sm:text-sm text-muted-foreground">
-                                {itemCount} {language === 'ar' ? '????' : 'items'}
+                                {itemCount} {language === 'ar' ? 'عناصر' : 'items'}
                               </span>
                             </div>
                             <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
@@ -1590,7 +1605,7 @@ export default function OrderingPage() {
                               data-testid={`button-view-details-${order.id}`}
                             >
                               <FileText className="h-3.5 w-3.5 me-1.5" />
-                              {language === 'ar' ? '????????' : 'Details'}
+                              {language === 'ar' ? 'التفاصيل' : 'Details'}
                             </Button>
 
                             {/* Issue Report Icon Button */}
@@ -1603,7 +1618,7 @@ export default function OrderingPage() {
                               }}
                               data-testid={`button-report-issue-${order.id}`}
                               className="min-h-[36px] px-3 border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950"
-                              title={language === 'ar' ? '??????? ?? ?????' : 'Report Issue'}
+                              title={language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
                             >
                               <AlertTriangle className="h-4 w-4 text-orange-500" />
                             </Button>
@@ -1619,7 +1634,7 @@ export default function OrderingPage() {
                                 }}
                                 data-testid={`button-submit-feedback-${order.id}`}
                                 className="min-h-[36px] px-3 border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950"
-                                title={language === 'ar' ? '????? ???????' : 'Submit Feedback'}
+                                title={language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                               >
                                 <Star className="h-4 w-4 text-yellow-500" />
                               </Button>
@@ -1640,7 +1655,7 @@ export default function OrderingPage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>
-                      {language === 'ar' ? '???? ????? ?????????...' : 'Loading documents...'}
+                      {language === 'ar' ? 'جارٍ تحميل المستندات...' : 'Loading documents...'}
                     </span>
                   </div>
                 </div>
@@ -1649,8 +1664,8 @@ export default function OrderingPage() {
                   <CardContent className="py-8 sm:py-12">
                     <EmptyState
                       icon={FolderOpen}
-                      title={language === 'ar' ? '?? ???? ???????' : 'No LTA Documents'}
-                      description={language === 'ar' ? '?? ??? ??? ?? ??????? ?????????? ?????? ?? ???' : 'No documents have been uploaded for your LTAs yet'}
+                      title={language === 'ar' ? 'لا توجد مستندات اتفاقيات طويلة الأجل' : 'No LTA Documents'}
+                      description={language === 'ar' ? 'لم يتم تحميل أي مستندات لاتفاقياتك طويلة الأجل بعد' : 'No documents have been uploaded for your LTAs yet'}
                     />
                   </CardContent>
                 </Card>
@@ -1678,7 +1693,7 @@ export default function OrderingPage() {
                             {ltaName}
                           </CardTitle>
                           <CardDescription>
-                            {docs.length} {language === 'ar' ? '?????' : 'document'}{docs.length !== 1 ? (language === 'ar' ? '??' : 's') : ''}
+                            {docs.length} {language === 'ar' ? `مستند${docs.length !== 1 ? 'ات' : ''}` : `document${docs.length !== 1 ? 's' : ''}`}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -1734,7 +1749,7 @@ export default function OrderingPage() {
                                           window.open(doc.fileUrl, '_blank');
                                         }}
                                         className="flex-shrink-0"
-                                        title={language === 'ar' ? '????? ???????' : 'Download document'}
+                                        title={language === 'ar' ? 'تنزيل المستند' : 'Download document'}
                                       >
                                         <Download className="h-4 w-4" />
                                       </Button>
@@ -1846,12 +1861,12 @@ export default function OrderingPage() {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="create-offer-description">
               <DialogHeader>
                 <DialogTitle>
-                  {language === 'ar' ? '????? ??? ???' : 'Create Price Offer'}
+                  {language === 'ar' ? 'إنشاء عرض سعر' : 'Create Price Offer'}
                 </DialogTitle>
               </DialogHeader>
               <p id="create-offer-description" className="sr-only">
                 {language === 'ar'
-                  ? '????? ????? ??? ??? ???? ??????'
+                  ? 'نموذج لإنشاء عرض سعر جديد للعميل'
                   : 'Form to create a new price offer for the client'}
               </p>
               <div className="space-y-4">
@@ -1859,18 +1874,18 @@ export default function OrderingPage() {
                   <>
                     <div className="border rounded-lg p-4 space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-semibold">{language === 'ar' ? '???????? ????????' : 'Products & Pricing'}</h4>
+                        <h4 className="font-semibold">{language === 'ar' ? 'المنتجات والتسعير' : 'Products & Pricing'}</h4>
                         <span className="text-sm text-muted-foreground">
-                          {language === 'ar' ? `${offerItems.size} ????` : `${offerItems.size} items`}
+                          {language === 'ar' ? `${offerItems.size} عنصر` : `${offerItems.size} items`}
                         </span>
                       </div>
 
                       <div className="space-y-3">
                         <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
-                          <div className="col-span-5">{language === 'ar' ? '??????' : 'Product'}</div>
-                          <div className="col-span-2 text-center">{language === 'ar' ? '??????' : 'Qty'}</div>
-                          <div className="col-span-3">{language === 'ar' ? '??? ??????' : 'Unit Price'}</div>
-                          <div className="col-span-2 text-right">{language === 'ar' ? '????????' : 'Total'}</div>
+                          <div className="col-span-5">{language === 'ar' ? 'المنتج' : 'Product'}</div>
+                          <div className="col-span-2 text-center">{language === 'ar' ? 'الكمية' : 'Qty'}</div>
+                          <div className="col-span-3">{language === 'ar' ? 'سعر الوحدة' : 'Unit Price'}</div>
+                          <div className="col-span-2 text-right">{language === 'ar' ? 'الإجمالي' : 'Total'}</div>
                         </div>
 
                         {Array.from(offerItems.entries()).map(([productId, data]) => {
@@ -1933,7 +1948,7 @@ export default function OrderingPage() {
 
                       <div className="pt-3 border-t space-y-2">
                         <div className="flex justify-between text-lg font-bold">
-                          <span>{language === 'ar' ? '???????? (???? ???????)' : 'Total (Tax Included)'}:</span>
+                          <span>{language === 'ar' ? 'الإجمالي (شامل الضريبة):' : 'Total (Tax Included)'}:</span>
                           <span className="text-primary">
                             ${Array.from(offerItems.entries()).reduce((sum, [_, data]) => {
                               return sum + (data.price ? parseFloat(data.price) * data.quantity : 0);
@@ -1945,7 +1960,7 @@ export default function OrderingPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>{language === 'ar' ? '???????? (????)' : 'Validity (Days)'}</Label>
+                        <Label>{language === 'ar' ? 'الصلاحية (أيام)' : 'Validity (Days)'}</Label>
                         <Input
                           type="number"
                           min="1"
@@ -1954,7 +1969,7 @@ export default function OrderingPage() {
                         />
                       </div>
                       <div>
-                        <Label>{language === 'ar' ? '????? ????????' : 'Expiry Date'}</Label>
+                        <Label>{language === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date'}</Label>
                         <Input
                           type="text"
                           value={new Date(Date.now() + parseInt(offerValidityDays || '30') * 24 * 60 * 60 * 1000).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
@@ -1965,12 +1980,12 @@ export default function OrderingPage() {
                     </div>
 
                     <div>
-                      <Label>{language === 'ar' ? '??????? (???????)' : 'Notes (Optional)'}</Label>
+                      <Label>{language === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (Optional)'}</Label>
                       <Textarea
                         value={offerNotes}
                         onChange={(e) => setOfferNotes(e.target.value)}
                         rows={3}
-                        placeholder={language === 'ar' ? '??? ?? ??????? ??????...' : 'Add any additional notes...'}
+                        placeholder={language === 'ar' ? 'أضف أي ملاحظات إضافية...' : 'Add any additional notes...'}
                       />
                     </div>
                   </>
@@ -1978,13 +1993,13 @@ export default function OrderingPage() {
                   <div className="text-center py-10">
                     <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                     <p className="text-lg font-medium text-foreground mb-4">
-                      {language === 'ar' ? '?? ??? ????? ??? ???' : 'No Price Request Selected'}
+                      {language === 'ar' ? 'لم يتم تحديد طلب سعر' : 'No Price Request Selected'}
                     </p>
                     <p className="text-sm text-muted-foreground mb-6">
-                      {language === 'ar' ? '???? ????? ??? ??? ?? ????? ????? ??????? ?????? ???.' : 'Please select a price request from the list to create an offer.'}
+                      {language === 'ar' ? 'الرجاء تحديد طلب سعر من القائمة لإنشاء عرض سعر.' : 'Please select a price request from the list to create an offer.'}
                     </p>
                     <Button onClick={() => setCreateOfferDialogOpen(false)}>
-                      {language === 'ar' ? '?????' : 'Got it'}
+                      {language === 'ar' ? 'فهمت' : 'Got it'}
                     </Button>
                   </div>
                 )}
@@ -2001,15 +2016,15 @@ export default function OrderingPage() {
                     setSelectedRequestForOffer(null); // Clear selected request
                   }}
                 >
-                  {language === 'ar' ? '?????' : 'Cancel'}
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
                 </Button>
                 <Button
                   onClick={handleSubmitOffer}
                   disabled={createOfferMutation.isPending || offerItems.size === 0}
                 >
                   {createOfferMutation.isPending
-                    ? (language === 'ar' ? '???? ???????...' : 'Creating...')
-                    : (language === 'ar' ? '????? ???' : 'Create Offer')
+                    ? (language === 'ar' ? 'جارٍ الإنشاء...' : 'Creating...')
+                    : (language === 'ar' ? 'إنشاء عرض سعر' : 'Create Offer')
                   }
                 </Button>
               </DialogFooter>
