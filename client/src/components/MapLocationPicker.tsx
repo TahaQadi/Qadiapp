@@ -18,7 +18,11 @@ L.Icon.Default.mergeOptions({
 interface MapLocationPickerProps {
   latitude?: number;
   longitude?: number;
-  onLocationSelect: (lat: number, lng: number) => void;
+  onLocationSelect: (lat: number, lng: number, address?: { 
+    addressEn: string; 
+    city: string; 
+    country: string; 
+  }) => void;
 }
 
 interface LocationMarkerProps {
@@ -70,10 +74,31 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
     }
   }, [latitude, longitude]);
 
-  const handleLocationSelect = (lat: number, lng: number) => {
+  const handleLocationSelect = async (lat: number, lng: number) => {
     setMarkerPosition([lat, lng]);
     setError(null);
-    onLocationSelect(lat, lng);
+    
+    // Reverse geocode to get address
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`
+      );
+      const data = await response.json();
+      
+      if (data.address) {
+        const address = {
+          addressEn: data.display_name || '',
+          city: data.address.city || data.address.town || data.address.village || '',
+          country: data.address.country || '',
+        };
+        onLocationSelect(lat, lng, address);
+      } else {
+        onLocationSelect(lat, lng);
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      onLocationSelect(lat, lng);
+    }
   };
 
   const getCurrentLocation = () => {
@@ -92,19 +117,40 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
     // Call getCurrentPosition directly - this will trigger the browser's native permission prompt
     // The browser will show its own permission dialog if permission hasn't been granted yet
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         const accuracy = position.coords.accuracy; // accuracy in meters
         
         setCenter([lat, lng]);
         setMarkerPosition([lat, lng]);
-        onLocationSelect(lat, lng);
         setIsLoadingLocation(false);
         setError(null);
         
         // Log accuracy for debugging
         console.log(`Location acquired: ${lat}, ${lng} (accuracy: ±${Math.round(accuracy)}m)`);
+        
+        // Reverse geocode to get address
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`
+          );
+          const data = await response.json();
+          
+          if (data.address) {
+            const address = {
+              addressEn: data.display_name || '',
+              city: data.address.city || data.address.town || data.address.village || '',
+              country: data.address.country || '',
+            };
+            onLocationSelect(lat, lng, address);
+          } else {
+            onLocationSelect(lat, lng);
+          }
+        } catch (error) {
+          console.error('Reverse geocoding error:', error);
+          onLocationSelect(lat, lng);
+        }
       },
       (error) => {
         console.error('Geolocation error:', error);

@@ -314,9 +314,21 @@ export function LocationManagementDialog({
               <MapLocationPicker
                 latitude={form.watch('latitude')}
                 longitude={form.watch('longitude')}
-                onLocationSelect={(lat, lng) => {
+                onLocationSelect={(lat, lng, address) => {
                   form.setValue('latitude', lat);
                   form.setValue('longitude', lng);
+                  if (address) {
+                    // Only update if fields are empty to avoid overwriting user input
+                    if (!form.getValues('addressEn')) {
+                      form.setValue('addressEn', address.addressEn);
+                    }
+                    if (!form.getValues('city')) {
+                      form.setValue('city', address.city);
+                    }
+                    if (!form.getValues('country')) {
+                      form.setValue('country', address.country);
+                    }
+                  }
                 }}
               />
             </div>
