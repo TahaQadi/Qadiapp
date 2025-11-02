@@ -300,6 +300,7 @@ export interface IStorage {
   getLtaDocuments(ltaId: string): Promise<any[]>;
   getLtaDocument(id: string): Promise<any | undefined>;
   deleteLtaDocument(id: string): Promise<boolean>;
+  getClientLtaDocuments(clientId: string): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -1846,6 +1847,22 @@ export class MemStorage implements IStorage {
       DELETE FROM lta_documents WHERE id = ${id}
     `);
     return true;
+  }
+
+  async getClientLtaDocuments(clientId: string): Promise<any[]> {
+    const result = await this.db.execute(sql`
+      SELECT 
+        ld.*,
+        l.name_en as lta_name_en,
+        l.name_ar as lta_name_ar,
+        l.id as lta_id
+      FROM lta_documents ld
+      INNER JOIN ltas l ON ld.lta_id = l.id
+      INNER JOIN lta_clients lc ON l.id = lc.lta_id
+      WHERE lc.client_id = ${clientId}
+      ORDER BY ld.created_at DESC
+    `);
+    return result.rows;
   }
 }
 

@@ -3818,6 +3818,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all LTA documents for the authenticated client
+  app.get('/api/client/ltas/documents', requireAuth, async (req: any, res) => {
+    try {
+      const docs = await storage.getClientLtaDocuments(req.client.id);
+      res.json(docs);
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : 'Unknown error',
+        messageAr: 'حدث خطأ أثناء جلب مستندات الاتفاقية'
+      });
+    }
+  });
+
   // Image Upload Endpoint
   app.post('/api/admin/products/:id/image', requireAdmin, uploadImage.single('image'), async (req: any, res) => {
     try {

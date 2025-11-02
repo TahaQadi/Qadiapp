@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle, Calendar, Check, Save, Eye } from 'lucide-react';
+import { Heart, Package, Trash2, Send, X, ShoppingCart, User, LogOut, FileText, Loader2, Settings, Search, History, Menu, DollarSign, AlertCircle, Minus, Plus, Boxes, ArrowRight, Star, AlertTriangle, Calendar, Check, Save, Eye, Download, FolderOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useLocation } from 'wouter';
@@ -73,6 +73,21 @@ interface Order {
   createdAt: string;
   currency: string;
   pipefyCardId?: string;
+}
+
+interface LtaDocument {
+  id: string;
+  ltaId: string;
+  ltaNameEn?: string;
+  ltaNameAr?: string;
+  nameEn: string;
+  nameAr: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  uploadedBy: string;
+  createdAt: string;
 }
 
 export default function OrderingPage() {
@@ -174,6 +189,11 @@ export default function OrderingPage() {
 
   const { data: orders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ['/api/client/orders'],
+  });
+
+  const { data: ltaDocuments = [], isLoading: ltaDocumentsLoading } = useQuery<LtaDocument[]>({
+    queryKey: ['/api/client/ltas/documents'],
+    enabled: !!user,
   });
 
   const { data: priceRequests = [], isLoading: priceRequestsLoading } = useQuery<any[]>({
@@ -1242,6 +1262,16 @@ export default function OrderingPage() {
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="lta-documents" className="min-h-[44px] flex-1 sm:flex-initial data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] transition-all duration-300 text-xs sm:text-sm gap-2" data-testid="tab-lta-documents">
+                  <FolderOpen className="h-4 w-4 me-1 sm:me-2" />
+                  <span className="hidden xs:inline">{language === 'ar' ? 'مستندات الاتفاقيات' : 'LTA Documents'}</span>
+                  <span className="xs:hidden">{language === 'ar' ? 'مستندات' : 'Docs'}</span>
+                  {ltaDocuments.length > 0 && (
+                    <Badge variant="secondary" className="ms-1 h-5 min-w-5 px-1.5 text-xs">
+                      {ltaDocuments.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -1719,6 +1749,127 @@ export default function OrderingPage() {
                                 <Star className="h-4 w-4 text-yellow-500" />
                               </Button>
                             )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* LTA Documents Tab */}
+            <TabsContent value="lta-documents" className="space-y-4 sm:space-y-6">
+              {ltaDocumentsLoading ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>
+                      {language === 'ar' ? 'جاري تحميل المستندات...' : 'Loading documents...'}
+                    </span>
+                  </div>
+                </div>
+              ) : ltaDocuments.length === 0 ? (
+                <Card className="border-border/50 dark:border-[#d4af37]/20">
+                  <CardContent className="py-8 sm:py-12">
+                    <EmptyState
+                      icon={FolderOpen}
+                      title={language === 'ar' ? 'لا توجد مستندات' : 'No LTA Documents'}
+                      description={language === 'ar' ? 'لم يتم رفع أي مستندات للاتفاقيات الخاصة بك بعد' : 'No documents have been uploaded for your LTAs yet'}
+                    />
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {/* Group documents by LTA */}
+                  {Object.entries(
+                    ltaDocuments.reduce((acc, doc) => {
+                      const ltaId = doc.ltaId;
+                      if (!acc[ltaId]) {
+                        acc[ltaId] = [];
+                      }
+                      acc[ltaId].push(doc);
+                      return acc;
+                    }, {} as Record<string, LtaDocument[]>)
+                  ).map(([ltaId, docs]) => {
+                    const lta = clientLtas.find(l => l.id === ltaId);
+                    const ltaName = language === 'ar' 
+                      ? (docs[0]?.ltaNameAr || lta?.nameAr || '')
+                      : (docs[0]?.ltaNameEn || lta?.nameEn || '');
+
+                    return (
+                      <Card key={ltaId} className="border-border/50 dark:border-[#d4af37]/20">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-primary dark:text-[#d4af37]" />
+                            {ltaName}
+                          </CardTitle>
+                          <CardDescription>
+                            {docs.length} {language === 'ar' ? 'مستند' : 'document'}{docs.length !== 1 ? (language === 'ar' ? 'ات' : 's') : ''}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {docs.map((doc) => {
+                              const formatFileSize = (bytes: number): string => {
+                                if (bytes === 0) return '0 Bytes';
+                                const k = 1024;
+                                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+                              };
+
+                              return (
+                                <Card
+                                  key={doc.id}
+                                  className="border-border/50 dark:border-[#d4af37]/20 hover:border-primary dark:hover:border-[#d4af37] hover:shadow-lg transition-all duration-300 bg-card/50 dark:bg-card/30 backdrop-blur-sm"
+                                >
+                                  <CardContent className="p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <FileText className="h-4 w-4 text-primary dark:text-[#d4af37] flex-shrink-0" />
+                                          <h4 className="font-semibold text-sm truncate">
+                                            {language === 'ar' ? doc.nameAr : doc.nameEn}
+                                          </h4>
+                                        </div>
+                                        <div className="space-y-1 text-xs text-muted-foreground">
+                                          <div className="flex items-center gap-2">
+                                            <span>{doc.fileName}</span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span>{formatFileSize(doc.fileSize)}</span>
+                                            <span>•</span>
+                                            <span>{doc.fileType}</span>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            <span>
+                                              {new Date(doc.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                              })}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          window.open(doc.fileUrl, '_blank');
+                                        }}
+                                        className="flex-shrink-0"
+                                        title={language === 'ar' ? 'تنزيل المستند' : 'Download document'}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
                           </div>
                         </CardContent>
                       </Card>
