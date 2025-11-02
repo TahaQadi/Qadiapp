@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import { 
   LineChart, 
   Line, 
@@ -42,12 +46,17 @@ import {
   Settings,
   Edit,
   AlertTriangle,
-  TrendingUp as TrendingUpIcon
+  TrendingUp as TrendingUpIcon,
+  Menu,
+  User,
+  LogOut,
+  Palette
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { formatDateLocalized } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardStats {
   summary: {
@@ -108,10 +117,12 @@ const STATUS_LABELS: Record<string, { en: string; ar: string }> = {
 
 export default function AdminDashboardPage() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data: stats, isLoading, error, refetch } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard/stats', timeRange],
@@ -272,6 +283,17 @@ export default function AdminDashboardPage() {
       gradient: 'from-emerald-500/20 to-teal-500/10',
       hoverGradient: 'from-emerald-500/30 to-teal-500/20',
     },
+    {
+      id: 'design-system',
+      path: '/admin/design-system',
+      icon: Palette,
+      titleEn: 'Design System',
+      titleAr: 'نظام التصميم',
+      descEn: 'Design reference, user flows, and wireframes',
+      descAr: 'مرجع التصميم وسير المستخدم والأسلاك',
+      gradient: 'from-pink-500/20 to-rose-500/10',
+      hoverGradient: 'from-pink-500/30 to-rose-500/20',
+    },
   ];
 
   if (error) {
@@ -297,32 +319,157 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-xl font-semibold">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            {/* Mobile Menu Button */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
+                <SheetHeader>
+                  <SheetTitle>{language === 'ar' ? 'القائمة' : 'Menu'}</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col h-full mt-6">
+                  {user && (
+                    <div className="flex items-center gap-3 pb-4 border-b mb-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate text-sm">
+                          {user?.name || user?.email}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <nav className="flex-1 py-4 space-y-1">
+                    <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <Settings className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/admin/demo-requests" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <PlayCircle className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'طلبات العروض' : 'Demo Requests'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/admin/orders" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <ClipboardList className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'إدارة الطلبات' : 'Orders'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/admin/price-management" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <FileText className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'إدارة الأسعار' : 'Price Management'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/admin/ltas" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <FileText className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'الاتفاقيات' : 'LTAs'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/admin/clients" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <Users className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'العملاء' : 'Clients'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/admin/products" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <Package className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'المنتجات' : 'Products'}</span>
+                      </Button>
+                    </Link>
+
+                    <Separator className="my-4" />
+
+                    <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <User className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/ordering" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <ShoppingCart className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'إنشاء طلب' : 'Create Order'}</span>
+                      </Button>
+                    </Link>
+
+                    <Separator className="my-4" />
+
+                    <div className="space-y-2 px-3">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
+                        <LanguageToggle />
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
+                        <ThemeToggle />
+                      </div>
+                    </div>
+                  </nav>
+
+                  <div className="pt-4 border-t">
+                    <Link href="/logout" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
+                        <LogOut className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-semibold truncate">
                 {language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 {language === 'ar' ? 'نظرة عامة على النظام' : 'System Overview'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <Button
               variant="outline"
               asChild
-              className="gap-2"
+              size="sm"
+              className="gap-1.5 sm:gap-2 h-9 sm:h-10 px-2 sm:px-4"
             >
               <Link href="/ordering">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline">{language === 'ar' ? 'إنشاء طلب' : 'Create Order'}</span>
+                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden lg:inline">{language === 'ar' ? 'إنشاء طلب' : 'Create Order'}</span>
               </Link>
             </Button>
 
             <Select value={timeRange} onValueChange={(value) => setTimeRange(value as typeof timeRange)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[100px] sm:w-[140px] h-9 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -336,6 +483,7 @@ export default function AdminDashboardPage() {
             <Button
               variant="outline"
               size="icon"
+              className="h-9 w-9 sm:h-10 sm:w-10"
               onClick={() => {
                 queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/stats'] });
                 refetch();
@@ -343,14 +491,17 @@ export default function AdminDashboardPage() {
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
+
+            <ThemeToggle />
+            <LanguageToggle />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Quick Links Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {/* Demo Requests */}
           <Link href="/admin/demo-requests">
             <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
@@ -456,7 +607,7 @@ export default function AdminDashboardPage() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent className="pt-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {otherFeatures.map((feature) => {
                     const Icon = feature.icon;
                     return (
@@ -488,7 +639,7 @@ export default function AdminDashboardPage() {
         </Collapsible>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Total Orders */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -632,7 +783,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Revenue Trend */}
           <Card>
             <CardHeader>
@@ -643,10 +794,11 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[250px] sm:h-[300px] w-full" />
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={stats?.trends.revenue || []}>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={250} minHeight={250}>
+                    <LineChart data={stats?.trends.revenue || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
@@ -675,6 +827,7 @@ export default function AdminDashboardPage() {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -687,11 +840,12 @@ export default function AdminDashboardPage() {
                 {language === 'ar' ? 'عدد الطلبات اليومية' : 'Daily Order Count'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-[300px] w-full" />
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[250px] sm:h-[300px] w-full" />
+            ) : (
+              <div className="w-full overflow-x-auto">
+                <ResponsiveContainer width="100%" height={250} minHeight={250}>
                   <LineChart data={stats?.trends.orders || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
@@ -719,6 +873,7 @@ export default function AdminDashboardPage() {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+              </div>
               )}
             </CardContent>
           </Card>
@@ -733,9 +888,10 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[250px] sm:h-[300px] w-full" />
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={250} minHeight={250}>
                   <PieChart>
                     <Pie
                       data={stats?.distributions.orderStatus || []}
@@ -758,6 +914,7 @@ export default function AdminDashboardPage() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+              </div>
               )}
             </CardContent>
           </Card>
@@ -772,9 +929,10 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[250px] sm:h-[300px] w-full" />
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={250} minHeight={250}>
                   <BarChart 
                     data={stats?.distributions.topProducts.slice(0, 10) || []}
                     layout="vertical"
@@ -795,6 +953,7 @@ export default function AdminDashboardPage() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
               )}
             </CardContent>
           </Card>
@@ -830,7 +989,8 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             ) : (
-              <Table>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{language === 'ar' ? 'معرف الطلب' : 'Order ID'}</TableHead>
@@ -866,6 +1026,7 @@ export default function AdminDashboardPage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

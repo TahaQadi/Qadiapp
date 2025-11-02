@@ -191,8 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         client: {
           id: client.id,
-          nameEn: client.nameEn,
-          nameAr: client.nameAr,
+          name: client.name,
           username: client.username,
           email: client.email,
           phone: client.phone,
@@ -342,13 +341,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Auto-create draft LTA for this client
           const client = await storage.getClient(req.client.id);
           const ltaCount = (await storage.getLtas()).length + 1;
-          const ltaName = `Draft Contract - ${client?.nameEn || 'Client'} - ${new Date().toISOString().split('T')[0]}`;
+          const ltaName = `Draft Contract - ${client?.name || 'Client'} - ${new Date().toISOString().split('T')[0]}`;
 
           const newLta = await storage.createLta({
-            nameEn: ltaName,
-            nameAr: `عقد مسودة - ${client?.nameAr || 'عميل'} - ${new Date().toISOString().split('T')[0]}`,
-            descriptionEn: 'Auto-generated draft contract from price request',
-            descriptionAr: 'عقد مسودة تم إنشاؤه تلقائياً من طلب السعر',
+            name: ltaName,
+            description: 'Auto-generated draft contract from price request',
             status: 'draft'
           });
 
@@ -394,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await notificationService.sendToAllAdmins(
         notificationService.createPriceRequestNotification(
-          { en: client?.nameEn || 'Client', ar: client?.nameAr || 'عميل' },
+          { en: client?.name || 'Client', ar: client?.name || 'عميل' },
           requestNumber,
           products.length,
           priceRequest.id
@@ -406,10 +403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         recipientId: req.client.id,
         recipientType: 'client',
         type: 'price_request_sent',
-        titleEn: 'Price Request Submitted',
-        titleAr: 'تم إرسال طلب السعر',
-        messageEn: `Your request #${requestNumber} has been submitted`,
-        messageAr: `تم إرسال طلبك رقم ${requestNumber}`,
+        title: 'Price Request Submitted',
+        message: `Your request #${requestNumber} has been submitted`,
         metadata: { requestId: priceRequest.id },
         actionUrl: '/price-requests',
         actionType: 'view_request',
@@ -586,10 +581,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           clientId: admin.id,
           type: 'system',
-          titleEn: `Price Offer ${action === 'accept' ? 'Accepted' : 'Rejected'}`,
-          titleAr: action === 'accept' ? 'تم قبول عرض السعر' : 'تم رفض عرض السعر',
-          messageEn: `${client?.nameEn} ${action === 'accept' ? 'accepted' : 'rejected'} offer #${offer.offerNumber}`,
-          messageAr: `${action === 'accept' ? 'قبل' : 'رفض'} ${client?.nameAr} العرض رقم ${offer.offerNumber}`,
+          title: `Price Offer ${action === 'accept' ? 'Accepted' : 'Rejected'}`,
+          message: `${client?.name} ${action === 'accept' ? 'accepted' : 'rejected'} offer #${offer.offerNumber}`,
           metadata: JSON.stringify({ offerId: offer.id })
         });
       }
@@ -713,8 +706,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
 
-        // Check if names are missing
-        if (!item.nameEn || !item.nameAr) {
+        // Check if name is missing
+        if (!item.name) {
           const product = await storage.getProduct(item.productId);
 
           if (!product) {
@@ -724,11 +717,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
 
-          // Enrich with product names
+          // Enrich with product name
           enrichedItems.push({
             ...item,
-            nameEn: item.nameEn || product.nameEn || 'Unknown Product',
-            nameAr: item.nameAr || product.nameAr || 'منتج غير معروف',
+            name: item.name || product.name || 'Unknown Product',
             sku: item.sku || product.sku || 'N/A'
           });
         } else {
@@ -766,10 +758,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createNotification({
             clientId: request.clientId,
             type: 'system',
-            titleEn: 'Price Request Processed',
-            titleAr: 'تمت معالجة طلب السعر',
-            messageEn: `Your price request ${request.requestNumber} has been processed. An offer will be sent to you shortly.`,
-            messageAr: `تمت معالجة طلب السعر ${request.requestNumber}. سيتم إرسال عرض السعر قريباً.`,
+            title: 'Price Request Processed',
+            message: `Your price request ${request.requestNumber} has been processed. An offer will be sent to you shortly.`,
             metadata: JSON.stringify({ requestId: request.id, offerId: offer.id })
           });
         }
@@ -826,8 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (product) {
           items.push({
             sku: product.sku,
-            nameAr: product.nameAr,
-            nameEn: product.nameEn,
+            name: product.name,
             quantity: item.quantity || 1,
             unitPrice: product.sellingPricePiece || '0.00'
           });
@@ -840,8 +829,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         variables: [
           { key: 'date', value: new Date().toLocaleDateString('ar-SA') },
           { key: 'offerNumber', value: priceRequest.requestNumber },
-          { key: 'clientName', value: client.nameAr },
-          { key: 'ltaName', value: lta.nameAr },
+          { key: 'clientName', value: client.name },
+          { key: 'ltaName', value: lta.name },
           { key: 'validUntil', value: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-SA') },
           { key: 'items', value: items },
           { key: 'subtotal', value: items.reduce((sum, item) => sum + (parseFloat(item.unitPrice) * item.quantity), 0).toFixed(2) },
@@ -999,9 +988,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { key: 'offerNumber', value: offer.offerNumber },
           { key: 'offerDate', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
           { key: 'validUntil', value: new Date(offer.validUntil).toLocaleDateString('ar-SA') },
-          { key: 'clientName', value: client.nameAr || client.nameEn },
-          { key: 'clientNameAr', value: client.nameAr },
-          { key: 'clientNameEn', value: client.nameEn },
+          { key: 'clientName', value: client.name },
+          { key: 'clientNameAr', value: client.name },
+          { key: 'clientNameEn', value: client.name },
           { key: 'products', value: mappedItems },
           { key: 'items', value: mappedItems },
           { key: 'subtotal', value: parseFloat(offer.subtotal).toFixed(2) },
@@ -1097,9 +1086,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { key: 'offerNumber', value: offer.offerNumber },
           { key: 'offerDate', value: new Date(offer.createdAt).toLocaleDateString('ar-SA') },
           { key: 'validUntil', value: new Date(offer.validUntil).toLocaleDateString('ar-SA') },
-          { key: 'clientName', value: client.nameAr || client.nameEn },
-          { key: 'clientNameAr', value: client.nameAr },
-          { key: 'clientNameEn', value: client.nameEn },
+          { key: 'clientName', value: client.name },
+          { key: 'clientNameAr', value: client.name },
+          { key: 'clientNameEn', value: client.name },
           { key: 'products', value: mappedItems },
           { key: 'items', value: mappedItems },
           { key: 'subtotal', value: parseFloat(offer.subtotal).toFixed(2) },
@@ -1141,10 +1130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         clientId: offer.clientId,
         type: 'system',
-        titleEn: 'New Price Offer',
-        titleAr: 'عرض سعر جديد',
-        messageEn: `You have received price offer #${offer.offerNumber}`,
-        messageAr: `لقد استلمت عرض السعر رقم ${offer.offerNumber}`,
+        title: 'New Price Offer',
+        message: `You have received price offer #${offer.offerNumber}`,
         metadata: JSON.stringify({ offerId: offer.id })
       });
 
@@ -1248,8 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientsBasicInfo = clients.map(client => ({
         id: client.id,
         username: client.username,
-        nameEn: client.nameEn,
-        nameAr: client.nameAr,
+        name: client.name,
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
@@ -1289,8 +1275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         client: {
           id: client.id,
           username: client.username,
-          nameEn: client.nameEn || '',
-          nameAr: client.nameAr || '',
+          name: client.name || '',
           email: client.email || null,
           phone: client.phone || null,
           isAdmin: client.isAdmin || false,
@@ -1324,8 +1309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({
         id: client.id,
         username: client.username,
-        nameEn: client.nameEn,
-        nameAr: client.nameAr,
+        name: client.name,
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
@@ -1374,8 +1358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         id: client.id,
         username: client.username,
-        nameEn: client.nameEn,
-        nameAr: client.nameAr,
+        name: client.name,
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
@@ -1453,8 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         id: client.id,
         username: client.username,
-        nameEn: client.nameEn,
-        nameAr: client.nameAr,
+        name: client.name,
         email: client.email,
         phone: client.phone,
         isAdmin: client.isAdmin,
@@ -2213,7 +2195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const client = allClients.find(c => c.id === order.clientId);
         if (client) {
           const existing = clientOrderCounts.get(order.clientId) || {
-            clientName: client.nameEn || client.nameAr,
+            clientName: client.name || 'Unknown',
             orderCount: 0,
             revenue: 0
           };
@@ -2322,9 +2304,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { key: 'orderNumber', value: order.id.substring(0, 8) },
           { key: 'orderId', value: order.id },
           { key: 'orderDate', value: new Date(order.createdAt).toLocaleDateString('ar-SA') },
-          { key: 'clientName', value: client?.nameAr || client?.nameEn || 'عميل' },
-          { key: 'clientNameAr', value: client?.nameAr || '' },
-          { key: 'clientNameEn', value: client?.nameEn || '' },
+          { key: 'clientName', value: client?.name || 'عميل' },
+          { key: 'clientNameAr', value: client?.name || '' },
+          { key: 'clientNameEn', value: client?.name || '' },
           { key: 'deliveryAddress', value: order.deliveryAddress || client?.address || 'لم يحدد' },
           { key: 'deliveryLocation', value: order.deliveryAddress || client?.address || 'لم يحدد' },
           { key: 'clientPhone', value: client?.phone || '' },
@@ -2436,10 +2418,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createNotification({
             clientId: fullOrder.clientId,
             type: 'order_status_changed',
-            titleEn: statusMessages[status]?.en || 'Order status updated',
-            titleAr: statusMessages[status]?.ar || 'تم تحديث حالة الطلب',
-            messageEn: `Order #${fullOrder.id.substring(0, 8)} status updated`,
-            messageAr: `تم تحديث حالة الطلب #${fullOrder.id.substring(0, 8)}`,
+            title: statusMessages[status]?.en || 'Order status updated',
+            message: `Order #${fullOrder.id.substring(0, 8)} status updated`,
             actionUrl: `/orders`,
             metadata: JSON.stringify({
               orderId: fullOrder.id,
@@ -2465,10 +2445,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await storage.createNotification({
                 clientId: fullOrder.clientId,
                 type: 'feedback_request',
-                titleEn: 'How was your order?',
-                titleAr: 'كيف كان طلبك؟',
-                messageEn: 'Share your experience to help us improve',
-                messageAr: 'شارك تجربتك لمساعدتنا على التحسين',
+                title: 'How was your order?',
+                message: 'Share your experience to help us improve',
                 actionUrl: `/orders?feedback=${fullOrder.id}`,
                 metadata: JSON.stringify({
                   orderId: fullOrder.id,
@@ -3058,10 +3036,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           clientId: req.client.id,
           type: 'order_created',
-          titleEn: 'Order Placed Successfully',
-          titleAr: 'تم تقديم الطلب بنجاح',
-          messageEn: `Your order #${finalOrder.id.substring(0, 8)} has been placed successfully. Total: ${finalOrder.totalAmount} ${validatedItems[0]?.currency || 'USD'}`,
-          messageAr: `تم تقديم طلبك #${finalOrder.id.substring(0, 8)} بنجاح. المجموع: ${finalOrder.totalAmount} ${validatedItems[0]?.currency || 'USD'}`,
+          title: 'Order Placed Successfully',
+          message: `Your order #${finalOrder.id.substring(0, 8)} has been placed successfully. Total: ${finalOrder.totalAmount} ${validatedItems[0]?.currency || 'USD'}`,
           metadata: JSON.stringify({ orderId: finalOrder.id }),
         });
       } catch (notifError: any) {
@@ -3393,16 +3369,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createNotification({
               clientId: req.body.clientId,
               type: 'price_assigned',
-              titleEn: 'Price Offer Ready',
-              titleAr: 'عرض السعر جاهز',
-              messageEn: `Your price request for ${product.nameEn} has been processed. Price: ${validatedData.contractPrice} ${validatedData.currency}`,
-              messageAr: `تمت معالجة طلب السعر الخاص بـ ${product.nameAr}. السعر: ${validatedData.contractPrice} ${validatedData.currency}`,
+              title: 'Price Offer Ready',
+              message: `Your price request for ${product.name} has been processed. Price: ${validatedData.contractPrice} ${validatedData.currency}`,
               metadata: JSON.stringify({
                 productId: product.id,
                 sku: product.sku,
                 ltaId: lta.id,
-                ltaNameEn: lta.nameEn,
-                ltaNameAr: lta.nameAr,
+                ltaName: lta.name,
                 contractPrice: validatedData.contractPrice,
                 currency: validatedData.currency,
               }),
@@ -3641,19 +3614,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { nameEn, nameAr } = req.body;
-      if (!nameEn || !nameAr) {
+      const { name } = req.body;
+      if (!name) {
         return res.status(400).json({
-          message: "Document name (English and Arabic) is required",
-          messageAr: "اسم المستند (بالإنجليزية والعربية) مطلوب"
+          message: "Document name is required",
+          messageAr: "اسم المستند مطلوب"
         });
       }
 
       const fileUrl = `/attached_assets/documents/${req.file.filename}`;
       const document = await storage.createLtaDocument({
         ltaId: req.params.ltaId,
-        nameEn,
-        nameAr,
+        name,
         fileName: req.file.originalname,
         fileUrl,
         fileSize: req.file.size,
@@ -4209,11 +4181,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/^-+|-+$/g, '');
 
       res.json({
-        title: `${product.nameEn} - Al Qadi Portal`,
-        description: product.descriptionEn || product.nameEn,
+        title: `${product.name} - Al Qadi Portal`,
+        description: product.description || product.name,
         image: product.imageUrl ? `${baseUrl}${product.imageUrl}` : `${baseUrl}/logo.png`,
         url: `${baseUrl}/products/${slugifiedSubCategory}/${req.params.productName}`,
-        keywords: `${product.sku}, ${product.nameEn}, ${product.nameAr}, ${product.category || 'products'}`,
+        keywords: `${product.sku}, ${product.name}, ${product.category || 'products'}`,
       });
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });

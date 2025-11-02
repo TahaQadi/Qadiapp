@@ -29,8 +29,7 @@ interface ProductWithLtaPrice extends Product {
 interface PriceRequestItem {
   productId: string;
   productSku: string;
-  productNameEn: string;
-  productNameAr: string;
+  productName: string;
   quantity: number;
 }
 
@@ -163,15 +162,14 @@ export default function CatalogPage() {
     setPriceRequestList(prev => [...prev, {
       productId: product.id,
       productSku: product.sku,
-      productNameEn: product.nameEn,
-      productNameAr: product.nameAr,
+      productName: product.name,
       quantity: 1,
     }]);
 
     toast({
       description: language === 'ar'
-        ? `تمت إضافة ${product.nameAr} إلى قائمة طلبات الأسعار`
-        : `${product.nameEn} added to price request list`
+        ? `تمت إضافة ${product.name} إلى قائمة طلبات الأسعار`
+        : `${product.name} added to price request list`
     });
   };
 
@@ -229,15 +227,14 @@ export default function CatalogPage() {
   // Filter products based on search and category
   const filteredProducts = products.filter(p => {
     // Handle null/undefined values
-    const nameEn = p.nameEn || '';
-    const nameAr = p.nameAr || '';
+    const name = p.name || '';
     const sku = p.sku || '';
     const category = p.category || '';
     const mainCategory = p.mainCategory || '';
     
     const matchesSearch = searchQuery === '' ||
-      nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      nameAr.includes(searchQuery) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.includes(searchQuery) ||
       sku.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (selectedSubCategory) {
@@ -388,7 +385,7 @@ export default function CatalogPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {language === 'ar' ? item.productNameAr : item.productNameEn}
+                            {item.productName}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             SKU: {item.productSku} • {language === 'ar' ? 'الكمية:' : 'Qty:'} {item.quantity}
@@ -610,7 +607,7 @@ export default function CatalogPage() {
                       {getSubCategories(selectedMainCategory).map((subCat) => {
                         const count = products.filter(p => p.category === subCat).length;
                         return (
-                          <SelectItem key={subCat} value={subCat}>
+                          <SelectItem key={subCat} value={subCat || ''}>
                             {subCat} ({count})
                           </SelectItem>
                         );
@@ -674,9 +671,9 @@ export default function CatalogPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredProducts.map((product, index) => {
-                    const name = language === 'ar' ? product.nameAr : product.nameEn;
-                    const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
-                    const slugifiedName = product.nameEn.toLowerCase()
+                    const name = product.name;
+                    const description = product.description;
+                    const slugifiedName = product.name?.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
                     return (
@@ -853,7 +850,7 @@ export default function CatalogPage() {
                         <SelectContent>
                           {clientLtas.map(lta => (
                             <SelectItem key={lta.id} value={lta.id}>
-                              {language === 'ar' ? lta.nameAr : lta.nameEn}
+                              {lta.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -867,7 +864,7 @@ export default function CatalogPage() {
                       <div key={item.productId} className="flex items-center justify-between gap-2 p-3 rounded-lg border">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {language === 'ar' ? item.productNameAr : item.productNameEn}
+                            {item.productName}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             SKU: {item.productSku}

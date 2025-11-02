@@ -11,7 +11,6 @@ import { useEffect, lazy, Suspense } from "react";
 import NotFoundPage from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import OnboardingPage from "@/pages/OnboardingPage";
-import LoginPage from "@/pages/LoginPage";
 import LogoutPage from "@/pages/LogoutPage";
 import OrderingPage from "@/pages/OrderingPage";
 import ClientProfilePage from "@/pages/ClientProfilePage";
@@ -36,6 +35,7 @@ import CatalogPage from '@/pages/CatalogPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminDemoRequestsPage from "@/pages/AdminDemoRequestsPage";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import { ProtectedRoute } from '@/lib/protected-route';
 import "./lib/i18n";
 import { HelmetProvider } from 'react-helmet-async';
@@ -118,7 +118,9 @@ function Router() {
     <Switch>
       {/* Public routes */}
       <Route path="/landing" component={LandingPage} />
-      <Route path="/login" component={LoginPage} />
+      <Route path="/login">
+        <Redirect to="/landing?auth=login" />
+      </Route>
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/logout" component={LogoutPage} />
 
@@ -168,6 +170,7 @@ function Router() {
       <AdminRoute path="/admin/ltas" component={AdminLtaListPage} />
       <AdminRoute path="/admin/reports" component={AdminReportsPage} />
       <AdminRoute path="/admin/demo-requests" component={AdminDemoRequestsPage} />
+      <AdminRoute path="/admin/design-system" component={DesignSystemPage} />
 
       <ProtectedRoute path="/price-request" component={PriceRequestPage} />
       <ProtectedRoute path="/price-offers" component={ClientPriceOffersPage} />

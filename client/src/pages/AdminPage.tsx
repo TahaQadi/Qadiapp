@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp, PlayCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { LogOut, User, Users, Package, FileText, Truck, ChevronRight, ChevronLeft, ShoppingCart, Menu, Settings, Edit, ClipboardList, AlertTriangle, TrendingUp, PlayCircle, ArrowLeft, ArrowRight, Palette } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -149,6 +149,18 @@ export default function AdminPage() {
       gradient: 'from-emerald-500/20 to-teal-500/10',
       hoverGradient: 'from-emerald-500/30 to-teal-500/20',
       testId: 'card-feedback-analytics'
+    },
+    {
+      id: 'design-system',
+      path: '/admin/design-system',
+      icon: Palette,
+      titleEn: 'Design System',
+      titleAr: 'نظام التصميم',
+      descEn: 'Design reference, user flows, and wireframes',
+      descAr: 'مرجع التصميم وسير المستخدم والأسلاك',
+      gradient: 'from-pink-500/20 to-rose-500/10',
+      hoverGradient: 'from-pink-500/30 to-rose-500/20',
+      testId: 'card-design-system'
     }
   ];
 

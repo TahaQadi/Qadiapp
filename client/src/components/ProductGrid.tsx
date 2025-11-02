@@ -67,10 +67,8 @@ export const ProductGrid = memo(({
           <ProductCard 
             key={product.id} 
             id={product.id}
-            nameEn={product.nameEn}
-            nameAr={product.nameAr}
-            descriptionEn={product.descriptionEn || undefined}
-            descriptionAr={product.descriptionAr || undefined}
+            name={product.name}
+            description={product.description || undefined}
             price={product.contractPrice || "0"}
             currency={product.currency || "SAR"}
             sku={product.sku}

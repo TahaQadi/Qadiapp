@@ -8,10 +8,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ProductCardProps {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  descriptionEn?: string;
-  descriptionAr?: string;
+  name: string;
+  description?: string;
   price: string;
   currency: string;
   sku: string;
@@ -20,10 +18,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
-  nameEn,
-  nameAr,
-  descriptionEn,
-  descriptionAr,
+  name,
+  description,
   price,
   currency,
   sku,
@@ -33,9 +29,6 @@ export function ProductCard({
   const { t } = useTranslation();
   const { language } = useLanguage();
   const isMobile = useIsMobile();
-
-  const name = language === 'ar' ? nameAr : nameEn;
-  const description = language === 'ar' ? descriptionAr : descriptionEn;
 
   return (
     <Card className={cn(

@@ -19,10 +19,8 @@ import { NotificationItem } from './notifications/NotificationItem';
 interface Notification {
   id: string;
   type: string;
-  titleEn: string;
-  titleAr: string;
-  messageEn: string;
-  messageAr: string;
+  title: string;
+  message: string;
   isRead: boolean;
   metadata?: string;
   pdfFileName?: string | null;

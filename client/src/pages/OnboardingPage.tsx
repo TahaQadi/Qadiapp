@@ -23,8 +23,7 @@ interface OnboardingData {
     confirmPassword: string;
   };
   company: {
-    nameEn: string;
-    nameAr: string;
+    name: string;
     email: string;
     phone: string;
     // Organization Identity
@@ -33,10 +32,8 @@ interface OnboardingData {
     industry: string;
   };
   headquarters: {
-    nameEn: string;
-    nameAr: string;
-    addressEn: string;
-    addressAr: string;
+    name: string;
+    address: string;
     city: string;
     country: string;
     phone: string;
@@ -82,11 +79,11 @@ export default function OnboardingPage() {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     user: { email: '', password: '', confirmPassword: '' },
     company: { 
-      nameEn: '', nameAr: '', email: '', phone: '',
+      name: '', email: '', phone: '',
       domain: '', registrationId: '', industry: ''
     },
     headquarters: { 
-      nameEn: '', nameAr: '', addressEn: '', addressAr: '', 
+      name: '', address: '', 
       city: '', country: '', phone: '' 
     },
     departments: DEFAULT_DEPARTMENTS,
@@ -194,24 +191,24 @@ export default function OnboardingPage() {
         }
         break;
       case 2:
-        if (!onboardingData.company.nameAr) {
+        if (!onboardingData.company.name) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى إدخال اسم الشركة بالعربية' 
-              : 'Please enter company name in Arabic',
+              ? 'يرجى إدخال اسم الشركة' 
+              : 'Please enter company name',
             variant: 'destructive',
           });
           return false;
         }
         break;
       case 3:
-        if (!onboardingData.headquarters.nameAr || !onboardingData.headquarters.addressAr) {
+        if (!onboardingData.headquarters.name || !onboardingData.headquarters.address) {
           toast({
             title: language === 'ar' ? 'خطأ' : 'Error',
             description: language === 'ar' 
-              ? 'يرجى ملء معلومات الموقع بالعربية' 
-              : 'Please fill location details in Arabic',
+              ? 'يرجى ملء معلومات الموقع' 
+              : 'Please fill location details',
             variant: 'destructive',
           });
           return false;
@@ -393,37 +390,20 @@ export default function OnboardingPage() {
 
               {currentStep === 2 && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="nameAr" data-testid="label-company-name-ar">
-                        {language === 'ar' ? 'اسم الشركة' : 'Company Name (Arabic)'} *
-                      </Label>
-                      <Input
-                        id="nameAr"
-                        data-testid="input-company-name-ar"
-                        value={onboardingData.company.nameAr}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          company: { ...prev.company, nameAr: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Name in Arabic'}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="nameEn" data-testid="label-company-name-en">
-                        {language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}
-                      </Label>
-                      <Input
-                        id="nameEn"
-                        data-testid="input-company-name-en"
-                        value={onboardingData.company.nameEn}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          company: { ...prev.company, nameEn: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'الاسم بالإنجليزية (اختياري)' : 'Name in English (Optional)'}
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="name" data-testid="label-company-name">
+                      {language === 'ar' ? 'اسم الشركة' : 'Company Name'} *
+                    </Label>
+                    <Input
+                      id="name"
+                      data-testid="input-company-name"
+                      value={onboardingData.company.name}
+                      onChange={(e) => setOnboardingData(prev => ({
+                        ...prev,
+                        company: { ...prev.company, name: e.target.value }
+                      }))}
+                      placeholder={language === 'ar' ? 'اسم الشركة' : 'Company Name'}
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -525,65 +505,33 @@ export default function OnboardingPage() {
 
               {currentStep === 3 && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label data-testid="label-location-name-ar">
-                        {language === 'ar' ? 'اسم الموقع' : 'Location Name (Arabic)'} *
-                      </Label>
-                      <Input
-                        data-testid="input-location-name-ar"
-                        value={onboardingData.headquarters.nameAr}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          headquarters: { ...prev.headquarters, nameAr: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
-                      />
-                    </div>
-                    <div>
-                      <Label data-testid="label-location-name-en">
-                        {language === 'ar' ? 'الاسم الإنجليزي (اختياري)' : 'English Name (Optional)'}
-                      </Label>
-                      <Input
-                        data-testid="input-location-name-en"
-                        value={onboardingData.headquarters.nameEn}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          headquarters: { ...prev.headquarters, nameEn: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'الاسم بالإنجليزية (اختياري)' : 'Name in English (Optional)'}
-                      />
-                    </div>
+                  <div>
+                    <Label data-testid="label-location-name">
+                      {language === 'ar' ? 'اسم الموقع' : 'Location Name'} *
+                    </Label>
+                    <Input
+                      data-testid="input-location-name"
+                      value={onboardingData.headquarters.name}
+                      onChange={(e) => setOnboardingData(prev => ({
+                        ...prev,
+                        headquarters: { ...prev.headquarters, name: e.target.value }
+                      }))}
+                      placeholder={language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
+                    />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label data-testid="label-location-address-ar">
-                        {language === 'ar' ? 'العنوان' : 'Address (Arabic)'} *
-                      </Label>
-                      <Input
-                        data-testid="input-location-address-ar"
-                        value={onboardingData.headquarters.addressAr}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          headquarters: { ...prev.headquarters, addressAr: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'العنوان بالعربية' : 'Address in Arabic'}
-                      />
-                    </div>
-                    <div>
-                      <Label data-testid="label-location-address-en">
-                        {language === 'ar' ? 'العنوان الإنجليزي (اختياري)' : 'English Address (Optional)'}
-                      </Label>
-                      <Input
-                        data-testid="input-location-address-en"
-                        value={onboardingData.headquarters.addressEn}
-                        onChange={(e) => setOnboardingData(prev => ({
-                          ...prev,
-                          headquarters: { ...prev.headquarters, addressEn: e.target.value }
-                        }))}
-                        placeholder={language === 'ar' ? 'العنوان بالإنجليزية (اختياري)' : 'Address in English (Optional)'}
-                      />
-                    </div>
+                  <div>
+                    <Label data-testid="label-location-address">
+                      {language === 'ar' ? 'العنوان' : 'Address'} *
+                    </Label>
+                    <Input
+                      data-testid="input-location-address"
+                      value={onboardingData.headquarters.address}
+                      onChange={(e) => setOnboardingData(prev => ({
+                        ...prev,
+                        headquarters: { ...prev.headquarters, address: e.target.value }
+                      }))}
+                      placeholder={language === 'ar' ? 'العنوان' : 'Address'}
+                    />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
@@ -633,10 +581,19 @@ export default function OnboardingPage() {
                     <MapLocationPicker
                       latitude={onboardingData.headquarters.latitude}
                       longitude={onboardingData.headquarters.longitude}
-                      onLocationSelect={(lat, lng) => {
+                      onLocationSelect={(lat, lng, address) => {
                         setOnboardingData(prev => ({
                           ...prev,
-                          headquarters: { ...prev.headquarters, latitude: lat, longitude: lng }
+                          headquarters: { 
+                            ...prev.headquarters,
+                            latitude: lat,
+                            longitude: lng,
+                            ...(address && {
+                              address: address.address || prev.headquarters.address,
+                              city: address.city || prev.headquarters.city,
+                              country: address.country || prev.headquarters.country
+                            })
+                          }
                         }));
                       }}
                     />
@@ -738,7 +695,7 @@ export default function OnboardingPage() {
                   
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'معلومات الشركة' : 'Company Information'}</h3>
-                    <p data-testid="text-review-company-name">{onboardingData.company.nameAr}{onboardingData.company.nameEn ? ` / ${onboardingData.company.nameEn}` : ''}</p>
+                    <p data-testid="text-review-company-name">{onboardingData.company.name}</p>
                     <p className="text-sm text-muted-foreground" data-testid="text-review-company-email">{onboardingData.company.email}</p>
                   </div>
                   
@@ -746,8 +703,8 @@ export default function OnboardingPage() {
                   
                   <div>
                     <h3 className="font-semibold mb-2">{language === 'ar' ? 'الموقع' : 'Location'}</h3>
-                    <p data-testid="text-review-location-name">{onboardingData.headquarters.nameAr}</p>
-                    <p className="text-sm text-muted-foreground" data-testid="text-review-location-address">{onboardingData.headquarters.addressAr}</p>
+                    <p data-testid="text-review-location-name">{onboardingData.headquarters.name}</p>
+                    <p className="text-sm text-muted-foreground" data-testid="text-review-location-address">{onboardingData.headquarters.address}</p>
                   </div>
                   
                   <Separator />

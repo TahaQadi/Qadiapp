@@ -41,8 +41,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const clientFormSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   domain: z.string().optional(),
@@ -59,8 +58,7 @@ const clientFormSchema = z.object({
 const createClientSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   domain: z.string().optional(),
@@ -85,8 +83,7 @@ type PasswordResetFormValues = z.infer<typeof passwordResetSchema>;
 interface ClientBasic {
   id: string;
   username: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   email: string | null;
   phone: string | null;
   isAdmin: boolean;
@@ -114,10 +111,8 @@ interface Department {
 
 interface Location {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  addressEn: string;
-  addressAr: string;
+  name: string;
+  address: string;
   city: string | null;
   country: string | null;
   isHeadquarters: boolean;
@@ -192,8 +187,7 @@ export default function AdminClientsPage() {
       // Search filter
       if (debouncedSearchQuery) {
         const query = debouncedSearchQuery.toLowerCase();
-        const matchesName = client.nameEn.toLowerCase().includes(query) || 
-                           client.nameAr.toLowerCase().includes(query);
+        const matchesName = client.name.toLowerCase().includes(query);
         const matchesEmail = client.email?.toLowerCase().includes(query);
         const matchesUsername = client.username.toLowerCase().includes(query);
 
@@ -726,8 +720,7 @@ export default function AdminClientsPage() {
 
       const exportData = detailedClients.map(({ client, departments, locations, companyUsers }) => ({
         'Username': client.username,
-        'Name (English)': client.nameEn,
-        'Name (Arabic)': client.nameAr,
+        'Name': client.name,
         'Email': client.email || '',
         'Phone': client.phone || '',
         'Admin Status': client.isAdmin ? (language === 'ar' ? 'مسؤول' : 'Admin') : (language === 'ar' ? 'عميل' : 'Client'),
@@ -824,8 +817,7 @@ export default function AdminClientsPage() {
   useEffect(() => {
     if (clientDetails?.client) {
       form.reset({
-        nameEn: clientDetails.client.nameEn,
-        nameAr: clientDetails.client.nameAr,
+        name: clientDetails.client.name,
         email: clientDetails.client.email || '',
         phone: clientDetails.client.phone || '',
       });
@@ -1402,7 +1394,7 @@ export default function AdminClientsPage() {
                         className="flex-1 text-start"
                       >
                         <div className="font-medium">
-                          {language === 'ar' ? client.nameAr : client.nameEn}
+                          {client.name}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {client.email || client.username}
@@ -1518,34 +1510,19 @@ export default function AdminClientsPage() {
                             </FormItem>
                           )}
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={createForm.control}
-                            name="nameEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
-                                <FormControl>
-                                  <Input {...field} data-testid="input-create-name-en" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={createForm.control}
-                            name="nameAr"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                                <FormControl>
-                                  <Input {...field} data-testid="input-create-name-ar" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                        <FormField
+                          control={createForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} data-testid="input-create-name" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <FormField
                           control={createForm.control}
                           name="email"
@@ -1717,7 +1694,7 @@ export default function AdminClientsPage() {
             <SheetHeader>
               <SheetTitle>
                 {clientDetails?.client 
-                  ? (language === 'ar' ? clientDetails.client.nameAr : clientDetails.client.nameEn)
+                  ? clientDetails.client.name
                   : (language === 'ar' ? 'تفاصيل العميل' : 'Client Details')}
               </SheetTitle>
             </SheetHeader>
@@ -1980,60 +1957,45 @@ export default function AdminClientsPage() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 sm:space-y-4 pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <FormField
-                    control={form.control}
-                    name="nameEn"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="nameAr"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="sm:col-span-2">
-                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="email" className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem className="sm:col-span-2">
-                        <FormLabel className="text-sm font-medium">{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel className="text-sm font-medium">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel className="text-sm font-medium">{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Organization Information Section */}
                 <Separator />
@@ -2447,17 +2409,9 @@ function ClientDetailsCard({
                 <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
                   <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5" />
-                    {language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}
+                    {language === 'ar' ? 'الاسم' : 'Name'}
                   </div>
-                  <div className="font-semibold text-foreground dark:text-white">{clientDetails.client.nameEn}</div>
-                </div>
-                
-                <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">
-                  <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                    <User className="h-3.5 w-3.5" />
-                    {language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}
-                  </div>
-                  <div className="font-semibold text-foreground dark:text-white">{clientDetails.client.nameAr}</div>
+                  <div className="font-semibold text-foreground dark:text-white">{clientDetails.client.name}</div>
                 </div>
 
                 <div className="p-4 rounded-lg bg-gradient-to-br from-accent/30 to-accent/10 dark:from-accent/20 dark:to-accent/5 border border-border/50 dark:border-[#d4af37]/10">

@@ -50,8 +50,7 @@ export interface ProductWithLtaPrice extends Product {
 export interface CartItem {
   productId: string;
   productSku: string;
-  productNameEn: string;
-  productNameAr: string;
+  productName: string;
   quantity: number;
   price: string;
   currency: string;
@@ -78,10 +77,8 @@ interface Order {
 interface LtaDocument {
   id: string;
   ltaId: string;
-  ltaNameEn?: string;
-  ltaNameAr?: string;
-  nameEn: string;
-  nameAr: string;
+  ltaName?: string;
+  name: string;
   fileName: string;
   fileUrl: string;
   fileSize: number;
@@ -355,8 +352,7 @@ export default function OrderingPage() {
         return [...prevCart, {
           productId: product.id,
           productSku: product.sku,
-          productNameEn: product.nameEn,
-          productNameAr: product.nameAr,
+          productName: product.name,
           quantity: quantityChange,
           price: product.contractPrice,
           currency: product.currency || 'ILS',
@@ -434,8 +430,7 @@ export default function OrderingPage() {
         if (product && product.contractPrice && product.ltaId) {
           newCartItems.push({
             productId: product.id,
-            productNameEn: product.nameEn,
-            productNameAr: product.nameAr,
+            productName: product.name,
             price: product.contractPrice,
             quantity: (item as any).quantity,
             productSku: product.sku,
@@ -529,8 +524,7 @@ export default function OrderingPage() {
       return {
         productId,
         sku: product?.sku || '',
-        nameEn: product?.nameEn || '',
-        nameAr: product?.nameAr || '',
+        name: product?.name || '',
         quantity: data.quantity,
         price: data.price,
       };
@@ -581,8 +575,7 @@ export default function OrderingPage() {
         if (product && product.contractPrice && product.ltaId) {
           newCartItems.push({
             productId: product.id,
-            productNameEn: product.nameEn,
-            productNameAr: product.nameAr,
+            productName: product.name,
             price: product.contractPrice,
             quantity: (item as any).quantity,
             productSku: product.sku,
@@ -649,24 +642,22 @@ export default function OrderingPage() {
   // Convert cart items to match ShoppingCart component interface
   const shoppingCartItems = useMemo(() => cart.map(item => ({
     productId: item.productId,
-    nameEn: item.productNameEn,
-    nameAr: item.productNameAr,
+    name: item.productName,
     price: item.price,
     quantity: item.quantity,
     sku: item.productSku,
   })), [cart]);
 
   function ProductCard({ product }: { product: ProductWithLtaPrice }) {
-    const primaryName = language === 'ar' ? product.nameAr : product.nameEn;
-    const secondaryName = language === 'ar' ? product.nameEn : product.nameAr;
-    const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
+    const primaryName = product.name;
+    const description = product.description;
     const cartItem = cart.find(item => item.productId === product.id);
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
     const [, setLocation] = useLocation();
     const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
     // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
 
-    const productSlug = product.nameEn?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
+    const productSlug = product.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
     const categorySlug = (product.category?.trim() || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'products';
     const productUrl = `/products/${categorySlug}/${productSlug}`;
 
@@ -767,7 +758,7 @@ export default function OrderingPage() {
               {primaryName}
             </h3>
             <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
-              {secondaryName}
+              {product.sku}
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -1037,7 +1028,7 @@ export default function OrderingPage() {
                   {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
                 </h1>
                 <p className="text-[10px] sm:text-xs text-muted-foreground hidden md:block truncate">
-                  {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
+                  {language === 'ar' ? 'مرحباً' : 'Welcome'}, {user?.name}
                 </p>
               </div>
             </div>
@@ -1086,7 +1077,7 @@ export default function OrderingPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold truncate text-sm">
-                          {language === 'ar' ? user?.nameAr : user?.nameEn}
+                          {user?.name}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
                           {user?.email}
@@ -1291,7 +1282,7 @@ export default function OrderingPage() {
                               className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-[120px]"
                               data-testid={`tab-lta-${lta.id}`}
                             >
-                              {language === 'ar' ? lta.nameAr : lta.nameEn}
+                              {lta.name}
                             </TabsTrigger>
                           ))}
                         </TabsList>
@@ -1793,9 +1784,7 @@ export default function OrderingPage() {
                     }, {} as Record<string, LtaDocument[]>)
                   ).map(([ltaId, docs]) => {
                     const lta = clientLtas.find(l => l.id === ltaId);
-                    const ltaName = language === 'ar' 
-                      ? (docs[0]?.ltaNameAr || lta?.nameAr || '')
-                      : (docs[0]?.ltaNameEn || lta?.nameEn || '');
+                    const ltaName = docs[0]?.ltaName || lta?.name || '';
 
                     return (
                       <Card key={ltaId} className="border-border/50 dark:border-[#d4af37]/20">
@@ -1830,7 +1819,7 @@ export default function OrderingPage() {
                                         <div className="flex items-center gap-2 mb-2">
                                           <FileText className="h-4 w-4 text-primary dark:text-[#d4af37] flex-shrink-0" />
                                           <h4 className="font-semibold text-sm truncate">
-                                            {language === 'ar' ? doc.nameAr : doc.nameEn}
+                                            {doc.name}
                                           </h4>
                                         </div>
                                         <div className="space-y-1 text-xs text-muted-foreground">
@@ -1919,15 +1908,14 @@ export default function OrderingPage() {
           onOpenChange={setOrderConfirmationOpen}
           items={cart.map(item => ({
             productId: item.productId,
-            nameEn: item.productNameEn,
-            nameAr: item.productNameAr,
+            name: item.productName,
             sku: item.productSku,
             quantity: item.quantity,
             price: item.price,
           }))}
           totalAmount={cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0)}
           currency={cart[0]?.currency || 'ILS'}
-          ltaName={clientLtas.find(lta => lta.id === activeLtaId)?.nameEn}
+          ltaName={clientLtas.find(lta => lta.id === activeLtaId)?.name}
           onConfirm={handleConfirmOrder}
           onEdit={() => {
             setOrderConfirmationOpen(false);
@@ -2011,7 +1999,7 @@ export default function OrderingPage() {
                             <div key={productId} className="grid grid-cols-12 gap-2 items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                               <div className="col-span-5">
                                 <div className="font-medium text-sm">
-                                  {language === 'ar' ? product.nameAr : product.nameEn}
+                                  {product.name}
                                 </div>
                                 <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
                               </div>

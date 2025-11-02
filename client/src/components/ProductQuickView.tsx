@@ -27,8 +27,8 @@ export function ProductQuickView({ product, open, onOpenChange, onAddToCart }: P
 
   if (!product) return null;
 
-  const name = language === 'ar' ? product.nameAr : product.nameEn;
-  const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
+  const name = product.name;
+  const description = product.description;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -15,8 +15,7 @@ import { Package, DollarSign, AlertCircle, ShoppingCart, ArrowLeft, FileText } f
 
 export interface OrderConfirmationItem {
   productId: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   sku: string;
   quantity: number;
   price: string;
@@ -48,9 +47,7 @@ export function OrderConfirmationDialog({
   const { t } = useTranslation();
   const { language } = useLanguage();
 
-  // Assume ltaContract is available if ltaName is provided, and has nameAr/nameEn properties.
-  // In a real scenario, you might need to fetch or pass the full ltaContract object.
-  const ltaContract = ltaName ? { nameEn: ltaName, nameAr: ltaName } : null;
+  const ltaContract = ltaName ? { name: ltaName } : null;
 
 
   const total = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
@@ -80,7 +77,7 @@ export function OrderConfirmationDialog({
                   {language === 'ar' ? 'اتفاقية العقد' : 'LTA Contract'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'ar' ? ltaContract.nameAr : ltaContract.nameEn}
+                  {ltaContract.name}
                 </p>
               </div>
             </div>
@@ -103,7 +100,7 @@ export function OrderConfirmationDialog({
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
-                      {language === 'ar' ? item.nameAr : item.nameEn}
+                      {item.name}
                     </p>
                     <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
                   </div>

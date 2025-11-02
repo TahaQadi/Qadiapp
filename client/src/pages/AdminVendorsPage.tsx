@@ -21,8 +21,7 @@ import { z } from 'zod';
 
 const vendorFormSchema = z.object({
   vendorNumber: z.string().min(1, 'Vendor number is required'),
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   contactEmail: z.string().email().optional().or(z.literal('')),
   contactPhone: z.string().optional(),
   address: z.string().optional(),
@@ -33,8 +32,7 @@ type VendorFormValues = z.infer<typeof vendorFormSchema>;
 interface Vendor {
   id: string;
   vendorNumber: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   contactEmail: string | null;
   contactPhone: string | null;
   address: string | null;
@@ -62,8 +60,7 @@ export default function AdminVendorsPage() {
     resolver: zodResolver(vendorFormSchema),
     defaultValues: {
       vendorNumber: '',
-      nameEn: '',
-      nameAr: '',
+      name: '',
       contactEmail: '',
       contactPhone: '',
       address: '',
@@ -74,8 +71,7 @@ export default function AdminVendorsPage() {
     resolver: zodResolver(vendorFormSchema),
     defaultValues: {
       vendorNumber: '',
-      nameEn: '',
-      nameAr: '',
+      name: '',
       contactEmail: '',
       contactPhone: '',
       address: '',
@@ -156,8 +152,7 @@ export default function AdminVendorsPage() {
     setSelectedVendor(vendor);
     editForm.reset({
       vendorNumber: vendor.vendorNumber,
-      nameEn: vendor.nameEn,
-      nameAr: vendor.nameAr,
+      name: vendor.name,
       contactEmail: vendor.contactEmail || '',
       contactPhone: vendor.contactPhone || '',
       address: vendor.address || '',
@@ -220,8 +215,8 @@ export default function AdminVendorsPage() {
   });
 
   const downloadCSVTemplate = () => {
-    const headers = ['Vendor Number', 'Name (EN)', 'Name (AR)', 'Email', 'Phone', 'Address'];
-    const sampleData = ['V001', 'ABC Company', 'شركة ABC', 'contact@abc.com', '+966123456789', 'Riyadh, Saudi Arabia'];
+    const headers = ['Vendor Number', 'Name', 'Email', 'Phone', 'Address'];
+    const sampleData = ['V001', 'ABC Company', 'contact@abc.com', '+966123456789', 'Riyadh, Saudi Arabia'];
 
     const csv = [
       headers.join(','),
@@ -350,25 +345,12 @@ export default function AdminVendorsPage() {
                     />
                     <FormField
                       control={createForm.control}
-                      name="nameEn"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                          <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                           <FormControl>
-                            <Input {...field} data-testid="input-name-en" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={createForm.control}
-                      name="nameAr"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                          <FormControl>
-                            <Input {...field} data-testid="input-name-ar" />
+                            <Input {...field} data-testid="input-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -452,10 +434,7 @@ export default function AdminVendorsPage() {
                           {language === 'ar' ? 'رقم المورد' : 'Vendor #'}
                         </th>
                         <th className="text-left p-3 font-semibold">
-                          {language === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}
-                        </th>
-                        <th className="text-left p-3 font-semibold">
-                          {language === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}
+                          {language === 'ar' ? 'الاسم' : 'Name'}
                         </th>
                         <th className="text-left p-3 font-semibold">
                           {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
@@ -474,11 +453,8 @@ export default function AdminVendorsPage() {
                           <td className="p-3" data-testid={`text-vendor-number-${vendor.id}`}>
                             {vendor.vendorNumber}
                           </td>
-                          <td className="p-3" data-testid={`text-name-en-${vendor.id}`}>
-                            {vendor.nameEn}
-                          </td>
-                          <td className="p-3" data-testid={`text-name-ar-${vendor.id}`}>
-                            {vendor.nameAr}
+                          <td className="p-3" data-testid={`text-name-${vendor.id}`}>
+                            {vendor.name}
                           </td>
                           <td className="p-3" data-testid={`text-email-${vendor.id}`}>
                             {vendor.contactEmail || '-'}
@@ -548,19 +524,10 @@ export default function AdminVendorsPage() {
 
                         <div>
                           <p className="text-sm text-muted-foreground">
-                            {language === 'ar' ? 'الاسم (EN)' : 'Name (EN)'}
+                            {language === 'ar' ? 'الاسم' : 'Name'}
                           </p>
-                          <p className="font-medium" data-testid={`text-name-en-${vendor.id}`}>
-                            {vendor.nameEn}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            {language === 'ar' ? 'الاسم (AR)' : 'Name (AR)'}
-                          </p>
-                          <p className="font-medium" data-testid={`text-name-ar-${vendor.id}`}>
-                            {vendor.nameAr}
+                          <p className="font-medium" data-testid={`text-name-${vendor.id}`}>
+                            {vendor.name}
                           </p>
                         </div>
 
@@ -625,25 +592,12 @@ export default function AdminVendorsPage() {
               />
               <FormField
                 control={editForm.control}
-                name="nameEn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-edit-name-en" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="nameAr"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-edit-name-ar" />
+                      <Input {...field} data-testid="input-edit-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -713,8 +667,8 @@ export default function AdminVendorsPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === 'ar'
-                ? `سيتم حذف المورد "${selectedVendor?.nameAr}" بشكل دائم. لا يمكن التراجع عن هذا الإجراء.`
-                : `This will permanently delete vendor "${selectedVendor?.nameEn}". This action cannot be undone.`}
+                ? `سيتم حذف المورد "${selectedVendor?.name}" بشكل دائم. لا يمكن التراجع عن هذا الإجراء.`
+                : `This will permanently delete vendor "${selectedVendor?.name}". This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

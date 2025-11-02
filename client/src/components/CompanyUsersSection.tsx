@@ -19,16 +19,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const createUserSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   departmentType: z.string().optional(),
 });
 
 const updateUserSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   departmentType: z.string().optional(),
@@ -42,8 +40,7 @@ type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 interface CompanyUser {
   id: string;
   username: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   email: string | null;
   phone: string | null;
   departmentType: string | null;
@@ -83,8 +80,7 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
     defaultValues: {
       username: '',
       password: '',
-      nameEn: '',
-      nameAr: '',
+      name: '',
       email: '',
       phone: '',
       departmentType: '',
@@ -94,8 +90,7 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
   const updateForm = useForm<UpdateUserFormValues>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
+      name: '',
       email: '',
       phone: '',
       departmentType: '',
@@ -192,8 +187,7 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
   const handleEditUser = (user: CompanyUser) => {
     setSelectedUser(user);
     updateForm.reset({
-      nameEn: user.nameEn,
-      nameAr: user.nameAr,
+      name: user.name,
       email: user.email || '',
       phone: user.phone || '',
       departmentType: user.departmentType || '',
@@ -204,7 +198,7 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
   };
 
   const handleDeleteUser = async (user: CompanyUser) => {
-    if (confirm(language === 'ar' ? `هل أنت متأكد من حذف المستخدم ${user.nameAr}؟` : `Are you sure you want to delete user ${user.nameEn}?`)) {
+    if (confirm(language === 'ar' ? `هل أنت متأكد من حذف المستخدم ${user.name}؟` : `Are you sure you want to delete user ${user.name}?`)) {
       deleteUserMutation.mutate(user.id);
     }
   };
@@ -245,7 +239,7 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium" data-testid={`text-user-name-${user.id}`}>
-                    {language === 'ar' ? user.nameAr : user.nameEn}
+                    {user.name}
                   </span>
                   {!user.isActive && (
                     <Badge variant="secondary" data-testid={`badge-inactive-${user.id}`}>
@@ -359,48 +353,26 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
                 />
               </div>
 
-              <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
-                <FormField
-                  control={createForm.control}
-                  name="nameEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground dark:text-gray-200">
-                        {language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          data-testid="input-name-en"
-                          className="border-border/50 dark:border-[#d4af37]/30 focus:border-primary dark:focus:border-[#d4af37]"
-                          placeholder={language === 'ar' ? 'الاسم بالإنجليزية' : 'English name'}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="nameAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground dark:text-gray-200">
-                        {language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          data-testid="input-name-ar"
-                          className="border-border/50 dark:border-[#d4af37]/30 focus:border-primary dark:focus:border-[#d4af37]"
-                          placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Arabic name'}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={createForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground dark:text-gray-200">
+                      {language === 'ar' ? 'الاسم' : 'Name'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        data-testid="input-name"
+                        className="border-border/50 dark:border-[#d4af37]/30 focus:border-primary dark:focus:border-[#d4af37]"
+                        placeholder={language === 'ar' ? 'الاسم' : 'Name'}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={createForm.control}
@@ -492,25 +464,12 @@ export function CompanyUsersSection({ companyId }: CompanyUsersSectionProps) {
             <form onSubmit={updateForm.handleSubmit((data) => updateUserMutation.mutate(data))} className="space-y-4">
               <FormField
                 control={updateForm.control}
-                name="nameEn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم بالإنجليزية' : 'Name (English)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-edit-name-en" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={updateForm.control}
-                name="nameAr"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم بالعربية' : 'Name (Arabic)'}</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-edit-name-ar" />
+                      <Input {...field} data-testid="input-edit-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

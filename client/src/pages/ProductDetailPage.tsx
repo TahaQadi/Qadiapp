@@ -46,7 +46,7 @@ export default function ProductDetailPage() {
   });
 
   const product = products.find(p => {
-    const slugifiedName = p.nameEn.toLowerCase()
+    const slugifiedName = p.name?.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
     return slugifiedName === productName;
@@ -91,20 +91,21 @@ export default function ProductDetailPage() {
       currentList.push({
         productId: product?.id,
         productSku: product?.sku,
-        productNameEn: product?.nameEn,
-        productNameAr: product?.nameAr,
+        productName: product?.name,
       });
 
       // Save updated list to sessionStorage
       sessionStorage.setItem('priceRequestList', JSON.stringify(currentList));
 
       // Update local state to trigger re-render
-      setPriceRequestList(prev => [...prev, product?.id]);
+      if (product?.id) {
+        setPriceRequestList(prev => [...prev, product.id]);
+      }
 
       toast({
         description: language === 'ar'
-          ? `تمت إضافة ${product?.nameAr} إلى قائمة طلبات الأسعار`
-          : `${product?.nameEn} added to price request list`
+          ? `تمت إضافة ${product?.name} إلى قائمة طلبات الأسعار`
+          : `${product?.name} added to price request list`
       });
       return;
     }
@@ -154,9 +155,9 @@ export default function ProductDetailPage() {
     );
   }
 
-  const name = language === 'ar' ? product.nameAr : product.nameEn;
-  const description = language === 'ar' ? product.descriptionAr : product.descriptionEn;
-  const specifications = language === 'ar' ? product.specificationsAr : '';
+  const name = product.name;
+  const description = product.description;
+  const specifications = '';
   const pageTitle = `${name} - ${product.sku}`;
   const pageDescription = description || `${name} - ${product.sku}`;
 
@@ -190,9 +191,8 @@ export default function ProductDetailPage() {
           {JSON.stringify({
             "@context": "https://schema.org/",
             "@type": "Product",
-            "name": product.nameEn,
-            "alternateName": product.nameAr,
-            "description": product.descriptionEn || product.nameEn,
+            "name": product.name,
+            "description": product.description || product.name,
             "sku": product.sku,
             "image": product.imageUrl || `${window.location.origin}/logo.png`,
             "category": product.category || '',
@@ -241,7 +241,7 @@ export default function ProductDetailPage() {
               {
                 "@type": "ListItem",
                 "position": product.category ? 3 : 2,
-                "name": product.nameEn,
+                "name": product.name,
                 "item": window.location.href
               }
             ]
@@ -432,8 +432,8 @@ export default function ProductDetailPage() {
                 .filter(p => p.id !== product.id)
                 .slice(0, 5)
                 .map((relatedProduct) => {
-                  const relatedName = language === 'ar' ? relatedProduct.nameAr : relatedProduct.nameEn;
-                  const slugifiedName = relatedProduct.nameEn.toLowerCase()
+                  const relatedName = relatedProduct.name;
+                  const slugifiedName = relatedProduct.name?.toLowerCase()
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-+|-+$/g, '');
                   const slugifiedSubCategory = (relatedProduct.category || 'products').toLowerCase()

@@ -146,7 +146,7 @@ export function formatDepartmentsForCSV(departments: Array<{ departmentType: str
  * @param locations - Array of location objects
  * @returns Formatted location summary
  */
-export function formatLocationsForCSV(locations: Array<{ nameEn: string; nameAr: string; isHeadquarters: boolean }>): string {
+export function formatLocationsForCSV(locations: Array<{ name: string; isHeadquarters: boolean }>): string {
   if (!locations || locations.length === 0) {
     return '';
   }
@@ -155,7 +155,7 @@ export function formatLocationsForCSV(locations: Array<{ nameEn: string; nameAr:
   const count = locations.length;
   
   if (headquarters) {
-    return `${count} locations (HQ: ${headquarters.nameEn})`;
+    return `${count} locations (HQ: ${headquarters.name})`;
   }
   
   return `${count} locations`;

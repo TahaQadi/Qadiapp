@@ -18,8 +18,7 @@ export const sessions = pgTable(
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").unique(), // Reserved for future use
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
+  name: text("name").notNull(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
@@ -46,8 +45,7 @@ export const companyUsers = pgTable("company_users", {
   companyId: varchar("company_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
+  name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
   departmentType: text("department_type"), // 'finance', 'purchase', 'warehouse', null
@@ -75,10 +73,8 @@ export const clientDepartments = pgTable("client_departments", {
 export const clientLocations = pgTable("client_locations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").notNull(),
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
-  addressEn: text("address_en").notNull(),
-  addressAr: text("address_ar").notNull(),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
   city: text("city"),
   country: text("country"),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
@@ -90,8 +86,7 @@ export const clientLocations = pgTable("client_locations", {
 export const vendors = pgTable("vendors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   vendorNumber: text("vendor_number").notNull().unique(),
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
+  name: text("name").notNull(),
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   address: text("address"),
@@ -101,8 +96,7 @@ export const vendors = pgTable("vendors", {
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sku: text("sku").notNull().unique(),
-  nameAr: text("name_ar").notNull(),
-  nameEn: text("name_en").notNull(),
+  name: text("name").notNull(),
   categoryNum: text("category_num"),
   unitType: text("unit_type"),
   unit: text("unit"),
@@ -117,16 +111,13 @@ export const products = pgTable("products", {
   sellingPricePiece: decimal("selling_price_piece", { precision: 10, scale: 2 }),
   imageUrl: text("image_url"),
   imageUrls: jsonb("image_urls"),
-  descriptionEn: text("description_en"),
-  descriptionAr: text("description_ar"),
+  description: text("description"),
 });
 
 export const ltas = pgTable("ltas", {
   id: uuid("id").defaultRandom().primaryKey(),
-  nameEn: text("name_en").notNull(),
-  nameAr: text("name_ar").notNull(),
-  descriptionEn: text("description_en"),
-  descriptionAr: text("description_ar"),
+  name: text("name").notNull(),
+  description: text("description"),
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   status: text("status", { enum: ["draft", "active", "expired"] }).notNull().default("active"),
@@ -227,10 +218,8 @@ export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id, { onDelete: "cascade" }),
   type: text("type").notNull(), // 'order_created', 'order_status_changed', 'order_modification_requested', 'order_modification_reviewed', 'system', 'price_request', 'price_offer_ready', 'price_request_sent', 'issue_report'
-  titleEn: text("title_en").notNull(),
-  titleAr: text("title_ar").notNull(),
-  messageEn: text("message_en").notNull(),
-  messageAr: text("message_ar").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
   metadata: jsonb("metadata"),
   actionUrl: text("action_url"), // URL to navigate when notification is clicked
@@ -301,7 +290,7 @@ export const priceOffers = pgTable("price_offers", {
   requestId: varchar("request_id").references(() => priceRequests.id, { onDelete: "set null" }), // Can be null if admin creates directly
   clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
   ltaId: uuid("lta_id").references(() => ltas.id, { onDelete: "restrict" }), // Nullable for bootstrap flow
-  items: jsonb("items").notNull(), // Array of {productId, nameEn, nameAr, sku, quantity, unitPrice, total}
+  items: jsonb("items").notNull(), // Array of {productId, name, sku, quantity, unitPrice, total}
   subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 12, scale: 2 }).notNull().default("0"),
   total: decimal("total", { precision: 12, scale: 2 }).notNull(),
@@ -374,10 +363,8 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 
 export const updateNotificationSchema = z.object({
   isRead: z.boolean().optional(),
-  titleEn: z.string().optional(),
-  titleAr: z.string().optional(),
-  messageEn: z.string().optional(),
-  messageAr: z.string().optional(),
+  title: z.string().optional(),
+  message: z.string().optional(),
 });
 
 export const insertPriceRequestSchema = createInsertSchema(priceRequests).omit({ id: true, requestedAt: true });
@@ -404,8 +391,7 @@ export const priceImportRowSchema = z.object({
 // Cart item schema for order validation
 export const cartItemSchema = z.object({
   productId: z.string(),
-  nameEn: z.string(),
-  nameAr: z.string(),
+  name: z.string(),
   price: z.string(),
   quantity: z.number().int().positive(),
   sku: z.string(),
@@ -417,10 +403,8 @@ export const updateDepartmentSchema = createDepartmentSchema.partial();
 
 // Location validation schemas
 export const createLocationSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
-  addressEn: z.string().min(1, 'English address is required'),
-  addressAr: z.string().min(1, 'Arabic address is required'),
+  name: z.string().min(1, 'Name is required'),
+  address: z.string().min(1, 'Address is required'),
   city: z.string().optional(),
   country: z.string().optional(),
   isHeadquarters: z.boolean().default(false),
@@ -481,8 +465,7 @@ export const saveTemplateSchema = z.object({
 
 // Client update schema (admin)
 export const updateClientSchema = insertClientSchema.pick({
-  nameEn: true,
-  nameAr: true,
+  name: true,
   email: true,
   phone: true,
   domain: true,
@@ -501,8 +484,7 @@ export const createClientSchema = insertClientSchema.omit({ isAdmin: true });
 
 // Client self-update schema (clients can update own info)
 export const updateOwnProfileSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
 });
@@ -510,8 +492,7 @@ export const updateOwnProfileSchema = z.object({
 // Company user validation schemas
 export const createCompanyUserSchema = insertCompanyUserSchema.omit({ companyId: true });
 export const updateCompanyUserSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required').optional(),
-  nameAr: z.string().min(1, 'Arabic name is required').optional(),
+  name: z.string().min(1, 'Name is required').optional(),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   departmentType: z.string().optional(),
@@ -719,8 +700,7 @@ export type PriceImportRow = z.infer<typeof priceImportRowSchema>;
 
 export interface CartItem {
   productId: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   price: string;
   quantity: number;
   sku: string;
@@ -732,14 +712,12 @@ export interface AuthUser {
   id: string; // Company/Client ID (for backwards compatibility with existing routes)
   userId?: string; // Company User ID (for multi-user system)
   username: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   email?: string;
   phone?: string;
   isAdmin: boolean;
   companyId?: string; // Same as id, kept for clarity
-  companyNameEn?: string;
-  companyNameAr?: string;
+  companyName?: string;
   departments?: ClientDepartment[];
   locations?: ClientLocation[];
 }

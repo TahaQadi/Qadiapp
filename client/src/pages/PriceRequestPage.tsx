@@ -226,7 +226,7 @@ export default function PriceRequestPage() {
                   <SelectContent>
                     {activeLtas.map((lta) => (
                       <SelectItem key={lta.id} value={lta.id}>
-                        {language === "ar" ? lta.nameAr : lta.nameEn}
+                        {lta.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -269,7 +269,7 @@ export default function PriceRequestPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold">
-                              {language === "ar" ? product.nameAr : product.nameEn}
+                              {product.name}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               SKU: {product.sku}

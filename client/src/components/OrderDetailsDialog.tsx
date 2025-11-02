@@ -26,8 +26,7 @@ import { DocumentViewer } from './DocumentViewer';
 
 interface OrderItem {
   productId: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   sku: string;
   quantity: number;
   price: string;
@@ -221,7 +220,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                 <p className="text-sm text-muted-foreground">
                   {language === 'ar' ? 'اسم العميل/الجهة:' : 'Client/Entity Name:'}
                 </p>
-                <p className="text-sm">{client?.nameAr || client?.nameEn || (language === 'ar' ? 'غير محدد' : 'Not specified')}</p>
+                <p className="text-sm">{client?.name || (language === 'ar' ? 'غير محدد' : 'Not specified')}</p>
               </div>
 
               <div className="space-y-1">
@@ -231,7 +230,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                 <div className="flex items-center gap-2">
                   <p className="text-sm flex-1">
                     {deliveryLocation 
-                      ? (language === 'ar' ? deliveryLocation.addressAr : deliveryLocation.addressEn)
+                      ? deliveryLocation.address
                       : (language === 'ar' ? 'غير محدد' : 'Not specified')
                     }
                   </p>
@@ -272,7 +271,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                 </p>
                 <p className="text-sm">
                   {ltaData 
-                    ? (language === 'ar' ? ltaData.nameAr : ltaData.nameEn)
+                    ? ltaData.name
                     : (language === 'ar' ? 'غير محدد' : 'Not specified')
                   }
                 </p>
@@ -348,7 +347,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order }: OrderDetailsDi
                 >
                   <div className="flex-1">
                     <p className="font-medium text-sm">
-                      {language === 'ar' ? item.nameAr : item.nameEn}
+                      {item.name}
                     </p>
                     <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
                   </div>

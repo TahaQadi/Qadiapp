@@ -20,8 +20,7 @@ import { cn } from '@/lib/utils';
 
 interface Client {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
 }
 
 interface ClientSelectorProps {
@@ -48,7 +47,7 @@ export function ClientSelector({ clients, selectedClientId, onClientSelect }: Cl
           data-testid="button-client-selector"
         >
           {selectedClient 
-            ? (language === 'ar' ? selectedClient.nameAr : selectedClient.nameEn)
+            ? selectedClient.name
             : t('selectClient')}
           <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -75,7 +74,7 @@ export function ClientSelector({ clients, selectedClientId, onClientSelect }: Cl
                       selectedClientId === client.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {language === 'ar' ? client.nameAr : client.nameEn}
+                  {client.name}
                 </CommandItem>
               ))}
             </CommandGroup>

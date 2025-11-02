@@ -28,10 +28,8 @@ import { cn } from '@/lib/utils';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 
 const ltaFormSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
-  descriptionEn: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
   startDate: z.date(),
   endDate: z.date(),
   status: z.enum(['active', 'inactive']),
@@ -51,8 +49,7 @@ const ltaClientSchema = z.object({
 });
 
 const ltaDocumentSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   file: z.any(),
 });
 
@@ -63,10 +60,8 @@ type LtaDocumentFormValues = z.infer<typeof ltaDocumentSchema>;
 
 interface Lta {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  descriptionEn?: string | null;
-  descriptionAr?: string | null;
+  name: string;
+  description?: string | null;
   startDate: string;
   endDate: string;
   status: 'active' | 'inactive';
@@ -75,8 +70,7 @@ interface Lta {
 
 interface Product {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   sku: string;
   contractPrice?: string;
   currency?: string;
@@ -84,16 +78,14 @@ interface Product {
 
 interface Client {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   email?: string | null;
 }
 
 interface LtaDocument {
   id: string;
   ltaId: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   fileName: string;
   fileUrl: string;
   fileSize: number;
@@ -106,8 +98,7 @@ interface LtaProduct {
   id: string;
   ltaId: string;
   productId: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   sku: string;
   contractPrice: string;
   currency: string;
@@ -190,10 +181,8 @@ export default function AdminLtaDetailPage() {
   const editLtaForm = useForm<LtaFormValues>({
     resolver: zodResolver(ltaFormSchema),
     defaultValues: {
-      nameEn: lta?.nameEn || '',
-      nameAr: lta?.nameAr || '',
-      descriptionEn: lta?.descriptionEn || '',
-      descriptionAr: lta?.descriptionAr || '',
+      name: lta?.name || '',
+      description: lta?.description || '',
       startDate: lta ? new Date(lta.startDate) : new Date(),
       endDate: lta ? new Date(lta.endDate) : new Date(),
       status: lta?.status || 'active',
@@ -224,15 +213,13 @@ export default function AdminLtaDetailPage() {
   });
 
   const uploadDocumentSchema = z.object({
-    nameEn: z.string().min(1, 'English name is required'),
-    nameAr: z.string().min(1, 'Arabic name is required'),
+    name: z.string().min(1, 'Name is required'),
   });
 
-  const uploadDocumentForm = useForm<{ nameEn: string; nameAr: string }>({
+  const uploadDocumentForm = useForm<{ name: string }>({
     resolver: zodResolver(uploadDocumentSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
+      name: '',
     },
   });
 
@@ -404,10 +391,9 @@ export default function AdminLtaDetailPage() {
   });
 
   const uploadDocumentMutation = useMutation({
-    mutationFn: async (data: { nameEn: string; nameAr: string; file: File }) => {
+    mutationFn: async (data: { name: string; file: File }) => {
       const formData = new FormData();
-      formData.append('nameEn', data.nameEn);
-      formData.append('nameAr', data.nameAr);
+      formData.append('name', data.name);
       formData.append('document', data.file);
 
       const response = await fetch(`/api/admin/ltas/${ltaId}/documents`, {
@@ -478,10 +464,8 @@ export default function AdminLtaDetailPage() {
       const endDate = new Date(lta.endDate);
       
       editLtaForm.reset({
-        nameEn: lta.nameEn,
-        nameAr: lta.nameAr,
-        descriptionEn: lta.descriptionEn || '',
-        descriptionAr: lta.descriptionAr || '',
+        name: lta.name,
+        description: lta.description || '',
         startDate: isNaN(startDate.getTime()) ? new Date() : startDate,
         endDate: isNaN(endDate.getTime()) ? new Date() : endDate,
         status: lta.status,
@@ -683,7 +667,7 @@ KB-001,89.99,SAR`;
             </Link>
           </Button>
           <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#d4af37]/60 bg-clip-text text-transparent truncate">
-            {language === 'ar' ? lta.nameAr : lta.nameEn}
+            {lta.name}
           </h1>
         </div>
       </header>
@@ -695,7 +679,7 @@ KB-001,89.99,SAR`;
             <div className="flex-1">
               <CardTitle className="text-xl sm:text-2xl font-bold">{language === 'ar' ? 'معلومات الاتفاقية' : 'LTA Information'}</CardTitle>
               <CardDescription className="mt-1 text-sm">
-                {language === 'ar' ? lta.descriptionAr : lta.descriptionEn}
+                {lta.description}
               </CardDescription>
             </div>
             <Button 
@@ -710,12 +694,8 @@ KB-001,89.99,SAR`;
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</p>
-                <p className="font-medium">{lta.nameEn}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</p>
-                <p className="font-medium">{lta.nameAr}</p>
+                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الاسم' : 'Name'}</p>
+                <p className="font-medium">{lta.name}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{language === 'ar' ? 'تاريخ البداية' : 'Start Date'}</p>
@@ -788,7 +768,7 @@ KB-001,89.99,SAR`;
                         <TableRow key={product.id} data-testid={`row-product-${product.productId}`}>
                           <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                           <TableCell className="font-medium">
-                            {language === 'ar' ? product.nameAr : product.nameEn}
+                            {product.name}
                           </TableCell>
                           <TableCell>
                             {product.contractPrice} {product.currency}
@@ -867,7 +847,7 @@ KB-001,89.99,SAR`;
                       ltaClients.map((client) => (
                         <TableRow key={client.id} data-testid={`row-client-${client.id}`}>
                           <TableCell className="font-medium">
-                            {language === 'ar' ? client.nameAr : client.nameEn}
+                            {client.name}
                           </TableCell>
                           <TableCell>{client.email || '-'}</TableCell>
                           <TableCell className="text-end">
@@ -935,7 +915,7 @@ KB-001,89.99,SAR`;
                       ltaDocuments.map((doc) => (
                         <TableRow key={doc.id} data-testid={`row-document-${doc.id}`}>
                           <TableCell className="font-medium">
-                            {language === 'ar' ? doc.nameAr : doc.nameEn}
+                            {doc.name}
                           </TableCell>
                           <TableCell className="font-mono text-sm">{doc.fileType?.split('/').pop()?.toUpperCase() || 'N/A'}</TableCell>
                           <TableCell className="text-sm">{formatFileSize(doc.fileSize)}</TableCell>
@@ -983,12 +963,12 @@ KB-001,89.99,SAR`;
             <form onSubmit={editLtaForm.handleSubmit((data) => updateLtaMutation.mutate(data))} className="space-y-4">
               <FormField
                 control={editLtaForm.control}
-                name="nameEn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-edit-name-en" />
+                      <Input {...field} data-testid="input-edit-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -996,38 +976,12 @@ KB-001,89.99,SAR`;
               />
               <FormField
                 control={editLtaForm.control}
-                name="nameAr"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الوصف' : 'Description'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-edit-name-ar" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editLtaForm.control}
-                name="descriptionEn"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} data-testid="input-edit-description-en" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editLtaForm.control}
-                name="descriptionAr"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} data-testid="input-edit-description-ar" />
+                      <Textarea {...field} data-testid="input-edit-description" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1175,7 +1129,7 @@ KB-001,89.99,SAR`;
                       <SelectContent>
                         {allProducts.map((product) => (
                           <SelectItem key={product.id} value={product.id}>
-                            {language === 'ar' ? product.nameAr : product.nameEn} ({product.sku})
+                            {product.name} ({product.sku})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1359,7 +1313,7 @@ KB-001,89.99,SAR`;
                       <SelectContent>
                         {allClients.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
-                            {language === 'ar' ? client.nameAr : client.nameEn}
+                            {client.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1395,8 +1349,8 @@ KB-001,89.99,SAR`;
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === 'ar' 
-                ? `هل أنت متأكد من إزالة "${selectedClient?.nameAr}" من الاتفاقية؟`
-                : `Are you sure you want to remove "${selectedClient?.nameEn}" from the LTA?`}
+                ? `هل أنت متأكد من إزالة "${selectedClient?.name}" من الاتفاقية؟`
+                : `Are you sure you want to remove "${selectedClient?.name}" from the LTA?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1534,8 +1488,7 @@ KB-001,89.99,SAR`;
                   return;
                 }
                 uploadDocumentMutation.mutate({
-                  nameEn: data.nameEn,
-                  nameAr: data.nameAr,
+                  name: data.name,
                   file: documentFile,
                 });
               })}
@@ -1543,25 +1496,12 @@ KB-001,89.99,SAR`;
             >
               <FormField
                 control={uploadDocumentForm.control}
-                name="nameEn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم بالإنجليزية' : 'Name (English)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-document-name-en" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={uploadDocumentForm.control}
-                name="nameAr"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم بالعربية' : 'Name (Arabic)'}</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-document-name-ar" />
+                      <Input {...field} data-testid="input-document-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1624,7 +1564,7 @@ KB-001,89.99,SAR`;
           </DialogHeader>
           {selectedDocument && (
             <div className="p-4 bg-muted rounded-md">
-              <p className="font-medium">{language === 'ar' ? selectedDocument.nameAr : selectedDocument.nameEn}</p>
+              <p className="font-medium">{selectedDocument.name}</p>
               <p className="text-sm text-muted-foreground">{selectedDocument.fileName}</p>
             </div>
           )}

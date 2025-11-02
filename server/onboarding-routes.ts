@@ -17,8 +17,7 @@ const onboardingSchema = z.object({
     path: ["confirmPassword"],
   }),
   company: z.object({
-    nameEn: z.string().optional(),
-    nameAr: z.string().min(1, 'Company name in Arabic is required / اسم الشركة بالعربية مطلوب'),
+    name: z.string().min(1, 'Company name is required / اسم الشركة مطلوب'),
     email: z.string().email().optional().or(z.literal('')),
     phone: z.string().optional(),
     // Organization Identity
@@ -27,10 +26,8 @@ const onboardingSchema = z.object({
     industry: z.string().optional(),
   }),
   headquarters: z.object({
-    nameEn: z.string().optional(),
-    nameAr: z.string().min(1, 'HQ name in Arabic is required / اسم المقر بالعربية مطلوب'),
-    addressEn: z.string().optional(),
-    addressAr: z.string().min(1, 'HQ address in Arabic is required / عنوان المقر بالعربية مطلوب'),
+    name: z.string().min(1, 'HQ name is required / اسم المقر مطلوب'),
+    address: z.string().min(1, 'HQ address is required / عنوان المقر مطلوب'),
     city: z.string().optional(),
     country: z.string().optional(),
     phone: z.string().optional(),
@@ -79,8 +76,7 @@ router.post('/onboarding/complete', async (req, res) => {
 
     // Create client/company account
     const client = await storage.createClient({
-      nameEn: data.company.nameEn || data.company.nameAr,
-      nameAr: data.company.nameAr,
+      name: data.company.name,
       username: data.user.email,
       password: hashedPassword,
       email: data.user.email,
@@ -102,10 +98,8 @@ router.post('/onboarding/complete', async (req, res) => {
     // Create headquarters location
     await storage.createClientLocation({
       clientId: client.id,
-      nameEn: data.headquarters.nameEn || data.headquarters.nameAr,
-      nameAr: data.headquarters.nameAr,
-      addressEn: data.headquarters.addressEn || data.headquarters.addressAr,
-      addressAr: data.headquarters.addressAr,
+      name: data.headquarters.name,
+      address: data.headquarters.address,
       city: data.headquarters.city || null,
       country: data.headquarters.country || null,
       phone: data.headquarters.phone || null,

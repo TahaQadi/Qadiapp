@@ -22,8 +22,7 @@ import { LocationManagementDialog } from '@/components/LocationManagementDialog'
 import { SEO } from '@/components/SEO';
 
 const updateProfileSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
 });
@@ -41,8 +40,7 @@ export default function ClientProfilePage() {
   const form = useForm<UpdateProfileForm>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      nameEn: user?.nameEn || '',
-      nameAr: user?.nameAr || '',
+      name: user?.name || '',
       email: user?.email || '',
       phone: user?.phone || '',
     },
@@ -285,13 +283,9 @@ export default function ClientProfilePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                    <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'الاسم بالعربية' : 'Name (Arabic)'}</p>
-                    <p className="font-medium text-foreground dark:text-white">{user?.nameAr || '-'}</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                    <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'الاسم بالإنجليزية' : 'Name (English)'}</p>
-                    <p className="font-medium text-foreground dark:text-white">{user?.nameEn || '-'}</p>
+                  <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10 md:col-span-2">
+                    <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'الاسم' : 'Name'}</p>
+                    <p className="font-medium text-foreground dark:text-white">{user?.name || '-'}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10 md:col-span-2">
                     <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
@@ -357,26 +351,15 @@ export default function ClientProfilePage() {
               <CardContent className="space-y-4">
                 {isEditing ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nameAr">{isArabic ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</Label>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="name">{isArabic ? 'الاسم' : 'Name'}</Label>
                       <Input
-                        id="nameAr"
-                        {...form.register('nameAr')}
-                        data-testid="input-name-ar"
+                        id="name"
+                        {...form.register('name')}
+                        data-testid="input-name"
                       />
-                      {form.formState.errors.nameAr && (
-                        <p className="text-sm text-destructive">{form.formState.errors.nameAr.message}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="nameEn">{isArabic ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</Label>
-                      <Input
-                        id="nameEn"
-                        {...form.register('nameEn')}
-                        data-testid="input-name-en"
-                      />
-                      {form.formState.errors.nameEn && (
-                        <p className="text-sm text-destructive">{form.formState.errors.nameEn.message}</p>
+                      {form.formState.errors.name && (
+                        <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
@@ -409,13 +392,9 @@ export default function ClientProfilePage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                      <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'اسم العميل (عربي)' : 'Client Name (Arabic)'}</p>
-                      <p className="font-medium text-foreground dark:text-white">{user?.nameAr || '-'}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
-                      <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'اسم العميل (إنجليزي)' : 'Client Name (English)'}</p>
-                      <p className="font-medium text-foreground dark:text-white">{user?.nameEn || '-'}</p>
+                    <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10 md:col-span-2">
+                      <p className="text-sm text-muted-foreground mb-1">{isArabic ? 'الاسم' : 'Name'}</p>
+                      <p className="font-medium text-foreground dark:text-white">{user?.name || '-'}</p>
                     </div>
                     <div className="p-4 rounded-lg bg-accent/30 dark:bg-accent/10 border border-border/50 dark:border-[#d4af37]/10">
                       <p className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
@@ -572,7 +551,7 @@ export default function ClientProfilePage() {
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="font-medium text-foreground dark:text-white">
-                                {isArabic ? location.nameAr : location.nameEn}
+                                {location.name}
                               </h4>
                               {location.isHeadquarters && (
                                 <Badge variant="default" data-testid={`badge-headquarters-${location.id}`}>
@@ -581,7 +560,7 @@ export default function ClientProfilePage() {
                               )}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {isArabic ? location.addressAr : location.addressEn}
+                              {location.address}
                               {(location.city || location.country) && (
                                 <span>
                                   {', '}

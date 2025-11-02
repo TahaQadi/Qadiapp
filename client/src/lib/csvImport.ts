@@ -20,8 +20,7 @@ export interface ImportResult {
 export interface ClientImportData {
   username: string;
   password: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   email?: string;
   phone?: string;
   isAdmin?: boolean;
@@ -93,7 +92,7 @@ export function parseCSVFile(file: File): Promise<string[][]> {
  * @returns Array of missing required headers
  */
 export function validateCSVHeaders(headers: string[]): string[] {
-  const requiredHeaders = ['username', 'password', 'nameEn', 'nameAr'];
+  const requiredHeaders = ['username', 'password', 'name'];
   const missingHeaders: string[] = [];
   
   for (const required of requiredHeaders) {
@@ -150,19 +149,11 @@ export function validateClientRow(row: string[], headers: string[], rowIndex: nu
     });
   }
   
-  if (!data.nameen) {
+  if (!data.name) {
     errors.push({
       row: rowIndex,
-      field: 'nameEn',
-      message: 'English name is required'
-    });
-  }
-  
-  if (!data.namear) {
-    errors.push({
-      row: rowIndex,
-      field: 'nameAr',
-      message: 'Arabic name is required'
+      field: 'name',
+      message: 'Name is required'
     });
   }
   
@@ -252,8 +243,7 @@ export function processCSVData(csvData: string[][]): ImportResult {
       const clientData: ClientImportData = {
         username: data.username,
         password: data.password,
-        nameEn: data.nameen,
-        nameAr: data.namear,
+        name: data.name,
         email: data.email || undefined,
         phone: data.phone || undefined,
         isAdmin: data.isadmin ? 
@@ -288,8 +278,7 @@ export function generateClientImportTemplate(): string {
   const headers = [
     'username',
     'password', 
-    'nameEn',
-    'nameAr',
+    'name',
     'email',
     'phone',
     'isAdmin',
@@ -304,7 +293,6 @@ export function generateClientImportTemplate(): string {
     'client1',
     'Password123!',
     'Company One',
-    'شركة واحد',
     'email@example.com',
     '+123456789',
     'false',

@@ -181,10 +181,8 @@ export interface IStorage {
   createNotification(data: {
     clientId: string | null; // Allow null for system-wide notifications
     type: 'order_created' | 'order_status_changed' | 'order_modification_requested' | 'order_modification_reviewed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent' | 'issue_report';
-    titleEn: string;
-    titleAr: string;
-    messageEn: string;
-    messageAr: string;
+    title: string;
+    message: string;
     metadata?: string;
     actionUrl?: string;
     actionType?: 'view_order' | 'review_request' | 'download_pdf' | 'view_request' | null;
@@ -289,8 +287,7 @@ export interface IStorage {
   // LTA Documents
   createLtaDocument(data: {
     ltaId: string;
-    nameEn: string;
-    nameAr: string;
+    name: string;
     fileName: string;
     fileUrl: string;
     fileSize: number;
@@ -379,14 +376,12 @@ export class MemStorage implements IStorage {
         id: company.id, // Company ID for backwards compatibility with existing routes
         userId: companyUser.id, // Company user ID for multi-user system
         username: companyUser.username,
-        nameEn: companyUser.nameEn,
-        nameAr: companyUser.nameAr,
+        name: companyUser.name,
         email: companyUser.email ?? undefined,
         phone: companyUser.phone ?? undefined,
         isAdmin: company.isAdmin,
         companyId: company.id,
-        companyNameEn: company.nameEn,
-        companyNameAr: company.nameAr,
+        companyName: company.name,
       };
     }
 
@@ -409,8 +404,7 @@ export class MemStorage implements IStorage {
     return {
       id: client.id,
       username: client.username,
-      nameEn: client.nameEn,
-      nameAr: client.nameAr,
+      name: client.name,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
       isAdmin: client.isAdmin,
@@ -430,8 +424,7 @@ export class MemStorage implements IStorage {
     const inserted = await this.db
       .insert(clients)
       .values({
-        nameEn: insertClient.nameEn,
-        nameAr: insertClient.nameAr,
+        name: insertClient.name,
         username: insertClient.username,
         password: insertClient.password,
         userId: insertClient.userId ?? null,
@@ -447,8 +440,7 @@ export class MemStorage implements IStorage {
     // Build update object with only provided fields
     const updateData: any = {};
 
-    if (data.nameEn !== undefined) updateData.nameEn = data.nameEn;
-    if (data.nameAr !== undefined) updateData.nameAr = data.nameAr;
+    if (data.name !== undefined) updateData.name = data.name;
     if (data.email !== undefined) updateData.email = data.email;
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.isAdmin !== undefined) updateData.isAdmin = data.isAdmin;
@@ -495,8 +487,7 @@ export class MemStorage implements IStorage {
         companyId: insertUser.companyId,
         username: insertUser.username,
         password: insertUser.password,
-        nameEn: insertUser.nameEn,
-        nameAr: insertUser.nameAr,
+        name: insertUser.name,
         email: insertUser.email ?? null,
         phone: insertUser.phone ?? null,
         departmentType: insertUser.departmentType ?? null,
@@ -567,10 +558,8 @@ export class MemStorage implements IStorage {
       .insert(clientLocations)
       .values({
         clientId: insertLoc.clientId,
-        nameEn: insertLoc.nameEn,
-        nameAr: insertLoc.nameAr,
-        addressEn: insertLoc.addressEn,
-        addressAr: insertLoc.addressAr,
+        name: insertLoc.name,
+        address: insertLoc.address,
         city: insertLoc.city ?? null,
         country: insertLoc.country ?? null,
         latitude: insertLoc.latitude ?? null,
@@ -615,8 +604,7 @@ export class MemStorage implements IStorage {
       .insert(vendors)
       .values({
         vendorNumber: insertVendor.vendorNumber,
-        nameEn: insertVendor.nameEn,
-        nameAr: insertVendor.nameAr,
+        name: insertVendor.name,
         contactEmail: insertVendor.contactEmail ?? null,
         contactPhone: insertVendor.contactPhone ?? null,
         address: insertVendor.address ?? null,
@@ -903,10 +891,8 @@ export class MemStorage implements IStorage {
     const inserted = await this.db
       .insert(ltas)
       .values({
-        nameEn: insertLta.nameEn,
-        nameAr: insertLta.nameAr,
-        descriptionEn: insertLta.descriptionEn ?? null,
-        descriptionAr: insertLta.descriptionAr ?? null,
+        name: insertLta.name,
+        description: insertLta.description ?? null,
         startDate: insertLta.startDate,
         endDate: insertLta.endDate,
         status: insertLta.status ?? 'active',
@@ -1026,10 +1012,8 @@ export class MemStorage implements IStorage {
         .select({
           id: products.id,
           sku: products.sku,
-          nameEn: products.nameEn,
-          nameAr: products.nameAr,
-          descriptionEn: products.descriptionEn,
-          descriptionAr: products.descriptionAr,
+          name: products.name,
+          description: products.description,
           mainCategory: products.mainCategory,
           category: products.category,
           unitType: products.unitType,
@@ -1263,10 +1247,8 @@ export class MemStorage implements IStorage {
   async createNotification(data: {
     clientId: string | null; // Allow null for system-wide notifications
     type: 'order_created' | 'order_status_changed' | 'order_modification_requested' | 'order_modification_reviewed' | 'system' | 'price_request' | 'price_offer_ready' | 'price_request_sent' | 'issue_report';
-    titleEn: string;
-    titleAr: string;
-    messageEn: string;
-    messageAr: string;
+    title: string;
+    message: string;
     metadata?: string;
     actionUrl?: string;
     actionType?: 'view_order' | 'review_request' | 'download_pdf' | 'view_request' | null;
@@ -1274,10 +1256,8 @@ export class MemStorage implements IStorage {
     const result = await this.db.insert(notifications).values({
       clientId: data.clientId,
       type: data.type,
-      titleEn: data.titleEn,
-      titleAr: data.titleAr,
-      messageEn: data.messageEn,
-      messageAr: data.messageAr,
+      title: data.title,
+      message: data.message,
       metadata: data.metadata ? JSON.stringify(data.metadata) : null,
       actionUrl: data.actionUrl || null,
       actionType: data.actionType || null,
@@ -1771,7 +1751,7 @@ export class MemStorage implements IStorage {
 
   async getDocumentAccessLogs(documentId: string): Promise<any[]> {
     const result = await this.db.execute(sql`
-      SELECT dal.*, c.name_en as client_name_en, c.name_ar as client_name_ar
+      SELECT dal.*, c.name as client_name
       FROM document_access_logs dal
       LEFT JOIN clients c ON dal.client_id = c.id
       WHERE dal.document_id = ${documentId}
@@ -1804,8 +1784,7 @@ export class MemStorage implements IStorage {
   // LTA Documents
   async createLtaDocument(data: {
     ltaId: string;
-    nameEn: string;
-    nameAr: string;
+    name: string;
     fileName: string;
     fileUrl: string;
     fileSize: number;
@@ -1814,10 +1793,10 @@ export class MemStorage implements IStorage {
   }): Promise<any> {
     const result = await this.db.execute(sql`
       INSERT INTO lta_documents (
-        id, lta_id, name_en, name_ar, file_name, file_url,
+        id, lta_id, name, file_name, file_url,
         file_size, file_type, uploaded_by, created_at
       ) VALUES (
-        gen_random_uuid(), ${data.ltaId}, ${data.nameEn}, ${data.nameAr},
+        gen_random_uuid(), ${data.ltaId}, ${data.name},
         ${data.fileName}, ${data.fileUrl}, ${data.fileSize}, ${data.fileType},
         ${data.uploadedBy}, NOW()
       )
@@ -1853,8 +1832,7 @@ export class MemStorage implements IStorage {
     const result = await this.db.execute(sql`
       SELECT 
         ld.*,
-        l.name_en as lta_name_en,
-        l.name_ar as lta_name_ar,
+        l.name as lta_name,
         l.id as lta_id
       FROM lta_documents ld
       INNER JOIN ltas l ON ld.lta_id = l.id

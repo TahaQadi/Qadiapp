@@ -37,8 +37,7 @@ const priceOfferSchema = z.object({
   notes: z.string().optional(),
   items: z.array(z.object({
     productId: z.string().min(1, 'Product is required'),
-    nameEn: z.string().min(1, 'Product name is required'),
-    nameAr: z.string().min(1, 'Product name is required'),
+    name: z.string().min(1, 'Product name is required'),
     sku: z.string().min(1, 'SKU is required'),
     quantity: z.number().min(1, 'Quantity must be at least 1'),
     unitPrice: z.string()
@@ -55,25 +54,21 @@ type PriceOfferFormValues = z.infer<typeof priceOfferSchema>;
 
 interface LTA {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  descriptionEn?: string | null;
-  descriptionAr?: string | null;
+  name: string;
+  description?: string | null;
   status: 'active' | 'inactive';
   currency: string; // LTA currency - now required
 }
 
 interface Client {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   email?: string | null;
 }
 
 interface Product {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   sku: string;
   contractPrice?: string;
   currency?: string;
@@ -343,8 +338,7 @@ export default function PriceOfferCreationDialog({
         const ltaCurrency = priceRequest.lta?.currency || 'ILS';
         const items = priceRequest.products.map((product: any) => ({
           productId: product.id || product.productId,
-          nameEn: product.nameEn || 'Unknown Product',
-          nameAr: product.nameAr || 'منتج غير معروف',
+          name: product.name || 'Unknown Product',
           sku: product.sku || 'N/A',
           quantity: product.quantity || 1,
           unitPrice: product.contractPrice || '0',
@@ -403,8 +397,7 @@ export default function PriceOfferCreationDialog({
 
     const newItem = {
       productId: product.id,
-      nameEn: product.nameEn || product.nameAr || 'Unknown Product',
-      nameAr: product.nameAr || product.nameEn || 'منتج غير معروف',
+      name: product.name || 'Unknown Product',
       sku: product.sku || 'N/A',
       quantity: 1,
       unitPrice: product.contractPrice || '0',
@@ -492,7 +485,7 @@ export default function PriceOfferCreationDialog({
                       <SelectContent>
                         {ltas.filter(lta => lta.status === 'active').map((lta) => (
                           <SelectItem key={lta.id} value={lta.id}>
-                            {language === 'ar' ? lta.nameAr : lta.nameEn}
+                            {lta.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -523,7 +516,7 @@ export default function PriceOfferCreationDialog({
                       <SelectContent>
                         {clients.map((client) => ( // Use the fetched clients state
                           <SelectItem key={client.id} value={client.id}>
-                            {language === 'ar' ? client.nameAr : client.nameEn}
+                            {client.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -596,7 +589,7 @@ export default function PriceOfferCreationDialog({
                       .filter(p => !currentItems.some(item => item.productId === p.id))
                       .map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {language === 'ar' ? product.nameAr : product.nameEn} ({product.sku})
+                          {product.name} ({product.sku})
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -634,7 +627,7 @@ export default function PriceOfferCreationDialog({
                                 <TableCell>
                                   <div>
                                     <div className="font-medium text-sm">
-                                      {language === 'ar' ? (item.nameAr || item.nameEn) : (item.nameEn || item.nameAr)}
+                                      {item.name}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
                                       SKU: {item.sku || 'N/A'}
@@ -697,7 +690,7 @@ export default function PriceOfferCreationDialog({
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm">
-                                  {language === 'ar' ? item.nameAr : item.nameEn}
+                                  {item.name}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                   {language === 'ar' ? 'رمز المنتج:' : 'SKU:'} {item.sku}

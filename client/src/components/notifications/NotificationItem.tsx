@@ -8,10 +8,8 @@ import { ar, enUS } from 'date-fns/locale';
 interface Notification {
   id: string;
   type: string;
-  titleEn: string;
-  titleAr: string;
-  messageEn: string;
-  messageAr: string;
+  title: string;
+  message: string;
   isRead: boolean;
   metadata?: string;
   pdfFileName?: string | null;
@@ -112,8 +110,8 @@ export function NotificationItem({
 }: NotificationItemProps): JSX.Element {
   const actionButton = getActionButton(notification, language);
 
-  const title = language === 'ar' ? notification.titleAr : notification.titleEn;
-  const message = language === 'ar' ? notification.messageAr : notification.messageEn;
+  const title = notification.title;
+  const message = notification.message;
   const notificationLabel = `${title}. ${message}. ${formatDate(notification.createdAt, language)}${!notification.isRead ? '. Unread' : ''}`;
 
   return (

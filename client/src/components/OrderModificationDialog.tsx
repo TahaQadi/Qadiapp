@@ -18,8 +18,7 @@ import type { Order, Product } from "@shared/schema";
 interface CartItem {
   productId: string;
   sku: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   price: string;
   quantity: number;
   ltaId: string;
@@ -95,8 +94,7 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
       const newItem: CartItem = {
         productId: product.id,
         sku: product.sku,
-        nameEn: product.nameEn,
-        nameAr: product.nameAr,
+        name: product.name,
         price: product.contractPrice || "0",
         quantity: 1,
         ltaId: order.ltaId,
@@ -235,7 +233,7 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
                       {modifiedItems.map((item) => (
                         <TableRow key={item.productId}>
                           <TableCell className="font-medium">
-                            {i18n.language === 'ar' ? item.nameAr : item.nameEn}
+                            {item.name}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
@@ -299,7 +297,7 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
                     <SelectContent>
                       {ltaProducts.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {i18n.language === 'ar' ? product.nameAr : product.nameEn}
+                          {product.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -10,8 +10,7 @@ import { useState, useRef } from 'react';
 
 export interface CartItem {
   productId: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   price: string;
   quantity: number;
   sku: string;
@@ -90,7 +89,7 @@ function CartItemCard({
       >
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">
-            {language === 'ar' ? item.nameAr : item.nameEn}
+            {item.name}
           </p>
           <p className="text-xs text-muted-foreground">
             {t('sku')}: {item.sku}

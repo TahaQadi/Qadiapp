@@ -14,13 +14,11 @@ import { MapPin, Globe } from 'lucide-react';
 import type { ClientLocation } from '@shared/schema';
 
 const locationSchema = z.object({
-  nameEn: z.string().min(1, 'Location name (English) is required'),
-  nameAr: z.string().min(1, 'Location name (Arabic) is required'),
-  addressEn: z.string().min(1, 'Address (English) is required'),
-  addressAr: z.string().min(1, 'Address (Arabic) is required'),
-  city: z.string().min(1, 'City is required'),
-  country: z.string().min(1, 'Country is required'),
-  phone: z.string().min(1, 'Phone is required'),
+  name: z.string().min(1, 'Location name is required'),
+  address: z.string().min(1, 'Address is required'),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  phone: z.string().optional(),
   isHeadquarters: z.boolean().default(false),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
@@ -48,10 +46,8 @@ export function LocationManagementDialog({
   const form = useForm<LocationForm>({
     resolver: zodResolver(locationSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
-      addressEn: '',
-      addressAr: '',
+      name: '',
+      address: '',
       city: '',
       country: '',
       phone: '',
@@ -65,10 +61,8 @@ export function LocationManagementDialog({
   useEffect(() => {
     if (open) {
       form.reset(location ? {
-        nameEn: location.nameEn || '',
-        nameAr: location.nameAr || '',
-        addressEn: location.addressEn || '',
-        addressAr: location.addressAr || '',
+        name: location.name || '',
+        address: location.address || '',
         city: location.city || '',
         country: location.country || '',
         phone: location.phone || '',
@@ -76,10 +70,8 @@ export function LocationManagementDialog({
         latitude: location.latitude ? Number(location.latitude) : undefined,
         longitude: location.longitude ? Number(location.longitude) : undefined,
       } : {
-        nameEn: '',
-        nameAr: '',
-        addressEn: '',
-        addressAr: '',
+        name: '',
+        address: '',
         city: '',
         country: '',
         phone: '',
@@ -98,10 +90,8 @@ export function LocationManagementDialog({
 
   const handleCancel = () => {
     form.reset(location ? {
-      nameEn: location.nameEn || '',
-      nameAr: location.nameAr || '',
-      addressEn: location.addressEn || '',
-      addressAr: location.addressAr || '',
+      name: location.name || '',
+      address: location.address || '',
       city: location.city || '',
       country: location.country || '',
       phone: location.phone || '',
@@ -109,10 +99,8 @@ export function LocationManagementDialog({
       latitude: location.latitude ? Number(location.latitude) : undefined,
       longitude: location.longitude ? Number(location.longitude) : undefined,
     } : {
-      nameEn: '',
-      nameAr: '',
-      addressEn: '',
-      addressAr: '',
+      name: '',
+      address: '',
       city: '',
       country: '',
       phone: '',
@@ -139,96 +127,48 @@ export function LocationManagementDialog({
           <DialogDescription className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400">
             {location
               ? (language === 'ar' 
-                  ? 'تحديث معلومات الموقع بكلا اللغتين والعنوان على الخريطة'
-                  : 'Update location information in both languages and address on the map')
+                  ? 'تحديث معلومات الموقع والعنوان على الخريطة'
+                  : 'Update location information and address on the map')
               : (language === 'ar' 
-                  ? 'أدخل معلومات الموقع بكلا اللغتين واختر العنوان على الخريطة'
-                  : 'Enter location information in both languages and select address on the map')
+                  ? 'أدخل معلومات الموقع واختر العنوان على الخريطة'
+                  : 'Enter location information and select address on the map')
             }
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 sm:gap-4 py-4">
-          {/* Bilingual Name Section */}
-          <div className="space-y-3 p-3 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 dark:from-accent/10 dark:to-accent/5 border border-border/30 dark:border-[#d4af37]/10">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Globe className="h-4 w-4" />
-              {language === 'ar' ? 'اسم الموقع (ثنائي اللغة)' : 'Location Name (Bilingual)'}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="nameEn" className="text-xs font-medium text-muted-foreground">
-                {language === 'ar' ? 'الاسم بالإنجليزية' : 'Name (English)'}
-              </Label>
-              <Input
-                id="nameEn"
-                {...form.register('nameEn')}
-                className="h-10 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
-                placeholder="Main Office"
-                data-testid="input-name-en"
-              />
-              {form.formState.errors.nameEn && (
-                <p className="text-xs text-destructive">{form.formState.errors.nameEn.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nameAr" className="text-xs font-medium text-muted-foreground">
-                {language === 'ar' ? 'الاسم بالعربية' : 'Name (Arabic)'}
-              </Label>
-              <Input
-                id="nameAr"
-                {...form.register('nameAr')}
-                className="h-10 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
-                placeholder="المكتب الرئيسي"
-                dir="rtl"
-                data-testid="input-name-ar"
-              />
-              {form.formState.errors.nameAr && (
-                <p className="text-xs text-destructive">{form.formState.errors.nameAr.message}</p>
-              )}
-            </div>
+          {/* Name Section */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium">
+              {language === 'ar' ? 'اسم الموقع' : 'Location Name'}
+            </Label>
+            <Input
+              id="name"
+              {...form.register('name')}
+              className="h-10 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
+              placeholder={language === 'ar' ? 'المكتب الرئيسي' : 'Main Office'}
+              data-testid="input-name"
+            />
+            {form.formState.errors.name && (
+              <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
+            )}
           </div>
 
-          {/* Bilingual Address Section */}
-          <div className="space-y-3 p-3 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 dark:from-accent/10 dark:to-accent/5 border border-border/30 dark:border-[#d4af37]/10">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Globe className="h-4 w-4" />
-              {language === 'ar' ? 'العنوان (ثنائي اللغة)' : 'Address (Bilingual)'}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="addressEn" className="text-xs font-medium text-muted-foreground">
-                {language === 'ar' ? 'العنوان بالإنجليزية' : 'Address (English)'}
-              </Label>
-              <Input
-                id="addressEn"
-                {...form.register('addressEn')}
-                className="h-10 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
-                placeholder="123 Main Street"
-                data-testid="input-address-en"
-              />
-              {form.formState.errors.addressEn && (
-                <p className="text-xs text-destructive">{form.formState.errors.addressEn.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="addressAr" className="text-xs font-medium text-muted-foreground">
-                {language === 'ar' ? 'العنوان بالعربية' : 'Address (Arabic)'}
-              </Label>
-              <Input
-                id="addressAr"
-                {...form.register('addressAr')}
-                className="h-10 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
-                placeholder="شارع الرئيسي 123"
-                dir="rtl"
-                data-testid="input-address-ar"
-              />
-              {form.formState.errors.addressAr && (
-                <p className="text-xs text-destructive">{form.formState.errors.addressAr.message}</p>
-              )}
-            </div>
+          {/* Address Section */}
+          <div className="space-y-2">
+            <Label htmlFor="address" className="text-sm font-medium">
+              {language === 'ar' ? 'العنوان' : 'Address'}
+            </Label>
+            <Input
+              id="address"
+              {...form.register('address')}
+              className="h-10 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]"
+              placeholder={language === 'ar' ? 'العنوان' : 'Address'}
+              data-testid="input-address"
+            />
+            {form.formState.errors.address && (
+              <p className="text-xs text-destructive">{form.formState.errors.address.message}</p>
+            )}
           </div>
 
           {/* Additional Location Details */}
@@ -319,8 +259,8 @@ export function LocationManagementDialog({
                   form.setValue('longitude', lng);
                   if (address) {
                     // Only update if fields are empty to avoid overwriting user input
-                    if (!form.getValues('addressEn')) {
-                      form.setValue('addressEn', address.addressEn);
+                    if (!form.getValues('address')) {
+                      form.setValue('address', address.address || '');
                     }
                     if (!form.getValues('city')) {
                       form.setValue('city', address.city);

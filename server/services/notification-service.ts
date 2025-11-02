@@ -18,10 +18,8 @@ export interface NotificationPayload {
   recipientId: string; // Client ID or admin user ID
   recipientType: "client" | "admin"; // Type of recipient
   type: NotificationType;
-  titleEn: string;
-  titleAr: string;
-  messageEn: string;
-  messageAr: string;
+  title: string;
+  message: string;
   metadata?: Record<string, any>;
   actionUrl?: string; // URL to navigate when notification is clicked
   actionType?: "view_order" | "review_request" | "download_pdf" | "view_request" | null;
@@ -162,11 +160,11 @@ export class NotificationService {
     return await storage.createNotification({
       clientId: payload.recipientId,
       type: payload.type,
-      titleEn: payload.titleEn,
-      titleAr: payload.titleAr,
-      messageEn: payload.messageEn,
-      messageAr: payload.messageAr,
+      title: payload.title,
+      message: payload.message,
       metadata: payload.metadata ? JSON.stringify(payload.metadata) : undefined,
+      actionUrl: payload.actionUrl,
+      actionType: payload.actionType || null,
     });
   }
 
@@ -188,8 +186,8 @@ export class NotificationService {
 
       // Prepare push notification payload
       const pushPayload: PushNotificationPayload = {
-        title: payload.titleEn, // Default to English, could be localized based on user preference
-        body: payload.messageEn,
+        title: payload.title,
+        body: payload.message,
         url: payload.actionUrl || "/",
         tag: payload.type,
         icon: "/logo.png",
@@ -330,10 +328,8 @@ export class NotificationService {
 
     return {
       type: "order_status_changed",
-      titleEn: "Order Status Update",
-      titleAr: "تحديث حالة الطلب",
-      messageEn: `Your order ${orderNumber} is now ${status.en}`,
-      messageAr: `طلبك ${orderNumber} الآن ${status.ar}`,
+      title: "Order Status Update",
+      message: `Your order ${orderNumber} is now ${status.en}`,
       metadata: { orderId: clientId, orderNumber, status: orderStatus },
       actionUrl: "/orders",
       actionType: "view_order",
@@ -351,10 +347,8 @@ export class NotificationService {
   ): Omit<NotificationPayload, "recipientId" | "recipientType"> {
     return {
       type: "price_request",
-      titleEn: "New Price Request",
-      titleAr: "طلب سعر جديد",
-      messageEn: `${clientName.en} requested pricing for ${productCount} product(s)`,
-      messageAr: `طلب ${clientName.ar} تسعير لـ ${productCount} منتج`,
+      title: "New Price Request",
+      message: `${clientName.en} requested pricing for ${productCount} product(s)`,
       metadata: { requestId, requestNumber },
       actionUrl: `/admin/price-requests/${requestId}`,
       actionType: "review_request",
@@ -381,10 +375,8 @@ export class NotificationService {
 
     return {
       type: "issue_report",
-      titleEn: "New Issue Report",
-      titleAr: "بلاغ مشكلة جديد",
-      messageEn: `${clientName.en} reported a ${severityLabel.en} severity issue: ${title}`,
-      messageAr: `${clientName.ar} أبلغ عن مشكلة بدرجة ${severityLabel.ar}: ${title}`,
+      title: "New Issue Report",
+      message: `${clientName.en} reported a ${severityLabel.en} severity issue: ${title}`,
       metadata: { issueId, severity, title },
       actionUrl: `/admin/issues/${issueId}`,
       actionType: "review_request",

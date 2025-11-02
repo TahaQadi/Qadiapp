@@ -36,11 +36,9 @@ export type PaginatedRequest = z.infer<typeof paginatedRequestSchema>;
 
 // Product validation schemas
 export const createProductSchema = z.object({
-  nameEn: validators.nonEmptyString,
-  nameAr: validators.nonEmptyString,
+  name: validators.nonEmptyString,
   sku: validators.nonEmptyString,
-  descriptionEn: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  description: z.string().optional(),
   category: z.string().optional(),
   brand: z.string().optional(),
   unit: z.string().optional(),
@@ -52,13 +50,11 @@ export const updateProductSchema = createProductSchema.partial();
 
 // LTA validation schemas
 const ltaBaseSchema = z.object({
-  nameEn: validators.nonEmptyString,
-  nameAr: validators.nonEmptyString,
+  name: validators.nonEmptyString,
   contractNumber: validators.nonEmptyString,
   startDate: validators.date,
   endDate: validators.date,
-  descriptionEn: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  description: z.string().optional(),
   status: z.enum(['active', 'inactive', 'expired']).default('active'),
 });
 
@@ -93,8 +89,7 @@ export const bulkAssignLtaProductsSchema = z.object({
 
 // Client validation schemas
 export const createClientSchema = z.object({
-  nameEn: validators.nonEmptyString,
-  nameAr: validators.nonEmptyString,
+  name: validators.nonEmptyString,
   username: validators.username,
   password: validators.password,
   email: validators.email,
@@ -121,8 +116,7 @@ export const createCompanyUserSchema = z.object({
   companyId: validators.id,
   username: validators.username,
   password: validators.password,
-  nameEn: validators.nonEmptyString,
-  nameAr: validators.nonEmptyString,
+  name: validators.nonEmptyString,
   email: validators.email,
   phone: validators.phone,
   departmentType: z.enum(['finance', 'purchase', 'warehouse']).optional(),
@@ -182,8 +176,7 @@ export const reviewOrderModificationSchema = z.object({
 // Order Template validation schemas
 export const createOrderTemplateSchema = z.object({
   clientId: validators.id,
-  nameEn: validators.nonEmptyString,
-  nameAr: validators.nonEmptyString,
+  name: validators.nonEmptyString,
   ltaId: validators.id,
   items: z.array(z.object({
     productId: validators.id,
@@ -245,8 +238,7 @@ export const respondToPriceOfferSchema = z.object({
 // Note: This is for legacy order templates. 
 // For document templates, use @shared/template-schema.ts instead
 export const createTemplateSchema = z.object({
-  nameEn: validators.nonEmptyString,
-  nameAr: validators.nonEmptyString,
+  name: validators.nonEmptyString,
   type: z.enum(['order', 'price_offer', 'invoice', 'lta_contract']),
   content: validators.nonEmptyString,
   isActive: z.boolean().default(true),

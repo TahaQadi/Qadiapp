@@ -25,10 +25,8 @@ import { z } from 'zod';
 import { PaginationControls } from '@/components/PaginationControls';
 
 const productFormSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
-  descriptionEn: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
   sku: z.string().min(1, 'SKU is required'),
   category: z.string().optional(),
   categoryNum: z.string().optional(),
@@ -48,10 +46,8 @@ type ProductFormValues = z.infer<typeof productFormSchema>;
 
 interface Product {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  descriptionEn?: string | null;
-  descriptionAr?: string | null;
+  name: string;
+  description?: string | null;
   sku: string;
   category?: string | null;
   categoryNum?: string | null;
@@ -71,8 +67,7 @@ interface Product {
 interface Vendor {
   id: string;
   vendorNumber: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
 }
 
 export default function AdminProductsPage() {
@@ -112,10 +107,8 @@ export default function AdminProductsPage() {
   const createForm = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
-      descriptionEn: '',
-      descriptionAr: '',
+      name: '',
+      description: '',
       sku: '',
       category: '',
       categoryNum: '',
@@ -135,10 +128,8 @@ export default function AdminProductsPage() {
   const editForm = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
-      descriptionEn: '',
-      descriptionAr: '',
+      name: '',
+      description: '',
       sku: '',
       category: '',
       categoryNum: '',
@@ -410,10 +401,8 @@ export default function AdminProductsPage() {
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     editForm.reset({
-      nameEn: product.nameEn,
-      nameAr: product.nameAr,
-      descriptionEn: product.descriptionEn || '',
-      descriptionAr: product.descriptionAr || '',
+      name: product.name,
+      description: product.description || '',
       sku: product.sku,
       category: product.category || '',
       categoryNum: product.categoryNum || '',
@@ -470,8 +459,7 @@ export default function AdminProductsPage() {
   const filteredProducts = products.filter(product => {
     const matchesSearch = searchQuery === '' || 
       product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.nameAr.toLowerCase().includes(searchQuery.toLowerCase());
+      product.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
     const matchesVendor = vendorFilter === 'all' || product.vendorId === vendorFilter;
@@ -666,7 +654,7 @@ export default function AdminProductsPage() {
                       const vendor = vendors.find(v => v.id === vendorId);
                       return vendor ? (
                         <SelectItem key={vendor.id} value={vendor.id}>
-                          {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                          {vendor.vendorNumber} - {vendor.name}
                         </SelectItem>
                       ) : null;
                     })}
@@ -725,7 +713,7 @@ export default function AdminProductsPage() {
                               {product.imageUrl ? (
                                 <img 
                                   src={product.imageUrl} 
-                                  alt={language === 'ar' ? product.nameAr : product.nameEn}
+                                  alt={product.name}
                                   className="w-12 h-12 object-cover rounded-lg border border-border/50 dark:border-[#d4af37]/20"
                                   data-testid={`img-product-${product.id}`}
                                 />
@@ -737,10 +725,10 @@ export default function AdminProductsPage() {
                             </TableCell>
                             <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                             <TableCell className="font-medium">
-                              {language === 'ar' ? product.nameAr : product.nameEn}
+                              {product.name}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                              {language === 'ar' ? product.descriptionAr : product.descriptionEn}
+                              {product.description || '-'}
                             </TableCell>
                             <TableCell className="text-sm">
                               {product.category ? (
@@ -896,7 +884,7 @@ export default function AdminProductsPage() {
                           <SelectContent>
                             {vendors.map((vendor) => (
                               <SelectItem key={vendor.id} value={vendor.id}>
-                                {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                                {vendor.vendorNumber} - {vendor.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -909,59 +897,31 @@ export default function AdminProductsPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <FormField
                     control={createForm.control}
-                    name="nameEn"
+                    name="name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'} *</FormLabel>
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'} *</FormLabel>
                         <FormControl>
-                          <Input {...field} data-testid="input-name-en" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={createForm.control}
-                    name="nameAr"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'} *</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-name-ar" />
+                          <Input {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={createForm.control}
-                    name="descriptionEn"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} data-testid="input-description-en" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={createForm.control}
-                    name="descriptionAr"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} data-testid="input-description-ar" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={createForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'الوصف' : 'Description'}</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={3} data-testid="input-description" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Categories */}
@@ -1241,7 +1201,7 @@ export default function AdminProductsPage() {
                           <SelectContent>
                             {vendors.map((vendor) => (
                               <SelectItem key={vendor.id} value={vendor.id}>
-                                {vendor.vendorNumber} - {language === 'ar' ? vendor.nameAr : vendor.nameEn}
+                                {vendor.vendorNumber} - {vendor.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1254,59 +1214,31 @@ export default function AdminProductsPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <FormField
                     control={editForm.control}
-                    name="nameEn"
+                    name="name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'} *</FormLabel>
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'} *</FormLabel>
                         <FormControl>
-                          <Input {...field} data-testid="input-edit-name-en" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="nameAr"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'} *</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-edit-name-ar" />
+                          <Input {...field} data-testid="input-edit-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="descriptionEn"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} data-testid="input-edit-description-en" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="descriptionAr"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} data-testid="input-edit-description-ar" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'الوصف' : 'Description'}</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={3} data-testid="input-edit-description" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Categories */}
@@ -1511,8 +1443,8 @@ export default function AdminProductsPage() {
             <AlertDialogTitle>{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
             <AlertDialogDescription>
               {language === 'ar' 
-                ? `هل أنت متأكد من حذف المنتج "${selectedProduct?.nameAr}"؟ لا يمكن التراجع عن هذا الإجراء.`
-                : `Are you sure you want to delete product "${selectedProduct?.nameEn}"? This action cannot be undone.`
+                ? `هل أنت متأكد من حذف المنتج "${selectedProduct?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete product "${selectedProduct?.name}"? This action cannot be undone.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>

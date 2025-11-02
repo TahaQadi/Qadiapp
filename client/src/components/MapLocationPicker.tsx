@@ -19,7 +19,7 @@ interface MapLocationPickerProps {
   latitude?: number;
   longitude?: number;
   onLocationSelect: (lat: number, lng: number, address?: { 
-    addressEn: string; 
+    address: string;
     city: string; 
     country: string; 
   }) => void;
@@ -81,14 +81,43 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
     // Reverse geocode to get address
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`,
+        {
+          headers: {
+            'User-Agent': 'AlQadiPortal/1.0'
+          }
+        }
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.address) {
+        // Also fetch Arabic version
+        let addressAr = '';
+        try {
+          const arResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`,
+            {
+              headers: {
+                'User-Agent': 'AlQadiPortal/1.0'
+              }
+            }
+          );
+          if (arResponse.ok) {
+            const arData = await arResponse.json();
+            addressAr = arData.display_name || '';
+          }
+        } catch (e) {
+          console.warn('Failed to fetch Arabic address:', e);
+        }
+        
         const address = {
-          addressEn: data.display_name || '',
-          city: data.address.city || data.address.town || data.address.village || '',
+          address: addressAr || data.display_name || '', // Prefer Arabic, fallback to English
+          city: data.address.city || data.address.town || data.address.village || data.address.municipality || '',
           country: data.address.country || '',
         };
         onLocationSelect(lat, lng, address);
@@ -133,14 +162,43 @@ export function MapLocationPicker({ latitude, longitude, onLocationSelect }: Map
         // Reverse geocode to get address
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`,
+            {
+              headers: {
+                'User-Agent': 'AlQadiPortal/1.0'
+              }
+            }
           );
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
           const data = await response.json();
           
           if (data.address) {
+            // Also fetch Arabic version
+            let addressAr = '';
+            try {
+              const arResponse = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`,
+                {
+                  headers: {
+                    'User-Agent': 'AlQadiPortal/1.0'
+                  }
+                }
+              );
+              if (arResponse.ok) {
+                const arData = await arResponse.json();
+                addressAr = arData.display_name || '';
+              }
+            } catch (e) {
+              console.warn('Failed to fetch Arabic address:', e);
+            }
+            
             const address = {
-              addressEn: data.display_name || '',
-              city: data.address.city || data.address.town || data.address.village || '',
+              address: addressAr || data.display_name || '', // Prefer Arabic, fallback to English
+              city: data.address.city || data.address.town || data.address.village || data.address.municipality || '',
               country: data.address.country || '',
             };
             onLocationSelect(lat, lng, address);

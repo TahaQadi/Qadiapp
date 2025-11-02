@@ -28,10 +28,8 @@ import { PaginationControls } from '@/components/PaginationControls';
 import { EmptyState } from '@/components/EmptyState';
 
 const ltaFormSchema = z.object({
-  nameEn: z.string().min(1, 'English name is required'),
-  nameAr: z.string().min(1, 'Arabic name is required'),
-  descriptionEn: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
   startDate: z.date(),
   endDate: z.date(),
   status: z.enum(['active', 'inactive']),
@@ -45,10 +43,8 @@ type LtaFormValues = z.infer<typeof ltaFormSchema>;
 
 interface Lta {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  descriptionEn?: string | null;
-  descriptionAr?: string | null;
+  name: string;
+  description?: string | null;
   startDate: string;
   endDate: string;
   status: 'active' | 'inactive';
@@ -77,8 +73,7 @@ export default function AdminLtaListPage() {
     return ltas.filter(lta => {
       const matchesStatus = statusFilter === 'all' || lta.status === statusFilter;
       const matchesSearch = searchTerm === '' || 
-        lta.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lta.nameAr.toLowerCase().includes(searchTerm.toLowerCase());
+        lta.name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStatus && matchesSearch;
     });
   }, [ltas, statusFilter, searchTerm]);
@@ -93,10 +88,8 @@ export default function AdminLtaListPage() {
   const createForm = useForm<LtaFormValues>({
     resolver: zodResolver(ltaFormSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
-      descriptionEn: '',
-      descriptionAr: '',
+      name: '',
+      description: '',
       startDate: new Date(),
       endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       status: 'active',
@@ -107,10 +100,8 @@ export default function AdminLtaListPage() {
   const editForm = useForm<LtaFormValues>({
     resolver: zodResolver(ltaFormSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
-      descriptionEn: '',
-      descriptionAr: '',
+      name: '',
+      description: '',
       startDate: new Date(),
       endDate: new Date(),
       status: 'active',
@@ -191,10 +182,8 @@ export default function AdminLtaListPage() {
   const handleEditLta = (lta: Lta) => {
     setSelectedLta(lta);
     editForm.reset({
-      nameEn: lta.nameEn,
-      nameAr: lta.nameAr,
-      descriptionEn: lta.descriptionEn || '',
-      descriptionAr: lta.descriptionAr || '',
+      name: lta.name,
+      description: lta.description || '',
       startDate: new Date(lta.startDate),
       endDate: new Date(lta.endDate),
       status: lta.status,
@@ -339,13 +328,13 @@ export default function AdminLtaListPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-semibold truncate">
-                            {language === 'ar' ? lta.nameAr : lta.nameEn}
+                            {lta.name}
                           </h3>
                           {getStatusBadge(lta.status)}
                         </div>
-                        {(lta.descriptionEn || lta.descriptionAr) && (
+                        {lta.description && (
                           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                            {language === 'ar' ? lta.descriptionAr : lta.descriptionEn}
+                            {lta.description}
                           </p>
                         )}
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -423,12 +412,12 @@ export default function AdminLtaListPage() {
             <form onSubmit={createForm.handleSubmit(handleCreateLta)} className="space-y-4">
               <FormField
                 control={createForm.control}
-                name="nameEn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-name-en" />
+                      <Input {...field} data-testid="input-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -436,38 +425,12 @@ export default function AdminLtaListPage() {
               />
               <FormField
                 control={createForm.control}
-                name="nameAr"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الوصف' : 'Description'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-name-ar" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createForm.control}
-                name="descriptionEn"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} data-testid="input-description-en" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createForm.control}
-                name="descriptionAr"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} data-testid="input-description-ar" />
+                      <Textarea {...field} data-testid="input-description" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -627,12 +590,12 @@ export default function AdminLtaListPage() {
             <form onSubmit={editForm.handleSubmit(handleUpdateLta)} className="space-y-4">
               <FormField
                 control={editForm.control}
-                name="nameEn"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-edit-name-en" />
+                      <Input {...field} data-testid="input-edit-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -640,38 +603,12 @@ export default function AdminLtaListPage() {
               />
               <FormField
                 control={editForm.control}
-                name="nameAr"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
+                    <FormLabel>{language === 'ar' ? 'الوصف' : 'Description'}</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-edit-name-ar" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="descriptionEn"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الوصف (إنجليزي)' : 'Description (English)'}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} data-testid="input-edit-description-en" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="descriptionAr"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'الوصف (عربي)' : 'Description (Arabic)'}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} data-testid="input-edit-description-ar" />
+                      <Textarea {...field} data-testid="input-edit-description" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -830,8 +767,8 @@ export default function AdminLtaListPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === 'ar' 
-                ? `هل أنت متأكد من حذف الاتفاقية "${selectedLta?.nameAr}"؟ هذا الإجراء لا يمكن التراجع عنه.`
-                : `Are you sure you want to delete the LTA "${selectedLta?.nameEn}"? This action cannot be undone.`}
+                ? `هل أنت متأكد من حذف الاتفاقية "${selectedLta?.name}"؟ هذا الإجراء لا يمكن التراجع عنه.`
+                : `Are you sure you want to delete the LTA "${selectedLta?.name}"? This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
