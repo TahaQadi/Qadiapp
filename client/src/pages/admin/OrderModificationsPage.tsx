@@ -456,6 +456,7 @@ export default function OrderModificationsPage() {
         </DialogContent>
         </Dialog>
       )}
+      </div>
     </PageLayout>
   );
 }

@@ -654,6 +654,6 @@ export default function ClientPriceOffersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+    </div>
   );
 }

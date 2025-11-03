@@ -488,6 +488,7 @@ export default function AdminDocumentListPage() {
           ))}
         </div>
       )}
+      </div>
     </PageLayout>
   );
 }

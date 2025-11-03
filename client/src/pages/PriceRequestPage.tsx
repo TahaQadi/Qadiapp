@@ -160,31 +160,6 @@ export default function PriceRequestPage() {
         }
       />
 
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/profile">
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
-            {user?.isAdmin && (
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/admin">
-                  <Package className="h-5 w-5" />
-                </Link>
-              </Button>
-            )}
-            <NotificationCenter />
-            <LanguageToggle />
-            <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={() => window.location.href = "/api/logout"}>
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-6 relative">
         <div className="max-w-4xl mx-auto space-y-6">
           {hasNoActiveLtas && (
