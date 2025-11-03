@@ -3,6 +3,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -1036,35 +1038,13 @@ export default function AdminPriceManagementPage() {
   const isSelectedOffer = (offerId: string) => selectedOffers.has(offerId);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              asChild 
-              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary dark:hover:text-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300 shrink-0"
-            >
-              <Link href="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37] shrink-0" />
-              <h1 className="text-base sm:text-xl font-semibold truncate bg-gradient-to-r from-primary to-primary/70 dark:from-[#d4af37] dark:to-[#d4af37]/70 bg-clip-text text-transparent">
-                {language === 'ar' ? 'إدارة الأسعار' : 'Price Management'}
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'إدارة الأسعار' : 'Price Management'}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
             {filteredOffers.length > 0 && (
               <Button
                 onClick={() => handleExportToExcel(filteredOffers)}
@@ -1076,15 +1056,13 @@ export default function AdminPriceManagementPage() {
                 <span className="hidden sm:inline">{language === 'ar' ? 'Excel' : 'Excel'}</span>
               </Button>
             )}
-            <div className="hidden sm:flex items-center gap-2">
-              <LanguageToggle />
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
 
-      <main className="container mx-auto px-4 py-6 relative z-10">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {linkedRequestId && (
           <Card className="mb-6 border-primary/50 bg-primary/5">
             <CardContent className="p-4">
@@ -2280,6 +2258,6 @@ export default function AdminPriceManagementPage() {
           })()}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

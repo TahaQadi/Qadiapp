@@ -54,13 +54,13 @@ export function ProductCard({
           {t('sku')}: {sku}
         </div>
 
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+        <div className="mt-auto pt-2 space-y-2">
           <div className="font-mono text-lg font-medium">
             {currency} {price}
           </div>
 
           <Button
-            size="sm"
+            className="w-full min-h-[44px]"
             onClick={onAddToCart}
             data-testid={`button-add-to-cart-${sku}`}
           >

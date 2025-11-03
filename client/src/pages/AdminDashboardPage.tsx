@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -316,11 +318,13 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+        subtitle={language === 'ar' ? 'نظرة عامة على النظام' : 'System Overview'}
+        showLogo={true}
+        actions={
+          <>
             {/* Mobile Menu Button */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -445,17 +449,6 @@ export default function AdminDashboardPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-xl font-semibold truncate">
-                {language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                {language === 'ar' ? 'نظرة عامة على النظام' : 'System Overview'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <Button
               variant="outline"
               asChild
@@ -494,12 +487,12 @@ export default function AdminDashboardPage() {
 
             <ThemeToggle />
             <LanguageToggle />
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Quick Links Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {/* Demo Requests */}
@@ -1031,7 +1024,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
+    </PageLayout>
   );
 }
 

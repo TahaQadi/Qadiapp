@@ -47,13 +47,20 @@ export function securityHeaders(options: SecurityHeadersOptions = {}) {
 
     // Content Security Policy
     if (enableCSP) {
+      const isDev = process.env.NODE_ENV === 'development';
       const cspDirectives = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Needed for Vite dev
+        // Allow Vite dev server scripts and HMR in development
+        isDev 
+          ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:*"
+          : "script-src 'self' 'unsafe-inline'", // Production: allow only unsafe-inline for React
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: https:",
-        "connect-src 'self'",
+        isDev
+          ? "connect-src 'self' http://localhost:* ws://localhost:*"
+          : "connect-src 'self'",
+        "frame-ancestors 'self'", // Prevent clickjacking
       ];
       res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
     }
@@ -92,13 +99,13 @@ export function securityHeaders(options: SecurityHeadersOptions = {}) {
  */
 export const SecurityPresets = {
   /**
-   * Development configuration (lenient)
+   * Development configuration (lenient but secure)
    */
   DEVELOPMENT: {
     enableCORS: true,
     allowedOrigins: ['*'],
-    enableCSP: false, // Disabled for easier development
-    enableHSTS: false,
+    enableCSP: true, // Enabled with lenient settings for Vite dev server
+    enableHSTS: false, // HSTS not needed in development
     enableXFrameOptions: true,
     enableXContentTypeOptions: true,
   },

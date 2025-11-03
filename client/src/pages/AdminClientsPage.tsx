@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { CompanyUsersSection } from '@/components/CompanyUsersSection';
 import { ClientImportDialog } from '@/components/ClientImportDialog';
 import { DepartmentManagementDialog } from '@/components/DepartmentManagementDialog';
@@ -21,7 +23,6 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Link } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,7 +39,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Link } from 'wouter';
 
 const clientFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -825,67 +826,32 @@ export default function AdminClientsPage() {
   }, [clientDetails, form]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm safe-top">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="touch-target h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary dark:hover:text-[#d4af37] hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300 flex-shrink-0"
-              data-testid="button-back-admin"
-            >
-              <Link href="/admin">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <img 
-              src="/logo.png" 
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
-            />
-            <div className="min-w-0 flex-1">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden md:block truncate">
-                {language === 'ar' ? 'إدارة معلومات العملاء والمستخدمين' : 'Manage client information and users'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'إدارة العملاء' : 'Client Management'}
+        subtitle={language === 'ar' ? 'إدارة معلومات العملاء والمستخدمين' : 'Manage client information and users'}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
             <LanguageToggle />
             <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
               onClick={() => window.location.href = '/api/logout'}
-              className="touch-target h-9 w-9 sm:h-10 sm:w-10 hover:bg-destructive/10"
-              data-testid="button-logout"
+              className="h-9 w-9 sm:h-10 sm:w-10"
             >
               <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 relative z-10 pb-20 sm:pb-8">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8 animate-slide-down">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-2">
             {language === 'ar' ? 'لوحة إدارة العملاء' : 'Client Management Dashboard'}
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -2290,7 +2256,7 @@ export default function AdminClientsPage() {
           }}
         />
       </main>
-    </div>
+    </PageLayout>
   );
 }
 

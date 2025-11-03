@@ -54,6 +54,7 @@ import fs from "fs";
 import express from 'express'; // Import express to use its middleware like express.json()
 
 import { generateSitemap } from "./sitemap";
+import { cacheMiddleware, CacheTTL, invalidateResourceCache } from "./caching";
 
 // --- Database imports for specific operations within the routes ---
 import { db, schema, orders, notifications, orderFeedback } from './db';
@@ -307,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products Routes - Get all products with client's LTA prices (if any)
-  app.get("/api/products", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/products", requireAuth, cacheMiddleware(CacheTTL.MEDIUM), async (req: AuthenticatedRequest, res: Response) => {
     try {
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       const products = await storage.getAllProductsWithClientPrices(req.client.id);
@@ -2064,6 +2065,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Reports Statistics Endpoint
+  app.get("/api/admin/stats", requireAdmin, async (req: any, res) => {
+    try {
+      const now = new Date();
+      const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const last30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // Get total counts
+      const [
+        totalClients,
+        totalProducts,
+        totalOrders,
+        totalLtas,
+        totalFeedback,
+        totalIssues,
+        totalPriceRequests,
+        totalDemoRequests
+      ] = await Promise.all([
+        db.select({ count: count() }).from(schema.clients).where(eq(schema.clients.isAdmin, false)),
+        db.select({ count: count() }).from(schema.products),
+        db.select({ count: count() }).from(schema.orders),
+        db.select({ count: count() }).from(schema.ltas),
+        db.select({ count: count() }).from(schema.orderFeedback),
+        db.select({ count: count() }).from(schema.issueReports),
+        db.select({ count: count() }).from(schema.priceRequests),
+        db.select({ count: count() }).from(schema.demoRequests)
+      ]);
+
+      // Get recent activity counts
+      const [
+        orders24h,
+        orders7d,
+        orders30d,
+        feedback24h,
+        issues24h
+      ] = await Promise.all([
+        db.select({ count: count() }).from(schema.orders).where(gte(schema.orders.createdAt, last24h)),
+        db.select({ count: count() }).from(schema.orders).where(gte(schema.orders.createdAt, last7d)),
+        db.select({ count: count() }).from(schema.orders).where(gte(schema.orders.createdAt, last30d)),
+        db.select({ count: count() }).from(schema.orderFeedback).where(gte(schema.orderFeedback.createdAt, last24h)),
+        db.select({ count: count() }).from(schema.issueReports).where(gte(schema.issueReports.createdAt, last24h))
+      ]);
+
+      // Get order status breakdown
+      const orderStatusBreakdown = await db.select({
+        status: schema.orders.status,
+        count: count()
+      })
+        .from(schema.orders)
+        .groupBy(schema.orders.status);
+
+      // Get issue status breakdown
+      const issueStatusBreakdown = await db.select({
+        status: schema.issueReports.status,
+        count: count()
+      })
+        .from(schema.issueReports)
+        .groupBy(schema.issueReports.status);
+
+      res.json({
+        totals: {
+          clients: totalClients[0]?.count || 0,
+          products: totalProducts[0]?.count || 0,
+          orders: totalOrders[0]?.count || 0,
+          ltas: totalLtas[0]?.count || 0,
+          feedback: totalFeedback[0]?.count || 0,
+          issues: totalIssues[0]?.count || 0,
+          priceRequests: totalPriceRequests[0]?.count || 0,
+          demoRequests: totalDemoRequests[0]?.count || 0
+        },
+        recentActivity: {
+          orders24h: orders24h[0]?.count || 0,
+          orders7d: orders7d[0]?.count || 0,
+          orders30d: orders30d[0]?.count || 0,
+          feedback24h: feedback24h[0]?.count || 0,
+          issues24h: issues24h[0]?.count || 0
+        },
+        breakdowns: {
+          orderStatus: orderStatusBreakdown.map(item => ({
+            status: item.status,
+            count: item.count
+          })),
+          issueStatus: issueStatusBreakdown.map(item => ({
+            status: item.status,
+            count: item.count
+          }))
+        }
+      });
+    } catch (error) {
+      errorLogger.logError(error as Error, {
+        route: '/api/admin/stats',
+        userId: req.client?.id
+      });
+      res.status(500).json({
+        message: "Error fetching statistics",
+        messageAr: "خطأ في جلب الإحصائيات"
+      });
+    }
+  });
+
   // Admin Dashboard Stats Endpoint  
   app.get("/api/admin/dashboard/stats", requireAdmin, async (req: any, res) => {
     try {
@@ -2648,7 +2750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all products (public for catalog) - with caching
-  app.get("/api/products/public", async (req, res) => {
+  app.get("/api/products/public", cacheMiddleware(CacheTTL.MEDIUM), async (req, res) => {
     try {
       // Set cache headers for better performance
       res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
@@ -2691,6 +2793,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = createProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
+      // Invalidate product caches
+      invalidateResourceCache('products');
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -2716,6 +2820,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messageAr: "المنتج غير موجود",
         });
       }
+      // Invalidate product caches
+      invalidateResourceCache('products');
       res.json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -2734,6 +2840,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/products/:id", requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteProduct(req.params.id);
+      // Invalidate product caches
+      invalidateResourceCache('products');
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({

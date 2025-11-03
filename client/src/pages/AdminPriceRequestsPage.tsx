@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/components/LanguageProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -168,22 +172,27 @@ export default function AdminPriceRequestsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{language === "ar" ? "طلبات الأسعار" : "Price Requests"}</h1>
-            <p className="text-muted-foreground mt-1">
-              {language === "ar" ? "إدارة طلبات الأسعار من العملاء" : "Manage client price requests"}
-            </p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/admin/price-offers">
-              <FileText className="h-4 w-4 mr-2" />
-              {language === "ar" ? "عروض الأسعار" : "Price Offers"}
-            </Link>
-          </Button>
-        </div>
+    <PageLayout>
+      <PageHeader
+        title={language === "ar" ? "طلبات الأسعار" : "Price Requests"}
+        subtitle={language === "ar" ? "إدارة طلبات الأسعار من العملاء" : "Manage client price requests"}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <Link href="/admin/price-offers">
+                <FileText className="h-4 w-4 mr-2" />
+                {language === "ar" ? "عروض الأسعار" : "Price Offers"}
+              </Link>
+            </Button>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
+
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl relative z-10">
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -458,7 +467,6 @@ export default function AdminPriceRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      </div>
+    </PageLayout>
   );
 }

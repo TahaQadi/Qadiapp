@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Package, Trash2, FileSpreadsheet, MapPin, ExternalLink, FileText, Calendar } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight, Search, Printer, Share2, Package, Trash2, FileSpreadsheet, MapPin, ExternalLink, FileText, Calendar, Menu, User, LogOut, ClipboardList, ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateLocalized } from '@/lib/dateUtils';
 import { apiRequest, queryClient, cacheStrategies } from '@/lib/queryClient';
@@ -615,7 +618,7 @@ function AdminOrderDetailsContent({
       {/* Company Header */}
       <div className="border-b-2 border-primary pb-3 mb-4">
         <div className="text-center mb-2">
-          <h1 className="text-xl font-bold text-primary">
+          <h1 className="text-lg sm:text-xl font-bold text-primary">
             {companyName}
           </h1>
         </div>
@@ -634,7 +637,7 @@ function AdminOrderDetailsContent({
 
       {/* Document Title */}
       <div className="text-center py-2 px-4 bg-primary/10 border border-primary rounded">
-        <h2 className="text-lg font-bold text-primary">
+        <h2 className="text-base sm:text-lg font-bold text-primary">
           {language === 'ar' ? 'تأكيد الطلب' : 'Order Confirmation'}
         </h2>
       </div>
@@ -1451,7 +1454,8 @@ export default function AdminOrdersPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" data-testid="page-admin-orders">
+    <PageLayout>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black" data-testid="page-admin-orders">
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
@@ -1490,6 +1494,114 @@ export default function AdminOrdersPage() {
           <div className="flex items-center gap-2 shrink-0">
             <LanguageToggle />
             <ThemeToggle />
+            
+            {/* Sidebar Menu for Navigation */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                >
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side={language === 'ar' ? 'right' : 'left'} className="w-[280px] sm:w-[320px]">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-3 pb-4 border-b">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">
+                        {language === 'ar' ? 'بوابة القاضي' : 'Al Qadi Portal'}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {language === 'ar' ? 'مرحباً' : 'Welcome'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <nav className="flex-1 py-4 space-y-1">
+                    <Link href="/admin">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-11"
+                        data-testid="sidebar-admin"
+                      >
+                        <Package className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'لوحة الإدارة' : 'Admin Dashboard'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/ordering">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-11"
+                        data-testid="sidebar-ordering"
+                      >
+                        <ClipboardList className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'نظام الطلبات' : 'Ordering System'}</span>
+                      </Button>
+                    </Link>
+
+                    <Link href="/profile">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-11"
+                        data-testid="sidebar-profile"
+                      >
+                        <User className="h-5 w-5" />
+                        <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
+                      </Button>
+                    </Link>
+
+                    <div className="py-2">
+                      <Separator />
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                        {language === 'ar' ? 'الإعدادات' : 'Settings'}
+                      </p>
+
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-5 w-5 flex items-center justify-center">
+                            🌐
+                          </div>
+                          <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
+                        </div>
+                        <LanguageToggle />
+                      </div>
+
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-5 w-5 flex items-center justify-center">
+                            🎨
+                          </div>
+                          <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
+                        </div>
+                        <ThemeToggle />
+                      </div>
+                    </div>
+                  </nav>
+
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      asChild
+                      className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+                    >
+                      <Link href="/logout">
+                        <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
@@ -1498,7 +1610,7 @@ export default function AdminOrdersPage() {
       <main className="container mx-auto px-4 py-6 relative z-10">
         <Card className="border-border/50 dark:border-[#d4af37]/20 shadow-xl bg-card/50 dark:bg-card/30 backdrop-blur-sm">
           <CardHeader className="pb-4 space-y-1">
-            <CardTitle className="flex items-center gap-2 text-2xl">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl lg:text-2xl">
               <div className="p-2 rounded-lg bg-primary/10 dark:bg-[#d4af37]/10">
                 <Package className="h-6 w-6 text-primary dark:text-[#d4af37]" />
               </div>
@@ -1809,7 +1921,7 @@ export default function AdminOrdersPage() {
           )}
         </DialogContent>
       </Dialog>
-
-    </div>
+      </div>
+    </PageLayout>
   );
 }

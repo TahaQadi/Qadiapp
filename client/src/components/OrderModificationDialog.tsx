@@ -97,7 +97,7 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
         name: product.name,
         price: product.contractPrice || "0",
         quantity: 1,
-        ltaId: order.ltaId,
+        ltaId: order.ltaId || "",
         currency: product.currency || "SAR",
       };
       setModifiedItems(prev => [...prev, newItem]);
@@ -112,17 +112,14 @@ export function OrderModificationDialog({ order, open, onOpenChange }: OrderModi
       reason: string;
       newItems?: CartItem[];
     }) => {
-      return apiRequest(`/api/orders/${orderId}/modify`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          modificationType, 
-          reason,
-          newItems: newItems || undefined
-        }),
+      return apiRequest('POST', `/api/orders/${orderId}/modify`, { 
+        modificationType, 
+        reason,
+        newItems: newItems || undefined
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/client/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/orders', order?.id, 'modifications'] });
       onOpenChange(false);
       setReason("");

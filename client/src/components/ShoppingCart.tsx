@@ -6,7 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from './LanguageProvider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 export interface CartItem {
   productId: string;
@@ -43,18 +45,35 @@ function CartItemCard({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [showQuickSelect, setShowQuickSelect] = useState(false);
   const startX = useRef(0);
   const isDragging = useRef(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const quickQuantities = [1, 5, 10, 20];
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     isDragging.current = true;
+    
+    // Long press detection for quick quantity select
+    longPressTimerRef.current = setTimeout(() => {
+      if (isMobile && !isDragging.current) {
+        setShowQuickSelect(true);
+      }
+    }, 500);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging.current) return;
     const currentX = e.touches[0].clientX;
     const diff = currentX - startX.current;
+    
+    // Cancel long press if user swipes
+    if (Math.abs(diff) > 10 && longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    
     // Only allow left swipe (negative values)
     if (diff < 0) {
       setSwipeOffset(Math.max(diff, -100));
@@ -63,11 +82,27 @@ function CartItemCard({
 
   const handleTouchEnd = () => {
     isDragging.current = false;
+    
+    // Cancel long press timer
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    
     if (swipeOffset < -60) {
       onRemoveItem(item.productId);
     }
     setSwipeOffset(0);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div
@@ -134,6 +169,32 @@ function CartItemCard({
           <Trash2 className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
         </Button>
       </div>
+
+      {/* Quick quantity select dialog (mobile) */}
+      {showQuickSelect && isMobile && (
+        <Dialog open={showQuickSelect} onOpenChange={setShowQuickSelect}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{item.name}</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-2 py-4">
+              {quickQuantities.map((qty) => (
+                <Button
+                  key={qty}
+                  variant={item.quantity === qty ? "default" : "outline"}
+                  onClick={() => {
+                    onUpdateQuantity(item.productId, qty);
+                    setShowQuickSelect(false);
+                  }}
+                  className="h-12"
+                >
+                  {qty}
+                </Button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -201,7 +262,8 @@ export function ShoppingCart({
               </div>
             </ScrollArea>
 
-            <div className="p-6 pt-4 border-t space-y-4">
+            {/* Sticky Summary Section */}
+            <div className="sticky bottom-0 bg-background border-t p-6 pt-4 space-y-4 shadow-lg">
               <div className="space-y-2">
                 <div className="flex justify-between font-medium">
                   <span>{t('total')}</span>

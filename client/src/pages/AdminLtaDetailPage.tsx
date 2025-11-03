@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Link, useRoute } from 'wouter';
@@ -21,7 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ArrowLeft, Pencil, Plus, Trash2, CalendarIcon, Upload, Download } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ArrowLeft, Pencil, Plus, Trash2, CalendarIcon, Upload, Download, Check, ChevronsUpDown } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -128,6 +133,7 @@ export default function AdminLtaDetailPage() {
   const [deleteDocumentDialogOpen, setDeleteDocumentDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<LtaDocument | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
 
   const { data: lta, isLoading: ltaLoading} = useQuery<Lta>({
     queryKey: ['/api/admin/ltas', ltaId],
@@ -611,18 +617,19 @@ KB-001,89.99,SAR`;
 
   if (ltaLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-50 border-b bg-background">
-          <div className="container mx-auto px-4 h-16 flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/admin/ltas">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="h-6 w-48 bg-muted rounded animate-pulse" />
-          </div>
-        </header>
-        <main className="container mx-auto px-4 py-6 space-y-6">
+      <PageLayout>
+        <PageHeader
+          title={language === 'ar' ? 'الاتفاقية طويلة الأجل' : 'Long-Term Agreement'}
+          backHref="/admin/ltas"
+          showLogo={true}
+          actions={
+            <>
+              <LanguageToggle />
+              <ThemeToggle />
+            </>
+          }
+        />
+        <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
           <Card>
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -633,46 +640,40 @@ KB-001,89.99,SAR`;
             </CardContent>
           </Card>
         </main>
-      </div>
+      </PageLayout>
     );
   }
 
   if (!lta) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية غير موجودة' : 'LTA not found'}</p>
-      </div>
+      <PageLayout>
+        <PageHeader
+          title={language === 'ar' ? 'الاتفاقية طويلة الأجل' : 'Long-Term Agreement'}
+          backHref="/admin/ltas"
+          showLogo={true}
+        />
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">{language === 'ar' ? 'الاتفاقية غير موجودة' : 'LTA not found'}</p>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title={lta.name}
+        backHref="/admin/ltas"
+        showLogo={true}
+        actions={
+          <>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
 
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center gap-2 sm:gap-3 min-w-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-            data-testid="button-back-ltas"
-          >
-            <Link href="/admin/ltas">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#d4af37]/60 bg-clip-text text-transparent truncate">
-            {lta.name}
-          </h1>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 relative z-10">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 sm:space-y-6 relative z-10">
         {/* Section 1: LTA Information */}
         <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm">
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
@@ -1107,7 +1108,12 @@ KB-001,89.99,SAR`;
       </Dialog>
 
       {/* Add Product Dialog */}
-      <Dialog open={addProductDialogOpen} onOpenChange={setAddProductDialogOpen}>
+      <Dialog open={addProductDialogOpen} onOpenChange={(open) => {
+        setAddProductDialogOpen(open);
+        if (!open) {
+          setProductSearchOpen(false);
+        }
+      }}>
         <DialogContent data-testid="dialog-add-product">
           <DialogHeader>
             <DialogTitle>{language === 'ar' ? 'إضافة منتج' : 'Add Product'}</DialogTitle>
@@ -1117,26 +1123,81 @@ KB-001,89.99,SAR`;
               <FormField
                 control={addProductForm.control}
                 name="productId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{language === 'ar' ? 'المنتج' : 'Product'}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-product">
-                          <SelectValue placeholder={language === 'ar' ? 'اختر منتج' : 'Select product'} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {allProducts.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} ({product.sku})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selectedProductData = allProducts.find(p => p.id === field.value);
+
+                  return (
+                    <FormItem>
+                      <FormLabel>{language === 'ar' ? 'المنتج' : 'Product'}</FormLabel>
+                      <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="select-product"
+                            >
+                              {selectedProductData
+                                ? `${selectedProductData.name} (${selectedProductData.sku})`
+                                : language === 'ar' ? 'اختر منتج' : 'Select product'}
+                              <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                          <Command filter={(value, search) => {
+                            if (!search) return 1;
+                            const searchLower = search.toLowerCase();
+                            // Value format: "name|sku" - we use pipe as separator
+                            const [name, sku] = value.split('|');
+                            const nameMatch = name?.toLowerCase().includes(searchLower);
+                            const skuMatch = sku?.toLowerCase().includes(searchLower);
+                            return (nameMatch || skuMatch) ? 1 : 0;
+                          }}>
+                            <CommandInput
+                              placeholder={language === 'ar' ? 'ابحث عن المنتج أو رمز المنتج...' : 'Search product name or SKU...'}
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                {language === 'ar' ? 'لا توجد منتجات' : 'No products found'}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {allProducts.map((product) => (
+                                  <CommandItem
+                                    key={product.id}
+                                    value={`${product.name}|${product.sku}`}
+                                    onSelect={() => {
+                                      field.onChange(product.id);
+                                      setProductSearchOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "me-2 h-4 w-4",
+                                        field.value === product.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span>{product.name}</span>
+                                      <span className="text-xs text-muted-foreground font-mono">
+                                        {product.sku}
+                                      </span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
               <FormField
                 control={addProductForm.control}
@@ -1596,6 +1657,6 @@ KB-001,89.99,SAR`;
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

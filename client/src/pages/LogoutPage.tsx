@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useLanguage } from '@/components/LanguageProvider';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogOut, Loader2, CheckCircle2 } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
@@ -72,18 +73,7 @@ export default function LogoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
+    <PageLayout>
       {/* Main content */}
       <div className="relative flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-md border-border/50 dark:border-[#d4af37]/20 shadow-lg dark:shadow-[#d4af37]/5 animate-fade-in">
@@ -104,7 +94,7 @@ export default function LogoutPage() {
 
               {/* Message */}
               <div className="space-y-2">
-                <h2 className="text-2xl font-semibold">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
                   {status === 'logging_out' 
                     ? messages.logging_out[language]
                     : messages.success[language]
@@ -150,6 +140,6 @@ export default function LogoutPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }

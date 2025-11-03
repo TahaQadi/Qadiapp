@@ -1,6 +1,8 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +13,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/LanguageProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { Download, FileText, Calendar as CalendarIcon, Filter, X, Search, User, FileCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -220,33 +224,35 @@ export default function AdminDocumentListPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {language === 'ar' ? 'المستندات المُنشأة' : 'Generated Documents'}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {language === 'ar' 
-              ? `${filteredDocuments.length} من ${documents.length} مستند` 
-              : `${filteredDocuments.length} of ${documents.length} documents`}
-          </p>
-        </div>
-        <Button
-          variant={showFilters ? 'default' : 'outline'}
-          onClick={() => setShowFilters(!showFilters)}
-          className="gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          {language === 'ar' ? 'الفلاتر' : 'Filters'}
-          {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1">
-              {activeFiltersCount}
-            </Badge>
-          )}
-        </Button>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'المستندات المُنشأة' : 'Generated Documents'}
+        subtitle={language === 'ar' 
+          ? `${filteredDocuments.length} من ${documents.length} مستند` 
+          : `${filteredDocuments.length} of ${documents.length} documents`}
+        showLogo={true}
+        actions={
+          <>
+            <Button
+              variant={showFilters ? 'default' : 'outline'}
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {language === 'ar' ? 'الفلاتر' : 'Filters'}
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
+
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 relative z-10">
 
       {/* Filter Panel */}
       {showFilters && (
@@ -482,6 +488,6 @@ export default function AdminDocumentListPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

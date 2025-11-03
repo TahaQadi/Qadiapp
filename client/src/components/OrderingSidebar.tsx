@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { User, Settings, LogOut, Package, FileText, History, FolderOpen, DollarSign } from 'lucide-react';
+import { User, Settings, LogOut, Package, FileText, History, FolderOpen, DollarSign, Moon } from 'lucide-react';
 
 interface OrderingSidebarProps {
   activeTab?: string;
@@ -49,7 +49,7 @@ export function OrderingSidebar({
   };
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="inset" collapsible="icon" side="right">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-3 px-2 py-4">
           <img
@@ -194,8 +194,8 @@ export function OrderingSidebar({
               <SidebarMenuItem>
                 <div className="flex items-center justify-between px-2 py-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-base">🎨</span>
-                    <span className="text-sm">{isArabic ? 'المظهر' : 'Theme'}</span>
+                    <Moon className="h-4 w-4" />
+                    <span className="text-sm">{isArabic ? 'الوضع الليلي' : 'Dark Mode'}</span>
                   </div>
                   <ThemeToggle />
                 </div>

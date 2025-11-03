@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles, Phone, Users, Clock, History, DollarSign, Edit, MapPin, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -7,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { SEO } from "@/components/SEO";
 import { DemoRequestDialog } from "@/components/DemoRequestDialog";
 import { AuthDialog } from "@/components/AuthDialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export default function LandingPage() {
   const { language, setLanguage } = useLanguage();
@@ -245,35 +248,35 @@ export default function LandingPage() {
           : "Al Qadi, order management, contract management, custom pricing, supplies, Palestine, Ramallah"}
         structuredData={structuredData}
       />
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements - optimized */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div 
-          className="absolute top-1/3 left-1/3 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ 
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-1/3 right-1/3 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5]
-          }}
-          transition={{ 
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
-      </div>
+      <PageLayout showAnimatedBackground={false}>
+        {/* Animated background elements - optimized */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            className="absolute top-1/3 left-1/3 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ 
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-1/3 right-1/3 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1.2, 1, 1.2],
+              opacity: [0.5, 0.3, 0.5]
+            }}
+            transition={{ 
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          />
+        </div>
 
       {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-black/95 backdrop-blur-xl border-b border-[#d4af37]/20' : 'bg-transparent'}`}>
@@ -337,12 +340,55 @@ export default function LandingPage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37] to-[#f9c800] rounded-full blur-2xl opacity-30 animate-pulse"></div>
+              {/* Glow layer - blurred logo with gold colorization */}
+              <motion.img 
+                src="/logo.png" 
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+                className="absolute inset-0 h-24 w-24 sm:h-32 sm:w-32 md:h-48 md:w-48 lg:h-64 lg:w-64 mx-auto object-contain pointer-events-none"
+                style={{
+                  filter: "blur(18px) sepia(1) saturate(2) hue-rotate(15deg) brightness(1.2)",
+                  WebkitFilter: "blur(18px) sepia(1) saturate(2) hue-rotate(15deg) brightness(1.2)",
+                  opacity: 0.4,
+                }}
+                animate={{
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              {/* Second glow layer for more intensity */}
+              <motion.img 
+                src="/logo.png" 
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+                className="absolute inset-0 h-24 w-24 sm:h-32 sm:w-32 md:h-48 md:w-48 lg:h-64 lg:w-64 mx-auto object-contain pointer-events-none"
+                style={{
+                  filter: "blur(10px) sepia(1) saturate(2) hue-rotate(15deg) brightness(1.1)",
+                  WebkitFilter: "blur(10px) sepia(1) saturate(2) hue-rotate(15deg) brightness(1.1)",
+                  opacity: 0.5,
+                }}
+                animate={{
+                  opacity: [0.4, 0.6, 0.4],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.4,
+                }}
+              />
+              {/* Actual logo image on top */}
               <img 
                 src="/logo.png" 
                 alt={isArabic ? 'شعار القاضي' : 'Al Qadi Logo'} 
                 loading="eager"
-                className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-48 md:w-48 lg:h-64 lg:w-64 mx-auto object-contain drop-shadow-2xl"
+                className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-48 md:w-48 lg:h-64 lg:w-64 mx-auto object-contain z-10"
               />
             </motion.div>
 
@@ -862,7 +908,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-    </div>
+      </PageLayout>
     </>
   );
 }

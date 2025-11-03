@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +17,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { MapLocationPicker } from '@/components/MapLocationPicker';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 interface OnboardingData {
   user: {
@@ -282,11 +286,22 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      <div className="container mx-auto px-4 py-8">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'تسجيل عميل جديد' : 'Client Onboarding'}
+        showLogo={true}
+        actions={
+          <>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
+
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
               {language === 'ar' ? 'تسجيل عميل جديد' : 'Client Onboarding'}
             </h1>
             <div className="text-sm text-muted-foreground">
@@ -784,6 +799,6 @@ export default function OnboardingPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

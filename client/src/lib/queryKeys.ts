@@ -144,6 +144,38 @@ export const queryKeys = {
     products: () => [...queryKeys.stats.all, 'products'] as const,
     clients: () => [...queryKeys.stats.all, 'clients'] as const,
   },
+
+  // Monitoring & Reports
+  monitoring: {
+    all: ['monitoring'] as const,
+    health: () => [...queryKeys.monitoring.all, 'health'] as const,
+    performance: {
+      all: () => [...queryKeys.monitoring.all, 'performance'] as const,
+      stats: () => [...queryKeys.monitoring.performance.all(), 'stats'] as const,
+      metrics: (limit?: number) => [...queryKeys.monitoring.performance.all(), 'metrics', limit] as const,
+    },
+    cache: {
+      all: () => [...queryKeys.monitoring.all, 'cache'] as const,
+      stats: () => [...queryKeys.monitoring.cache.all(), 'stats'] as const,
+    },
+    business: {
+      all: () => [...queryKeys.monitoring.all, 'business'] as const,
+      metrics: (startDate?: string, endDate?: string) => [...queryKeys.monitoring.business.all(), 'metrics', startDate, endDate] as const,
+      events: (limit?: number) => [...queryKeys.monitoring.business.all(), 'events', limit] as const,
+    },
+    audit: {
+      all: () => [...queryKeys.monitoring.all, 'audit'] as const,
+      logs: (filters?: string) => [...queryKeys.monitoring.audit.all(), 'logs', filters] as const,
+      resource: (resource: string, resourceId: string) => [...queryKeys.monitoring.audit.all(), 'resource', resource, resourceId] as const,
+    },
+  },
+
+  // Admin Reports
+  adminReports: {
+    all: ['admin-reports'] as const,
+    stats: () => [...queryKeys.adminReports.all, 'stats'] as const,
+    errorStats: () => [...queryKeys.adminReports.all, 'error-stats'] as const,
+  },
 } as const;
 
 /**

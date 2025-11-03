@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,9 +98,16 @@ export default function OrderModificationsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64" data-testid="loader-modifications">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageLayout>
+        <PageHeader
+          title={i18n.language === 'ar' ? 'طلبات تعديل الطلبات' : 'Order Modification Requests'}
+          backHref="/admin"
+          showLogo={true}
+        />
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 flex items-center justify-center min-h-[60vh]" data-testid="loader-modifications">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageLayout>
     );
   }
 
@@ -106,15 +115,15 @@ export default function OrderModificationsPage() {
   const reviewedModifications = modifications.filter(m => m.status !== 'pending');
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold" data-testid="heading-order-modifications">
-          {i18n.language === 'ar' ? 'طلبات تعديل الطلبات' : 'Order Modification Requests'}
-        </h1>
-        <p className="text-muted-foreground" data-testid="text-description">
-          {i18n.language === 'ar' ? 'راجع ووافق على طلبات تعديل الطلبات من العملاء' : 'Review and approve order modification requests from clients'}
-        </p>
-      </div>
+    <PageLayout>
+      <PageHeader
+        title={i18n.language === 'ar' ? 'طلبات تعديل الطلبات' : 'Order Modification Requests'}
+        subtitle={i18n.language === 'ar' ? 'راجع ووافق على طلبات تعديل الطلبات من العملاء' : 'Review and approve order modification requests from clients'}
+        backHref="/admin"
+        showLogo={true}
+      />
+
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 relative z-10">
 
       {/* Pending Modifications */}
       <div>
@@ -447,6 +456,6 @@ export default function OrderModificationsPage() {
         </DialogContent>
         </Dialog>
       )}
-    </div>
+    </PageLayout>
   );
 }

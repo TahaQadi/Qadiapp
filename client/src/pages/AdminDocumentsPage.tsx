@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -179,42 +181,21 @@ export default function AdminDocumentsPage() {
 
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="h-9 w-9 sm:h-10 sm:w-10"
-              data-testid="button-back"
-            >
-              <Link href="/admin">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'مكتبة المستندات' : 'Document Library'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar'
-                  ? 'إدارة المستندات'
-                  : 'Manage documents'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'مكتبة المستندات' : 'Document Library'}
+        subtitle={language === 'ar' ? 'إدارة المستندات' : 'Manage documents'}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
             <LanguageToggle />
             <ThemeToggle />
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
-      {/* Main Content */}
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-1 max-w-md">
             <TabsTrigger value="documents" data-testid="tab-documents">
@@ -504,6 +485,6 @@ export default function AdminDocumentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

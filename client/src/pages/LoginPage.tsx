@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useLanguage } from '@/components/LanguageProvider';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, Mail, Lock } from 'lucide-react';
 import { Link } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export default function LoginPage() {
   const { language } = useLanguage();
@@ -79,18 +82,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
+    <PageLayout>
       {/* Main content */}
       <div className="relative flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-md border-border/50 dark:border-[#d4af37]/20 shadow-lg dark:shadow-[#d4af37]/5 animate-fade-in">
@@ -99,7 +91,7 @@ export default function LoginPage() {
               <div className="p-2 rounded-lg bg-primary/10 dark:bg-[#d4af37]/10">
                 <LogIn className="h-6 w-6 text-primary dark:text-[#d4af37]" />
               </div>
-              <CardTitle className="text-2xl font-semibold">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl font-semibold">
                 {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
               </CardTitle>
             </div>
@@ -207,6 +199,6 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }

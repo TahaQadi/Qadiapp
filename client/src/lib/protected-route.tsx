@@ -1,6 +1,14 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { Suspense } from "react";
+
+// Loading fallback component for protected routes
+const PageLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loader2 className="h-8 w-8 animate-spin text-border" />
+  </div>
+);
 
 export function ProtectedRoute({
   path,
@@ -14,9 +22,7 @@ export function ProtectedRoute({
   if (isLoading) {
     return (
       <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
+        <PageLoadingFallback />
       </Route>
     );
   }
@@ -29,5 +35,11 @@ export function ProtectedRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Component />
+      </Suspense>
+    </Route>
+  );
 }

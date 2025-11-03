@@ -3,7 +3,10 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/components/LanguageProvider';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { ShoppingCart as ShoppingCartComponent } from '@/components/ShoppingCart';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SaveTemplateDialog } from '@/components/SaveTemplateDialog';
 import { OrderTemplateCard } from '@/components/OrderTemplateCard';
 import { OrderHistoryTable } from '@/components/OrderHistoryTable';
@@ -33,10 +36,15 @@ import { SEO } from "@/components/SEO";
 import { safeJsonParse } from '@/lib/safeJson';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCartActions } from '@/hooks/useCartActions';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/lib/utils';
 import { MicroFeedbackWidget } from '@/components/MicroFeedbackWidget';
 import { EmptyState } from '@/components/EmptyState';
 import { Label } from '@/components/ui/label';
+import { QuickAddMenu } from '@/components/QuickAddMenu';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -90,6 +98,7 @@ export default function OrderingPage() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const isArabic = language === 'ar';
 
@@ -120,7 +129,8 @@ export default function OrderingPage() {
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<string | null>(null);
   const [selectedOrderForIssue, setSelectedOrderForIssue] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false); // Added for micro-feedback
+  const [showOrderPlacementFeedback, setShowOrderPlacementFeedback] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Price offer creation states
   const [createOfferDialogOpen, setCreateOfferDialogOpen] = useState(false);
@@ -153,6 +163,26 @@ export default function OrderingPage() {
       return () => clearTimeout(timeoutId);
     }
   }, [cart]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearchFocus: () => {
+      searchInputRef.current?.focus();
+    },
+    onCartToggle: () => {
+      setCartOpen(prev => !prev);
+    },
+    onEscape: () => {
+      // Close modals/dialogs
+      if (cartOpen) setCartOpen(false);
+      if (saveTemplateDialogOpen) setSaveTemplateDialogOpen(false);
+      if (orderDetailsDialogOpen) setOrderDetailsDialogOpen(false);
+      if (orderConfirmationOpen) setOrderConfirmationOpen(false);
+      if (feedbackDialogOpen) setFeedbackDialogOpen(false);
+      if (issueReportDialogOpen) setIssueReportDialogOpen(false);
+      if (createOfferDialogOpen) setCreateOfferDialogOpen(false);
+    },
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -611,6 +641,11 @@ export default function OrderingPage() {
     [cart]
   );
 
+  const cartTotalAmount = useMemo(() => {
+    const total = cart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+    return total.toFixed(2);
+  }, [cart]);
+
   const formattedOrders = useMemo(() => orders.map(order => {
     const orderItems = safeJsonParse(order.items, []) as any[];
     // Calculate total quantity of all items
@@ -653,6 +688,11 @@ export default function OrderingPage() {
     const isDifferentLta = activeLtaId !== null && activeLtaId !== product.ltaId;
     const [, setLocation] = useLocation();
     const [quantityType, setQuantityType] = useState<'pcs' | 'box'>('pcs');
+    const [isHovered, setIsHovered] = useState(false);
+    const [showQuickAddMenu, setShowQuickAddMenu] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
     // const [customQuantity, setCustomQuantity] = useState(1); // Already defined above
 
     const productSlug = product.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
@@ -680,12 +720,77 @@ export default function OrderingPage() {
       const finalQty = getFinalQuantity(customQuantity);
       handleAddToCart(product, finalQty);
       setCustomQuantity(1); // Reset after adding
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
     };
+
+    const handleQuickAdd = (qty: number) => {
+      handleAddToCart(product, qty);
+      setIsHovered(false);
+      setShowQuickAddMenu(false);
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
+    };
+
+    // Mobile swipe-right gesture handler
+    const handleTouchStart = (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+      
+      // Long press detection
+      longPressTimerRef.current = setTimeout(() => {
+        if (product.hasPrice && !isDifferentLta) {
+          setShowQuickAddMenu(true);
+        }
+      }, 500);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      // Cancel long press if user moves finger
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+      // Cancel long press timer
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+
+      // Handle swipe-right gesture
+      if (touchStartRef.current && product.hasPrice && !isDifferentLta) {
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchStartRef.current.x;
+        const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+        const deltaTime = Date.now() - touchStartRef.current.time;
+
+        // Swipe right: deltaX > 50px, horizontal movement > vertical, quick gesture (< 500ms)
+        if (deltaX > 50 && deltaX > deltaY && deltaTime < 500) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleQuickAdd(1);
+        }
+      }
+
+      touchStartRef.current = null;
+    };
+
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+        }
+      };
+    }, []);
 
     return (
       <Card
         className={cn(
-          "group flex flex-col overflow-hidden transition-all duration-500 ease-out " +
+          "group flex flex-col overflow-hidden transition-all duration-500 ease-out relative " +
           "bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm " +
           "border-border/50 dark:border-[#d4af37]/20 " +
           "hover:border-primary dark:hover:border-[#d4af37] " +
@@ -694,7 +799,34 @@ export default function OrderingPage() {
           isDifferentLta && "opacity-50 pointer-events-none"
         )}
         data-testid={`card-product-${product.id}`}
+        onMouseEnter={() => !isMobile && setIsHovered(true)}
+        onMouseLeave={() => !isMobile && setIsHovered(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
+        {/* Quick-add overlay (desktop hover) */}
+        {!isMobile && isHovered && product.hasPrice && !isDifferentLta && (
+          <QuickAddMenu
+            onAdd={handleQuickAdd}
+            disabled={isDifferentLta}
+          />
+        )}
+
+        {/* Quick-add menu (mobile long-press) */}
+        {showQuickAddMenu && product.hasPrice && !isDifferentLta && (
+          <>
+            <div 
+              className="fixed inset-0 z-20" 
+              onClick={() => setShowQuickAddMenu(false)}
+            />
+            <QuickAddMenu
+              onAdd={handleQuickAdd}
+              disabled={isDifferentLta}
+              className="z-30"
+            />
+          </>
+        )}
         {/* Shimmer Effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
 
@@ -726,7 +858,10 @@ export default function OrderingPage() {
         </div>
 
           {/* Badges */}
-          <div className="absolute top-1.5 end-1.5 flex flex-col gap-1">
+          <div className={cn(
+            "absolute top-1.5 flex flex-col gap-1",
+            isArabic ? "start-1.5" : "end-1.5"
+          )}>
             {cartItem && (
               <Badge
                 className="bg-primary text-primary-foreground shadow-lg backdrop-blur-sm text-xs px-1.5 py-0.5"
@@ -746,7 +881,7 @@ export default function OrderingPage() {
           </div>
 
         {/* Product Info */}
-        <CardContent className="flex-1 p-2.5 space-y-1.5 relative z-10">
+        <CardContent className="flex-1 p-3 space-y-1.5 relative z-10">
           <div>
             <h3
               className="font-semibold text-sm line-clamp-2 leading-tight text-card-foreground hover:text-primary transition-colors cursor-pointer"
@@ -804,15 +939,15 @@ export default function OrderingPage() {
         </CardContent>
 
         {/* Action Buttons */}
-        <CardFooter className="p-2 pt-0 gap-1.5 relative z-20 flex-col">
+        <CardFooter className="p-3 pt-0 gap-1.5 relative z-20 flex-col">
           {product.hasPrice ? (
             <>
               {cartItem ? (
-                <div className="flex items-center gap-1.5 w-full">
+                <div className="flex items-center gap-2 w-full">
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-full h-7 w-7 flex-shrink-0"
+                    className="rounded-full flex-shrink-0 h-11 w-11 min-h-[44px] min-w-[44px]"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -821,13 +956,13 @@ export default function OrderingPage() {
                     disabled={isDifferentLta}
                     data-testid={`button-decrement-cart-${product.id}`}
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="font-semibold text-xs text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في العربية' : 'in cart'}</span>
+                  <span className="font-semibold text-sm text-center flex-1">{cartItem.quantity} {language === 'ar' ? 'في العربية' : 'in cart'}</span>
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-full h-7 w-7 flex-shrink-0"
+                    className="rounded-full flex-shrink-0 h-11 w-11 min-h-[44px] min-w-[44px]"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -836,7 +971,7 @@ export default function OrderingPage() {
                     disabled={isDifferentLta}
                     data-testid={`button-increment-cart-${product.id}`}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
@@ -851,10 +986,8 @@ export default function OrderingPage() {
                           setQuantityType('pcs');
                         }}
                         className={cn(
-                          "flex-1 px-2 py-1 text-[10px] font-medium rounded transition-colors",
-                          quantityType === 'pcs'
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                          "flex-1 px-2 font-medium rounded transition-colors min-h-[44px] py-2 text-xs",
+                          quantityType === 'pcs' ? "bg-primary text-primary-foreground" : "bg-background"
                         )}
                         data-testid={`button-select-pcs-${product.id}`}
                       >
@@ -867,10 +1000,8 @@ export default function OrderingPage() {
                           setQuantityType('box');
                         }}
                         className={cn(
-                          "flex-1 px-2 py-1 text-[10px] font-medium rounded transition-colors",
-                          quantityType === 'box'
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                          "flex-1 px-2 font-medium rounded transition-colors min-h-[44px] py-2 text-xs",
+                          quantityType === 'box' ? "bg-primary text-primary-foreground" : "bg-background"
                         )}
                         data-testid={`button-select-box-${product.id}`}
                       >
@@ -880,7 +1011,7 @@ export default function OrderingPage() {
                   )}
 
                   {/* Quantity Selector and Add Button */}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <div className="flex items-center border rounded flex-shrink-0">
                       <button
                         onClick={(e) => {
@@ -888,10 +1019,10 @@ export default function OrderingPage() {
                           e.stopPropagation();
                           setCustomQuantity(Math.max(1, customQuantity - 1));
                         }}
-                        className="p-1 hover:bg-muted transition-colors"
+                        className="hover:bg-muted transition-colors min-h-[44px] min-w-[44px] p-2"
                         data-testid={`button-decrease-qty-${product.id}`}
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className="h-4 w-4" />
                       </button>
                       <input
                         type="number"
@@ -903,7 +1034,7 @@ export default function OrderingPage() {
                           setCustomQuantity(Math.max(1, val));
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-10 text-center text-xs border-x bg-transparent focus:outline-none font-semibold"
+                        className="w-12 text-center text-sm border-x bg-transparent focus:outline-none font-semibold py-2 min-h-[44px]"
                         data-testid={`input-quantity-${product.id}`}
                       />
                       <button
@@ -912,10 +1043,10 @@ export default function OrderingPage() {
                           e.stopPropagation();
                           setCustomQuantity(customQuantity + 1);
                         }}
-                        className="p-1 hover:bg-muted transition-colors"
+                        className="hover:bg-muted transition-colors min-h-[44px] min-w-[44px] p-2"
                         data-testid={`button-increase-qty-${product.id}`}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
 
@@ -926,15 +1057,15 @@ export default function OrderingPage() {
                         handleAddWithQuantity();
                       }}
                       disabled={isDifferentLta}
-                      size="sm"
-                      className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md h-7 text-xs"
+                      isSuccess={isSuccess}
+                      className="w-full transition-all duration-300 shadow-sm hover:shadow-md h-11 min-h-[44px] text-sm"
                       data-testid={`button-add-to-cart-${product.id}`}
                     >
-                      <ShoppingCart className="w-3 h-3 me-1" />
+                      <ShoppingCart className="w-4 h-4 me-2" />
                       <span className="truncate">
                         {isDifferentLta
                           ? (language === 'ar' ? 'عقد مختلف' : 'Different Contract')
-                          : (language === 'ar' ? 'إضافة' : 'Add')
+                          : (language === 'ar' ? 'إضافة إلى السلة' : 'Add to Cart')
                         }
                       </span>
                     </Button>
@@ -958,10 +1089,10 @@ export default function OrderingPage() {
                 window.location.href = '/catalog';
               }}
               variant="outline"
-              className="w-full transition-all duration-300 shadow-sm hover:shadow-md h-7 text-xs"
+              className="w-full transition-all duration-300 shadow-sm hover:shadow-md h-11 min-h-[44px] text-sm"
               data-testid={`button-request-price-${product.id}`}
             >
-              <Heart className="w-3 h-3 me-1" />
+              <Heart className="w-4 h-4 me-2" />
               <span>
                 {language === 'ar' ? 'طلب عرض سعر' : 'Request Quote'}
               </span>
@@ -1000,63 +1131,58 @@ export default function OrderingPage() {
         description={isArabic ? "إدارة الطلبات وسلة التسوق" : "Manage your orders and shopping cart"}
         noIndex={true}
       />
-      <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-[#0a0a0a]" dir={isArabic ? 'rtl' : 'ltr'} data-testid="page-ordering">
-          {/* Animated background elements - Optimized for mobile */}
-          <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 sm:top-1/3 left-1/4 sm:left-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/4 sm:bottom-1/3 right-1/4 sm:right-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <PageLayout showAnimatedBackground={false}>
+        <SidebarProvider defaultOpen={false}>
+          <div className="min-h-screen" dir={isArabic ? 'rtl' : 'ltr'} data-testid="page-ordering">
+            {/* Animated background elements - Optimized for mobile */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/4 sm:top-1/3 left-1/4 sm:left-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/10 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-1/4 sm:bottom-1/3 right-1/4 sm:right-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-[#d4af37]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-            {/* Floating particles - hidden on mobile */}
-            <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block"></div>
-            <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block" style={{ animationDelay: '2s' }}></div>
-          </div>
-
-          {/* Sidebar */}
-          <OrderingSidebar
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            cartItemCount={cartItemCount}
-            ordersCount={orders.length}
-            templatesCount={templates.length}
-            priceOffersCount={priceOffers.length}
-            ltaDocumentsCount={ltaDocuments.length}
-          />
-
-          {/* Main Content Area */}
-          <SidebarInset>
-            {/* Header - Mobile Optimized */}
-            <div className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/30 bg-background/98 dark:bg-black/95 backdrop-blur-xl shadow-lg dark:shadow-[#d4af37]/10 safe-top">
-              <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-3 min-w-0">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  <SidebarTrigger className="h-11 w-11 sm:h-10 sm:w-10 flex-shrink-0 touch-target hover:bg-primary/10 dark:hover:bg-[#d4af37]/20 rounded-lg transition-colors" />
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate leading-tight">
-                      {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
-                    </h1>
-                    <p className="text-xs text-muted-foreground dark:text-[#d4af37]/60 hidden sm:block mt-0.5">
-                      {language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Right Section - Action Buttons */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <OrderingHeader
-                    cartItemCount={cartItemCount}
-                    onCartOpen={() => setCartOpen(true)}
-                    userName={user?.name}
-                  />
-                </div>
-              </div>
+              {/* Floating particles - hidden on mobile */}
+              <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block"></div>
+              <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 dark:bg-[#d4af37]/30 rounded-full animate-float hidden sm:block" style={{ animationDelay: '2s' }}></div>
             </div>
 
+            {/* Sidebar */}
+            <OrderingSidebar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              cartItemCount={cartItemCount}
+              ordersCount={orders.length}
+              templatesCount={templates.length}
+              priceOffersCount={priceOffers.length}
+              ltaDocumentsCount={ltaDocuments.length}
+            />
+
+            {/* Main Content Area */}
+            <SidebarInset>
+              {/* Header - Using PageHeader */}
+              <PageHeader
+                title={language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
+                subtitle={language === 'ar' ? 'بوابة القاضي' : 'AlQadi Gate'}
+                showLogo={false}
+                actions={
+                  <>
+                    <OrderingHeader
+                      cartItemCount={cartItemCount}
+                      onCartOpen={() => setCartOpen(true)}
+                      userName={user?.name}
+                      cartItems={shoppingCartItems}
+                      cartTotal={cartTotalAmount}
+                      currency={cart[0]?.currency || 'ILS'}
+                    />
+                    <SidebarTrigger className="flex-shrink-0 !h-11 !w-11 min-h-[44px] min-w-[44px] hover:bg-primary/10 dark:hover:bg-[#d4af37]/20 rounded-lg transition-colors" />
+                  </>
+                }
+              />
+
             {/* Main Content */}
-            <main className="container mx-auto px-3 sm:px-4 py-3 sm:py-6 relative z-10 safe-bottom">
+            <main className="container mx-auto px-2 sm:px-4 py-2 sm:py-6 relative z-10 safe-bottom">
           {/* Welcome Section - Mobile Optimized */}
-          <div className="mb-6 sm:mb-8 animate-slide-down">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
+          <div className="mb-4 sm:mb-8 animate-slide-down">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
               {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground dark:text-[#d4af37]/70">
@@ -1067,8 +1193,8 @@ export default function OrderingPage() {
           </div>
 
           {/* Catalog Link Banner - Mobile Optimized with Enhanced Branding */}
-          <Card className="mb-6 sm:mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background dark:from-[#d4af37]/15 dark:via-[#d4af37]/5 dark:to-background border-primary/30 dark:border-[#d4af37]/40 hover:border-primary/50 dark:hover:border-[#d4af37]/60 hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300 animate-fade-in">
-            <CardContent className="p-4 sm:p-5 lg:p-6">
+          <Card className="mb-4 sm:mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background dark:from-[#d4af37]/15 dark:via-[#d4af37]/5 dark:to-background border-primary/30 dark:border-[#d4af37]/40 hover:border-primary/50 dark:hover:border-[#d4af37]/60 hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300 animate-fade-in">
+            <CardContent className="p-3 sm:p-5 lg:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
                 <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                   <div className="p-3 sm:p-3.5 rounded-xl bg-primary/15 dark:bg-[#d4af37]/20 flex-shrink-0 ring-2 ring-primary/20 dark:ring-[#d4af37]/30">
@@ -1085,7 +1211,7 @@ export default function OrderingPage() {
                     </p>
                   </div>
                 </div>
-                <Button asChild size="lg" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[48px] touch-target-large font-semibold shadow-md hover:shadow-lg dark:bg-[#d4af37] dark:hover:bg-[#f9c800] dark:text-black transition-all">
+                <Button asChild size="lg" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[48px] font-semibold shadow-md hover:shadow-lg dark:bg-[#d4af37] dark:hover:bg-[#f9c800] dark:text-black transition-all">
                   <Link href="/catalog">
                     <Boxes className="h-5 w-5 me-2" />
                     {language === 'ar' ? 'عرض الكتالوج' : 'View Catalog'}
@@ -1095,13 +1221,13 @@ export default function OrderingPage() {
             </CardContent>
           </Card>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4 lg:space-y-6">
-            <div className="sticky top-[64px] sm:top-[72px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 sm:py-3 bg-background/98 dark:bg-black/95 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/30 shadow-sm dark:shadow-[#d4af37]/5 safe-top">
-              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-                <TabsList className="w-max sm:w-full inline-flex justify-start bg-card/60 dark:bg-card/40 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/30 h-auto p-1.5 gap-1 sm:gap-2 rounded-xl">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2 sm:space-y-4 lg:space-y-6">
+            <div className="sticky z-40 -mx-2 sm:-mx-6 px-2 sm:px-6 py-2 sm:py-3 bg-background/98 dark:bg-black/95 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/30 shadow-sm dark:shadow-[#d4af37]/5 safe-top top-16">
+              <div className="overflow-x-auto scrollbar-hide smooth-scroll -mx-2 px-2 sm:mx-0 sm:px-0">
+                <TabsList className="inline-flex justify-start bg-card/60 dark:bg-card/40 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/30 h-auto p-1.5 gap-1 sm:gap-2 rounded-xl w-max sm:w-full">
                   <TabsTrigger
                     value="lta-products"
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg"
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg"
                     data-testid="tab-lta-products"
                   >
                     <Package className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
@@ -1114,7 +1240,7 @@ export default function OrderingPage() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="templates" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-templates"
                   >
                     <FileText className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
@@ -1127,7 +1253,7 @@ export default function OrderingPage() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="price-offers" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-price-offers"
                   >
                     <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
@@ -1140,7 +1266,7 @@ export default function OrderingPage() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="history" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-history"
                   >
                     <History className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
@@ -1153,7 +1279,7 @@ export default function OrderingPage() {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="lta-documents" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap touch-target-large font-medium rounded-lg" 
+                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-lta-documents"
                   >
                     <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
@@ -1176,12 +1302,15 @@ export default function OrderingPage() {
                   <div className="bg-card/50 rounded-lg p-3 sm:p-4 border border-border/50">
                     <Tabs value={selectedLtaFilter || clientLtas[0]?.id || ''} onValueChange={setSelectedLtaFilter} className="w-full">
                       <div className="relative">
-                        <TabsList className="w-full inline-flex items-center justify-start h-auto gap-2 p-1 bg-muted rounded-md overflow-x-auto flex-nowrap">
+                        <TabsList className={cn(
+                          "w-full inline-flex items-center justify-start h-auto gap-2 p-1 bg-muted rounded-md overflow-x-auto flex-nowrap smooth-scroll scrollbar-hide",
+                          isMobile ? "gap-1.5" : "gap-2"
+                        )}>
                           {clientLtas.map(lta => (
                             <TabsTrigger
                               key={lta.id}
                               value={lta.id}
-                              className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 min-w-[120px]"
+                              className="whitespace-nowrap flex-shrink-0 font-medium min-w-[120px] text-xs sm:text-sm px-3 sm:px-4 py-2 min-h-[44px]"
                               data-testid={`tab-lta-${lta.id}`}
                             >
                               {lta.name}
@@ -1223,28 +1352,38 @@ export default function OrderingPage() {
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                          <Search className={cn(
+                            "absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none",
+                            isArabic ? "right-3" : "left-3"
+                          )} />
                           <Input
+                            ref={searchInputRef}
                             type="search"
                             placeholder={language === 'ar' ? 'ابحث عن المنتجات...' : 'Search products...'}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-11 ps-10 border-2 focus-visible:ring-2"
+                            className={cn(
+                              "w-full border-2 focus-visible:ring-2 h-12 min-h-[44px] text-base",
+                              isArabic ? "pe-10 ps-4" : "ps-10 pe-4"
+                            )}
                             data-testid="input-search-products"
                           />
                           {searchQuery && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                              className={cn(
+                                "absolute top-1/2 transform -translate-y-1/2 h-11 w-11 min-h-[44px] min-w-[44px]",
+                                isArabic ? "left-2" : "right-2"
+                              )}
                               onClick={() => setSearchQuery('')}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-5 w-5" />
                             </Button>
                           )}
                         </div>
                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                          <SelectTrigger className="w-full sm:w-[220px] h-11 border-2" data-testid="select-category">
+                          <SelectTrigger className="w-full sm:w-[220px] border-2 h-12 min-h-[44px] text-base" data-testid="select-category">
                             <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
                           </SelectTrigger>
                           <SelectContent>
@@ -1269,19 +1408,38 @@ export default function OrderingPage() {
                       {/* Active Filters */}
                       {(searchQuery || selectedCategory !== 'all') && (
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-muted-foreground">
+                          <span className={cn(
+                            "text-muted-foreground",
+                            isMobile ? "text-sm" : "text-sm"
+                          )}>
                             {language === 'ar' ? 'عوامل التصفية النشطة:' : 'Active filters:'}
                           </span>
                           {searchQuery && (
                             <Badge variant="secondary" className="gap-1">
                               {language === 'ar' ? `بحث: "${searchQuery}"` : `Search: "${searchQuery}"`}
-                              <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSearchQuery('');
+                                }}
+                                className="min-h-[32px] min-w-[32px] p-1"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
                             </Badge>
                           )}
                           {selectedCategory !== 'all' && (
                             <Badge variant="secondary" className="gap-1">
                               {selectedCategory}
-                              <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('all')} />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedCategory('all');
+                                }}
+                                className="min-h-[32px] min-w-[32px] p-1"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
                             </Badge>
                           )}
                           <Button
@@ -1291,7 +1449,7 @@ export default function OrderingPage() {
                               setSearchQuery('');
                               setSelectedCategory('all');
                             }}
-                            className="h-6 text-xs"
+                            className="h-11 min-h-[44px] text-sm px-3"
                           >
                             {language === 'ar' ? 'مسح الكل' : 'Clear all'}
                           </Button>
@@ -1604,10 +1762,10 @@ export default function OrderingPage() {
                                   setOrderDetailsDialogOpen(true);
                                 }
                               }}
-                              className="flex-1 min-h-[36px] px-3 border-primary/20 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                              className="flex-1 border-primary/20 hover:bg-primary/10 hover:border-primary transition-all duration-300 min-h-[44px] px-3 text-sm"
                               data-testid={`button-view-details-${order.id}`}
                             >
-                              <FileText className="h-3.5 w-3.5 me-1.5" />
+                              <FileText className="h-4 w-4 me-2" />
                               {language === 'ar' ? 'التفاصيل' : 'Details'}
                             </Button>
 
@@ -1620,10 +1778,10 @@ export default function OrderingPage() {
                                 setIssueReportDialogOpen(true);
                               }}
                               data-testid={`button-report-issue-${order.id}`}
-                              className="min-h-[36px] px-3 border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950"
+                              className="border-orange-200 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-900 dark:hover:bg-orange-950 min-h-[44px] min-w-[44px] px-3"
                               title={language === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report Issue'}
                             >
-                              <AlertTriangle className="h-4 w-4 text-orange-500" />
+                              <AlertTriangle className="h-5 w-5 text-orange-500" />
                             </Button>
 
                             {/* Feedback Icon Button - Only for delivered/cancelled */}
@@ -1636,10 +1794,10 @@ export default function OrderingPage() {
                                   setFeedbackDialogOpen(true);
                                 }}
                                 data-testid={`button-submit-feedback-${order.id}`}
-                                className="min-h-[36px] px-3 border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950"
+                                className="border-green-200 hover:bg-green-50 hover:border-green-300 dark:border-green-900 dark:hover:bg-green-950 min-h-[44px] min-w-[44px] px-3"
                                 title={language === 'ar' ? 'تقديم ملاحظات' : 'Submit Feedback'}
                               >
-                                <Star className="h-4 w-4 text-yellow-500" />
+                                <Star className="h-5 w-5 text-yellow-500" />
                               </Button>
                             )}
                           </div>
@@ -2035,8 +2193,18 @@ export default function OrderingPage() {
           </Dialog>
             )}
           </SidebarInset>
-        </div>
-      </SidebarProvider>
+
+          {/* Floating Submit Order Button */}
+          <FloatingActionButton
+            cartItemCount={cartItemCount}
+            totalAmount={cartTotalAmount}
+            currency={cart[0]?.currency || 'ILS'}
+            onSubmitOrder={handleSubmitOrder}
+            disabled={submitOrderMutation.isPending || cart.length === 0}
+          />
+          </div>
+        </SidebarProvider>
+      </PageLayout>
     </>
   );
 }

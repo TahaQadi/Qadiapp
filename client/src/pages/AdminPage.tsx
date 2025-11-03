@@ -2,6 +2,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -165,43 +167,18 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img 
-              src="/logo.png" 
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'} 
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
-            />
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'جميع الميزات' : 'All Features'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar' ? 'مرحباً' : 'Welcome'}, {language === 'ar' ? user?.nameAr : user?.nameEn}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'جميع الميزات' : 'All Features'}
+        subtitle={language === 'ar' ? `مرحباً, ${user?.nameAr || ''}` : `Welcome, ${user?.nameEn || ''}`}
+        showLogo={true}
+        actions={
+          <>
             <Button
               variant="ghost"
               size="icon"
               asChild
-              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+              className="h-9 w-9 sm:h-10 sm:w-10"
               data-testid="button-ordering"
             >
               <Link href="/ordering">
@@ -220,7 +197,7 @@ export default function AdminPage() {
                   <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
+              <SheetContent side={language === 'ar' ? 'right' : 'left'} className="w-[280px] sm:w-[320px]">
                 <div className="flex flex-col h-full">
                   <div className="flex items-center gap-3 pb-4 border-b">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -305,9 +282,11 @@ export default function AdminPage() {
                 </div>
               </SheetContent>
             </Sheet>
-          </div>
-        </div>
-      </header>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
@@ -315,7 +294,7 @@ export default function AdminPage() {
         <div className="mb-8 animate-slide-down">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+              <h2 className="text-xl sm:text-2xl font-semibold mb-2">
                 {language === 'ar' ? 'جميع الميزات' : 'All Features'}
               </h2>
               <p className="text-muted-foreground">
@@ -460,6 +439,6 @@ export default function AdminPage() {
           </div>
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

@@ -24,18 +24,34 @@ export default function DesignSystemPage(): JSX.Element {
   const isRTL = language === "ar";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-primary/5 dark:bg-[#d4af37]/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+        {/* Floating particles */}
+        <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-primary/20 rounded-full animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              asChild
+              className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+            >
               <Link href="/admin">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#d4af37]/60 bg-clip-text text-transparent">
                 {language === "ar" ? "نظام التصميم" : "Design System"}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -49,18 +65,18 @@ export default function DesignSystemPage(): JSX.Element {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6" dir={isRTL ? "rtl" : "ltr"}>
+      <main className="container mx-auto px-4 py-6 relative z-10" dir={isRTL ? "rtl" : "ltr"}>
         <Tabs defaultValue="user-flow" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto mb-6">
-            <TabsTrigger value="user-flow" className="text-sm sm:text-base min-h-[44px] gap-2">
+          <TabsList className="grid w-full grid-cols-3 h-auto mb-6 border-border/50 dark:border-[#d4af37]/20">
+            <TabsTrigger value="user-flow" className="text-sm sm:text-base min-h-[44px] gap-2 transition-all duration-300 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10">
               <GitBranch className="h-4 w-4" />
               <span>{language === "ar" ? "سير المستخدم" : "User Flow"}</span>
             </TabsTrigger>
-            <TabsTrigger value="wireframe" className="text-sm sm:text-base min-h-[44px] gap-2">
+            <TabsTrigger value="wireframe" className="text-sm sm:text-base min-h-[44px] gap-2 transition-all duration-300 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10">
               <Layout className="h-4 w-4" />
               <span>{language === "ar" ? "الأسلاك" : "Wireframe"}</span>
             </TabsTrigger>
-            <TabsTrigger value="design-reference" className="text-sm sm:text-base min-h-[44px] gap-2">
+            <TabsTrigger value="design-reference" className="text-sm sm:text-base min-h-[44px] gap-2 transition-all duration-300 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-[#d4af37]/10">
               <Palette className="h-4 w-4" />
               <span>{language === "ar" ? "مرجع التصميم" : "Design Reference"}</span>
             </TabsTrigger>
@@ -69,7 +85,7 @@ export default function DesignSystemPage(): JSX.Element {
           {/* User Flow Tab */}
           <TabsContent value="user-flow" className="space-y-6">
             {/* Client Journey */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GitBranch className="h-5 w-5" />
@@ -159,7 +175,7 @@ export default function DesignSystemPage(): JSX.Element {
             </Card>
 
             {/* Admin Journey */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Layers className="h-5 w-5" />
@@ -236,7 +252,7 @@ export default function DesignSystemPage(): JSX.Element {
             </Card>
 
             {/* Price Management Flow */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
@@ -315,7 +331,7 @@ Client Response:
           {/* Wireframe Tab */}
           <TabsContent value="wireframe" className="space-y-6">
             {/* Ordering Page Wireframe */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Layout className="h-5 w-5" />
@@ -387,7 +403,7 @@ Client Response:
             </Card>
 
             {/* Admin Dashboard Wireframe */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Layout className="h-5 w-5" />
@@ -435,7 +451,7 @@ Client Response:
             </Card>
 
             {/* Product Management Wireframe */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Layout className="h-5 w-5" />
@@ -475,7 +491,7 @@ Client Response:
           {/* Design Reference Tab */}
           <TabsContent value="design-reference" className="space-y-6">
             {/* Color Palette */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Palette className="h-5 w-5" />
@@ -592,7 +608,7 @@ Client Response:
             </Card>
 
             {/* Typography */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Type className="h-5 w-5" />
@@ -672,7 +688,7 @@ Client Response:
             </Card>
 
             {/* Spacing System */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Layers className="h-5 w-5" />
@@ -741,7 +757,7 @@ Client Response:
             </Card>
 
             {/* Component Library */}
-            <Card>
+            <Card className="border-border/50 dark:border-[#d4af37]/20 bg-card/50 dark:bg-black/40 backdrop-blur-sm hover:shadow-lg dark:hover:shadow-[#d4af37]/10 transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Layers className="h-5 w-5" />

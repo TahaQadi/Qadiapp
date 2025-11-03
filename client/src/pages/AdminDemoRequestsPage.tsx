@@ -1,6 +1,10 @@
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/components/LanguageProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -372,30 +376,21 @@ export default function AdminDemoRequestsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold">
-                {language === 'ar' ? 'طلبات العروض التوضيحية' : 'Demo Requests'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar' ? 'إدارة طلبات العروض التوضيحية من العملاء' : 'Manage demo requests from clients'}
-              </p>
-            </div>
-          </div>
-            
-            </div>
-      </header>
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'طلبات العروض التوضيحية' : 'Demo Requests'}
+        subtitle={language === 'ar' ? 'إدارة طلبات العروض التوضيحية من العملاء' : 'Manage demo requests from clients'}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
 
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl relative z-10">
         {/* Search and Filter Controls */}
         <Card className="mb-6">
           <CardContent className="p-4">
@@ -735,6 +730,6 @@ export default function AdminDemoRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

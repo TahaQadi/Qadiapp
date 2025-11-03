@@ -41,9 +41,9 @@ export const PRODUCT_ENDPOINTS = {
 
 // Order endpoints
 export const ORDER_ENDPOINTS = {
-  LIST: '/api/orders',
-  CREATE: '/api/orders',
-  DETAIL: (id: string) => `/api/orders/${id}`,
+  LIST: '/api/client/orders',
+  CREATE: '/api/client/orders',
+  DETAIL: (id: string) => `/api/orders/${id}/history`,
   CANCEL: (id: string) => `/api/orders/${id}/cancel`,
   MODIFY: (id: string) => `/api/orders/${id}/modify`,
 } as const;

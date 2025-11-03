@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,6 +76,7 @@ export default function ClientDocumentsPage() {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('documents');
   const [requestForm, setRequestForm] = useState<DocumentRequest>({
     documentType: 'price_offer',
     description: '',
@@ -209,64 +212,23 @@ export default function ClientDocumentsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 dark:hover:bg-[#d4af37]/10 transition-all duration-300"
-              title={language === 'ar' ? 'العودة للطلبات' : 'Back to Ordering'}
-            >
-              <Link href="/ordering">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'مستنداتي' : 'My Documents'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar'
-                  ? 'عرض وتنزيل المستندات الخاصة بك'
-                  : 'View and download your documents'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'مستنداتي' : 'My Documents'}
+        subtitle={language === 'ar' ? 'عرض وتنزيل المستندات الخاصة بك' : 'View and download your documents'}
+        backHref="/ordering"
+        showLogo={true}
+        actions={
+          <>
             <NotificationCenter />
             <LanguageToggle />
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 sm:h-10 sm:w-10"
-              asChild
-            >
-              <Link href="/profile">
-                <User className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 sm:h-10 sm:w-10"
-              asChild
-            >
-              <Link href="/logout">
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
-      {/* Main Content */}
-      <div className="container mx-auto p-6 max-w-7xl">
-        <Tabs defaultValue="documents" className="space-y-6">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="documents">
               <FileText className="h-4 w-4 mr-2" />
@@ -614,6 +576,6 @@ export default function ClientDocumentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { LazyImage } from '@/components/LazyImage';
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -188,6 +189,17 @@ export default function CatalogPage() {
         description: language === 'ar'
           ? 'يرجى إضافة منتجات لطلب السعر'
           : 'Please add products to request price'
+      });
+      return;
+    }
+
+    if (clientLtas.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar'
+          ? 'لا توجد اتفاقيات معينة لحسابك. يرجى التواصل مع المسؤول.'
+          : 'No LTA assigned to your account. Please contact an administrator.'
       });
       return;
     }
@@ -699,11 +711,11 @@ export default function CatalogPage() {
 
                           <div className="relative aspect-square bg-muted overflow-hidden">
                             {product.imageUrl ? (
-                              <img
+                              <LazyImage
                                 src={product.imageUrl}
                                 alt={name}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                loading="lazy"
+                                className="transition-transform duration-300 group-hover:scale-110"
+                                aspectRatio="1/1"
                                 data-testid={`img-product-${product.id}`}
                               />
                             ) : (
@@ -838,7 +850,7 @@ export default function CatalogPage() {
               ) : (
                 <>
                   {/* LTA Selection */}
-                  {clientLtas.length > 0 && (
+                  {clientLtas.length > 0 ? (
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
                         {language === 'ar' ? 'اختر الاتفاقية' : 'Select LTA'}
@@ -855,6 +867,17 @@ export default function CatalogPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
+                      <p className="text-sm font-medium text-destructive">
+                        {language === 'ar' ? '⚠️ لا توجد اتفاقيات معينة' : '⚠️ No LTA Assigned'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === 'ar'
+                          ? 'لا توجد اتفاقيات (LTA) معينة لحسابك. يرجى التواصل مع المسؤول لتعيين اتفاقية لك.'
+                          : 'No Long-Term Agreements (LTA) are assigned to your account. Please contact an administrator to assign an LTA.'}
+                      </p>
                     </div>
                   )}
 
@@ -908,7 +931,7 @@ export default function CatalogPage() {
               {priceRequestList.length > 0 && (
                 <Button
                   onClick={handleSubmitPriceRequest}
-                  disabled={requestPriceMutation.isPending || !selectedLtaId}
+                  disabled={requestPriceMutation.isPending || !selectedLtaId || clientLtas.length === 0}
                 >
                   {requestPriceMutation.isPending ? (
                     <Loader2 className="h-4 w-4 me-2 animate-spin" />

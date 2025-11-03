@@ -1,6 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,33 +122,19 @@ export default function ErrorLogsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-              data-testid="button-back-admin"
-            >
-              <Link href="/admin">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {isRTL ? 'سجلات الأخطاء' : 'Error Logs'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {isRTL ? 'مراقبة وإدارة أخطاء التطبيق' : 'Monitor and manage application errors'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <PageLayout>
+      <PageHeader
+        title={isRTL ? 'سجلات الأخطاء' : 'Error Logs'}
+        subtitle={isRTL ? 'مراقبة وإدارة أخطاء التطبيق' : 'Monitor and manage application errors'}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
 
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         <div className={`space-y-6 ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -344,9 +334,9 @@ export default function ErrorLogsPage() {
             )}
           </ScrollArea>
         </CardContent>
-      </Card>
+        </Card>
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/components/LanguageProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -316,72 +320,68 @@ export default function CustomerFeedbackPage() {
 
   if (statsLoading || issuesLoading || microStatsLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <PageLayout>
+        <PageHeader
+          title={language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
+          backHref="/admin"
+          showLogo={true}
+        />
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      </PageLayout>
     );
   }
 
   if (statsError || issuesError || microStatsError) {
     return (
-      <div className="container mx-auto p-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              {language === 'ar' ? 'خطأ في تحميل البيانات' : 'Error Loading Data'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              {statsError && `Analytics: ${(statsError as any)?.message || 'Unknown error'}`}
-              <br />
-              {issuesError && `Issues: ${(issuesError as any)?.message || 'Unknown error'}`}
-              <br />
-              {microStatsError && `Micro Feedback Analytics: ${(microStatsError as any)?.message || 'Unknown error'}`}
-            </p>
-            <Button 
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/feedback/issues'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/feedback/micro/analytics'] });
-              }}
-            >
-              {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLayout>
+        <PageHeader
+          title={language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
+          backHref="/admin"
+          showLogo={true}
+        />
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                {language === 'ar' ? 'خطأ في تحميل البيانات' : 'Error Loading Data'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                {statsError && `Analytics: ${(statsError as any)?.message || 'Unknown error'}`}
+                <br />
+                {issuesError && `Issues: ${(issuesError as any)?.message || 'Unknown error'}`}
+                <br />
+                {microStatsError && `Micro Feedback Analytics: ${(microStatsError as any)?.message || 'Unknown error'}`}
+              </p>
+              <Button 
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/feedback/analytics'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/feedback/issues'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/feedback/micro/analytics'] });
+                }}
+              >
+                {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="h-9 w-9 sm:h-10 sm:w-10 text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
-              data-testid="button-back-admin"
-            >
-              <Link href="/admin">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                {language === 'ar' ? 'التحليلات والتقييمات وإدارة المشاكل' : 'Analytics, ratings, and issue management'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+    <PageLayout>
+      <PageHeader
+        title={language === 'ar' ? 'الملاحظات والتحليلات' : 'Feedback & Analytics'}
+        subtitle={language === 'ar' ? 'التحليلات والتقييمات وإدارة المشاكل' : 'Analytics, ratings, and issue management'}
+        backHref="/admin"
+        showLogo={true}
+        actions={
+          <>
             <Select value={timeRange} onValueChange={(val: any) => setTimeRange(val)}>
               <SelectTrigger className="w-24 sm:w-32">
                 <SelectValue />
@@ -397,9 +397,11 @@ export default function CustomerFeedbackPage() {
               <Download className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">{language === 'ar' ? 'تصدير' : 'Export'}</span>
             </Button>
-          </div>
-        </div>
-      </header>
+            <LanguageToggle />
+            <ThemeToggle />
+          </>
+        }
+      />
 
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         <div className="space-y-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
@@ -783,6 +785,6 @@ export default function CustomerFeedbackPage() {
       </Dialog>
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

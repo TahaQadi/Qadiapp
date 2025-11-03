@@ -337,12 +337,28 @@ export class MemStorage implements IStorage {
 
   // Client Authentication
   async getClientByUsername(username: string): Promise<Client | undefined> {
-    const result = await this.db.select().from(clients).where(eq(clients.username, username)).limit(1);
+    // Check both username and email fields since username should be an email
+    const result = await this.db.select().from(clients)
+      .where(
+        or(
+          eq(clients.username, username),
+          eq(clients.email, username)
+        )
+      )
+      .limit(1);
     return result[0];
   }
 
   async getCompanyUserByUsername(username: string): Promise<CompanyUser | undefined> {
-    const result = await this.db.select().from(companyUsers).where(eq(companyUsers.username, username)).limit(1);
+    // Check both username and email fields since username should be an email
+    const result = await this.db.select().from(companyUsers)
+      .where(
+        or(
+          eq(companyUsers.username, username),
+          eq(companyUsers.email, username)
+        )
+      )
+      .limit(1);
     return result[0];
   }
 

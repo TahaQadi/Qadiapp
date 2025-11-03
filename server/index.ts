@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import path from 'path'; // Import path module
+import compression from 'compression';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedData } from "./seed";
@@ -25,6 +26,21 @@ const app = express();
 // Phase 4: Security headers middleware
 const isDev = app.get("env") === "development";
 app.use(securityHeaders(isDev ? SecurityPresets.DEVELOPMENT : SecurityPresets.PRODUCTION));
+
+// Performance: Compression middleware (gzip/brotli)
+// Apply compression early, but skip for already compressed content and static assets
+app.use(compression({
+  filter: (req: Request, res: Response) => {
+    // Don't compress if client doesn't accept compression
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Use compression for all other requests
+    return compression.filter(req, res);
+  },
+  level: 6, // Good balance between compression and CPU usage
+  threshold: 1024, // Only compress responses larger than 1KB
+}));
 
 // Phase 3: Performance monitoring middleware
 app.use(performanceMonitoringMiddleware);

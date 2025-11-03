@@ -9,6 +9,7 @@ import { Client, AuthUser } from "@shared/schema";
 import { AuthenticatedRequest, AdminRequest } from "./types";
 import { createErrorResponse, ErrorCode } from "@shared/api-types";
 import { errors } from "./error-handler";
+import { loginSchema } from "@shared/api-validation";
 
 declare global {
   namespace Express {
@@ -129,7 +130,26 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+  // Validation middleware for login
+  const validateLogin = (req: Request, res: Response, next: NextFunction) => {
+    try {
+      loginSchema.parse(req.body);
+      next();
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        const firstError = error.errors[0];
+        return res.status(400).json({
+          message: firstError?.message || 'Invalid login credentials',
+          messageAr: 'بيانات تسجيل الدخول غير صحيحة'
+        });
+      }
+      next(error);
+    }
+  };
+
+  app.post("/api/login", validateLogin, passport.authenticate("local", {
+    failureMessage: 'Invalid email or password',
+  }), (req, res) => {
     const rememberMe = req.body.rememberMe === true;
     
     if (req.session) {

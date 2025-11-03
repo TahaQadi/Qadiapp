@@ -281,9 +281,9 @@ export const fileUploadSchema = z.object({
   }
 );
 
-// Login validation
+// Login validation - username should be an email
 export const loginSchema = z.object({
-  username: validators.username,
+  username: z.string().email("Username must be a valid email address"),
   password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional(),
 });

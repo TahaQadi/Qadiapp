@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Package, ShoppingCart, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LazyImage } from '@/components/LazyImage';
 import type { Product } from '@shared/schema';
 
 interface ProductWithLtaPrice extends Product {
@@ -300,10 +301,11 @@ export default function ProductDetailPage() {
           {/* Product Image */}
           <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
             {product.imageUrl ? (
-              <img
+              <LazyImage
                 src={product.imageUrl}
                 alt={name}
-                className="w-full h-full object-cover"
+                aspectRatio="1/1"
+                className="rounded-lg"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -444,10 +446,10 @@ export default function ProductDetailPage() {
                       <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                         <div className="aspect-square bg-muted">
                           {relatedProduct.imageUrl ? (
-                            <img
+                            <LazyImage
                               src={relatedProduct.imageUrl}
                               alt={relatedName}
-                              className="w-full h-full object-cover"
+                              aspectRatio="1/1"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">

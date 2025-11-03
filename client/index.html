@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    
+    <!-- Security Headers -->
+    <!-- Content Security Policy - Allow Vite dev server and necessary resources -->
+    <!-- Note: frame-ancestors and X-Frame-Options must be set via HTTP headers, not meta tags -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:* ws://localhost:*;" />
+    <!-- X-Frame-Options is set via HTTP headers, not meta tag -->
+    
     <title>Al Qadi Portal - Order Management System | بوابة القاضي</title>
     <meta name="description" content="Efficient ordering system with client-specific pricing and templates, supporting Arabic and English languages. نظام متكامل لإدارة الطلبات والعقود مع أسعار مخصصة" />
     <meta name="keywords" content="Al Qadi, order management, procurement, contracts, Palestine, القاضي, إدارة طلبات, عقود, فلسطين" />
@@ -49,9 +56,14 @@
     <meta name="twitter:description" content="Complete order and contract management system with custom pricing" />
 
     <!-- Fonts -->
+    <!-- Preload critical font files for faster rendering -->
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2" type="font/woff2" crossorigin>
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/notosansarabic/v18/nwpxtLGrOAZMl5nJ_wfgRg3DrWFZWsdvbqFMiDwZiQFl_HR2aVYttfy_4k.woff2" type="font/woff2" crossorigin>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=JetBrains+Mono:wght@400..700&family=Noto+Sans+Arabic:wght@300..900&display=swap" rel="stylesheet">
+    <!-- Use font-display: swap for faster text rendering -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/logo.png" />

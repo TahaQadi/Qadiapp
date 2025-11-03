@@ -100,7 +100,7 @@ export function MicroFeedbackWidget({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="min-h-[44px] min-w-[44px]"
             onClick={() => {
               setShowFeedback(false);
               setSentiment(null);
@@ -137,7 +137,7 @@ export function MicroFeedbackWidget({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 hover:bg-green-100 dark:hover:bg-green-900/20"
+          className="min-h-[44px] min-w-[44px] hover:bg-green-100 dark:hover:bg-green-900/20"
           onClick={() => handleSentiment('positive')}
         >
           <ThumbsUp className="h-4 w-4" />
@@ -145,7 +145,7 @@ export function MicroFeedbackWidget({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900/20"
+          className="min-h-[44px] min-w-[44px] hover:bg-red-100 dark:hover:bg-red-900/20"
           onClick={() => handleSentiment('negative')}
         >
           <ThumbsDown className="h-4 w-4" />
@@ -166,7 +166,7 @@ export function MicroFeedbackWidget({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="min-h-[44px] min-w-[44px]"
             onClick={onDismiss}
           >
             <X className="h-4 w-4" />
