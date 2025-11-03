@@ -23,6 +23,7 @@ interface ProductWithLtaPrice extends Product {
 export default function ProductDetailPage() {
   const [, params] = useRoute('/products/:category/:productName');
   const productName = params?.productName;
+  const category = params?.category;
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -47,10 +48,15 @@ export default function ProductDetailPage() {
   });
 
   const product = products.find(p => {
-    const slugifiedName = p.name?.toLowerCase()
+    const slugifiedName = (p.name || p.nameEn || '')?.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
-    return slugifiedName === productName;
+    const slugifiedCategory = (p.category || '')?.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    
+    // Match both product name and category for more precise matching
+    return slugifiedName === productName && (!category || slugifiedCategory === category);
   });
 
   // Show loading only if products are still loading AND we haven't found the product yet
@@ -138,20 +144,34 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (!product) {
+  if (!product && !productsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 dark:from-black dark:via-[#1a1a1a] dark:to-black flex items-center justify-center">
-        <div className="text-center">
-          <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-semibold mb-2">
-            {language === 'ar' ? 'المنتج غير موجود' : 'Product Not Found'}
-          </h2>
-          <Button asChild>
-            <Link href="/">
-              {language === 'ar' ? 'العودة إلى الرئيسية' : 'Back to Home'}
-            </Link>
-          </Button>
-        </div>
+        <Card className="max-w-md mx-4 text-center">
+          <CardContent className="pt-6 pb-6">
+            <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-2xl font-semibold mb-2">
+              {language === 'ar' ? 'المنتج غير موجود' : 'Product Not Found'}
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              {language === 'ar' 
+                ? 'عذراً، لم نتمكن من العثور على المنتج الذي تبحث عنه'
+                : 'Sorry, we couldn\'t find the product you\'re looking for'}
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button asChild variant="default">
+                <Link href="/catalog">
+                  {language === 'ar' ? 'تصفح الكتالوج' : 'Browse Catalog'}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/">
+                  {language === 'ar' ? 'الرئيسية' : 'Home'}
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
