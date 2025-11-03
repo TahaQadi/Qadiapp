@@ -736,7 +736,7 @@ export default function OrderingPage() {
     const handleTouchStart = (e: React.TouchEvent) => {
       const touch = e.touches[0];
       touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-      
+
       // Long press detection
       longPressTimerRef.current = setTimeout(() => {
         if (product.hasPrice && !isDifferentLta) {
