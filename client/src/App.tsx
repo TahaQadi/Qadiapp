@@ -141,7 +141,7 @@ function Router() {
       </Route>
 
       {/* Public product pages for SEO */}
-      <Route path="/products/:productName">
+      <Route path="/products/:category/:productName">
         <Suspense fallback={<PageLoadingFallback />}>
           <ProductDetailPage />
         </Suspense>

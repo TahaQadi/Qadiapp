@@ -688,8 +688,11 @@ export default function CatalogPage() {
                     const slugifiedName = product.name?.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
+                    const slugifiedCategory = (product.category || 'products').toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '');
                     return (
-                      <Link key={product.id} href={`/products/${slugifiedName}`}>
+                      <Link key={product.id} href={`/products/${slugifiedCategory}/${slugifiedName}`}>
                         <Card className="h-full relative overflow-hidden cursor-pointer group
                           bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
                           border-border/50 dark:border-[#d4af37]/20

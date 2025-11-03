@@ -21,7 +21,7 @@ interface ProductWithLtaPrice extends Product {
 }
 
 export default function ProductDetailPage() {
-  const [, params] = useRoute('/products/:productName');
+  const [, params] = useRoute('/products/:category/:productName');
   const productName = params?.productName;
   const { user } = useAuth();
   const { language } = useLanguage();
