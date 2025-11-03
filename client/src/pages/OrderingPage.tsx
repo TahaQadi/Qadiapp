@@ -1181,11 +1181,11 @@ export default function OrderingPage() {
             {/* Main Content */}
             <main className="container mx-auto px-2 sm:px-4 py-2 sm:py-6 relative z-10 safe-bottom">
           {/* Welcome Section - Mobile Optimized */}
-          <div className="mb-4 sm:mb-8 animate-slide-down">
-            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
+          <div className="mb-3 sm:mb-6 lg:mb-8 animate-slide-down">
+            <h2 className="text-base sm:text-2xl lg:text-3xl font-bold mb-0.5 sm:mb-2 bg-gradient-to-r from-foreground to-foreground/80 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent">
               {language === 'ar' ? 'لوحة الطلبات' : 'Ordering Dashboard'}
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground dark:text-[#d4af37]/70">
+            <p className="text-xs sm:text-base text-muted-foreground dark:text-[#d4af37]/70">
               {language === 'ar'
                 ? 'إدارة الطلبات وسلة التسوق من مكان واحد'
                 : 'Manage your orders and shopping cart from one place'}
@@ -1193,27 +1193,27 @@ export default function OrderingPage() {
           </div>
 
           {/* Catalog Link Banner - Mobile Optimized with Enhanced Branding */}
-          <Card className="mb-4 sm:mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background dark:from-[#d4af37]/15 dark:via-[#d4af37]/5 dark:to-background border-primary/30 dark:border-[#d4af37]/40 hover:border-primary/50 dark:hover:border-[#d4af37]/60 hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300 animate-fade-in">
-            <CardContent className="p-3 sm:p-5 lg:p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
-                <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full">
-                  <div className="p-3 sm:p-3.5 rounded-xl bg-primary/15 dark:bg-[#d4af37]/20 flex-shrink-0 ring-2 ring-primary/20 dark:ring-[#d4af37]/30">
-                    <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
+          <Card className="mb-3 sm:mb-6 lg:mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background dark:from-[#d4af37]/15 dark:via-[#d4af37]/5 dark:to-background border-primary/30 dark:border-[#d4af37]/40 hover:border-primary/50 dark:hover:border-[#d4af37]/60 hover:shadow-lg dark:hover:shadow-[#d4af37]/20 transition-all duration-300 animate-fade-in">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5">
+                <div className="flex items-start gap-2.5 sm:gap-4 flex-1 min-w-0 w-full">
+                  <div className="p-2.5 sm:p-3.5 rounded-xl bg-primary/15 dark:bg-[#d4af37]/20 flex-shrink-0 ring-2 ring-primary/20 dark:ring-[#d4af37]/30">
+                    <Package className="h-4 w-4 sm:h-6 sm:w-6 text-primary dark:text-[#d4af37]" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-1 text-foreground dark:text-[#d4af37]">
+                    <h3 className="font-semibold text-xs sm:text-base lg:text-lg mb-0.5 sm:mb-1 text-foreground dark:text-[#d4af37]">
                       {language === 'ar' ? 'تصفح كتالوج المنتجات' : 'Browse Product Catalog'}
                     </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-[#d4af37]/70 line-clamp-2">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground dark:text-[#d4af37]/70 line-clamp-2">
                       {language === 'ar'
                         ? 'استكشف جميع المنتجات المتاحة واطلب عروض الأسعار'
                         : 'Explore all available products and request price quotes'}
                     </p>
                   </div>
                 </div>
-                <Button asChild size="lg" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[48px] font-semibold shadow-md hover:shadow-lg dark:bg-[#d4af37] dark:hover:bg-[#f9c800] dark:text-black transition-all">
+                <Button asChild size="lg" className="w-full sm:w-auto sm:flex-shrink-0 min-h-[44px] font-semibold shadow-md hover:shadow-lg dark:bg-[#d4af37] dark:hover:bg-[#f9c800] dark:text-black transition-all text-xs sm:text-sm">
                   <Link href="/catalog">
-                    <Boxes className="h-5 w-5 me-2" />
+                    <Boxes className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
                     {language === 'ar' ? 'عرض الكتالوج' : 'View Catalog'}
                   </Link>
                 </Button>
@@ -1224,68 +1224,68 @@ export default function OrderingPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2 sm:space-y-4 lg:space-y-6">
             <div className="sticky z-40 -mx-2 sm:-mx-6 px-2 sm:px-6 py-2 sm:py-3 bg-background/98 dark:bg-black/95 backdrop-blur-xl border-b border-border/50 dark:border-[#d4af37]/30 shadow-sm dark:shadow-[#d4af37]/5 safe-top top-16">
               <div className="overflow-x-auto scrollbar-hide smooth-scroll -mx-2 px-2 sm:mx-0 sm:px-0">
-                <TabsList className="inline-flex justify-start bg-card/60 dark:bg-card/40 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/30 h-auto p-1.5 gap-1 sm:gap-2 rounded-xl w-max sm:w-full">
+                <TabsList className="inline-flex justify-start bg-card/60 dark:bg-card/40 backdrop-blur-sm border border-border/50 dark:border-[#d4af37]/30 h-auto p-1 sm:p-1.5 gap-1 rounded-xl w-max sm:w-full">
                   <TabsTrigger
                     value="lta-products"
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg"
+                    className="min-h-[44px] min-w-[44px] px-3 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg"
                     data-testid="tab-lta-products"
                   >
-                    <Package className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
-                    <span>{language === 'ar' ? 'الاتفاقيات' : 'LTAs'}</span>
+                    <Package className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="hidden xs:inline ms-1.5 sm:ms-2">{language === 'ar' ? 'الاتفاقيات' : 'LTAs'}</span>
                     {clientLtas.length > 0 && (
-                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
+                      <Badge variant="secondary" className="ms-1 sm:ms-2 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[10px] sm:text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {clientLtas.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="templates" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
+                    className="min-h-[44px] min-w-[44px] px-3 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-templates"
                   >
-                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
-                    <span>{language === 'ar' ? 'قوالب' : 'Templates'}</span>
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="hidden xs:inline ms-1.5 sm:ms-2">{language === 'ar' ? 'قوالب' : 'Templates'}</span>
                     {templates.length > 0 && (
-                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
+                      <Badge variant="secondary" className="ms-1 sm:ms-2 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[10px] sm:text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {templates.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="price-offers" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
+                    className="min-h-[44px] min-w-[44px] px-3 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-price-offers"
                   >
-                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
-                    <span>{language === 'ar' ? 'عروض' : 'Offers'}</span>
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="hidden xs:inline ms-1.5 sm:ms-2">{language === 'ar' ? 'عروض' : 'Offers'}</span>
                     {priceOffers.length > 0 && (
-                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
+                      <Badge variant="secondary" className="ms-1 sm:ms-2 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[10px] sm:text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {priceOffers.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="history" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
+                    className="min-h-[44px] min-w-[44px] px-3 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-history"
                   >
-                    <History className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
-                    <span>{language === 'ar' ? 'سجل' : 'History'}</span>
+                    <History className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="hidden xs:inline ms-1.5 sm:ms-2">{language === 'ar' ? 'سجل' : 'History'}</span>
                     {orders.length > 0 && (
-                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
+                      <Badge variant="secondary" className="ms-1 sm:ms-2 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[10px] sm:text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {orders.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="lta-documents" 
-                    className="min-h-[48px] px-4 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
+                    className="min-h-[44px] min-w-[44px] px-3 sm:px-5 lg:px-6 flex-shrink-0 data-[state=active]:bg-primary/15 dark:data-[state=active]:bg-[#d4af37]/20 data-[state=active]:text-primary dark:data-[state=active]:text-[#d4af37] data-[state=active]:shadow-md dark:data-[state=active]:shadow-[#d4af37]/20 transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap font-medium rounded-lg" 
                     data-testid="tab-lta-documents"
                   >
-                    <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5 me-1.5 sm:me-2" />
-                    <span>{language === 'ar' ? 'مستندات' : 'Docs'}</span>
+                    <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="hidden xs:inline ms-1.5 sm:ms-2">{language === 'ar' ? 'مستندات' : 'Docs'}</span>
                     {ltaDocuments.length > 0 && (
-                      <Badge variant="secondary" className="ms-2 h-5 sm:h-6 min-w-5 sm:min-w-6 px-1.5 sm:px-2 text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
+                      <Badge variant="secondary" className="ms-1 sm:ms-2 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[10px] sm:text-xs dark:bg-[#d4af37]/30 dark:text-[#d4af37]">
                         {ltaDocuments.length}
                       </Badge>
                     )}
@@ -1518,7 +1518,7 @@ export default function OrderingPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-5">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
                     {filteredProducts.map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))}
