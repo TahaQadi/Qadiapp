@@ -47,16 +47,36 @@ export default function ProductDetailPage() {
     queryKey: ['/api/products/public'],
   });
 
+  // Debug logging
+  if (products.length > 0 && !product && !productsLoading) {
+    console.log('Looking for product:', { productName, category });
+    console.log('Available products:', products.map(p => ({
+      name: p.name,
+      nameEn: p.nameEn,
+      category: p.category,
+      mainCategory: p.mainCategory,
+      slug: (p.name || p.nameEn || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    })));
+  }
+
   const product = products.find(p => {
-    const slugifiedName = (p.name || p.nameEn || '')?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    const slugifiedCategory = (p.category || '')?.toLowerCase()
+    // Try both name and nameEn fields for matching
+    const nameToSlugify = p.name || p.nameEn || '';
+    const slugifiedName = nameToSlugify.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
     
-    // Match both product name and category for more precise matching
-    return slugifiedName === productName && (!category || slugifiedCategory === category);
+    // For category, check both category and mainCategory fields
+    const categoryToSlugify = p.category || p.mainCategory || '';
+    const slugifiedCategory = categoryToSlugify.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    
+    // Match product name first, then optionally match category if provided
+    const nameMatches = slugifiedName === productName;
+    const categoryMatches = !category || slugifiedCategory === category;
+    
+    return nameMatches && categoryMatches;
   });
 
   // Show loading only if products are still loading AND we haven't found the product yet

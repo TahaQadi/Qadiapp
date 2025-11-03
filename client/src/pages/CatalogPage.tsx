@@ -683,12 +683,18 @@ export default function CatalogPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredProducts.map((product, index) => {
-                    const name = product.name;
-                    const description = product.description;
-                    const slugifiedName = product.name?.toLowerCase()
+                    // Use consistent name field (prefer name, fallback to nameEn)
+                    const name = product.name || product.nameEn || 'Unknown Product';
+                    const description = product.description || product.descriptionEn;
+                    
+                    // Slugify the name consistently
+                    const slugifiedName = name.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
-                    const slugifiedCategory = (product.category || 'products').toLowerCase()
+                    
+                    // Slugify category (prefer category, fallback to mainCategory)
+                    const categoryForUrl = product.category || product.mainCategory || 'products';
+                    const slugifiedCategory = categoryForUrl.toLowerCase()
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-+|-+$/g, '');
                     return (
