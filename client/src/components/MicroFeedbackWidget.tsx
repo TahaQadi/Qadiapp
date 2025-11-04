@@ -159,8 +159,8 @@ export function MicroFeedbackWidget({
       <div className="flex items-start justify-between mb-3">
         <p className="text-sm font-medium">
           {language === 'ar' 
-            ? 'هل كانت هذه التجربة مفيدة؟' 
-            : 'Was this experience helpful?'}
+            ? 'هل كان هذا مفيداً؟' 
+            : 'Was this helpful?'}
         </p>
         {onDismiss && (
           <Button

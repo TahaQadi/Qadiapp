@@ -480,7 +480,25 @@ export const updateClientSchema = insertClientSchema.pick({
 });
 
 // Client creation schema (admin with password)
-export const createClientSchema = insertClientSchema.omit({ isAdmin: true });
+export const createClientSchema = insertClientSchema.omit({ isAdmin: true }).extend({
+  // Headquarters location (optional)
+  headquarters: z.object({
+    name: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    phone: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+  }).optional(),
+  // Departments (optional)
+  departments: z.array(z.object({
+    type: z.string(),
+    contactName: z.string().optional(),
+    contactEmail: z.string().email().optional().or(z.literal('')),
+    contactPhone: z.string().optional(),
+  })).optional(),
+});
 
 // Client self-update schema (clients can update own info)
 export const updateOwnProfileSchema = z.object({

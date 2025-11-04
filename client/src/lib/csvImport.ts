@@ -17,18 +17,47 @@ export interface ImportResult {
   invalidRows: number;
 }
 
+export interface DepartmentImportData {
+  departmentType: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export interface LocationImportData {
+  name: string;
+  address: string;
+  city?: string;
+  country?: string;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
+  isHeadquarters?: boolean;
+}
+
 export interface ClientImportData {
+  // Basic fields
   username: string;
   password: string;
   name: string;
   email?: string;
   phone?: string;
   isAdmin?: boolean;
-  departmentTypes?: string[];
-  locationName?: string;
-  locationAddress?: string;
-  locationCity?: string;
-  locationCountry?: string;
+  // Organization fields
+  domain?: string;
+  registrationId?: string;
+  industry?: string;
+  hqCity?: string;
+  hqCountry?: string;
+  // Commercial fields
+  paymentTerms?: string;
+  priceTier?: string;
+  riskTier?: 'A' | 'B' | 'C';
+  contractModel?: 'PO' | 'LTA' | 'Subscription';
+  // Departments (multiple)
+  departments?: DepartmentImportData[];
+  // Locations (multiple)
+  locations?: LocationImportData[];
 }
 
 /**
@@ -45,7 +74,13 @@ export function parseCSVFile(file: File): Promise<string[][]> {
         const text = e.target?.result as string;
         const lines = text.split('\n').filter(line => line.trim());
         
-        const data = lines.map(line => {
+        // Filter out comment lines (lines starting with #)
+        const nonCommentLines = lines.filter(line => {
+          const trimmed = line.trim();
+          return trimmed.length > 0 && !trimmed.startsWith('#');
+        });
+        
+        const data = nonCommentLines.map(line => {
           // Simple CSV parsing - handles quoted fields
           const result: string[] = [];
           let current = '';
@@ -181,6 +216,30 @@ export function validateClientRow(row: string[], headers: string[], rowIndex: nu
     }
   }
   
+  // Risk tier validation
+  if (data.risktier && data.risktier.length > 0) {
+    const validValues = ['A', 'B', 'C'];
+    if (!validValues.includes(data.risktier.toUpperCase())) {
+      errors.push({
+        row: rowIndex,
+        field: 'riskTier',
+        message: 'riskTier must be A, B, or C'
+      });
+    }
+  }
+  
+  // Contract model validation
+  if (data.contractmodel && data.contractmodel.length > 0) {
+    const validValues = ['PO', 'LTA', 'Subscription'];
+    if (!validValues.includes(data.contractmodel)) {
+      errors.push({
+        row: rowIndex,
+        field: 'contractModel',
+        message: 'contractModel must be PO, LTA, or Subscription'
+      });
+    }
+  }
+  
   return errors;
 }
 
@@ -228,6 +287,77 @@ export function processCSVData(csvData: string[][]): ImportResult {
   const errors: ImportValidationError[] = [];
   const validData: ClientImportData[] = [];
   
+  // Helper function to parse departments
+  function parseDepartments(deptStr: string): DepartmentImportData[] | undefined {
+    if (!deptStr || deptStr.trim() === '') return undefined;
+    
+    try {
+      // Try JSON format first
+      if (deptStr.trim().startsWith('[')) {
+        return JSON.parse(deptStr);
+      }
+      
+      // Otherwise parse pipe-separated format: type|name|email|phone
+      const departments: DepartmentImportData[] = [];
+      const deptEntries = deptStr.split('||').filter(d => d.trim());
+      
+      for (const entry of deptEntries) {
+        const parts = entry.split('|').map(p => p.trim());
+        if (parts.length >= 1 && parts[0]) {
+          departments.push({
+            departmentType: parts[0],
+            contactName: parts[1] || undefined,
+            contactEmail: parts[2] || undefined,
+            contactPhone: parts[3] || undefined,
+          });
+        }
+      }
+      
+      return departments.length > 0 ? departments : undefined;
+    } catch {
+      // Fallback: treat as comma-separated department types
+      return deptStr.split(',').map(d => ({
+        departmentType: d.trim()
+      })).filter(d => d.departmentType);
+    }
+  }
+  
+  // Helper function to parse locations
+  function parseLocations(locStr: string): LocationImportData[] | undefined {
+    if (!locStr || locStr.trim() === '') return undefined;
+    
+    try {
+      // Try JSON format first
+      if (locStr.trim().startsWith('[')) {
+        return JSON.parse(locStr);
+      }
+      
+      // Otherwise parse pipe-separated format: name|address|city|country|phone|latitude|longitude|isHQ
+      const locations: LocationImportData[] = [];
+      const locEntries = locStr.split('||').filter(l => l.trim());
+      
+      for (const entry of locEntries) {
+        const parts = entry.split('|').map(p => p.trim());
+        if (parts.length >= 2 && parts[0] && parts[1]) {
+          locations.push({
+            name: parts[0],
+            address: parts[1],
+            city: parts[2] || undefined,
+            country: parts[3] || undefined,
+            phone: parts[4] || undefined,
+            latitude: parts[5] ? parseFloat(parts[5]) : undefined,
+            longitude: parts[6] ? parseFloat(parts[6]) : undefined,
+            isHeadquarters: parts[7] ? ['true', 'yes', '1', 'yes'].includes(parts[7].toLowerCase()) : false,
+          });
+        }
+      }
+      
+      return locations.length > 0 ? locations : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  
   // Validate each row
   dataRows.forEach((row, index) => {
     const rowErrors = validateClientRow(row, headers, index + 2); // +2 because header is row 1
@@ -248,12 +378,21 @@ export function processCSVData(csvData: string[][]): ImportResult {
         phone: data.phone || undefined,
         isAdmin: data.isadmin ? 
           ['true', 'yes', '1'].includes(data.isadmin.toLowerCase()) : false,
-        departmentTypes: data.departmenttypes ? 
-          data.departmenttypes.split(',').map(d => d.trim()) : undefined,
-        locationName: data.locationname || undefined,
-        locationAddress: data.locationaddress || undefined,
-        locationCity: data.locationcity || undefined,
-        locationCountry: data.locationcountry || undefined,
+        // Organization fields
+        domain: data.domain || undefined,
+        registrationId: data.registrationid || undefined,
+        industry: data.industry || undefined,
+        hqCity: data.hqcity || undefined,
+        hqCountry: data.hqcountry || undefined,
+        // Commercial fields
+        paymentTerms: data.paymentterms || undefined,
+        priceTier: data.pricetier || undefined,
+        riskTier: data.risktier ? (data.risktier.toUpperCase() as 'A' | 'B' | 'C') : undefined,
+        contractModel: data.contractmodel ? (data.contractmodel as 'PO' | 'LTA' | 'Subscription') : undefined,
+        // Departments
+        departments: parseDepartments(data.departments || ''),
+        // Locations
+        locations: parseLocations(data.locations || ''),
       };
       
       validData.push(clientData);
@@ -282,30 +421,90 @@ export function generateClientImportTemplate(): string {
     'email',
     'phone',
     'isAdmin',
-    'departmentTypes',
-    'locationName',
-    'locationAddress',
-    'locationCity',
-    'locationCountry'
+    'domain',
+    'registrationId',
+    'industry',
+    'hqCity',
+    'hqCountry',
+    'paymentTerms',
+    'priceTier',
+    'riskTier',
+    'contractModel',
+    'departments',
+    'locations'
   ];
   
+  // Sample data with all fields
   const sampleData = [
-    'client1',
-    'Password123!',
-    'Company One',
-    'email@example.com',
-    '+123456789',
-    'false',
-    'finance,purchase',
-    'Head Office',
-    '123 Main Street',
-    'Riyadh',
-    'Saudi Arabia'
+    'client1',                    // username
+    'Password123!',               // password
+    'Company One',                // name
+    'email@example.com',          // email
+    '+123456789',                 // phone
+    'false',                      // isAdmin
+    'example.com',                // domain
+    'REG-123456',                 // registrationId
+    'Technology',                 // industry
+    'Riyadh',                     // hqCity
+    'Saudi Arabia',               // hqCountry
+    'Net 30',                     // paymentTerms
+    'Tier 1',                     // priceTier
+    'A',                          // riskTier
+    'LTA',                        // contractModel
+    'finance|John Doe|john@example.com|+123456789||purchase|Jane Smith|jane@example.com|+987654321', // departments
+    'Head Office|123 Main Street|Riyadh|Saudi Arabia|+123456789|24.7136|46.6753|true||Warehouse|456 Industrial Ave|Jeddah|Saudi Arabia||21.5433|39.1728|false' // locations
+  ];
+  
+  // Escape values that contain commas or quotes
+  const escapeCSV = (value: string): string => {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  };
+  
+  // Build template with comments
+  const commentLines = [
+    '# Client Import Template',
+    '# Format: CSV with UTF-8 encoding',
+    '#',
+    '# BASIC FIELDS (Required: username, password, name)',
+    '# username: Unique username (min 3 characters)',
+    '# password: Password (min 6 characters)',
+    '# name: Company name',
+    '# email: Email address (optional)',
+    '# phone: Phone number (optional)',
+    '# isAdmin: true/false (optional, default: false)',
+    '#',
+    '# ORGANIZATION FIELDS (Optional)',
+    '# domain: Website domain',
+    '# registrationId: Registration/VAT number',
+    '# industry: Industry sector',
+    '# hqCity: Headquarters city',
+    '# hqCountry: Headquarters country',
+    '#',
+    '# COMMERCIAL FIELDS (Optional)',
+    '# paymentTerms: Payment terms (e.g., Net 30)',
+    '# priceTier: Price tier level',
+    '# riskTier: A, B, or C',
+    '# contractModel: PO, LTA, or Subscription',
+    '#',
+    '# DEPARTMENTS (Optional)',
+    '# Format: type|contactName|contactEmail|contactPhone || type2|name2|email2|phone2',
+    '# Example: finance|John Doe|john@example.com|+123456789 || purchase|Jane Smith|jane@example.com|+987654321',
+    '# Valid types: finance, purchase, warehouse',
+    '#',
+    '# LOCATIONS (Optional)',
+    '# Format: name|address|city|country|phone|latitude|longitude|isHQ || name2|address2|...',
+    '# Example: Head Office|123 Main St|Riyadh|Saudi Arabia|+123456789|24.7136|46.6753|true',
+    '# isHQ: true/false (indicates if this is the headquarters location)',
+    '#',
   ];
   
   const csvRows = [
+    ...commentLines,
     headers.join(','),
-    sampleData.join(',')
+    sampleData.map(escapeCSV).join(',')
   ];
   
   return '\uFEFF' + csvRows.join('\n'); // Add BOM for proper encoding

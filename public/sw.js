@@ -1,15 +1,142 @@
-const CACHE_NAME = 'alqadi-v1';
-const urlsToCache = [
+// Service Worker Version - increment when updating caching strategy
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `alqadi-${CACHE_VERSION}`;
+
+// Separate caches for different resource types
+const STATIC_CACHE = `${CACHE_NAME}-static`;
+const API_CACHE = `${CACHE_NAME}-api`;
+const HTML_CACHE = `${CACHE_NAME}-html`;
+
+// URLs to precache on install
+const urlsToPrecache = [
   '/',
-  '/offline.html'
+  '/offline.html',
+  '/manifest.json',
+  '/logo.png'
 ];
 
-// Install event - cache initial resources
+// Cache TTLs (in milliseconds)
+const CACHE_TTL = {
+  STATIC: 365 * 24 * 60 * 60 * 1000, // 1 year for hashed assets
+  API: 5 * 60 * 1000, // 5 minutes for API responses
+  HTML: 0, // Always revalidate HTML
+};
+
+// Helper: Check if request is for static asset (hashed JS/CSS/images)
+function isStaticAsset(url) {
+  const staticPatterns = [
+    /\.(js|css|woff2?|ttf|eot|png|jpg|jpeg|gif|svg|webp|ico)$/i,
+    /\/assets\//,
+    /\/static\//,
+  ];
+  return staticPatterns.some(pattern => pattern.test(url));
+}
+
+// Helper: Check if request is for API
+function isAPIRequest(url) {
+  return url.includes('/api/');
+}
+
+// Helper: Check if request is HTML
+function isHTMLRequest(request) {
+  return request.headers.get('accept')?.includes('text/html') || 
+         request.url.endsWith('/') || 
+         !request.url.includes('.');
+}
+
+// Cache-first strategy for static assets
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  
+  if (cached) {
+    return cached;
+  }
+  
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const responseToCache = response.clone();
+      cache.put(request, responseToCache);
+    }
+    return response;
+  } catch (error) {
+    // If network fails and no cache, return offline page for navigation requests
+    if (isHTMLRequest(request)) {
+      const offlinePage = await cache.match('/offline.html');
+      if (offlinePage) return offlinePage;
+    }
+    throw error;
+  }
+}
+
+// Network-first with cache fallback for API requests
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  
+  try {
+    const response = await fetch(request);
+    
+    // Cache successful GET responses
+    if (request.method === 'GET' && response.ok) {
+      const responseToCache = response.clone();
+      cache.put(request, responseToCache).then(() => {
+        // Set expiration timestamp in metadata
+        setTimeout(() => {
+          cache.delete(request);
+        }, CACHE_TTL.API);
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    // Fallback to cache if network fails
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+}
+
+// Stale-while-revalidate for HTML
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  
+  // Start fetching fresh content in background
+  const fetchPromise = fetch(request).then(response => {
+    if (response.ok) {
+      const responseToCache = response.clone();
+      cache.put(request, responseToCache);
+    }
+    return response;
+  }).catch(() => null);
+  
+  // Return cached version immediately if available
+  if (cached) {
+    return cached;
+  }
+  
+  // Otherwise wait for network
+  const response = await fetchPromise;
+  if (response) {
+    return response;
+  }
+  
+  // Last resort: offline page
+  const offlinePage = await cache.match('/offline.html');
+  if (offlinePage) return offlinePage;
+  
+  throw new Error('Offline and no cache available');
+}
+
+// Install event - precache critical resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToPrecache);
       })
       .then(() => self.skipWaiting())
   );
@@ -21,7 +148,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          // Delete all caches that don't match current version
+          if (!cacheName.startsWith(`alqadi-${CACHE_VERSION}`)) {
             return caches.delete(cacheName);
           }
         })
@@ -30,35 +158,45 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch event - route requests to appropriate strategy
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  
   // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  if (!request.url.startsWith(self.location.origin)) {
     return;
   }
-
+  
+  // Skip non-GET requests (except we might want to handle POST for offline later)
+  if (request.method !== 'GET') {
+    return;
+  }
+  
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response before caching
-        const responseToCache = response.clone();
-        
-        // Only cache successful GET requests
-        if (event.request.method === 'GET' && response.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        
-        return response;
-      })
-      .catch(() => {
-        // If network fails, try cache
-        return caches.match(event.request)
-          .then((response) => {
-            return response || caches.match('/offline.html');
-          });
-      })
+    (async () => {
+      const url = request.url;
+      
+      // Static assets: cache-first strategy
+      if (isStaticAsset(url)) {
+        return cacheFirst(request, STATIC_CACHE);
+      }
+      
+      // API requests: network-first with cache fallback
+      if (isAPIRequest(url)) {
+        return networkFirst(request, API_CACHE);
+      }
+      
+      // HTML requests: stale-while-revalidate
+      if (isHTMLRequest(request)) {
+        return staleWhileRevalidate(request, HTML_CACHE);
+      }
+      
+      // Default: network-first
+      return networkFirst(request, STATIC_CACHE);
+    })().catch(() => {
+      // Final fallback: offline page
+      return caches.match('/offline.html');
+    })
   );
 });
 

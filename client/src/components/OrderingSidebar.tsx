@@ -14,11 +14,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  SidebarRail,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { User, Settings, LogOut, Package, FileText, History, FolderOpen, DollarSign, Moon } from 'lucide-react';
+import { User, Settings, LogOut, Package, FileText, History, FolderOpen, DollarSign, ShoppingCart, Boxes } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface OrderingSidebarProps {
   activeTab?: string;
@@ -45,27 +46,29 @@ export function OrderingSidebar({
   const isArabic = language === 'ar';
 
   const handleTabClick = (tab: string): void => {
-    onTabChange?.(tab);
+    if (onTabChange) {
+      onTabChange(tab);
+    }
   };
 
   return (
-    <Sidebar variant="inset" collapsible="icon" side="right">
+    <Sidebar variant="inset" collapsible="icon" side={isArabic ? 'left' : 'right'}>
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 px-2 py-4">
-          <img
-            src="/logo.png"
-            alt={isArabic ? 'شعار الشركة' : 'Company Logo'}
-            className="h-8 w-8 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0"
-          />
-          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <h2 className="text-sm font-bold bg-gradient-to-r from-primary to-primary/60 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-              {isArabic ? 'بوابة القاضي' : 'AlQadi Gate'}
-            </h2>
-            <p className="text-xs text-muted-foreground truncate">
-              {isArabic ? 'مرحباً' : 'Welcome'}, {user?.name}
-            </p>
+        {user && (
+          <div className="flex items-center gap-3 px-2 py-4">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <User className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+              <p className="font-semibold truncate text-sm">
+                {user?.name || user?.email}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -79,8 +82,9 @@ export function OrderingSidebar({
                   isActive={activeTab === 'lta-products'}
                   onClick={() => handleTabClick('lta-products')}
                   tooltip={isArabic ? 'منتجات الاتفاقيات' : 'LTA Products'}
+                  className="h-11"
                 >
-                  <Package className="h-4 w-4" />
+                  <Package className="h-5 w-5" />
                   <span>{isArabic ? 'منتجات الاتفاقيات' : 'LTA Products'}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -90,8 +94,9 @@ export function OrderingSidebar({
                   isActive={activeTab === 'templates'}
                   onClick={() => handleTabClick('templates')}
                   tooltip={t('templates')}
+                  className="h-11"
                 >
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-5 w-5" />
                   <span>{t('templates')}</span>
                   {templatesCount > 0 && (
                     <span className="ml-auto text-xs text-muted-foreground">{templatesCount}</span>
@@ -104,8 +109,9 @@ export function OrderingSidebar({
                   isActive={activeTab === 'price-offers'}
                   onClick={() => handleTabClick('price-offers')}
                   tooltip={isArabic ? 'عروض الأسعار' : 'Price Offers'}
+                  className="h-11"
                 >
-                  <DollarSign className="h-4 w-4" />
+                  <DollarSign className="h-5 w-5" />
                   <span>{isArabic ? 'عروض الأسعار' : 'Price Offers'}</span>
                   {priceOffersCount > 0 && (
                     <span className="ml-auto text-xs text-muted-foreground">{priceOffersCount}</span>
@@ -118,8 +124,9 @@ export function OrderingSidebar({
                   isActive={activeTab === 'history'}
                   onClick={() => handleTabClick('history')}
                   tooltip={t('history')}
+                  className="h-11"
                 >
-                  <History className="h-4 w-4" />
+                  <History className="h-5 w-5" />
                   <span>{t('history')}</span>
                   {ordersCount > 0 && (
                     <span className="ml-auto text-xs text-muted-foreground">{ordersCount}</span>
@@ -132,8 +139,9 @@ export function OrderingSidebar({
                   isActive={activeTab === 'lta-documents'}
                   onClick={() => handleTabClick('lta-documents')}
                   tooltip={isArabic ? 'مستندات الاتفاقيات' : 'LTA Documents'}
+                  className="h-11"
                 >
-                  <FolderOpen className="h-4 w-4" />
+                  <FolderOpen className="h-5 w-5" />
                   <span>{isArabic ? 'مستندات الاتفاقيات' : 'LTA Documents'}</span>
                   {ltaDocumentsCount > 0 && (
                     <span className="ml-auto text-xs text-muted-foreground">{ltaDocumentsCount}</span>
@@ -152,9 +160,9 @@ export function OrderingSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={isArabic ? 'الملف الشخصي' : 'Profile'}>
+                <SidebarMenuButton asChild tooltip={isArabic ? 'الملف الشخصي' : 'Profile'} className="h-11">
                   <Link href="/profile">
-                    <User className="h-4 w-4" />
+                    <User className="h-5 w-5" />
                     <span>{isArabic ? 'الملف الشخصي' : 'Profile'}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -162,14 +170,32 @@ export function OrderingSidebar({
 
               {user?.isAdmin && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={isArabic ? 'لوحة الإدارة' : 'Admin Panel'}>
+                  <SidebarMenuButton asChild tooltip={isArabic ? 'لوحة الإدارة' : 'Admin Panel'} className="h-11">
                     <Link href="/admin">
-                      <Settings className="h-4 w-4" />
+                      <Settings className="h-5 w-5" />
                       <span>{isArabic ? 'لوحة الإدارة' : 'Admin Panel'}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={isArabic ? 'الكتالوج' : 'Catalog'} className="h-11">
+                  <Link href="/catalog">
+                    <Boxes className="h-5 w-5" />
+                    <span>{isArabic ? 'الكتالوج' : 'Catalog'}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={isArabic ? 'الطلبات' : 'Orders'} className="h-11">
+                  <Link href="/orders">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span>{isArabic ? 'الطلبات' : 'Orders'}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -178,45 +204,35 @@ export function OrderingSidebar({
 
         {/* Settings Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>{isArabic ? 'الإعدادات' : 'Settings'}</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <div className="flex items-center justify-between px-2 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🌐</span>
-                    <span className="text-sm">{isArabic ? 'اللغة' : 'Language'}</span>
-                  </div>
-                  <LanguageToggle />
-                </div>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <div className="flex items-center justify-between px-2 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <Moon className="h-4 w-4" />
-                    <span className="text-sm">{isArabic ? 'الوضع الليلي' : 'Dark Mode'}</span>
-                  </div>
-                  <ThemeToggle />
-                </div>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <div className="space-y-2 px-3 py-2">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm">{isArabic ? 'اللغة' : 'Language'}</span>
+                <LanguageToggle />
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm">{isArabic ? 'المظهر' : 'Theme'}</span>
+                <ThemeToggle />
+              </div>
+            </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="border-t pt-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={isArabic ? 'تسجيل الخروج' : 'Logout'}>
+            <SidebarMenuButton asChild tooltip={isArabic ? 'تسجيل الخروج' : 'Logout'} className="h-11">
               <Link href="/logout">
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
                 <span>{isArabic ? 'تسجيل الخروج' : 'Logout'}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <SidebarRail />
     </Sidebar>
   );
 }

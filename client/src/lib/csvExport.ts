@@ -142,6 +142,34 @@ export function formatDepartmentsForCSV(departments: Array<{ departmentType: str
 }
 
 /**
+ * Formats departments with full details for CSV export (import format)
+ * @param departments - Array of department objects with contact info
+ * @returns Pipe-separated format: type|contactName|contactEmail|contactPhone || type2|name2|email2|phone2
+ */
+export function formatDepartmentsForImportCSV(
+  departments: Array<{ 
+    departmentType: string; 
+    contactName?: string | null; 
+    contactEmail?: string | null; 
+    contactPhone?: string | null;
+  }>
+): string {
+  if (!departments || departments.length === 0) {
+    return '';
+  }
+  
+  return departments.map(dept => {
+    const parts = [
+      dept.departmentType,
+      dept.contactName || '',
+      dept.contactEmail || '',
+      dept.contactPhone || ''
+    ];
+    return parts.join('|');
+  }).join(' || ');
+}
+
+/**
  * Formats locations for CSV export
  * @param locations - Array of location objects
  * @returns Formatted location summary
@@ -159,4 +187,40 @@ export function formatLocationsForCSV(locations: Array<{ name: string; isHeadqua
   }
   
   return `${count} locations`;
+}
+
+/**
+ * Formats locations with full details for CSV export (import format)
+ * @param locations - Array of location objects with full details
+ * @returns Pipe-separated format: name|address|city|country|phone|latitude|longitude|isHQ || name2|address2|...
+ */
+export function formatLocationsForImportCSV(
+  locations: Array<{ 
+    name: string; 
+    address: string;
+    city?: string | null;
+    country?: string | null;
+    phone?: string | null;
+    latitude?: string | number | null;
+    longitude?: string | number | null;
+    isHeadquarters?: boolean;
+  }>
+): string {
+  if (!locations || locations.length === 0) {
+    return '';
+  }
+  
+  return locations.map(loc => {
+    const parts = [
+      loc.name || '',
+      loc.address || '',
+      loc.city || '',
+      loc.country || '',
+      loc.phone || '',
+      loc.latitude ? String(loc.latitude) : '',
+      loc.longitude ? String(loc.longitude) : '',
+      loc.isHeadquarters ? 'true' : 'false'
+    ];
+    return parts.join('|');
+  }).join(' || ');
 }

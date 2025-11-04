@@ -2,6 +2,7 @@ import { useRoute, Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { LazyImage } from '@/components/LazyImage';
+import { getProductUrl } from '@/lib/productLinks';
 
 interface ProductWithLtaPrice extends Product {
   contractPrice?: string;
@@ -66,6 +68,12 @@ export default function CatalogPage() {
     queryKey: ['/api/products/public'],
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
+    onError: (err) => {
+      console.error('Error fetching products:', err);
+    },
+    onSuccess: (data) => {
+      console.log('Products loaded successfully:', data?.length || 0);
+    },
   });
 
   const { data: clientLtas = [] } = useQuery<Lta[]>({
@@ -163,14 +171,14 @@ export default function CatalogPage() {
     setPriceRequestList(prev => [...prev, {
       productId: product.id,
       productSku: product.sku,
-      productName: product.name,
+      productName: product.name || 'Unknown Product',
       quantity: 1,
     }]);
 
     toast({
       description: language === 'ar'
-        ? `تمت إضافة ${product.name} إلى قائمة طلبات الأسعار`
-        : `${product.name} added to price request list`
+        ? `تمت إضافة ${product.name || 'Unknown Product'} إلى قائمة طلبات الأسعار`
+        : `${product.name || 'Unknown Product'} added to price request list`
     });
   };
 
@@ -288,31 +296,15 @@ export default function CatalogPage() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-[#d4af37]/20 bg-background/95 dark:bg-black/80 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = (user ? "/ordering" : "/landing")}
-              className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-            >
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            <img
-              src="/logo.png"
-              alt={language === 'ar' ? 'شعار الشركة' : 'Company Logo'}
-              className="h-8 w-8 sm:h-10 sm:w-10 object-contain dark:filter dark:drop-shadow-[0_0_8px_rgba(212,175,55,0.3)] flex-shrink-0 transition-transform hover:scale-110 duration-300"
-            />
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-semibold bg-gradient-to-r from-primary to-primary-600 dark:from-[#d4af37] dark:to-[#f9c800] bg-clip-text text-transparent truncate">
-                {language === 'ar' ? 'الكتالوج' : 'Product Catalog'}
-              </h1>
-            </div>
-          </div>
-          <div className="w-10"></div>
-        </div>
-      </header>
+      <PageHeader
+        title={language === 'ar' ? 'الكتالوج' : 'Product Catalog'}
+        backHref={user ? "/ordering" : "/landing"}
+        showLogo={true}
+        breadcrumbs={[
+          { label: language === 'ar' ? 'الرئيسية' : 'Home', href: user ? "/ordering" : "/landing" },
+          { label: language === 'ar' ? 'الكتالوج' : 'Catalog' }
+        ]}
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
@@ -683,22 +675,12 @@ export default function CatalogPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredProducts.map((product, index) => {
-                    // Use consistent name field (prefer name, fallback to nameEn)
-                    const name = product.name || product.nameEn || 'Unknown Product';
-                    const description = product.description || product.descriptionEn;
+                    // Use the name field from the product
+                    const name = product.name || 'Unknown Product';
+                    const description = product.description;
                     
-                    // Slugify the name consistently
-                    const slugifiedName = name.toLowerCase()
-                      .replace(/[^a-z0-9]+/g, '-')
-                      .replace(/^-+|-+$/g, '');
-                    
-                    // Slugify category (prefer category, fallback to mainCategory)
-                    const categoryForUrl = product.category || product.mainCategory || 'products';
-                    const slugifiedCategory = categoryForUrl.toLowerCase()
-                      .replace(/[^a-z0-9]+/g, '-')
-                      .replace(/^-+|-+$/g, '');
                     return (
-                      <Link key={product.id} href={`/products/${slugifiedCategory}/${slugifiedName}`}>
+                      <Link key={product.id} href={getProductUrl(product.sku)}>
                         <Card className="h-full relative overflow-hidden cursor-pointer group
                           bg-card/50 dark:bg-[#222222]/50 backdrop-blur-sm
                           border-border/50 dark:border-[#d4af37]/20
@@ -763,16 +745,17 @@ export default function CatalogPage() {
                           </CardContent>
 
                           {user && (
-                            <CardFooter className="p-3 pt-0">
+                            <CardFooter className="p-3 pt-0 relative z-10">
                               {product.hasPrice && product.contractPrice ? (
                                 <Button
                                   size="sm"
-                                  className="w-full"
+                                  className="w-full relative z-10"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     handleAddToCart(product);
                                   }}
+                                  asChild={false}
                                 >
                                   <ShoppingCart className="h-3 w-3 me-2" />
                                   {language === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
@@ -781,13 +764,14 @@ export default function CatalogPage() {
                                 <Button
                                   size="sm"
                                   variant={priceRequestList.some(item => item.productId === product.id) ? "default" : "outline"}
-                                  className="w-full"
+                                  className="w-full relative z-10"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     handleRequestPrice(product);
                                   }}
                                   disabled={priceRequestList.some(item => item.productId === product.id)}
+                                  asChild={false}
                                 >
                                   <Heart className={`h-3 w-3 me-2 ${priceRequestList.some(item => item.productId === product.id) ? 'fill-current' : ''}`} />
                                   {priceRequestList.some(item => item.productId === product.id)

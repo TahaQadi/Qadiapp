@@ -1306,7 +1306,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/clients", requireAdmin, async (req: any, res) => {
     try {
       const validatedData = createClientSchema.parse(req.body);
-      const client = await storage.createClient(validatedData);
+      
+      // Extract headquarters and departments before creating client
+      const { headquarters, departments, ...clientData } = validatedData as any;
+      
+      // Create client
+      const client = await storage.createClient(clientData);
+      
+      // Create headquarters location if provided
+      if (headquarters?.latitude && headquarters?.longitude) {
+        await storage.createClientLocation({
+          clientId: client.id,
+          name: headquarters.name || 'Headquarters',
+          address: headquarters.address || '',
+          city: headquarters.city || null,
+          country: headquarters.country || null,
+          phone: headquarters.phone || null,
+          latitude: headquarters.latitude.toString(),
+          longitude: headquarters.longitude.toString(),
+          isHeadquarters: true,
+        });
+      }
+      
+      // Create departments if provided
+      if (departments && Array.isArray(departments)) {
+        for (const dept of departments) {
+          if (dept.type && dept.contactName && dept.contactEmail && dept.contactPhone) {
+            await storage.createClientDepartment({
+              clientId: client.id,
+              departmentType: dept.type,
+              contactName: dept.contactName || null,
+              contactEmail: dept.contactEmail || null,
+              contactPhone: dept.contactPhone || null,
+            });
+          }
+        }
+      }
+      
       res.status(201).json({
         id: client.id,
         username: client.username,
@@ -1480,8 +1516,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         try {
           // Validate required fields
-          if (!clientData.username || !clientData.password || !clientData.nameEn || !clientData.nameAr) {
-            throw new Error("Missing required fields: username, password, nameEn, nameAr");
+          if (!clientData.username || !clientData.password || !clientData.name) {
+            throw new Error("Missing required fields: username, password, name");
           }
 
           // Check if username already exists
@@ -1490,45 +1526,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error(`Username '${clientData.username}' already exists`);
           }
 
-          // Create client
+          // Hash password before storing
+          const { hashPassword } = await import('./auth');
+          const hashedPassword = await hashPassword(clientData.password);
+
+          // Create client with all fields
           const client = await storage.createClient({
             username: clientData.username,
-            password: clientData.password,
-            nameEn: clientData.nameEn,
-            nameAr: clientData.nameAr,
+            password: hashedPassword,
+            name: clientData.name,
             email: clientData.email || null,
             phone: clientData.phone || null,
             isAdmin: clientData.isAdmin || false,
+            // Organization fields
+            domain: clientData.domain || null,
+            registrationId: clientData.registrationId || null,
+            industry: clientData.industry || null,
+            hqCity: clientData.hqCity || null,
+            hqCountry: clientData.hqCountry || null,
+            // Commercial fields
+            paymentTerms: clientData.paymentTerms || null,
+            priceTier: clientData.priceTier || null,
+            riskTier: clientData.riskTier || null,
+            contractModel: clientData.contractModel || null,
           });
 
           // Add departments if provided
-          if (clientData.departmentTypes && Array.isArray(clientData.departmentTypes)) {
-            for (const deptType of clientData.departmentTypes) {
+          if (clientData.departments && Array.isArray(clientData.departments)) {
+            for (const dept of clientData.departments) {
               await storage.createClientDepartment({
                 clientId: client.id,
-                departmentType: deptType,
-                contactName: null,
-                contactEmail: null,
-                contactPhone: null,
+                departmentType: dept.departmentType,
+                contactName: dept.contactName || null,
+                contactEmail: dept.contactEmail || null,
+                contactPhone: dept.contactPhone || null,
               });
             }
           }
 
-          // Add location if provided
-          if (clientData.locationName) {
-            await storage.createClientLocation({
-              clientId: client.id,
-              nameEn: clientData.locationName,
-              nameAr: clientData.locationName, // Use same name for both languages if not provided
-              addressEn: clientData.locationAddress || '',
-              addressAr: clientData.locationAddress || '',
-              city: clientData.locationCity || null,
-              country: clientData.locationCountry || null,
-              phone: null,
-              latitude: null,
-              longitude: null,
-              isHeadquarters: true, // Default to headquarters for imported locations
-            });
+          // Add locations if provided
+          if (clientData.locations && Array.isArray(clientData.locations)) {
+            for (const loc of clientData.locations) {
+              await storage.createClientLocation({
+                clientId: client.id,
+                name: loc.name,
+                address: loc.address,
+                city: loc.city || null,
+                country: loc.country || null,
+                phone: loc.phone || null,
+                latitude: loc.latitude?.toString() || null,
+                longitude: loc.longitude?.toString() || null,
+                isHeadquarters: loc.isHeadquarters || false,
+              });
+            }
           }
 
           results.successCount++;
@@ -1562,8 +1612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(users.map(user => ({
         id: user.id,
         username: user.username,
-        nameEn: user.nameEn,
-        nameAr: user.nameAr,
+        name: user.name,
         email: user.email,
         phone: user.phone,
         departmentType: user.departmentType,
@@ -1595,8 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({
         id: user.id,
         username: user.username,
-        nameEn: user.nameEn,
-        nameAr: user.nameAr,
+        name: user.name,
         email: user.email,
         phone: user.phone,
         departmentType: user.departmentType,
@@ -2757,14 +2805,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const allProducts = await storage.getProducts();
 
+      // Debug: Log first product to see what fields are available
+      if (allProducts.length > 0) {
+        console.log('Sample product fields:', Object.keys(allProducts[0]));
+        console.log('Sample product name:', allProducts[0].name);
+      }
+
       // Optimize response by only sending necessary fields
       const productsWithoutPricing = allProducts.map(p => ({
         id: p.id,
         sku: p.sku,
-        nameEn: p.nameEn,
-        nameAr: p.nameAr,
-        descriptionEn: p.descriptionEn,
-        descriptionAr: p.descriptionAr,
+        name: p.name,
+        description: p.description,
         mainCategory: p.mainCategory,
         category: p.category,
         unitType: p.unitType,

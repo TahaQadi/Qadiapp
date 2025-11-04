@@ -282,7 +282,7 @@ export interface IStorage {
   incrementDocumentViewCount(documentId: string): Promise<void>;
 
   // Order Feedback
-  createOrderFeedback(data: InsertOrderFeedback): Promise<OrderFeedback>;
+  createOrderFeedback(data: InsertOrderFeedback & { clientId: string }): Promise<OrderFeedback>;
 
   // LTA Documents
   createLtaDocument(data: {
@@ -447,6 +447,17 @@ export class MemStorage implements IStorage {
         email: insertClient.email ?? null,
         phone: insertClient.phone ?? null,
         isAdmin: insertClient.isAdmin ?? false,
+        // Organization fields
+        domain: insertClient.domain ?? null,
+        registrationId: insertClient.registrationId ?? null,
+        industry: insertClient.industry ?? null,
+        hqCity: insertClient.hqCity ?? null,
+        hqCountry: insertClient.hqCountry ?? null,
+        // Commercial fields
+        paymentTerms: insertClient.paymentTerms ?? null,
+        priceTier: insertClient.priceTier ?? null,
+        riskTier: insertClient.riskTier ?? null,
+        contractModel: insertClient.contractModel ?? null,
       })
       .returning();
     return inserted[0];
@@ -461,6 +472,17 @@ export class MemStorage implements IStorage {
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.isAdmin !== undefined) updateData.isAdmin = data.isAdmin;
     if (data.password !== undefined) updateData.password = data.password;
+    // Organization fields
+    if (data.domain !== undefined) updateData.domain = data.domain;
+    if (data.registrationId !== undefined) updateData.registrationId = data.registrationId;
+    if (data.industry !== undefined) updateData.industry = data.industry;
+    if (data.hqCity !== undefined) updateData.hqCity = data.hqCity;
+    if (data.hqCountry !== undefined) updateData.hqCountry = data.hqCountry;
+    // Commercial fields
+    if (data.paymentTerms !== undefined) updateData.paymentTerms = data.paymentTerms;
+    if (data.priceTier !== undefined) updateData.priceTier = data.priceTier;
+    if (data.riskTier !== undefined) updateData.riskTier = data.riskTier;
+    if (data.contractModel !== undefined) updateData.contractModel = data.contractModel;
 
     // If no fields to update, return the existing client
     if (Object.keys(updateData).length === 0) {
@@ -1030,15 +1052,22 @@ export class MemStorage implements IStorage {
           sku: products.sku,
           name: products.name,
           description: products.description,
-          mainCategory: products.mainCategory,
-          category: products.category,
+          categoryNum: products.categoryNum,
           unitType: products.unitType,
           unit: products.unit,
           unitPerBox: products.unitPerBox,
+          costPricePerBox: products.costPricePerBox,
+          specificationsAr: products.specificationsAr,
+          vendorId: products.vendorId,
+          mainCategory: products.mainCategory,
+          category: products.category,
+          costPricePerPiece: products.costPricePerPiece,
+          sellingPricePack: products.sellingPricePack,
+          sellingPricePiece: products.sellingPricePiece,
           imageUrl: products.imageUrl,
+          imageUrls: products.imageUrls,
           contractPrice: ltaProducts.contractPrice,
           currency: ltaProducts.currency,
-          ltaId: ltaProducts.ltaId,
         })
         .from(ltaProducts)
         .innerJoin(products, eq(products.id, ltaProducts.productId))
@@ -1046,8 +1075,8 @@ export class MemStorage implements IStorage {
 
       return result.map(p => ({
         ...p,
-        contractPrice: p.contractPrice?.toString(),
-        hasPrice: !!p.contractPrice,
+        contractPrice: p.contractPrice?.toString() || '0',
+        currency: p.currency || 'USD',
       }));
     } catch (error) {
       console.error('[Storage] Error getting products for LTA:', error);
@@ -1084,7 +1113,8 @@ export class MemStorage implements IStorage {
 
     let lta: Lta | undefined;
     if (request.ltaId) {
-      lta = await this.getLta(request.ltaId);
+      const ltaResult = await this.getLta(request.ltaId);
+      lta = ltaResult || undefined;
     }
 
     const products: Array<Product & { quantity: number }> = [];
@@ -1196,7 +1226,7 @@ export class MemStorage implements IStorage {
 
   async bulkAssignProductsToLta(
     ltaId: string,
-    products: Array<{ sku: string; contractPrice: string; currency: string }>
+    productData: Array<{ sku: string; contractPrice: string; currency: string }>
   ) {
     const results = {
       success: 0,
@@ -1210,15 +1240,15 @@ export class MemStorage implements IStorage {
     }
 
     // Fetch all products by SKU in one query to minimize DB calls
-    const skus = products.map(p => p.sku);
-    const existingProducts = await db.select().from(products).where(sql`${products.sku} = ANY(${skus})`);
+    const skus = productData.map(p => p.sku);
+    const existingProducts = await db.select().from(products).where(inArray(products.sku, skus));
     const productMap = new Map(existingProducts.map(p => [p.sku, p]));
 
     // Fetch existing LTA products for this LTA to check for duplicates
     const existingLtaProducts = await this.getLtaProducts(ltaId);
     const existingLtaProductMap = new Map(existingLtaProducts.map(lp => [lp.productId, lp]));
 
-    for (const item of products) {
+    for (const item of productData) {
       try {
         // Validate inputs
         if (!item.sku || !item.contractPrice) {
@@ -1313,12 +1343,12 @@ export class MemStorage implements IStorage {
       .where(and(...conditions))
       .orderBy(desc(notifications.createdAt));
 
-    if (limit) {
-      query = query.limit(limit);
+    if (limit !== undefined) {
+      query = query.limit(limit) as typeof query;
     }
 
-    if (offset) {
-      query = query.offset(offset);
+    if (offset !== undefined) {
+      query = query.offset(offset) as typeof query;
     }
 
     const result = await query.execute();
@@ -1647,18 +1677,21 @@ export class MemStorage implements IStorage {
   }
 
   async getDocumentsByType(documentType: string, clientId?: string): Promise<any[]> {
-    let query = db.select().from(documents).where(eq(documents.documentType, documentType));
-
+    const conditions = [eq(documents.documentType, documentType)];
+    
     if (clientId) {
-      query = query.where(eq(documents.clientId, clientId));
+      conditions.push(eq(documents.clientId, clientId));
     }
 
-    return await query.orderBy(desc(documents.createdAt));
+    return await db.select()
+      .from(documents)
+      .where(and(...conditions))
+      .orderBy(desc(documents.createdAt));
   }
 
   async getDocumentById(id: string): Promise<any | undefined> {
-    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
-    return doc;
+    const result = await db.select().from(documents).where(eq(documents.id, id));
+    return result[0];
   }
 
   async searchDocuments(
@@ -1672,8 +1705,6 @@ export class MemStorage implements IStorage {
       endDate?: Date;
       searchTerm?: string;
     }, page: number = 1, pageSize: number = 20): Promise<{ documents: any[], totalCount: number }> {
-    let query = db.select().from(documents);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(documents);
     const conditions = [];
 
     if (filters.documentType) {
@@ -1704,20 +1735,20 @@ export class MemStorage implements IStorage {
       );
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-      countQuery = countQuery.where(and(...conditions));
-    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count
-    const [{ count: totalCount }] = await countQuery;
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(documents);
+    const [{ count: totalCount }] = whereClause 
+      ? await countQuery.where(whereClause)
+      : await countQuery;
 
     // Apply pagination
     const offset = (page - 1) * pageSize;
-    const docs = await query
-      .orderBy(desc(documents.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+    const query = db.select().from(documents);
+    const docs = whereClause
+      ? await query.where(whereClause).orderBy(desc(documents.createdAt)).limit(pageSize).offset(offset)
+      : await query.orderBy(desc(documents.createdAt)).limit(pageSize).offset(offset);
 
     return { documents: docs, totalCount };
   }
@@ -1743,7 +1774,7 @@ export class MemStorage implements IStorage {
 
   async deleteDocument(id: string): Promise<boolean> {
     const result = await db.delete(documents).where(eq(documents.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Document Access Log Methods
@@ -1787,7 +1818,7 @@ export class MemStorage implements IStorage {
   }
 
   // Order Feedback
-  async createOrderFeedback(data: InsertOrderFeedback): Promise<OrderFeedback> {
+  async createOrderFeedback(data: InsertOrderFeedback & { clientId: string }): Promise<OrderFeedback> {
     try {
       const [feedback] = await db.insert(orderFeedback).values(data).returning();
       return feedback;

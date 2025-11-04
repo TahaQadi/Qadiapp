@@ -289,11 +289,11 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
           }
         >
           <Bell className="h-4 w-4" aria-hidden="true" />
-          <span>{language === 'ar' ? 'الإشعارات' : 'Notifications'}</span>
           {(unreadCountQuery.data?.count || 0) > 0 && unreadCountQuery.data && (
             <Badge 
               variant="destructive" 
-              className="ms-auto h-5 min-w-[1.25rem] px-1.5 flex items-center justify-center text-xs font-semibold animate-pulse"
+              className="ms-auto h-5 min-w-[1.25rem] px-1.5 flex items-center justify-center text-xs font-semibold"
+              style={{ animation: 'pulse-slow 5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
               aria-label={language === 'ar' ? `${unreadCountQuery.data.count} غير مقروء` : `${unreadCountQuery.data.count} unread`}
             >
               {unreadCountQuery.data.count > 99 ? '99+' : unreadCountQuery.data.count}
@@ -398,7 +398,8 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
           <Bell className="h-5 w-5" aria-hidden="true" />
           {(unreadCountQuery.data?.count || 0) > 0 && unreadCountQuery.data && (
             <span
-              className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-destructive text-destructive-foreground shadow-lg animate-pulse"
+              className="absolute -top-1 -end-1 h-5 min-w-[1.25rem] px-1 flex items-center justify-center rounded-full text-xs font-semibold bg-destructive text-destructive-foreground shadow-lg"
+              style={{ animation: 'pulse-slow 5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
               aria-label={language === 'ar' ? `${unreadCountQuery.data.count} غير مقروء` : `${unreadCountQuery.data.count} unread`}
             >
               {unreadCountQuery.data.count > 99 ? '99+' : unreadCountQuery.data.count}

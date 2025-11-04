@@ -98,8 +98,8 @@ export function SearchWithSuggestions({
         .filter(p => {
           const searchLower = value.toLowerCase();
           return (
-            p.nameEn.toLowerCase().includes(searchLower) ||
-            p.nameAr.includes(value) ||
+            p.name.toLowerCase().includes(searchLower) ||
+            p.name.includes(value) ||
             p.sku.toLowerCase().includes(searchLower) ||
             p.category?.toLowerCase().includes(searchLower)
           );
@@ -166,7 +166,7 @@ export function SearchWithSuggestions({
         <Card className="absolute z-50 w-full mt-1 max-h-96 overflow-y-auto shadow-lg">
           <div className="p-2">
             {suggestions.map((product) => {
-              const name = language === 'ar' ? product.nameAr : product.nameEn;
+              const name = product.name;
               return (
                 <div
                   key={product.id}

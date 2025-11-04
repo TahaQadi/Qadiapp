@@ -149,7 +149,7 @@ export function ClientImportDialog({
         target: {
           files: [droppedFile]
         }
-      } as React.ChangeEvent<HTMLInputElement>;
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileSelect(event);
     }
   };
@@ -163,8 +163,8 @@ export function ClientImportDialog({
           </DialogTitle>
           <DialogDescription>
             {language === 'ar' 
-              ? 'قم بتحميل ملف CSV لاستيراد العملاء بشكل مجمع. يمكنك تحميل القالب أولاً لمعرفة التنسيق المطلوب.'
-              : 'Upload a CSV file to bulk import clients. You can download the template first to see the required format.'}
+              ? 'قم بتحميل ملف CSV لاستيراد العملاء بشكل مجمع مع جميع التفاصيل (المعلومات الأساسية، معلومات المؤسسة، الشروط التجارية، الأقسام، والمواقع). يمكنك تحميل القالب أولاً لمعرفة التنسيق المطلوب.'
+              : 'Upload a CSV file to bulk import clients with all details (basic info, organization details, commercial terms, departments, and locations). You can download the template first to see the required format.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -180,8 +180,8 @@ export function ClientImportDialog({
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
                 {language === 'ar' 
-                  ? 'قم بتحميل القالب لمعرفة التنسيق المطلوب لملف CSV'
-                  : 'Download the template to see the required CSV format'}
+                  ? 'قم بتحميل القالب لمعرفة التنسيق المطلوب لملف CSV. القالب يتضمن جميع الحقول المتاحة: المعلومات الأساسية، معلومات المؤسسة، الشروط التجارية، الأقسام (بصيغة: type|contactName|contactEmail|contactPhone || type2|name2|email2|phone2)، والمواقع (بصيغة: name|address|city|country|phone|latitude|longitude|isHQ || name2|address2|...).'
+                  : 'Download the template to see the required CSV format. The template includes all available fields: basic info, organization details, commercial terms, departments (format: type|contactName|contactEmail|contactPhone || type2|name2|email2|phone2), and locations (format: name|address|city|country|phone|latitude|longitude|isHQ || name2|address2|...).'}
               </p>
               <Button 
                 variant="outline" 

@@ -23,8 +23,8 @@ export function useProductFilters(
   const filteredProducts = useMemo(() => {
     return ltaFilteredProducts.filter(p => {
       const matchesSearch = searchQuery === '' ||
-        p.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.nameAr.includes(searchQuery) ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.name.includes(searchQuery) ||
         p.sku.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;

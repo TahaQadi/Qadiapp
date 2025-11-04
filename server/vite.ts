@@ -87,18 +87,44 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Serve static files from dist/public with correct MIME types
+  // Serve static files from dist/public with optimized cache headers
   app.use(express.static(publicPath, {
     maxAge: '1y',
     etag: true,
     lastModified: true,
     setHeaders: (res, filePath) => {
+      const fileExt = path.extname(filePath).toLowerCase();
+      
+      // Set content type
       if (filePath.endsWith('.html')) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
       } else if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
       } else if (filePath.endsWith('.css')) {
         res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      }
+      
+      // Set cache headers based on file type
+      // Hashed static assets (JS/CSS with hash in filename) - immutable, 1 year
+      if ((fileExt === '.js' || fileExt === '.css') && /[a-f0-9]{8,}/.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+      // Images and fonts - 30 days
+      else if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.eot'].includes(fileExt)) {
+        res.setHeader('Cache-Control', 'public, max-age=2592000');
+      }
+      // HTML - always revalidate
+      else if (fileExt === '.html') {
+        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+      }
+      // Other static assets - 1 year
+      else {
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+      }
+      
+      // Add Vary header for compressed content
+      if (['.js', '.css', '.html'].includes(fileExt)) {
+        res.setHeader('Vary', 'Accept-Encoding');
       }
     }
   }));

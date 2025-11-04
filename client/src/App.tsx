@@ -1,5 +1,5 @@
 import { Switch, Route, Redirect, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient, initializeCachePersistence } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
@@ -20,7 +20,12 @@ const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
 const AdminPage = lazy(() => import("@/pages/AdminPage"));
 const AdminProductsPage = lazy(() => import("@/pages/AdminProductsPage"));
 const AdminVendorsPage = lazy(() => import("@/pages/AdminVendorsPage"));
-const AdminClientsPage = lazy(() => import("@/pages/AdminClientsPage"));
+const AdminClientsPage = lazy(() => 
+  import("@/pages/AdminClientsPage").catch((error) => {
+    console.error("Failed to load AdminClientsPage:", error);
+    throw error;
+  })
+);
 const AdminLtaListPage = lazy(() => import("@/pages/AdminLtaListPage"));
 const AdminLtaDetailPage = lazy(() => import("@/pages/AdminLtaDetailPage"));
 const AdminPriceRequestsPage = lazy(() => import('./pages/AdminPriceRequestsPage'));
@@ -141,7 +146,7 @@ function Router() {
       </Route>
 
       {/* Public product pages for SEO */}
-      <Route path="/products/:category/:productName">
+      <Route path="/products/:sku">
         <Suspense fallback={<PageLoadingFallback />}>
           <ProductDetailPage />
         </Suspense>
@@ -236,6 +241,11 @@ function AppWithProviders() {
 
   // Track page views
   usePageTracking();
+
+  // Initialize cache persistence on mount
+  useEffect(() => {
+    initializeCachePersistence();
+  }, []);
 
   // Initialize monitoring in production
   useEffect(() => {

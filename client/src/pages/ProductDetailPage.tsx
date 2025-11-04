@@ -3,14 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/components/LanguageProvider';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Package, ShoppingCart, Heart } from 'lucide-react';
+import { ArrowLeft, Package, ShoppingCart, Heart, Home, Grid3x3, ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LazyImage } from '@/components/LazyImage';
+import { getProductUrl } from '@/lib/productLinks';
 import type { Product } from '@shared/schema';
 
 interface ProductWithLtaPrice extends Product {
@@ -21,9 +23,8 @@ interface ProductWithLtaPrice extends Product {
 }
 
 export default function ProductDetailPage() {
-  const [, params] = useRoute('/products/:category/:productName');
-  const productName = params?.productName;
-  const category = params?.category;
+  const [, params] = useRoute('/products/:sku');
+  const skuParam = params?.sku;
   const { user } = useAuth();
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -42,42 +43,21 @@ export default function ProductDetailPage() {
     }
   });
 
-  // Fetch all products and find by name slug
+  // Fetch all products and find by SKU
+  // Use authenticated endpoint if user is logged in to get LTA prices
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductWithLtaPrice[]>({
-    queryKey: ['/api/products/public'],
+    queryKey: user ? ['/api/products'] : ['/api/products/public'],
   });
 
-  // Debug logging
-  if (products.length > 0 && !product && !productsLoading) {
-    console.log('Looking for product:', { productName, category });
-    console.log('Available products:', products.map(p => ({
-      name: p.name,
-      nameEn: p.nameEn,
-      category: p.category,
-      mainCategory: p.mainCategory,
-      slug: (p.name || p.nameEn || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-    })));
-  }
-
-  const product = products.find(p => {
-    // Try both name and nameEn fields for matching
-    const nameToSlugify = p.name || p.nameEn || '';
-    const slugifiedName = nameToSlugify.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    
-    // For category, check both category and mainCategory fields
-    const categoryToSlugify = p.category || p.mainCategory || '';
-    const slugifiedCategory = categoryToSlugify.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    
-    // Match product name first, then optionally match category if provided
-    const nameMatches = slugifiedName === productName;
-    const categoryMatches = !category || slugifiedCategory === category;
-    
-    return nameMatches && categoryMatches;
-  });
+  // Find product by SKU (decoded from URL)
+  const product = skuParam ? products.find(p => {
+    try {
+      const decodedSku = decodeURIComponent(skuParam);
+      return p.sku === decodedSku;
+    } catch {
+      return p.sku === skuParam;
+    }
+  }) : undefined;
 
   // Show loading only if products are still loading AND we haven't found the product yet
   const isLoading = productsLoading && !product;
@@ -291,50 +271,20 @@ export default function ProductDetailPage() {
       </Helmet>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = (user ? "/catalog" : "/landing")}
-            className="h-9 w-9 sm:h-10 sm:w-10 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-          >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Logo" className="h-8 w-8" />
-            <span className="font-semibold">
-              {language === 'ar' ? 'القاضي' : 'Al Qadi'}
-            </span>
-          </div>
-          <div className="w-10"></div>
-        </div>
-      </header>
+      <PageHeader
+        title={product?.name || (language === 'ar' ? 'القاضي' : 'Al Qadi')}
+        backHref={user ? "/catalog" : "/landing"}
+        showLogo={true}
+        breadcrumbs={[
+          { label: language === 'ar' ? 'الرئيسية' : 'Home', href: user ? "/ordering" : "/landing" },
+          { label: language === 'ar' ? 'الكتالوج' : 'Catalog', href: "/catalog" },
+          ...(product?.category ? [{ label: product.category }] : []),
+          ...(product?.name ? [{ label: product.name }] : [])
+        ]}
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
-        {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">
-            {language === 'ar' ? 'الرئيسية' : 'Home'}
-          </Link>
-          {product.mainCategory && (
-            <>
-              <span className="mx-2">/</span>
-              <Link href="/catalog" className="hover:text-foreground">
-                {product.mainCategory}
-              </Link>
-            </>
-          )}
-          {product.category && (
-            <>
-              <span className="mx-2">/</span>
-              <span className="text-foreground">{product.category}</span>
-            </>
-          )}
-          <span className="mx-2">/</span>
-          <span className="text-foreground">{name}</span>
-        </nav>
 
         {/* Product Details */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -421,19 +371,21 @@ export default function ProductDetailPage() {
                         }
                       </p>
                     </div>
-                    <Button 
-                      onClick={handleAddToCart} 
-                      variant={priceRequestList.includes(product.id) ? "default" : "outline"}
-                      size="lg" 
-                      className="w-full"
-                      disabled={priceRequestList.includes(product.id)}
-                    >
-                      <Heart className={`w-5 h-5 me-2 ${priceRequestList.includes(product.id) ? 'fill-current' : ''}`} />
-                      {priceRequestList.includes(product.id)
-                        ? (language === 'ar' ? 'تمت الإضافة' : 'Added')
-                        : (language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request')
-                      }
-                    </Button>
+                    {user && (
+                      <Button 
+                        onClick={handleAddToCart} 
+                        variant={priceRequestList.includes(product.id) ? "default" : "outline"}
+                        size="lg" 
+                        className="w-full"
+                        disabled={priceRequestList.includes(product.id)}
+                      >
+                        <Heart className={`w-5 h-5 me-2 ${priceRequestList.includes(product.id) ? 'fill-current' : ''}`} />
+                        {priceRequestList.includes(product.id)
+                          ? (language === 'ar' ? 'تمت الإضافة' : 'Added')
+                          : (language === 'ar' ? 'أضف إلى طلبات الأسعار' : 'Add to Price Request')
+                        }
+                      </Button>
+                    )}
                   </>
                 )}
               </CardContent>
@@ -475,14 +427,8 @@ export default function ProductDetailPage() {
                 .slice(0, 5)
                 .map((relatedProduct) => {
                   const relatedName = relatedProduct.name;
-                  const slugifiedName = relatedProduct.name?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
-                  const slugifiedSubCategory = (relatedProduct.category || 'products').toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
                   return (
-                    <Link key={relatedProduct.id} href={`/products/${slugifiedSubCategory}/${slugifiedName}`}>
+                    <Link key={relatedProduct.id} href={getProductUrl(relatedProduct.sku)}>
                       <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                         <div className="aspect-square bg-muted">
                           {relatedProduct.imageUrl ? (

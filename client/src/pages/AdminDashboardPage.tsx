@@ -124,7 +124,6 @@ export default function AdminDashboardPage() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [isFeaturesOpen, setIsFeaturesOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data: stats, isLoading, error, refetch } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard/stats', timeRange],
@@ -323,170 +322,12 @@ export default function AdminDashboardPage() {
         title={language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
         subtitle={language === 'ar' ? 'نظرة عامة على النظام' : 'System Overview'}
         showLogo={true}
+        showUserMenu={true}
+        showNotifications={true}
         actions={
           <>
-            {/* Mobile Menu Button */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-[280px] sm:w-[320px]">
-                <SheetHeader>
-                  <SheetTitle>{language === 'ar' ? 'القائمة' : 'Menu'}</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col h-full mt-6">
-                  {user && (
-                    <div className="flex items-center gap-3 pb-4 border-b mb-4">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate text-sm">
-                          {user?.name || user?.email}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user?.email}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <nav className="flex-1 py-4 space-y-1">
-                    <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <Settings className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/admin/demo-requests" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <PlayCircle className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'طلبات العروض' : 'Demo Requests'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/admin/orders" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <ClipboardList className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'إدارة الطلبات' : 'Orders'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/admin/price-management" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <FileText className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'إدارة الأسعار' : 'Price Management'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/admin/ltas" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <FileText className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'الاتفاقيات' : 'LTAs'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/admin/clients" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <Users className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'العملاء' : 'Clients'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/admin/products" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <Package className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'المنتجات' : 'Products'}</span>
-                      </Button>
-                    </Link>
-
-                    <Separator className="my-4" />
-
-                    <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <User className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</span>
-                      </Button>
-                    </Link>
-
-                    <Link href="/ordering" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <ShoppingCart className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'إنشاء طلب' : 'Create Order'}</span>
-                      </Button>
-                    </Link>
-
-                    <Separator className="my-4" />
-
-                    <div className="space-y-2 px-3">
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-sm">{language === 'ar' ? 'اللغة' : 'Language'}</span>
-                        <LanguageToggle />
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-sm">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
-                        <ThemeToggle />
-                      </div>
-                    </div>
-                  </nav>
-
-                  <div className="pt-4 border-t">
-                    <Link href="/logout" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-11">
-                        <LogOut className="h-5 w-5" />
-                        <span>{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            <Button
-              variant="outline"
-              asChild
-              size="sm"
-              className="gap-1.5 sm:gap-2 h-9 sm:h-10 px-2 sm:px-4"
-            >
-              <Link href="/ordering">
-                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden lg:inline">{language === 'ar' ? 'إنشاء طلب' : 'Create Order'}</span>
-              </Link>
-            </Button>
-
-            <Select value={timeRange} onValueChange={(value) => setTimeRange(value as typeof timeRange)}>
-              <SelectTrigger className="w-[100px] sm:w-[140px] h-9 sm:h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">{language === 'ar' ? '7 أيام' : '7 Days'}</SelectItem>
-                <SelectItem value="30d">{language === 'ar' ? '30 يوم' : '30 Days'}</SelectItem>
-                <SelectItem value="90d">{language === 'ar' ? '90 يوم' : '90 Days'}</SelectItem>
-                <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 sm:h-10 sm:w-10"
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard/stats'] });
-                refetch();
-              }}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-
-            <ThemeToggle />
             <LanguageToggle />
+            <ThemeToggle />
           </>
         }
       />
@@ -494,7 +335,7 @@ export default function AdminDashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-10">
         {/* Quick Links Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
           {/* Demo Requests */}
           <Link href="/admin/demo-requests">
             <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
@@ -576,9 +417,9 @@ export default function AdminDashboardPage() {
 
         {/* Other Features - Expandable Section */}
         <Collapsible open={isFeaturesOpen} onOpenChange={setIsFeaturesOpen}>
-          <Card>
+          <Card className="mb-4 sm:mb-6">
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4 px-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {isFeaturesOpen ? (
@@ -632,7 +473,7 @@ export default function AdminDashboardPage() {
         </Collapsible>
 
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
           {/* Total Orders */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

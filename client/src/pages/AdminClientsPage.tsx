@@ -27,7 +27,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDebounce } from '@/hooks/use-debounce';
-import { arrayToCSV, downloadCSV, formatDateForCSV, formatTimestampForCSV, formatDepartmentsForCSV, formatLocationsForCSV } from '@/lib/csvExport';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { arrayToCSV, downloadCSV, formatDateForCSV, formatTimestampForCSV, formatDepartmentsForCSV, formatLocationsForCSV, formatDepartmentsForImportCSV, formatLocationsForImportCSV } from '@/lib/csvExport';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,8 +39,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { MapLocationPicker } from '@/components/MapLocationPicker';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Link } from 'wouter';
+import type { ClientDepartment, ClientLocation } from '@shared/schema';
+
+const DEPARTMENT_TYPES = [
+  { value: 'finance', labelEn: 'Finance', labelAr: 'المالية' },
+  { value: 'purchase', labelEn: 'Purchase', labelAr: 'المشتريات' },
+  { value: 'warehouse', labelEn: 'Warehouse', labelAr: 'المستودع' },
+];
 
 const clientFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -47,13 +56,13 @@ const clientFormSchema = z.object({
   phone: z.string().optional(),
   domain: z.string().optional(),
   registrationId: z.string().optional(),
-  industry: z.string().optional(),
+  industry: z.string().optional().transform(val => val === 'none' ? '' : val),
   hqCity: z.string().optional(),
   hqCountry: z.string().optional(),
   paymentTerms: z.string().optional(),
   priceTier: z.string().optional(),
-  riskTier: z.enum(["A", "B", "C"]).optional().or(z.literal('')),
-  contractModel: z.enum(["PO", "LTA", "Subscription"]).optional().or(z.literal('')),
+  riskTier: z.enum(["A", "B", "C", "none"]).optional().transform(val => val === 'none' ? '' : val).or(z.literal('')),
+  contractModel: z.enum(["PO", "LTA", "Subscription", "none"]).optional().transform(val => val === 'none' ? '' : val).or(z.literal('')),
 });
 
 const createClientSchema = z.object({
@@ -64,13 +73,30 @@ const createClientSchema = z.object({
   phone: z.string().optional(),
   domain: z.string().optional(),
   registrationId: z.string().optional(),
-  industry: z.string().optional(),
+  industry: z.string().optional().transform(val => val === 'none' ? '' : val),
   hqCity: z.string().optional(),
   hqCountry: z.string().optional(),
   paymentTerms: z.string().optional(),
   priceTier: z.string().optional(),
-  riskTier: z.enum(["A", "B", "C"]).optional().or(z.literal('')),
-  contractModel: z.enum(["PO", "LTA", "Subscription"]).optional().or(z.literal('')),
+  riskTier: z.enum(["A", "B", "C", "none"]).optional().transform(val => val === 'none' ? '' : val).or(z.literal('')),
+  contractModel: z.enum(["PO", "LTA", "Subscription", "none"]).optional().transform(val => val === 'none' ? '' : val).or(z.literal('')),
+  // Headquarters location (optional)
+  headquarters: z.object({
+    name: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    phone: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+  }).optional(),
+  // Departments (optional)
+  departments: z.array(z.object({
+    type: z.string(),
+    contactName: z.string().optional(),
+    contactEmail: z.string().email().optional().or(z.literal('')),
+    contactPhone: z.string().optional(),
+  })).optional(),
 });
 
 const passwordResetSchema = z.object({
@@ -102,28 +128,10 @@ interface ClientBasic {
   contractModel?: string | null;
 }
 
-interface Department {
-  id: string;
-  departmentType: string;
-  contactName: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-}
-
-interface Location {
-  id: string;
-  name: string;
-  address: string;
-  city: string | null;
-  country: string | null;
-  isHeadquarters: boolean;
-  phone: string | null;
-}
-
 interface ClientDetails {
   client: ClientBasic;
-  departments: Department[];
-  locations: Location[];
+  departments: ClientDepartment[];
+  locations: ClientLocation[];
 }
 
 interface ClientDetailsCardProps {
@@ -139,10 +147,10 @@ interface ClientDetailsCardProps {
   setDeleteDialogOpen: (isOpen: boolean) => void;
   setPasswordResetDialogOpen: (isOpen: boolean) => void;
   handleAddDepartment: () => void;
-  handleEditDepartment: (department: Department) => void;
+  handleEditDepartment: (department: ClientDepartment) => void;
   handleDeleteDepartment: (id: string) => void;
   handleAddLocation: () => void;
-  handleEditLocation: (location: Location) => void;
+  handleEditLocation: (location: ClientLocation) => void;
   handleDeleteLocation: (id: string) => void;
 }
 
@@ -162,8 +170,8 @@ export default function AdminClientsPage() {
   const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<ClientDepartment | null>(null);
+  const [editingLocation, setEditingLocation] = useState<ClientLocation | null>(null);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -210,8 +218,7 @@ export default function AdminClientsPage() {
 
       switch (sortBy) {
         case 'name':
-          comparison = (language === 'ar' ? a.nameAr : a.nameEn)
-            .localeCompare(language === 'ar' ? b.nameAr : b.nameEn);
+          comparison = a.name.localeCompare(b.name);
           break;
         case 'email':
           comparison = (a.email || '').localeCompare(b.email || '');
@@ -264,8 +271,7 @@ export default function AdminClientsPage() {
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: {
-      nameEn: '',
-      nameAr: '',
+      name: '',
       email: '',
       phone: '',
     },
@@ -276,12 +282,37 @@ export default function AdminClientsPage() {
     defaultValues: {
       username: '',
       password: '',
-      nameEn: '',
-      nameAr: '',
+      name: '',
       email: '',
       phone: '',
+      headquarters: {
+        name: '',
+        address: '',
+        city: '',
+        country: '',
+        phone: '',
+      },
+      departments: [],
     },
   });
+
+  // Separate state for headquarters and departments (not managed by react-hook-form)
+  const [headquartersState, setHeadquartersState] = useState({
+    name: '',
+    address: '',
+    city: '',
+    country: '',
+    phone: '',
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
+  });
+
+  const [departmentsState, setDepartmentsState] = useState<Array<{
+    type: string;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+  }>>([]);
 
   const passwordResetForm = useForm<PasswordResetFormValues>({
     resolver: zodResolver(passwordResetSchema),
@@ -292,13 +323,33 @@ export default function AdminClientsPage() {
 
   const createClientMutation = useMutation({
     mutationFn: async (data: CreateClientFormValues) => {
-      const res = await apiRequest('POST', '/api/admin/clients', data);
+      // Merge headquarters and departments from state into the data
+      const payload = {
+        ...data,
+        headquarters: headquartersState.latitude && headquartersState.longitude ? {
+          ...headquartersState,
+          latitude: headquartersState.latitude,
+          longitude: headquartersState.longitude,
+        } : undefined,
+        departments: departmentsState.filter(dept => dept.type && dept.contactName && dept.contactEmail && dept.contactPhone),
+      };
+      const res = await apiRequest('POST', '/api/admin/clients', payload);
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
       setCreateDialogOpen(false);
       createForm.reset();
+      setHeadquartersState({
+        name: '',
+        address: '',
+        city: '',
+        country: '',
+        phone: '',
+        latitude: undefined,
+        longitude: undefined,
+      });
+      setDepartmentsState([]);
       toast({
         title: language === 'ar' ? 'تم إنشاء العميل بنجاح' : 'Client created successfully',
       });
@@ -546,7 +597,7 @@ export default function AdminClientsPage() {
 
   // Location mutations
   const createLocationMutation = useMutation({
-    mutationFn: async (data: { nameEn: string; nameAr: string; addressEn: string; addressAr: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean }) => {
+    mutationFn: async (data: { name: string; address: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean }) => {
       if (!selectedClientId) throw new Error('No client selected');
       const res = await apiRequest('POST', `/api/admin/clients/${selectedClientId}/locations`, data);
       return await res.json();
@@ -570,7 +621,7 @@ export default function AdminClientsPage() {
   });
 
   const updateLocationMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { nameEn: string; nameAr: string; addressEn: string; addressAr: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; address: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean } }) => {
       const res = await apiRequest('PUT', `/api/admin/locations/${id}`, data);
       return await res.json();
     },
@@ -698,14 +749,12 @@ export default function AdminClientsPage() {
                 client: data.client,
                 departments: data.departments || [],
                 locations: data.locations || [],
-                companyUsers: data.companyUsers || []
               };
             }
             return {
               client,
               departments: [],
               locations: [],
-              companyUsers: []
             };
           } catch (error) {
             console.error(`Error fetching details for client ${client.id}:`, error);
@@ -713,25 +762,30 @@ export default function AdminClientsPage() {
               client,
               departments: [],
               locations: [],
-              companyUsers: []
             };
           }
         })
       );
 
-      const exportData = detailedClients.map(({ client, departments, locations, companyUsers }) => ({
-        'Username': client.username,
-        'Name': client.name,
-        'Email': client.email || '',
-        'Phone': client.phone || '',
-        'Admin Status': client.isAdmin ? (language === 'ar' ? 'مسؤول' : 'Admin') : (language === 'ar' ? 'عميل' : 'Client'),
-        'Departments': formatDepartmentsForCSV(departments),
-        'Department Count': departments.length,
-        'Locations': formatLocationsForCSV(locations),
-        'Location Count': locations.length,
-        'Company Users': companyUsers.length,
-        'Created At': client.createdAt ? formatTimestampForCSV(client.createdAt, language) : '',
-        'Updated At': client.updatedAt ? formatTimestampForCSV(client.updatedAt, language) : '',
+      const exportData = detailedClients.map(({ client, departments, locations }) => ({
+        // Match template field order exactly
+        'username': client.username,
+        'password': '', // Password not exported for security
+        'name': client.name,
+        'email': client.email || '',
+        'phone': client.phone || '',
+        'isAdmin': client.isAdmin ? 'true' : 'false',
+        'domain': client.domain || '',
+        'registrationId': client.registrationId || '',
+        'industry': client.industry || '',
+        'hqCity': client.hqCity || '',
+        'hqCountry': client.hqCountry || '',
+        'paymentTerms': client.paymentTerms || '',
+        'priceTier': client.priceTier || '',
+        'riskTier': client.riskTier || '',
+        'contractModel': client.contractModel || '',
+        'departments': formatDepartmentsForImportCSV(departments),
+        'locations': formatLocationsForImportCSV(locations),
       }));
 
       const csvContent = arrayToCSV(exportData, { includeBOM: true });
@@ -762,7 +816,7 @@ export default function AdminClientsPage() {
     setDepartmentDialogOpen(true);
   };
 
-  const handleEditDepartment = (department: Department) => {
+  const handleEditDepartment = (department: ClientDepartment) => {
     setEditingDepartment(department);
     setDepartmentDialogOpen(true);
   };
@@ -786,7 +840,7 @@ export default function AdminClientsPage() {
     setLocationDialogOpen(true);
   };
 
-  const handleEditLocation = (location: Location) => {
+  const handleEditLocation = (location: ClientLocation) => {
     setEditingLocation(location);
     setLocationDialogOpen(true);
   };
@@ -797,7 +851,7 @@ export default function AdminClientsPage() {
     }
   };
 
-  const handleSaveLocation = (data: { nameEn: string; nameAr: string; addressEn: string; addressAr: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean }) => {
+  const handleSaveLocation = (data: { name: string; address: string; city?: string; country?: string; phone?: string; latitude?: number; longitude?: number; isHeadquarters?: boolean }) => {
     if (editingLocation) {
       updateLocationMutation.mutate({ id: editingLocation.id, data });
     } else {
@@ -821,6 +875,15 @@ export default function AdminClientsPage() {
         name: clientDetails.client.name,
         email: clientDetails.client.email || '',
         phone: clientDetails.client.phone || '',
+        domain: clientDetails.client.domain || '',
+        registrationId: clientDetails.client.registrationId || '',
+        industry: clientDetails.client.industry || 'none',
+        hqCity: clientDetails.client.hqCity || '',
+        hqCountry: clientDetails.client.hqCountry || '',
+        paymentTerms: clientDetails.client.paymentTerms || '',
+        priceTier: clientDetails.client.priceTier || '',
+        riskTier: (clientDetails.client.riskTier || 'none') as any,
+        contractModel: (clientDetails.client.contractModel || 'none') as any,
       });
     }
   }, [clientDetails, form]);
@@ -1114,25 +1177,12 @@ export default function AdminClientsPage() {
                         />
                         <FormField
                           control={createForm.control}
-                          name="nameEn"
+                          name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</FormLabel>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم' : 'Name'}</FormLabel>
                               <FormControl>
-                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-name-en" />
-                              </FormControl>
-                              <FormMessage className="text-xs" />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={createForm.control}
-                          name="nameAr"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</FormLabel>
-                              <FormControl>
-                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-name-ar" />
+                                <Input {...field} className="h-10 sm:h-11 border-border/50 dark:border-[#d4af37]/20 focus:border-primary dark:focus:border-[#d4af37]" data-testid="input-create-name" />
                               </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
@@ -1211,7 +1261,7 @@ export default function AdminClientsPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                                  <SelectItem value="none">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
                                   <SelectItem value="technology">{language === 'ar' ? 'التكنولوجيا' : 'Technology'}</SelectItem>
                                   <SelectItem value="manufacturing">{language === 'ar' ? 'التصنيع' : 'Manufacturing'}</SelectItem>
                                   <SelectItem value="healthcare">{language === 'ar' ? 'الرعاية الصحية' : 'Healthcare'}</SelectItem>
@@ -1224,6 +1274,32 @@ export default function AdminClientsPage() {
                                   <SelectItem value="other">{language === 'ar' ? 'أخرى' : 'Other'}</SelectItem>
                                 </SelectContent>
                               </Select>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="hqCity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'مدينة المقر' : 'HQ City'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="hqCountry"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">{language === 'ar' ? 'بلد المقر' : 'HQ Country'}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ''} className="h-10 sm:h-11" />
+                              </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
                           )}
@@ -1267,7 +1343,7 @@ export default function AdminClientsPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                                  <SelectItem value="none">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
                                   <SelectItem value="A">{language === 'ar' ? 'أ - منخفض' : 'A - Low'}</SelectItem>
                                   <SelectItem value="B">{language === 'ar' ? 'ب - متوسط' : 'B - Medium'}</SelectItem>
                                   <SelectItem value="C">{language === 'ar' ? 'ج - عالي' : 'C - High'}</SelectItem>
@@ -1290,7 +1366,7 @@ export default function AdminClientsPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                                  <SelectItem value="none">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
                                   <SelectItem value="PO">{language === 'ar' ? 'أمر شراء' : 'Purchase Order (PO)'}</SelectItem>
                                   <SelectItem value="LTA">{language === 'ar' ? 'اتفاقية طويلة الأجل' : 'Long-Term Agreement (LTA)'}</SelectItem>
                                   <SelectItem value="Subscription">{language === 'ar' ? 'اشتراك' : 'Subscription'}</SelectItem>
@@ -1301,6 +1377,174 @@ export default function AdminClientsPage() {
                           )}
                         />
                       </div>
+
+                      {/* Headquarters Location Section */}
+                      <Separator />
+                      <h4 className="text-sm font-semibold text-muted-foreground">
+                        {language === 'ar' ? 'موقع المقر الرئيسي (اختياري)' : 'Headquarters Location (Optional)'}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="sm:col-span-2">
+                          <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'اسم الموقع' : 'Location Name'}</label>
+                          <Input
+                            value={headquartersState.name}
+                            onChange={(e) => setHeadquartersState(prev => ({ ...prev, name: e.target.value }))}
+                            className="h-10 sm:h-11"
+                            placeholder={language === 'ar' ? 'مثال: المقر الرئيسي' : 'e.g., Headquarters'}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'العنوان' : 'Address'}</label>
+                          <Input
+                            value={headquartersState.address}
+                            onChange={(e) => setHeadquartersState(prev => ({ ...prev, address: e.target.value }))}
+                            className="h-10 sm:h-11"
+                            placeholder={language === 'ar' ? 'العنوان الكامل' : 'Full address'}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'المدينة' : 'City'}</label>
+                          <Input
+                            value={headquartersState.city}
+                            onChange={(e) => setHeadquartersState(prev => ({ ...prev, city: e.target.value }))}
+                            className="h-10 sm:h-11"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'الدولة' : 'Country'}</label>
+                          <Input
+                            value={headquartersState.country}
+                            onChange={(e) => setHeadquartersState(prev => ({ ...prev, country: e.target.value }))}
+                            className="h-10 sm:h-11"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'الهاتف' : 'Phone'}</label>
+                          <Input
+                            value={headquartersState.phone}
+                            onChange={(e) => setHeadquartersState(prev => ({ ...prev, phone: e.target.value }))}
+                            className="h-10 sm:h-11"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'الموقع على الخريطة' : 'Map Location'}</label>
+                          <MapLocationPicker
+                            latitude={headquartersState.latitude}
+                            longitude={headquartersState.longitude}
+                            onLocationSelect={(lat, lng, address) => {
+                              setHeadquartersState(prev => ({
+                                ...prev,
+                                latitude: lat,
+                                longitude: lng,
+                                ...(address && {
+                                  address: address.address || prev.address,
+                                  city: address.city || prev.city,
+                                  country: address.country || prev.country,
+                                }),
+                              }));
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Departments Section */}
+                      <Separator />
+                      <h4 className="text-sm font-semibold text-muted-foreground">
+                        {language === 'ar' ? 'الأقسام (اختياري)' : 'Departments (Optional)'}
+                      </h4>
+                      <div className="space-y-3">
+                        {departmentsState.map((dept, index) => (
+                          <Card key={index} className="p-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'نوع القسم' : 'Department Type'}</label>
+                                <Select
+                                  value={dept.type}
+                                  onValueChange={(value) => {
+                                    const newDepts = [...departmentsState];
+                                    newDepts[index].type = value;
+                                    setDepartmentsState(newDepts);
+                                  }}
+                                >
+                                  <SelectTrigger className="h-10 sm:h-11">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {DEPARTMENT_TYPES.map(dt => (
+                                      <SelectItem key={dt.value} value={dt.value}>
+                                        {language === 'ar' ? dt.labelAr : dt.labelEn}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'اسم جهة الاتصال' : 'Contact Name'}</label>
+                                <Input
+                                  value={dept.contactName}
+                                  onChange={(e) => {
+                                    const newDepts = [...departmentsState];
+                                    newDepts[index].contactName = e.target.value;
+                                    setDepartmentsState(newDepts);
+                                  }}
+                                  className="h-10 sm:h-11"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
+                                <Input
+                                  type="email"
+                                  value={dept.contactEmail}
+                                  onChange={(e) => {
+                                    const newDepts = [...departmentsState];
+                                    newDepts[index].contactEmail = e.target.value;
+                                    setDepartmentsState(newDepts);
+                                  }}
+                                  className="h-10 sm:h-11"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium mb-2 block">{language === 'ar' ? 'رقم الهاتف' : 'Phone'}</label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    value={dept.contactPhone}
+                                    onChange={(e) => {
+                                      const newDepts = [...departmentsState];
+                                      newDepts[index].contactPhone = e.target.value;
+                                      setDepartmentsState(newDepts);
+                                    }}
+                                    className="h-10 sm:h-11 flex-1"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => {
+                                      const newDepts = departmentsState.filter((_, i) => i !== index);
+                                      setDepartmentsState(newDepts);
+                                    }}
+                                    className="h-10 w-10 sm:h-11 sm:w-11"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setDepartmentsState([...departmentsState, { type: '', contactName: '', contactEmail: '', contactPhone: '' }]);
+                          }}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {language === 'ar' ? '+ إضافة قسم' : '+ Add Department'}
+                        </Button>
+                      </div>
+
                       <DialogFooter className="pt-3 sm:pt-4">
                         <Button 
                           type="submit" 
@@ -1579,7 +1823,7 @@ export default function AdminClientsPage() {
                           data-testid={`button-select-client-${client.id}`}
                         >
                           <div className="font-medium">
-                            {language === 'ar' ? client.nameAr : client.nameEn}
+                            {client.name}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {client.email || client.username}
@@ -1853,7 +2097,7 @@ export default function AdminClientsPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <div className="font-medium">{language === 'ar' ? loc.nameAr : loc.nameEn}</div>
+                                <div className="font-medium">{loc.name}</div>
                                 {loc.isHeadquarters && (
                                   <Badge variant="secondary">
                                     {language === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
@@ -1861,7 +2105,7 @@ export default function AdminClientsPage() {
                                 )}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {language === 'ar' ? loc.addressAr : loc.addressEn}
+                                {loc.address}
                               </div>
                               {(loc.city || loc.country) && (
                                 <div className="text-sm text-muted-foreground">
@@ -2008,7 +2252,7 @@ export default function AdminClientsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                            <SelectItem value="none">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
                             <SelectItem value="technology">{language === 'ar' ? 'التكنولوجيا' : 'Technology'}</SelectItem>
                             <SelectItem value="manufacturing">{language === 'ar' ? 'التصنيع' : 'Manufacturing'}</SelectItem>
                             <SelectItem value="healthcare">{language === 'ar' ? 'الرعاية الصحية' : 'Healthcare'}</SelectItem>
@@ -2064,7 +2308,7 @@ export default function AdminClientsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                            <SelectItem value="none">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
                             <SelectItem value="A">{language === 'ar' ? 'أ - منخفض' : 'A - Low'}</SelectItem>
                             <SelectItem value="B">{language === 'ar' ? 'ب - متوسط' : 'B - Medium'}</SelectItem>
                             <SelectItem value="C">{language === 'ar' ? 'ج - عالي' : 'C - High'}</SelectItem>
@@ -2087,7 +2331,7 @@ export default function AdminClientsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
+                            <SelectItem value="none">{language === 'ar' ? 'لا شيء' : 'None'}</SelectItem>
                             <SelectItem value="PO">{language === 'ar' ? 'أمر شراء' : 'Purchase Order (PO)'}</SelectItem>
                             <SelectItem value="LTA">{language === 'ar' ? 'اتفاقية طويلة الأجل' : 'Long-Term Agreement (LTA)'}</SelectItem>
                             <SelectItem value="Subscription">{language === 'ar' ? 'اشتراك' : 'Subscription'}</SelectItem>
@@ -2699,7 +2943,7 @@ function ClientDetailsCard({
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <div className="font-semibold text-foreground dark:text-white">
-                              {language === 'ar' ? loc.nameAr : loc.nameEn}
+                              {loc.name}
                             </div>
                             {loc.isHeadquarters && (
                               <Badge className="bg-primary/10 dark:bg-[#d4af37]/10 text-primary dark:text-[#d4af37] border-primary/20 dark:border-[#d4af37]/20">
@@ -2710,7 +2954,7 @@ function ClientDetailsCard({
                           <div className="flex items-start gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
                             <span className="line-clamp-2">
-                              {language === 'ar' ? loc.addressAr : loc.addressEn}
+                              {loc.address}
                               {(loc.city || loc.country) && (
                                 <span className="text-muted-foreground/70">
                                   {', '}

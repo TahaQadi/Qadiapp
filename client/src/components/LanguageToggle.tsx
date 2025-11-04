@@ -10,7 +10,7 @@ export function LanguageToggle() {
       size="sm"
       onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
       data-testid="button-language-toggle"
-      className="font-medium"
+      className="font-sans"
     >
       {language === 'en' ? 'العربية' : 'English'}
     </Button>

@@ -1,6 +1,6 @@
-
 import { db } from './db';
 import { products } from '@shared/schema';
+import { isNotNull } from 'drizzle-orm';
 
 export async function generateSitemap(): Promise<string> {
   const baseUrl = process.env.BASE_URL || 'https://your-domain.com';
@@ -8,58 +8,54 @@ export async function generateSitemap(): Promise<string> {
   // Get all products for sitemap
   const allProducts = await db.select({
     sku: products.sku,
+    name: products.name,
     category: products.category,
-    updatedAt: products.updatedAt,
+    mainCategory: products.mainCategory,
   }).from(products);
 
-  const staticPages = [
+  const staticPages: Array<{ url: string; priority: string; changefreq: string; lastmod?: string }> = [
     { url: '/', priority: '1.0', changefreq: 'daily' },
     { url: '/catalog', priority: '0.9', changefreq: 'daily' },
   ];
 
   // Generate category pages
-  const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-  const categoryPages = categories.map(cat => ({
-    url: `/catalog/${encodeURIComponent(cat!)}`,
+  const categorySet = new Set<string>();
+  allProducts.forEach(p => {
+    if (p.category) categorySet.add(p.category);
+  });
+  const categories = Array.from(categorySet);
+  const categoryPages: Array<{ url: string; priority: string; changefreq: string; lastmod?: string }> = categories.map(cat => ({
+    url: `/catalog/${encodeURIComponent(cat)}`,
     priority: '0.8',
     changefreq: 'weekly',
   }));
 
   // Generate product pages
-  const productPages = allProducts.map(product => {
-    const slugifiedName = product.nameEn.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    const slugifiedSubCategory = (product.subCategory || 'products').toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+  const productPages: Array<{ url: string; priority: string; changefreq: string; lastmod?: string }> = allProducts.map(product => {
     return {
-      url: `/products/${slugifiedSubCategory}/${slugifiedName}`,
+      url: `/products/${encodeURIComponent(product.sku)}`,
       priority: '0.7',
       changefreq: 'weekly',
-      lastmod: product.updatedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      lastmod: new Date().toISOString().split('T')[0],
     };
   });
 
-  const allPages = [...staticPages, ...categoryPages, ...productPages];
+  const allPages: Array<{ url: string; priority: string; changefreq: string; lastmod?: string }> = [...staticPages, ...categoryPages, ...productPages];
 
   // Get products with images for image sitemap
   const productsWithImages = await db.select({
     sku: products.sku,
+    name: products.name,
     imageUrl: products.imageUrl,
-    nameEn: products.nameEn,
-    nameAr: products.nameAr,
-  }).from(products).where(products.imageUrl);
+  }).from(products).where(isNotNull(products.imageUrl));
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${allPages.map(page => {
     const productImage = productsWithImages.find(p => {
-      const slugifiedName = p.nameEn.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      return page.url.includes(slugifiedName);
+      // Match by SKU instead of slugified name
+      return page.url.includes(encodeURIComponent(p.sku));
     });
     return `  <url>
     <loc>${baseUrl}${page.url}</loc>
@@ -68,8 +64,7 @@ ${allPages.map(page => {
     ${page.lastmod ? `<lastmod>${page.lastmod}</lastmod>` : ''}${productImage && productImage.imageUrl ? `
     <image:image>
       <image:loc>${baseUrl}${productImage.imageUrl}</image:loc>
-      <image:title>${productImage.nameEn}</image:title>
-      <image:caption>${productImage.nameAr}</image:caption>
+      <image:title>${productImage.name || 'Product'}</image:title>
     </image:image>` : ''}
   </url>`;
   }).join('\n')}

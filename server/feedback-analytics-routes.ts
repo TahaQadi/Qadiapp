@@ -152,8 +152,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
           comments: orderFeedback.comments,
           createdAt: orderFeedback.createdAt,
           clientId: orderFeedback.clientId,
-          clientNameEn: clients.nameEn,
-          clientNameAr: clients.nameAr
+          clientName: clients.name
         })
         .from(orderFeedback)
         .leftJoin(clients, eq(orderFeedback.clientId, clients.id))
@@ -172,7 +171,7 @@ router.get('/feedback/analytics', requireAdmin, async (req: any, res) => {
       rating: f.rating,
       comments: f.comments || '',
       createdAt: f.createdAt,
-      clientName: f.clientNameEn || 'Unknown Client'
+      clientName: f.clientName || 'Unknown Client'
     }));
 
     const response = {

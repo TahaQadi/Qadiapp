@@ -13,8 +13,7 @@ export async function seedData() {
   const adminUser = await storage.createClient({
     username: 'admin',
     password: await hashPassword('admin123'),
-    nameEn: 'Administrator',
-    nameAr: 'المسؤول',
+    name: 'Administrator',
     email: 'admin@system.com',
     phone: '+1111111111',
     isAdmin: true,
@@ -24,8 +23,7 @@ export async function seedData() {
   const testClient = await storage.createClient({
     username: 'test',
     password: await hashPassword('test123'),
-    nameEn: 'Acme Corporation',
-    nameAr: 'شركة أكمي',
+    name: 'Acme Corporation',
     email: 'info@acme.com',
     phone: '+1234567890',
     isAdmin: false,
@@ -59,10 +57,8 @@ export async function seedData() {
   // Create locations
   await storage.createClientLocation({
     clientId: testClient.id,
-    nameEn: 'Headquarters',
-    nameAr: 'المقر الرئيسي',
-    addressEn: '123 Main Street, Suite 100',
-    addressAr: '١٢٣ شارع الرئيسي، جناح ١٠٠',
+    name: 'Headquarters',
+    address: '123 Main Street, Suite 100',
     city: 'New York',
     country: 'USA',
     isHeadquarters: true,
@@ -71,10 +67,8 @@ export async function seedData() {
 
   await storage.createClientLocation({
     clientId: testClient.id,
-    nameEn: 'West Coast Branch',
-    nameAr: 'فرع الساحل الغربي',
-    addressEn: '456 Pacific Avenue',
-    addressAr: '٤٥٦ شارع باسيفيك',
+    name: 'West Coast Branch',
+    address: '456 Pacific Avenue',
     city: 'Los Angeles',
     country: 'USA',
     isHeadquarters: false,
@@ -84,65 +78,51 @@ export async function seedData() {
   // Create products
   const product1 = await storage.createProduct({
     sku: 'CHAIR-001',
-    nameEn: 'Office Chair',
-    nameAr: 'كرسي مكتب',
-    descriptionEn: 'Ergonomic design with lumbar support',
-    descriptionAr: 'تصميم مريح مع دعم قطني',
+    name: 'Office Chair',
+    description: 'Ergonomic design with lumbar support',
     category: 'Furniture',
   });
 
   const product2 = await storage.createProduct({
     sku: 'DESK-001',
-    nameEn: 'Standing Desk',
-    nameAr: 'مكتب واقف',
-    descriptionEn: 'Adjustable height electric desk',
-    descriptionAr: 'مكتب كهربائي بارتفاع قابل للتعديل',
+    name: 'Standing Desk',
+    description: 'Adjustable height electric desk',
     category: 'Furniture',
   });
 
   const product3 = await storage.createProduct({
     sku: 'ARM-001',
-    nameEn: 'Monitor Arm',
-    nameAr: 'ذراع شاشة',
-    descriptionEn: 'Dual monitor support, gas spring',
-    descriptionAr: 'دعم شاشتين، نابض غازي',
+    name: 'Monitor Arm',
+    description: 'Dual monitor support, gas spring',
     category: 'Accessories',
   });
 
   const product4 = await storage.createProduct({
     sku: 'LAMP-001',
-    nameEn: 'Desk Lamp',
-    nameAr: 'مصباح مكتب',
-    descriptionEn: 'LED desk lamp with adjustable brightness',
-    descriptionAr: 'مصباح مكتب LED بإضاءة قابلة للتعديل',
+    name: 'Desk Lamp',
+    description: 'LED desk lamp with adjustable brightness',
     category: 'Accessories',
   });
 
   const product5 = await storage.createProduct({
     sku: 'KB-001',
-    nameEn: 'Wireless Keyboard',
-    nameAr: 'لوحة مفاتيح لاسلكية',
-    descriptionEn: 'Mechanical switches, RGB backlight',
-    descriptionAr: 'مفاتيح ميكانيكية، إضاءة خلفية RGB',
+    name: 'Wireless Keyboard',
+    description: 'Mechanical switches, RGB backlight',
     category: 'Technology',
   });
 
   const product6 = await storage.createProduct({
     sku: 'PAD-001',
-    nameEn: 'Mouse Pad',
-    nameAr: 'حشية الفأرة',
-    descriptionEn: 'Extended gaming mouse pad',
-    descriptionAr: 'حشية فأرة للألعاب ممتدة',
+    name: 'Mouse Pad',
+    description: 'Extended gaming mouse pad',
     category: 'Technology',
   });
 
   // Create LTAs
   // LTA 1: General Office Supplies Contract (Active)
   const lta1 = await storage.createLta({
-    nameEn: 'Office Supplies Contract 2024',
-    nameAr: 'عقد اللوازم المكتبية 2024',
-    descriptionEn: 'Annual contract for office furniture and supplies',
-    descriptionAr: 'عقد سنوي للأثاث واللوازم المكتبية',
+    name: 'Office Supplies Contract 2024',
+    description: 'Annual contract for office furniture and supplies',
     startDate: new Date('2024-01-01'),
     endDate: new Date('2024-12-31'),
     status: 'active',
@@ -150,24 +130,20 @@ export async function seedData() {
 
   // LTA 2: Technology Equipment Contract (Active)
   const lta2 = await storage.createLta({
-    nameEn: 'Technology Equipment Contract 2024',
-    nameAr: 'عقد المعدات التقنية 2024',
-    descriptionEn: 'Contract for computers and tech accessories',
-    descriptionAr: 'عقد لأجهزة الكمبيوتر والملحقات التقنية',
+    name: 'Technology Equipment Contract 2024',
+    description: 'Contract for computers and tech accessories',
     startDate: new Date('2024-01-01'),
     endDate: new Date('2024-12-31'),
     status: 'active',
   });
 
-  // LTA 3: Expired/Inactive Contract (for testing)
+  // LTA 3: Expired Contract (for testing)
   const lta3 = await storage.createLta({
-    nameEn: 'Archived Supplies Contract 2023',
-    nameAr: 'عقد اللوازم المؤرشف 2023',
-    descriptionEn: 'Previous year contract (expired)',
-    descriptionAr: 'عقد السنة السابقة (منتهي)',
+    name: 'Archived Supplies Contract 2023',
+    description: 'Previous year contract (expired)',
     startDate: new Date('2023-01-01'),
     endDate: new Date('2023-12-31'),
-    status: 'inactive',
+    status: 'expired',
   });
 
   // Assign products to LTA 1 (Office Supplies) - 4 products
@@ -243,12 +219,12 @@ async function seedDefaultTemplates() {
 
   // Price Offer Template
   await TemplateStorage.createTemplate({
-    nameEn: 'Standard Price Offer',
-    nameAr: 'عرض سعر قياسي',
-    descriptionEn: 'Professional price offer template with company branding',
-    descriptionAr: 'قالب عرض سعر احترافي مع العلامة التجارية للشركة',
+    name: 'Standard Price Offer',
+    description: 'Professional price offer template with company branding',
     category: 'price_offer',
-    language: 'both',
+    language: 'ar',
+    version: 1,
+    isDefault: false,
     sections: [
       {
         type: 'header',
@@ -338,12 +314,12 @@ async function seedDefaultTemplates() {
 
   // Order Template
   await TemplateStorage.createTemplate({
-    nameEn: 'Standard Purchase Order',
-    nameAr: 'طلب شراء قياسي',
-    descriptionEn: 'Professional purchase order template',
-    descriptionAr: 'قالب طلب شراء احترافي',
+    name: 'Standard Purchase Order',
+    description: 'Professional purchase order template',
     category: 'order',
-    language: 'both',
+    language: 'ar',
+    version: 1,
+    isDefault: false,
     sections: [
       {
         type: 'header',
@@ -422,12 +398,12 @@ async function seedDefaultTemplates() {
 
   // Invoice Template
   await TemplateStorage.createTemplate({
-    nameEn: 'Standard Invoice',
-    nameAr: 'فاتورة قياسية',
-    descriptionEn: 'Professional invoice template',
-    descriptionAr: 'قالب فاتورة احترافي',
+    name: 'Standard Invoice',
+    description: 'Professional invoice template',
     category: 'invoice',
-    language: 'both',
+    language: 'ar',
+    version: 1,
+    isDefault: false,
     sections: [
       {
         type: 'header',

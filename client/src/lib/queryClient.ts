@@ -108,18 +108,18 @@ export const queryClient = new QueryClient({
 
 // Granular cache strategies by data type
 export const cacheStrategies = {
-  // Static/rarely changing data
+  // Static/rarely changing data - increased staleTime for better caching
   products: {
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 30 * 60 * 1000, // 30 minutes (increased from 15)
+    gcTime: 60 * 60 * 1000, // 1 hour (increased from 30 minutes)
   },
   categories: {
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 60 * 60 * 1000, // 1 hour
+    staleTime: 60 * 60 * 1000, // 1 hour (increased from 30 minutes)
+    gcTime: 2 * 60 * 60 * 1000, // 2 hours (increased from 1 hour)
   },
   vendors: {
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 20 * 60 * 1000, // 20 minutes
+    staleTime: 30 * 60 * 1000, // 30 minutes (increased from 10)
+    gcTime: 60 * 60 * 1000, // 1 hour (increased from 20 minutes)
   },
   
   // Semi-dynamic data
@@ -181,3 +181,20 @@ export const invalidateCachePattern = (pattern: string) => {
       ),
   });
 };
+
+// Initialize cache persistence (call this in App.tsx)
+export async function initializeCachePersistence(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const { restoreQueryCache, setupCachePersistence } = await import('./queryCachePersistence');
+    
+    // Restore cache on app startup
+    await restoreQueryCache(queryClient);
+    
+    // Setup automatic persistence
+    setupCachePersistence(queryClient);
+  } catch (error) {
+    console.warn('Failed to initialize cache persistence:', error);
+  }
+}

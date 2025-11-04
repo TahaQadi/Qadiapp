@@ -1966,9 +1966,9 @@ export default function AdminPriceManagementPage() {
                     ? JSON.parse(selectedRequest.products) 
                     : selectedRequest.products || []).map((product: any, idx: number) => {
                       // Handle different product name formats
-                      const productName = language === 'ar' 
-                        ? (product.nameAr || product.nameEn || product.name || 'منتج غير معروف')
-                        : (product.nameEn || product.nameAr || product.name || 'Unknown Product');
+                      const productName = language === 'ar'
+                        ? (product.name || 'منتج غير معروف')
+                        : (product.name || 'Unknown Product');
 
                       return (
                         <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50 gap-3">

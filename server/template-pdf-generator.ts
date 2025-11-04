@@ -1,5 +1,5 @@
 import PDFDocument from 'pdfkit';
-import type { Template, TemplateSection } from './template-storage';
+import type { DocumentTemplate, TemplateSection } from '@shared/template-schema';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,7 +20,7 @@ try {
 }
 
 interface GenerateOptions {
-  template: Template;
+  template: DocumentTemplate;
   variables: Array<{ key: string; value: any }>;
   language: 'en' | 'ar';
 }
@@ -77,7 +77,7 @@ export class TemplatePDFGenerator {
           ? JSON.parse(template.sections)
           : template.sections as TemplateSection[];
 
-        const sortedSections = sections.sort((a, b) =>
+        const sortedSections = sections.sort((a: TemplateSection, b: TemplateSection) =>
           (a.order || 0) - (b.order || 0)
         );
 
@@ -375,7 +375,7 @@ export class TemplatePDFGenerator {
     // Validate table structure
     if (!headers || !Array.isArray(headers)) {
       console.error('Invalid table section:', JSON.stringify(section, null, 2));
-      throw new Error(`Table headers not found or invalid in section: ${section.title || 'unnamed'}`);
+      throw new Error(`Table headers not found or invalid in section: ${section.type || 'unnamed'}`);
     }
 
     // Get data from variables - handle both direct variable and nested access

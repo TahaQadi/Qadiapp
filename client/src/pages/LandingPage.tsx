@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { Package, ShoppingCart, FileText, BarChart3, ArrowRight, CheckCircle, MessageSquare, TrendingUp, LogIn, PlayCircle, Sparkles, Phone, Users, Clock, History, DollarSign, Edit, MapPin, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -9,10 +11,9 @@ import { SEO } from "@/components/SEO";
 import { DemoRequestDialog } from "@/components/DemoRequestDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LanguageToggle } from "@/components/LanguageToggle";
 
 export default function LandingPage() {
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const isArabic = language === 'ar';
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -279,40 +280,15 @@ export default function LandingPage() {
         </div>
 
       {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-black/95 backdrop-blur-xl border-b border-[#d4af37]/20' : 'bg-transparent'}`}>
-        <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-          <motion.div 
-            className="flex items-center gap-2 sm:gap-3"
-            initial={{ opacity: 0, x: isArabic ? 20 : -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37] to-[#f9c800] rounded-xl blur-lg opacity-50"></div>
-              <img 
-                src="/logo.png" 
-                alt={isArabic ? 'شعار القاضي' : 'Al Qadi Logo'} 
-                className="relative h-10 w-10 sm:h-14 sm:w-14 object-contain"
-              />
-            </div>
-            <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-[#d4af37] to-[#f9c800] bg-clip-text text-transparent">
-              {isArabic ? 'بوابة القاضي' : 'Al Qadi Portal'}
-            </h1>
-          </motion.div>
-          <motion.div
-            className="flex items-center gap-2 sm:gap-3"
-            initial={{ opacity: 0, x: isArabic ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className="border-2 border-primary/50 bg-black/50 text-primary hover:bg-primary/10 hover:border-primary hover:text-primary backdrop-blur-sm transition-all duration-300 text-sm font-sans font-semibold pl-[3px] pr-[3px]"
-            >
-              {language === 'en' ? 'العربية' : 'En'}
-            </Button>
+      <PageHeader
+        title={isArabic ? 'بوابة القاضي' : 'Al Qadi Portal'}
+        showLogo={true}
+        variant="transparent"
+        scrollEffect={true}
+        className="fixed top-0 left-0 right-0"
+        actions={
+          <>
+            <LanguageToggle />
             <Button 
               onClick={handleLogin}
               size="sm"
@@ -320,9 +296,9 @@ export default function LandingPage() {
             >
               {isArabic ? 'تسجيل الدخول' : 'Sign In'}
             </Button>
-          </motion.div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Hero Section */}
       <section className="relative container mx-auto px-3 sm:px-4 md:px-6 pt-20 sm:pt-24 md:pt-32 pb-8 sm:pb-12 md:pb-20 min-h-screen flex items-center">

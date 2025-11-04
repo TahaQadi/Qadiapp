@@ -27,6 +27,15 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Preload critical CSS -->
+    <link rel="preload" as="style" href="/src/index.css" />
+    
+    <!-- Preload critical app resources -->
+    <link rel="preload" as="script" href="/src/main.tsx" crossorigin />
+    
+    <!-- Preload manifest for PWA -->
+    <link rel="preload" as="fetch" href="/manifest.json" crossorigin />
 
     <!-- Additional SEO -->
     <link rel="alternate" type="application/rss+xml" title="Al Qadi Products Feed" href="/feed.xml" />
