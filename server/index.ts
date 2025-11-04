@@ -140,11 +140,13 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
 
+  // Start server immediately in production
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
+    console.log(`✓ Server listening on port ${port}`);
     log(`serving on port ${port}`);
   }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
