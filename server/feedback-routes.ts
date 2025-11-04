@@ -171,7 +171,7 @@ router.post('/feedback/issue', requireAuth, async (req: any, res: any) => {
     // Notify admins using NotificationService (automatically sends push notifications)
     await notificationService.sendToAllAdmins(
       notificationService.createIssueReportNotification(
-        { en: client?.nameEn || 'A client', ar: client?.nameAr || 'عميل' },
+        { en: client?.name || 'A client', ar: client?.name || 'عميل' },
         data.severity,
         data.title,
         newReport.id
@@ -275,7 +275,7 @@ router.get('/feedback/issues', requireAuth, async (req: any, res: any) => {
         status: issueReports.status,
         createdAt: issueReports.createdAt,
         resolvedAt: issueReports.resolvedAt,
-        companyName: clients.nameEn,
+        companyName: clients.name,
       })
       .from(issueReports)
       .leftJoin(clients, eq(issueReports.userId, clients.id))
@@ -308,7 +308,7 @@ router.get('/feedback/all', requireAuth, async (req: any, res: any) => {
         comments: orderFeedback.comments,
         wouldRecommend: orderFeedback.wouldRecommend,
         createdAt: orderFeedback.createdAt,
-        companyName: clients.nameEn,
+        companyName: clients.name,
       })
       .from(orderFeedback)
       .innerJoin(orders, eq(orderFeedback.orderId, orders.id))
